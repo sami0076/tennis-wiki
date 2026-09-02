@@ -1,0 +1,53 @@
+version: "2"
+
+linters:
+  # Build-spec section 4.1 requires these four. Others are opt-in later
+  # rather than enabled wholesale, so every warning stays worth reading.
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - revive
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+    govet:
+      enable:
+        - shadow
+    revive:
+      rules:
+        - name: exported
+        - name: error-strings
+        - name: error-return
+        - name: context-as-argument
+        - name: indent-error-flow
+
+  exclusions:
+    generated: lax
+    rules:
+      # sqlc output is generated; linting it reports on code we do not write.
+      - path: internal/db/
+        linters:
+          - errcheck
+          - govet
+          - staticcheck
+          - revive
+      # Table-driven tests routinely ignore errors that matter in production.
+      - path: _test\.go
+        linters:
+          - errcheck
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/sami0076/tennis-wiki
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
