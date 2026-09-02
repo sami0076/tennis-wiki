@@ -1,0 +1,23 @@
+# Normalise to LF in the repository; check out native on Windows.
+* text=auto eol=lf
+
+# Files that MUST be LF - they run inside Linux containers.
+*.sh        text eol=lf
+Dockerfile* text eol=lf
+Makefile    text eol=lf
+*.go        text eol=lf
+*.sql       text eol=lf
+*.yaml      text eol=lf
+*.yml       text eol=lf
+
+# Binary - never touch.
+*.png  binary
+*.jpg  binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.xlsm binary
+*.gz   binary
+
+# Data fixtures: keep diffs readable but do not let Git guess.
+*.csv text eol=lf
