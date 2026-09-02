@@ -8,13 +8,30 @@ GOOSE_VERSION    := v3.28.0
 SQLC_VERSION     := v1.31.1
 
 MIGRATIONS := ./migrations
-DATABASE_URL ?= postgres://tennis:tennis@localhost:5432/tennis?sslmode=disable
+# Matches the published port in .env.example; 5432 is usually already taken.
+DATABASE_URL ?= postgres://tennis:tennis@localhost:5433/tennis?sslmode=disable
 
 .DEFAULT_GOAL := help
 
 ## help: list available targets
 help:
 	@grep -E '^## ' $(MAKEFILE_LIST) | sed 's/## //' | awk -F':' '{printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
+
+## up: start Postgres and Redis, wait until healthy
+up:
+	docker compose up -d --wait
+
+## down: stop the stack, keeping data
+down:
+	docker compose down
+
+## reset: stop the stack and delete all data
+reset:
+	docker compose down -v
+
+## psql: open a shell on the database
+psql:
+	docker compose exec postgres psql -U $${POSTGRES_USER:-tennis} -d $${POSTGRES_DB:-tennis}
 
 ## build: compile every binary into bin/
 build:
@@ -71,4 +88,4 @@ validate:
 clean:
 	rm -rf $(BIN)
 
-.PHONY: help build test test-race fmt lint migrate-up migrate-down sqlc ingest ingest-full dataqual validate clean
+.PHONY: help up down reset psql build test test-race fmt lint migrate-up migrate-down sqlc ingest ingest-full dataqual validate clean
