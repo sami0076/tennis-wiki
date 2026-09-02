@@ -6,6 +6,7 @@ import "fmt"
 // migrations/ is authoritative; this mirrors it.
 type Tier string
 
+// Tiers, ordered by competitive standard.
 const (
 	TierTour       Tier = "tour"
 	TierChallenger Tier = "challenger"
@@ -16,6 +17,7 @@ const (
 // Level is the source CSV's tourney_level code.
 type Level string
 
+// Level codes as they appear in the source tourney_level column.
 const (
 	LevelGrandSlam  Level = "G"
 	LevelMasters    Level = "M"

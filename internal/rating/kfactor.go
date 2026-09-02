@@ -42,6 +42,7 @@ type Weights struct {
 	Qualifying     float64
 }
 
+// DefaultWeights returns the values agreed in ADR-0004.
 func DefaultWeights() Weights {
 	return Weights{
 		GrandSlamFinal: 1.20,
