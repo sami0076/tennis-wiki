@@ -20,8 +20,14 @@ help:
 build:
 	$(GO) build -o $(BIN)/ ./cmd/...
 
-## test: run the full test suite with the race detector
+## test: run the test suite
 test:
+	$(GO) test ./...
+
+## test-race: run the test suite with the race detector (used by CI)
+# The race detector is unsupported on windows/arm64, so this is a separate
+# target rather than the default. CI runs on linux/amd64 and always uses it.
+test-race:
 	$(GO) test -race ./...
 
 ## fmt: format and tidy
@@ -65,4 +71,4 @@ validate:
 clean:
 	rm -rf $(BIN)
 
-.PHONY: help build test fmt lint migrate-up migrate-down sqlc ingest ingest-full dataqual validate clean
+.PHONY: help build test test-race fmt lint migrate-up migrate-down sqlc ingest ingest-full dataqual validate clean
