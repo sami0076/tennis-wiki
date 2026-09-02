@@ -1,0 +1,6 @@
+# Entry point so `docker compose up` works from the repository root.
+# The service definitions live in deploy/compose/ per the spec's layout.
+name: tennis-wiki
+
+include:
+  - deploy/compose/docker-compose.yml
