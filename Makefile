@@ -19,6 +19,9 @@ POSTGRES_DB   ?= tennis
 MIGRATIONS := ./migrations
 # Matches the published compose port; 5432 is usually already taken.
 DATABASE_URL ?= postgres://tennis:tennis@localhost:5433/tennis?sslmode=disable
+# Exported so the cmd/ binaries see it; they read DATABASE_URL from the
+# environment and every target below would otherwise need it passed by hand.
+export DATABASE_URL
 
 .DEFAULT_GOAL := help
 
@@ -45,6 +48,14 @@ psql:
 ## build: compile every binary into bin/
 build:
 	$(GO) build -o $(BIN)/ ./cmd/...
+
+TEST_DATABASE_URL ?= postgres://tennis:tennis@localhost:5433/tennis_test?sslmode=disable
+export TEST_DATABASE_URL
+
+## testdb: create the disposable database the integration tests truncate
+testdb:
+	-docker compose exec -T postgres psql -U $(POSTGRES_USER) -d $(POSTGRES_DB) -c "CREATE DATABASE tennis_test"
+	$(GO) run github.com/pressly/goose/v3/cmd/goose@$(GOOSE_VERSION) -dir $(MIGRATIONS) postgres "$(TEST_DATABASE_URL)" up
 
 ## test: run the test suite
 test:
@@ -97,4 +108,4 @@ validate:
 clean:
 	$(call RM_DIR,$(BIN))
 
-.PHONY: help up down reset psql build test test-race fmt lint migrate-up migrate-down sqlc ingest ingest-full dataqual validate clean
+.PHONY: help up down reset psql testdb build test test-race fmt lint migrate-up migrate-down sqlc ingest ingest-full dataqual validate clean

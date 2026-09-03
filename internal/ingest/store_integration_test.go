@@ -2,7 +2,9 @@ package ingest
 
 import (
 	"context"
+	"net/url"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/sami0076/tennis-wiki/internal/db"
@@ -11,12 +13,37 @@ import (
 // Integration tests need a migrated database. Set TEST_DATABASE_URL to run
 // them; they skip otherwise so the unit suite stays runnable anywhere.
 // Issue #13 replaces this with testcontainers so CI runs them automatically.
-func testStore(t *testing.T) (*Store, context.Context) {
+// requireTestDatabase returns the integration DSN, refusing to run against a
+// database whose name does not mark it as disposable.
+//
+// These tests TRUNCATE every table. Pointed at a working database they destroy
+// it, which is exactly what happened once during development. The name guard
+// is crude but it is checked before anything is dropped.
+func requireTestDatabase(t *testing.T) string {
 	t.Helper()
 	dsn := os.Getenv("TEST_DATABASE_URL")
 	if dsn == "" {
 		t.Skip("TEST_DATABASE_URL not set; skipping database integration test")
 	}
+	if !strings.Contains(dbName(dsn), "test") {
+		t.Fatalf("refusing to run: TEST_DATABASE_URL points at %q, which is not a test database. "+
+			"These tests truncate every table. Use `make testdb` and a database named *test*.", dbName(dsn))
+	}
+	return dsn
+}
+
+// dbName extracts the database name from a connection string.
+func dbName(dsn string) string {
+	u, err := url.Parse(dsn)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimPrefix(u.Path, "/")
+}
+
+func testStore(t *testing.T) (*Store, context.Context) {
+	t.Helper()
+	dsn := requireTestDatabase(t)
 	ctx := context.Background()
 	pool, err := db.Open(ctx, db.Config{DSN: dsn, MaxConns: 4, MinConns: 1})
 	if err != nil {

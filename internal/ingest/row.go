@@ -64,6 +64,44 @@ func (m MatchRow) HasDetailedStats() bool {
 	return m.Winner.Stats != nil && m.Loser.Stats != nil
 }
 
+// Tier derives the competitive tier from tourney_level.
+//
+// It cannot be taken from the source file. atp_matches_qual_chall mixes
+// Challenger main draws with Grand Slam and Masters qualifying, so filing the
+// whole file as challenger lands Wimbledon under the Challenger tier. fallback
+// is used only for a level code the source leaves empty.
+func (m MatchRow) Tier(fallback string) string {
+	level := strings.ToUpper(strings.TrimSpace(m.Level))
+	switch level {
+	case "":
+		return fallback
+	case "C":
+		// ATP Challenger, and the WTA 125 series.
+		return "challenger"
+	case "S":
+		// ATP Satellite and Futures.
+		return "futures"
+	}
+	// The WTA writes ITF events as their prize money in thousands: 15, 25, 60,
+	// 80, 100. Everything else alphabetic is a tour-level event.
+	if isNumericLevel(level) {
+		return "itf"
+	}
+	return "tour"
+}
+
+func isNumericLevel(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
 // qualifyingRound matches Q1, Q2, Q3 and so on. It must not match QF, which is
 // the quarterfinal of a main draw.
 var qualifyingRound = regexp.MustCompile(`^Q\d+$`)

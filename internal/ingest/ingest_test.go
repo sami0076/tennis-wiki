@@ -281,3 +281,44 @@ func TestLocalFetcher(t *testing.T) {
 		t.Errorf("missing season error = %v, want ErrNotFound", err)
 	}
 }
+
+// Tier comes from tourney_level, never from the file: atp_matches_qual_chall
+// mixes Challenger main draws with Grand Slam and Masters qualifying.
+func TestTierFromLevel(t *testing.T) {
+	cases := []struct {
+		level, fallback, want string
+	}{
+		{"G", "challenger", "tour"}, // Grand Slam qualifying sits in the qual_chall file
+		{"M", "challenger", "tour"}, // so does Masters qualifying
+		{"A", "challenger", "tour"},
+		{"D", "tour", "tour"}, // Davis Cup
+		{"F", "tour", "tour"}, // Tour Finals
+		{"P", "tour", "tour"}, // WTA Premier
+		{"PM", "tour", "tour"},
+		{"I", "itf", "tour"}, // WTA International, not ITF
+		{"C", "tour", "challenger"},
+		{"S", "tour", "futures"},
+		{"15", "tour", "itf"}, // WTA prize-money codes
+		{"25", "tour", "itf"},
+		{"100", "tour", "itf"},
+		{"", "challenger", "challenger"}, // only an empty level falls back
+		{"g", "challenger", "tour"},      // case insensitive
+	}
+	for _, c := range cases {
+		got := MatchRow{Level: c.level}.Tier(c.fallback)
+		if got != c.want {
+			t.Errorf("Tier(level=%q, fallback=%q) = %q, want %q", c.level, c.fallback, got, c.want)
+		}
+	}
+}
+
+// A Grand Slam read from the qualifying file must still be tour tier.
+func TestGrandSlamInQualFileIsTourTier(t *testing.T) {
+	src := sackmannATP
+	src.Tier = "challenger"
+	for _, r := range all(t, fixture(t, "atp_matches_qual_chall_2022.csv", src)) {
+		if r.Level == "G" && r.Tier(src.Tier) != "tour" {
+			t.Errorf("Grand Slam row filed as %q", r.Tier(src.Tier))
+		}
+	}
+}
