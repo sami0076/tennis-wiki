@@ -14,8 +14,10 @@ linters:
       check-type-assertions: true
       check-blank: true
     govet:
-      enable:
-        - shadow
+      # shadow is deliberately not enabled: it flags `if err := f(); err != nil`,
+      # which is idiomatic Go, and is excluded from the default vet suite for
+      # that reason.
+      enable-all: false
     revive:
       rules:
         - name: exported

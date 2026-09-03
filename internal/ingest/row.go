@@ -109,6 +109,13 @@ func parseRow(c *columns, rec []string) (MatchRow, error) {
 	if m.Winner.SourceID == "" || m.Loser.SourceID == "" {
 		return MatchRow{}, fmt.Errorf("row %s/%d has a missing player id", m.TourneyID, m.MatchNum)
 	}
+	// The source occasionally records a player as beating themselves. Both
+	// participants would collapse onto one primary key, leaving a match with a
+	// single player that corrupts head-to-head records and Elo alike.
+	if m.Winner.SourceID == m.Loser.SourceID {
+		return MatchRow{}, fmt.Errorf("row %s/%d: winner and loser are the same player (%s)",
+			m.TourneyID, m.MatchNum, m.Winner.SourceID)
+	}
 	return m, nil
 }
 
