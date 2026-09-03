@@ -1,0 +1,6 @@
+tourney_id,tourney_name,surface,draw_size,tourney_level,tourney_date,match_num,winner_id,winner_seed,winner_entry,winner_name,winner_hand,winner_ht,winner_ioc,winner_age,loser_id,loser_seed,loser_entry,loser_name,loser_hand,loser_ht,loser_ioc,loser_age,score,best_of,round,minutes,w_ace,w_df,w_svpt,w_1stIn,w_1stWon,w_2ndWon,w_SvGms,w_bpSaved,w_bpFaced,l_ace,l_df,l_svpt,l_1stIn,l_1stWon,l_2ndWon,l_SvGms,l_bpSaved,l_bpFaced,winner_rank,winner_rank_points,loser_rank,loser_rank_points
+1969-2029,Dublin,Grass,32,A,19690707,270,100011,,,Torben Ulrich,L,180,DEN,40.7,207077,,,Desmond Early,,,IRL,,6-0 6-2,3,R32,,,,,,,,,,,,,,,,,,,,,,,
+1969-2029,Dublin,Grass,32,A,19690707,271,100058,,,Roger Taylor,L,183,GBR,27.7,209525,,,Dennis Foley,U,,IRL,,6-1 6-2,3,R32,,,,,,,,,,,,,,,,,,,,,,,
+1969-2029,Dublin,Grass,32,A,19690707,272,100114,,,Ray Ruffels,R,,AUS,23.2,110196,,,Peter Ledbetter,U,,UNK,25.0,6-0 6-2,3,R32,,,,,,,,,,,,,,,,,,,,,,,
+1969-2029,Dublin,Grass,32,A,19690707,273,125672,,,Kenneth Reid,U,,IRL,,209594,,,P Coyle,U,,IRL,,6-3 6-4,3,R32,,,,,,,,,,,,,,,,,,,,,,,
+1969-2029,Dublin,Grass,32,A,19690707,274,100037,,,Nikola Pilic,L,191,CRO,29.8,209593,,,G Doughty,U,,IRL,,6-3 6-4,3,R32,,,,,,,,,,,,,,,,,,,,,,,

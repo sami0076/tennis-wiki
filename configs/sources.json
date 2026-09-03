@@ -1,0 +1,80 @@
+{
+  "sources": [
+    {
+      "name": "sackmann-atp-tour",
+      "tour": "atp",
+      "tier": "tour",
+      "profile": "sackmann",
+      "base_url": "https://raw.githubusercontent.com/Miasekk/tennis_atp/master",
+      "path": "results/atp_matches_{season}.csv",
+      "first_season": 1968,
+      "last_season": 2024,
+      "precedence": 50,
+      "attribution": "Jeff Sackmann / Tennis Abstract, CC BY-NC-SA 4.0"
+    },
+    {
+      "name": "sackmann-atp-qual-chall",
+      "tour": "atp",
+      "tier": "challenger",
+      "profile": "sackmann",
+      "base_url": "https://raw.githubusercontent.com/Miasekk/tennis_atp/master",
+      "path": "results/atp_matches_qual_chall_{season}.csv",
+      "first_season": 1978,
+      "last_season": 2024,
+      "precedence": 50,
+      "bundles_qualifying": true,
+      "attribution": "Jeff Sackmann / Tennis Abstract, CC BY-NC-SA 4.0"
+    },
+    {
+      "name": "sackmann-atp-futures",
+      "tour": "atp",
+      "tier": "futures",
+      "profile": "sackmann",
+      "base_url": "https://raw.githubusercontent.com/binmishr/Predictability-of-Tennis-Grand-Slams/main",
+      "path": "atp_matches_futures_{season}.csv",
+      "first_season": 1991,
+      "last_season": 2021,
+      "precedence": 40,
+      "bundles_qualifying": true,
+      "attribution": "Jeff Sackmann / Tennis Abstract, CC BY-NC-SA 4.0"
+    },
+    {
+      "name": "sackmann-wta-tour",
+      "tour": "wta",
+      "tier": "tour",
+      "profile": "sackmann",
+      "base_url": "https://raw.githubusercontent.com/binmishr/Predictability-of-Tennis-Grand-Slams/main",
+      "path": "wta_matches_{season}.csv",
+      "first_season": 1923,
+      "last_season": 2021,
+      "precedence": 40,
+      "attribution": "Jeff Sackmann / Tennis Abstract, CC BY-NC-SA 4.0"
+    },
+    {
+      "name": "sackmann-wta-qual-itf",
+      "tour": "wta",
+      "tier": "itf",
+      "profile": "sackmann",
+      "base_url": "https://raw.githubusercontent.com/binmishr/Predictability-of-Tennis-Grand-Slams/main",
+      "path": "wta_matches_qual_itf_{season}.csv",
+      "first_season": 1924,
+      "last_season": 2021,
+      "precedence": 40,
+      "bundles_qualifying": true,
+      "attribution": "Jeff Sackmann / Tennis Abstract, CC BY-NC-SA 4.0"
+    },
+    {
+      "name": "tml-atp-current",
+      "tour": "atp",
+      "tier": "tour",
+      "profile": "tml",
+      "base_url": "https://raw.githubusercontent.com/Tennismylife/TML-Database/master",
+      "path": "{season}.csv",
+      "first_season": 2025,
+      "last_season": 2026,
+      "through": "2026-01-17",
+      "precedence": 60,
+      "attribution": "Tennismylife TML-Database, built on Jeff Sackmann's structure"
+    }
+  ]
+}
