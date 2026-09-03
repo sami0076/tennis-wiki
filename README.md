@@ -86,19 +86,31 @@ of showing a zero. Full detail in [`DATA_LICENSE.md`](DATA_LICENSE.md).
 
 ## Run it locally
 
-_(pending Phase 1 completion — this is the target and the acceptance criterion.)_
+Needs Docker and Go 1.23+.
 
 ```bash
-docker compose up
+docker compose up -d      # Postgres 16 + Redis 7
+make migrate-up           # apply the schema
 ```
 
-That command must produce a fully working site with seeded data — one season of both
-tours, shipped as fixtures in the repo so first run takes seconds. For the full 1968-present
-ingest:
+Postgres is published on **5433** and Redis on **6380**, not the defaults, because a local
+install very often already holds 5432 and 6379.
 
-```bash
-make ingest-full
-```
+Useful targets — `make help` lists them all:
+
+| | |
+|---|---|
+| `make up` | start the stack and wait until healthy |
+| `make down` | stop it, keeping data |
+| `make reset` | stop it and delete all data |
+| `make psql` | open a shell on the database |
+| `make test` | run the test suite |
+| `make lint` | run golangci-lint |
+
+Seeding the database and serving the site are not wired up yet — see the
+[Phase 1 tracking issue](https://github.com/sami0076/tennis-wiki/issues/16). The eventual
+one-command target is `docker compose up` producing a working, seeded site, with
+`make ingest-full` for the complete dataset.
 
 ## Rating methodology
 

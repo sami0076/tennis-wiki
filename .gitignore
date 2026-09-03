@@ -33,7 +33,6 @@ pnpm-debug.log*
 # ---- Environment / secrets ----
 .env
 .env.*
-!.env.example
 *.pem
 *.key
 secrets.yaml
