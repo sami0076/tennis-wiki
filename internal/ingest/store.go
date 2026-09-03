@@ -248,7 +248,7 @@ func (s *Store) upsertTournaments(ctx context.Context, tx pgx.Tx, src Source, ro
 			        draw_size  = COALESCE(EXCLUDED.draw_size, tournaments.draw_size),
 			        start_date = EXCLUDED.start_date
 			 RETURNING id`,
-			r.TourneyID, src.Tour, r.TourneyName, r.Level, src.Tier, r.Surface,
+			r.TourneyID, src.Tour, r.TourneyName, r.Level, r.Tier(src.Tier), r.Surface,
 			r.DrawSize, r.TourneyDate, k.season).Scan(&id)
 		if err != nil {
 			return nil, fmt.Errorf("upsert tournament %s: %w", r.TourneyID, err)
