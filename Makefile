@@ -7,8 +7,17 @@ GOLANGCI_VERSION := v2.13.2
 GOOSE_VERSION    := v3.28.0
 SQLC_VERSION     := v1.31.1
 
+ifeq ($(OS),Windows_NT)
+RM_DIR = cmd //c "if exist $(1) rmdir /s /q $(1)"
+else
+RM_DIR = rm -rf $(1)
+endif
+
+POSTGRES_USER ?= tennis
+POSTGRES_DB   ?= tennis
+
 MIGRATIONS := ./migrations
-# Matches the published port in .env.example; 5432 is usually already taken.
+# Matches the published compose port; 5432 is usually already taken.
 DATABASE_URL ?= postgres://tennis:tennis@localhost:5433/tennis?sslmode=disable
 
 .DEFAULT_GOAL := help
@@ -31,7 +40,7 @@ reset:
 
 ## psql: open a shell on the database
 psql:
-	docker compose exec postgres psql -U $${POSTGRES_USER:-tennis} -d $${POSTGRES_DB:-tennis}
+	docker compose exec postgres psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)
 
 ## build: compile every binary into bin/
 build:
@@ -86,6 +95,6 @@ validate:
 
 ## clean: remove build artefacts
 clean:
-	rm -rf $(BIN)
+	$(call RM_DIR,$(BIN))
 
 .PHONY: help up down reset psql build test test-race fmt lint migrate-up migrate-down sqlc ingest ingest-full dataqual validate clean
