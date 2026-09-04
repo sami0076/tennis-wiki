@@ -102,8 +102,21 @@ Full detail in [`docs/methodology.md`](docs/methodology.md) and
 Needs Docker and Go 1.23+.
 
 ```bash
+make seed                 # Postgres + Redis, schema, and ~4,100 real matches
+make api                  # http://localhost:8080
+```
+
+`make seed` takes about ten seconds. The fixture is small but deliberately covers every
+data regime the site has to handle — full serve statistics, partial, never recorded at
+this tier, and never recorded in this era — so the interesting behaviour is visible
+immediately rather than after a full ingest. See [`testdata/README.md`](testdata/README.md).
+
+Or step by step:
+
+```bash
 docker compose up -d      # Postgres 16 + Redis 7
 make migrate-up           # apply the schema
+make ingest               # load the seed fixture
 ```
 
 Postgres is published on **5433** and Redis on **6380**, not the defaults, because a local
@@ -118,6 +131,7 @@ Useful targets — `make help` lists them all:
 | `make reset` | stop it and delete all data |
 | `make psql` | open a shell on the database |
 | `make testdb` | create the disposable database the integration tests need |
+| `make seed` | stack, schema, and seed fixture in one |
 | `make api` | run the HTTP API on port 8080 |
 | `make test` | run the test suite |
 | `make lint` | run golangci-lint |
@@ -142,6 +156,7 @@ Statistics that were never recorded are reported as absent with a reason, never 
 see [Coverage](#coverage). Errors are RFC 7807 `problem+json`, and list responses are
 cursor-paginated.
 
+`make ingest-full` performs the complete multi-decade ingest from the configured sources.
 The frontend is not built yet — see the
 [Phase 1 tracking issue](https://github.com/sami0076/tennis-wiki/issues/16). The eventual
 one-command target is `docker compose up` producing a working, seeded site, with
