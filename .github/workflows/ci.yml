@@ -50,24 +50,6 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16.10-alpine
-        env:
-          POSTGRES_USER: tennis
-          POSTGRES_PASSWORD: tennis
-          # The integration tests refuse to truncate a database whose name
-          # does not mark it as disposable.
-          POSTGRES_DB: tennis_test
-        # The port the compose file and Makefile already use, so the default
-        # DSNs work here unchanged.
-        ports:
-          - 5433:5432
-        options: >-
-          --health-cmd "pg_isready -U tennis -d tennis_test"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
@@ -76,14 +58,9 @@ jobs:
 
       - run: make build
 
-      - run: make migrate-test
-        env:
-          # setup-go pins GOTOOLCHAIN=local and goose needs Go 1.26. Let the
-          # tool fetch its own toolchain; our code still builds at the floor.
-          GOTOOLCHAIN: auto
-
-      # Without TEST_DATABASE_URL the integration tests skip. The Makefile
-      # exports it, so this is the first place they have ever actually run.
+      # No service container: the integration tests start their own Postgres
+      # per package through testcontainers, which is what keeps them from
+      # contending over one database. Runners have Docker.
       - run: make test-race
 
   migrations:

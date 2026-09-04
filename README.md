@@ -130,10 +130,9 @@ Useful targets — `make help` lists them all:
 | `make down` | stop it, keeping data |
 | `make reset` | stop it and delete all data |
 | `make psql` | open a shell on the database |
-| `make testdb` | create the disposable database the integration tests need |
 | `make seed` | stack, schema, and seed fixture in one |
 | `make api` | run the HTTP API on port 8080 |
-| `make test` | run the test suite |
+| `make test` | run the test suite (starts its own Postgres) |
 | `make lint` | run golangci-lint |
 
 ### The API
@@ -157,6 +156,11 @@ see [Coverage](#coverage). Errors are RFC 7807 `problem+json`, and list response
 cursor-paginated.
 
 `make ingest-full` performs the complete multi-decade ingest from the configured sources.
+
+Tests need Docker but no setup: the integration suites start a throwaway Postgres per
+package, apply the migrations, and stop it afterwards. Without Docker they skip with an
+explanation rather than failing. Set `TEST_DATABASE_URL` to use a server you already have;
+it must be named `*test*`, because some of those tests truncate tables.
 The frontend is not built yet — see the
 [Phase 1 tracking issue](https://github.com/sami0076/tennis-wiki/issues/16). The eventual
 one-command target is `docker compose up` producing a working, seeded site, with

@@ -49,10 +49,12 @@ psql:
 build:
 	$(GO) build -o $(BIN)/ ./cmd/...
 
+# Only the two targets below use this. It is deliberately not exported: the
+# tests start their own Postgres, and an exported default would silently point
+# them at the compose stack instead.
 TEST_DATABASE_URL ?= postgres://tennis:tennis@localhost:5433/tennis_test?sslmode=disable
-export TEST_DATABASE_URL
 
-## testdb: create the disposable database the integration tests truncate
+## testdb: create a database for TEST_DATABASE_URL (optional; tests start their own)
 testdb:
 	-docker compose exec -T postgres psql -U $(POSTGRES_USER) -d $(POSTGRES_DB) -c "CREATE DATABASE tennis_test"
 	$(MAKE) migrate-test
@@ -64,18 +66,17 @@ migrate-test:
 	$(GO) run github.com/pressly/goose/v3/cmd/goose@$(GOOSE_VERSION) -dir $(MIGRATIONS) postgres "$(TEST_DATABASE_URL)" up
 
 ## test: run the test suite
-# -p 1 because the integration tests across packages share one database: the
-# ingest suite truncates every table while the api and db suites hold open
-# transactions, which deadlocks. Issue #13 replaces this with a container per
-# package.
+# Integration tests start their own Postgres per package via testcontainers, so
+# they need Docker but no setup. Set TEST_DATABASE_URL to use a server you
+# already have instead; the database must be named *test*.
 test:
-	$(GO) test -p 1 ./...
+	$(GO) test ./...
 
 ## test-race: run the test suite with the race detector (used by CI)
 # The race detector is unsupported on windows/arm64, so this is a separate
 # target rather than the default. CI runs on linux/amd64 and always uses it.
 test-race:
-	$(GO) test -race -p 1 ./...
+	$(GO) test -race ./...
 
 ## fmt: format and tidy
 fmt:
