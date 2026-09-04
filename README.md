@@ -107,10 +107,30 @@ Useful targets — `make help` lists them all:
 | `make reset` | stop it and delete all data |
 | `make psql` | open a shell on the database |
 | `make testdb` | create the disposable database the integration tests need |
+| `make api` | run the HTTP API on port 8080 |
 | `make test` | run the test suite |
 | `make lint` | run golangci-lint |
 
-Seeding the database and serving the site are not wired up yet — see the
+### The API
+
+`make ingest` then `make api`, and the read-only API is up:
+
+```
+GET /api/v1/health                        readiness, including a database round trip
+GET /api/v1/players?q=&tour=&limit=       fuzzy search, diacritic-insensitive
+GET /api/v1/players/:slug                 profile and career summary
+```
+
+```bash
+curl 'localhost:8080/api/v1/players?q=Djokovi%C4%87'
+curl localhost:8080/api/v1/players/novak-djokovic
+```
+
+Statistics that were never recorded are reported as absent with a reason, never as zero —
+see [Coverage](#coverage). Errors are RFC 7807 `problem+json`, and list responses are
+cursor-paginated.
+
+The frontend is not built yet — see the
 [Phase 1 tracking issue](https://github.com/sami0076/tennis-wiki/issues/16). The eventual
 one-command target is `docker compose up` producing a working, seeded site, with
 `make ingest-full` for the complete dataset.

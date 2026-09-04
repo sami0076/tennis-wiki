@@ -59,7 +59,8 @@ func (a *API) Router() http.Handler {
 // routes registers the data endpoints. Kept separate so the middleware stack
 // above stays readable as endpoints are added.
 func (a *API) routes(r chi.Router) {
-	_ = r // filled in by the player endpoints in #12
+	r.Get("/players", a.handlePlayerSearch)
+	r.Get("/players/{slug}", a.handlePlayer)
 }
 
 // writeJSON sends a successful response. Errors go through WriteProblem instead.
