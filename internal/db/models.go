@@ -230,6 +230,16 @@ func (ns NullTour) Value() (driver.Value, error) {
 	return string(ns.Tour), nil
 }
 
+type IdentityReview struct {
+	Source     string
+	SourceID   string
+	Tour       Tour
+	Candidate  int64
+	Confidence pgtype.Numeric
+	Reason     string
+	SeenAt     pgtype.Timestamptz
+}
+
 type IngestRun struct {
 	ID          int64
 	Source      string
@@ -293,6 +303,10 @@ type Player struct {
 	BirthDate  *time.Time
 	ProSince   *int16
 	WikidataID *string
+	// Derived from match_players by the ingest refresh step; stale between runs.
+	CareerMatches int32
+	// Best tier reached, derived by the ingest refresh step. NULL until it runs.
+	BestTier *Tier
 }
 
 type PlayerAlias struct {
@@ -328,4 +342,12 @@ type Tournament struct {
 	DrawSize  *int16
 	StartDate time.Time
 	Season    int16
+}
+
+type UnresolvedReference struct {
+	Source      string
+	Kind        string
+	SourceID    string
+	Occurrences int64
+	LastSeen    pgtype.Timestamptz
 }
