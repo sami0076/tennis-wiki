@@ -75,6 +75,13 @@ ingest --stage reconcile
 Each chunk is idempotent, so a failed one is simply repeated. Resumability that skips
 already-complete (source, season) pairs would be a real improvement.
 
+### Repair a few rows without re-reading 1.6 million
+
+Every write is an upsert, so tightening a parse-time rule does not remove the rows already
+written under the old one -- only a re-ingest does, and that is an hour to clear seven rows.
+`ingest --stage prune` reaches the same state in seconds by applying the current rules to
+the stored rows instead of the source rows. `--dry-run` counts first.
+
 ### Concurrency defaults are too aggressive for a busy machine
 
 The default is one reader per CPU (12 here) with 2,000-row batches. On a machine with

@@ -126,6 +126,10 @@ ingest-full:
 dataqual:
 	$(GO) run ./cmd/dataqual
 
+## prune: clear stat lines that cannot describe a real match
+prune:
+	$(GO) run ./cmd/ingest --stage prune
+
 ## validate: report the rating-engine validation checks
 validate:
 	$(GO) run ./cmd/validate
@@ -134,7 +138,7 @@ validate:
 clean:
 	$(call RM_DIR,$(BIN))
 
-.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc seed api ingest ingest-full dataqual validate clean
+.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc seed api ingest ingest-full prune dataqual validate clean
 
 # print-VAR: echo a make variable, so CI can read the pinned tool versions
 # from here rather than duplicating them in a workflow file.
