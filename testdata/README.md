@@ -33,6 +33,11 @@ than discovering them after a twenty-minute ingest.
 | `atp_matches_futures_2015.csv` | 682 | 22 | 0 of 682 (0%) |
 | `atp_matches_1975.csv` | 699 | 24 | 0 of 699 (0%) |
 
+`2026.csv` is the odd one out: it comes from the TML mirror, which uses official ATP
+alphanumeric player ids (`MU94`, `W367`) rather than Sackmann numeric ones. Four of its
+players also appear in the 2019 files under a numeric id, so the seed demonstrates the
+cross-source identity problem and its resolution rather than only describing it.
+
 ### Players and rankings
 
 | file | rows |

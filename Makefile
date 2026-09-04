@@ -112,7 +112,7 @@ api:
 
 # The seasons the seed fixture covers. Narrowing the plan keeps the run quiet
 # rather than reporting three hundred files the fixture was never going to have.
-SEED_SEASONS := 1975,2015,2019
+SEED_SEASONS := 1975,2015,2019,2026
 
 ## ingest: load the small seed fixture (fast, for local development)
 ingest:
