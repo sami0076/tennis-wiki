@@ -1,5 +1,7 @@
 # Tennis Wiki
 
+[![CI](https://github.com/sami0076/tennis-wiki/actions/workflows/ci.yml/badge.svg)](https://github.com/sami0076/tennis-wiki/actions/workflows/ci.yml)
+
 Deep per-player statistics, head-to-head comparison, and first-principles match and draw
 simulation for **both the ATP and WTA tours** — built from raw match data, with the
 working shown.
@@ -104,6 +106,7 @@ Useful targets — `make help` lists them all:
 | `make down` | stop it, keeping data |
 | `make reset` | stop it and delete all data |
 | `make psql` | open a shell on the database |
+| `make testdb` | create the disposable database the integration tests need |
 | `make test` | run the test suite |
 | `make lint` | run golangci-lint |
 
@@ -187,7 +190,7 @@ that split.
 | 1 | Ingestion, schema, read-only API | In progress |
 | 2 | Elo engine, player pages, H2H, rankings, search | Not started |
 | 3 | Match simulator (closed form), draw simulator (Monte Carlo) | Not started |
-| 4 | Match Charting Project, clutch metrics, methodology page, k3s, CI | Not started |
+| 4 | Match Charting Project, clutch metrics, methodology page, k3s, image builds | Not started |
 
 ## Documentation
 
