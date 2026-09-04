@@ -22,6 +22,11 @@ func NewStore(pool *pgxpool.Pool) *Store { return &Store{pool: pool} }
 type Result struct {
 	Matches int
 	Players int
+	// Collapsed counts input rows that shared a natural key with an earlier row
+	// in the same batch. The sources do contain these, so it is not an error --
+	// but leaving it uncounted makes rows seen and rows written disagree for no
+	// visible reason.
+	Collapsed int
 }
 
 // StartRun records the beginning of an ingest and returns its id.
@@ -82,7 +87,7 @@ func (s *Store) WriteBatch(ctx context.Context, src Source, rows []MatchRow) (re
 	if err != nil {
 		return Result{}, err
 	}
-	matches, err := s.upsertMatches(ctx, tx, src, rows, playerIDs, tournamentIDs)
+	matches, collapsed, err := s.upsertMatches(ctx, tx, src, rows, playerIDs, tournamentIDs)
 	if err != nil {
 		return Result{}, err
 	}
@@ -93,7 +98,7 @@ func (s *Store) WriteBatch(ctx context.Context, src Source, rows []MatchRow) (re
 	if err := tx.Commit(ctx); err != nil {
 		return Result{}, fmt.Errorf("commit batch: %w", err)
 	}
-	return Result{Matches: len(matches), Players: len(playerIDs)}, nil
+	return Result{Matches: len(matches), Players: len(playerIDs), Collapsed: collapsed}, nil
 }
 
 // playerKey identifies a player within one source.
@@ -261,16 +266,17 @@ func (s *Store) upsertTournaments(ctx context.Context, tx pgx.Tx, src Source, ro
 func (s *Store) upsertMatches(
 	ctx context.Context, tx pgx.Tx, src Source, rows []MatchRow,
 	players map[playerKey]int64, tournaments map[tourneyKey]int64,
-) (map[matchKey]int64, error) {
+) (map[matchKey]int64, int, error) {
 	ids := make(map[matchKey]int64, len(rows))
+	collapsed := 0
 	for _, r := range rows {
 		tid, ok := tournaments[tourneyKey{r.TourneyID, r.TourneyDate.Year(), src.Tour}]
 		if !ok {
-			return nil, fmt.Errorf("match %s/%d: tournament not written", r.TourneyID, r.MatchNum)
+			return nil, 0, fmt.Errorf("match %s/%d: tournament not written", r.TourneyID, r.MatchNum)
 		}
 		winnerID, ok := players[playerKey{r.Winner.SourceID, src.Tour}]
 		if !ok {
-			return nil, fmt.Errorf("match %s/%d: winner not written", r.TourneyID, r.MatchNum)
+			return nil, 0, fmt.Errorf("match %s/%d: winner not written", r.TourneyID, r.MatchNum)
 		}
 
 		parsed := classifyScore(r.Score)
@@ -300,11 +306,15 @@ func (s *Store) upsertMatches(
 			winnerID, r.TourneyDate, parsed.incomplete, r.IsQualifying(),
 			isTeamEvent(r.Level), r.HasDetailedStats(), r.Indoor, src.Name).Scan(&id)
 		if err != nil {
-			return nil, fmt.Errorf("upsert match %s/%d: %w", r.TourneyID, r.MatchNum, err)
+			return nil, 0, fmt.Errorf("upsert match %s/%d: %w", r.TourneyID, r.MatchNum, err)
 		}
-		ids[matchKey{tid, r.MatchNum, r.IsQualifying()}] = id
+		key := matchKey{tid, r.MatchNum, r.IsQualifying()}
+		if _, dup := ids[key]; dup {
+			collapsed++
+		}
+		ids[key] = id
 	}
-	return ids, nil
+	return ids, collapsed, nil
 }
 
 func (s *Store) upsertMatchPlayers(
