@@ -1,36 +1,50 @@
 // Command api serves the tennis-wiki HTTP API.
-//
-// Not yet implemented. See the Phase 1 issues for scope.
 package main
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/sami0076/tennis-wiki/internal/db"
+	"github.com/sami0076/tennis-wiki/internal/httpapi"
 )
 
 func main() {
-	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, nil)))
+	log := slog.New(slog.NewTextHandler(os.Stderr, nil))
+	slog.SetDefault(log)
 
 	// Batch and server processes alike must shut down cleanly: Kubernetes
 	// sends SIGTERM and expects the process to drain rather than be killed.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	if err := run(ctx); err != nil {
+	if err := run(ctx, log); err != nil {
 		if errors.Is(err, context.Canceled) {
-			slog.Info("api: cancelled")
+			log.Info("api: cancelled")
 			return
 		}
-		slog.Error("api: failed", "error", err)
+		log.Error("api: failed", "error", err)
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context) error {
-	slog.InfoContext(ctx, "api: not implemented yet")
-	return nil
+func run(ctx context.Context, log *slog.Logger) error {
+	cfg, err := httpapi.LoadConfig()
+	if err != nil {
+		return fmt.Errorf("configuration: %w", err)
+	}
+
+	pool, err := db.Open(ctx, db.DefaultConfig(cfg.DatabaseURL))
+	if err != nil {
+		return err
+	}
+	defer pool.Close()
+
+	api := httpapi.New(db.New(pool), log, cfg)
+	return httpapi.Serve(ctx, cfg, api.Router(), log)
 }
