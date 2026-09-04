@@ -5,10 +5,33 @@ coverage — 1.63 million matches and 115,000 players, per
 [ADR-0003](decisions/0003-full-depth-player-coverage.md) — should be measured early, while
 the schema is still cheap to change.
 
-**Method.** All figures below are from one machine (Windows, Docker Desktop, Postgres 16.10
-in the compose stack) against a fixed slice: every configured source for seasons 2015–2019,
-about 160,000 matches. That is roughly a tenth of the full dataset. Where a number is
-extrapolated rather than measured it says so.
+**Method.** One machine: Windows, Docker Desktop, Postgres 16.10 in the compose stack.
+Early figures came from a fixed slice — seasons 2015–2019, about 160,000 matches — and are
+marked as such. **The full dataset has since been ingested**, so the headline numbers are
+now measured rather than extrapolated.
+
+## The full dataset, measured
+
+| | |
+|---|---|
+| matches | 1,624,479 |
+| match_players | 3,249,201 |
+| players | 125,868 |
+| tournaments | 63,681 |
+| rankings | 5,123,471 |
+| seasons | 1922–2026 |
+| **database size** | **2,054 MB** |
+
+Size by table: `match_players` 765 MB, `rankings` 749 MB, `matches` 465 MB, `players` 52 MB.
+
+**The earlier extrapolation of "about 1 GB" was low, and rankings are why.** It was made
+before #18 populated them, and 5.1 million ranking rows are 749 MB — more than the matches
+themselves. Anything sizing this database has to count them.
+
+**1,355,420 of 1,624,479 matches carry no serve statistics** — 83%. That is not a defect,
+it is what full-depth coverage means: Futures and ITF never recorded them, and nothing did
+before 1991. It is also why the API distinguishes the kinds of absence rather than
+returning zeroes.
 
 ## Ingest
 
@@ -26,10 +49,50 @@ write in the pipeline already batched; matches was the exception, and at 1.6 mil
 that is 1.6 million round trips. Pipelining them into one `pgx.Batch` per chunk removed
 about 40% of the wall time.
 
-**Extrapolated to the full dataset**: roughly 2 hours, against 3 hours before. Still the
-longest operation in the project by far, and still dominated by fetching a few hundred
-files over the network. `make ingest` loads the seed fixture in ten seconds precisely so
-this is not on anyone's critical path.
+**Measured on the full dataset**: the match stage ran in roughly 40 minutes of accumulated
+wall time across chunks, the reference stage (player tables and the full ranking history) in
+about 23 minutes, and identity reconciliation over 126,114 players in **20 seconds**. Still
+dominated by fetching a few hundred files. `make ingest` loads the seed fixture in ten
+seconds precisely so this is not on anyone's critical path.
+
+### Run it in chunks, not one shot
+
+A full ingest from empty is long enough that anything interrupting it — a machine running
+low on memory, a transient DNS failure, one row Postgres refuses — costs the whole run,
+because the ingest has no resume: it re-reads every file from the start and re-upserts rows
+it already has.
+
+Chunking by tour and season bounds that loss:
+
+```
+ingest --stage matches --tours wta --seasons 1922-1989
+ingest --stage matches --tours wta --seasons 1990-2005
+ingest --stage matches --tours atp --seasons 2020-2026
+ingest --stage reference
+ingest --stage reconcile
+```
+
+Each chunk is idempotent, so a failed one is simply repeated. Resumability that skips
+already-complete (source, season) pairs would be a real improvement.
+
+### Concurrency defaults are too aggressive for a busy machine
+
+The default is one reader per CPU (12 here) with 2,000-row batches. On a machine with
+Docker, a browser and an IDE already resident, that was enough to get the process killed for
+memory pressure twice. `--workers 2 --batch 500` completed comfortably and was not
+noticeably slower, since the bottleneck is the network.
+
+### Postgres needs more shared memory than Docker gives it
+
+`cmd/dataqual` failed on the full dataset with:
+
+```
+could not resize shared memory segment: No space left on device (SQLSTATE 53100)
+```
+
+Docker allocates a container 64 MB of `/dev/shm`, and Postgres uses it for parallel query
+workers. At 1.6 million matches the data-quality queries want more. The compose file now
+sets `shm_size: 1gb`.
 
 ## Database size
 
