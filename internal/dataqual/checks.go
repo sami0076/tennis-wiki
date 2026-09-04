@@ -164,6 +164,29 @@ var anomalyChecks = []Check{
 		Query:    `SELECT count(*) FROM matches WHERE minutes IS NOT NULL AND (minutes < 15 OR minutes > 480)`,
 	},
 	{
+		Name:     "unresolved_ranking_players",
+		Severity: Warning,
+		Why: "Ranking rows referencing a player id that is not in either player table. " +
+			"The ranking is skipped, not guessed at; a non-zero count means a player table is incomplete.",
+		Query: `SELECT count(*) FROM unresolved_references WHERE kind = 'rankings'`,
+		Sample: `SELECT source || ' player ' || source_id || ' (' || occurrences || ' rows)'
+		           FROM unresolved_references WHERE kind = 'rankings'
+		          ORDER BY occurrences DESC LIMIT 5`,
+	},
+	{
+		Name:     "players_without_biography",
+		Severity: Info,
+		Why: "No date of birth: either the player table has none, or the player appears only in " +
+			"match files. Identity reconciliation in #7 matches on date of birth.",
+		Query: `SELECT count(*) FROM players WHERE birth_date IS NULL`,
+	},
+	{
+		Name:     "players_without_rankings",
+		Severity: Info,
+		Why:      "Never ranked, or ranked outside the ingested decade files.",
+		Query:    `SELECT count(*) FROM players p WHERE NOT EXISTS (SELECT 1 FROM rankings r WHERE r.player_id = p.id)`,
+	},
+	{
 		Name:     "players_without_country",
 		Severity: Info,
 		Why:      "Country is absent for some lower-tier players.",
