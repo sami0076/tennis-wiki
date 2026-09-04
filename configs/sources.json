@@ -76,5 +76,56 @@
       "precedence": 60,
       "attribution": "Tennismylife TML-Database, built on Jeff Sackmann's structure"
     }
+  ],
+  "reference": [
+    {
+      "name": "sackmann-atp-players",
+      "tour": "atp",
+      "kind": "players",
+      "base_url": "https://raw.githubusercontent.com/Miasekk/tennis_atp/master",
+      "path": "players/atp_players.csv",
+      "attribution": "Jeff Sackmann / Tennis Abstract, CC BY-NC-SA 4.0"
+    },
+    {
+      "name": "sackmann-wta-players",
+      "tour": "wta",
+      "kind": "players",
+      "base_url": "https://raw.githubusercontent.com/binmishr/Predictability-of-Tennis-Grand-Slams/main",
+      "path": "wta_players.csv",
+      "attribution": "Jeff Sackmann / Tennis Abstract, CC BY-NC-SA 4.0"
+    },
+    {
+      "name": "sackmann-atp-rankings",
+      "tour": "atp",
+      "kind": "rankings",
+      "base_url": "https://raw.githubusercontent.com/Miasekk/tennis_atp/master",
+      "path": "rankings/atp_rankings_{decade}.csv",
+      "decades": [
+        "70s",
+        "80s",
+        "90s",
+        "00s",
+        "10s",
+        "20s",
+        "current"
+      ],
+      "attribution": "Jeff Sackmann / Tennis Abstract, CC BY-NC-SA 4.0"
+    },
+    {
+      "name": "sackmann-wta-rankings",
+      "tour": "wta",
+      "kind": "rankings",
+      "base_url": "https://raw.githubusercontent.com/binmishr/Predictability-of-Tennis-Grand-Slams/main",
+      "path": "wta_rankings_{decade}.csv",
+      "decades": [
+        "80s",
+        "90s",
+        "00s",
+        "10s",
+        "20s",
+        "current"
+      ],
+      "attribution": "Jeff Sackmann / Tennis Abstract, CC BY-NC-SA 4.0"
+    }
   ]
 }
