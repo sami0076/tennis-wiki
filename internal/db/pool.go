@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -17,6 +18,10 @@ type Config struct {
 	MaxConnLifetime time.Duration
 	MaxConnIdleTime time.Duration
 	ConnectTimeout  time.Duration
+	// Server-side cap on a single statement. Left zero by the batch jobs,
+	// whose transactions are legitimately long.
+	StatementTimeout  time.Duration
+	HealthCheckPeriod time.Duration
 }
 
 // DefaultConfig returns pool settings suited to the API.
@@ -28,6 +33,10 @@ func DefaultConfig(dsn string) Config {
 		MaxConnLifetime: time.Hour,
 		MaxConnIdleTime: 30 * time.Minute,
 		ConnectTimeout:  10 * time.Second,
+		// A public endpoint should not be able to pin a connection. Anything
+		// slower than this is a bug to fix, not a request to wait out.
+		StatementTimeout:  5 * time.Second,
+		HealthCheckPeriod: time.Minute,
 	}
 }
 
@@ -52,6 +61,16 @@ func Open(ctx context.Context, cfg Config) (*pgxpool.Pool, error) {
 	poolCfg.MaxConnIdleTime = cfg.MaxConnIdleTime
 	if cfg.ConnectTimeout > 0 {
 		poolCfg.ConnConfig.ConnectTimeout = cfg.ConnectTimeout
+	}
+	if cfg.HealthCheckPeriod > 0 {
+		poolCfg.HealthCheckPeriod = cfg.HealthCheckPeriod
+	}
+	if cfg.StatementTimeout > 0 {
+		if poolCfg.ConnConfig.RuntimeParams == nil {
+			poolCfg.ConnConfig.RuntimeParams = map[string]string{}
+		}
+		poolCfg.ConnConfig.RuntimeParams["statement_timeout"] =
+			strconv.FormatInt(cfg.StatementTimeout.Milliseconds(), 10)
 	}
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolCfg)
