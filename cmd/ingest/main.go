@@ -13,7 +13,10 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/sami0076/tennis-wiki/internal/db"
+	"github.com/sami0076/tennis-wiki/internal/identity"
 	"github.com/sami0076/tennis-wiki/internal/ingest"
 )
 
@@ -26,6 +29,8 @@ type config struct {
 	workers   int
 	batchSize int
 	stage     string
+	overrides string
+	dryRun    bool
 	verbose   bool
 }
 
@@ -36,6 +41,7 @@ const (
 	stageAll       = "all"
 	stageMatches   = "matches"
 	stageReference = "reference"
+	stageReconcile = "reconcile"
 )
 
 func main() {
@@ -48,7 +54,11 @@ func main() {
 	flag.IntVar(&cfg.workers, "workers", 0, "concurrent file readers (default: GOMAXPROCS)")
 	flag.IntVar(&cfg.batchSize, "batch", ingest.DefaultBatchSize, "rows per transaction")
 	flag.StringVar(&cfg.stage, "stage", stageAll,
-		"what to ingest: all, matches, or reference (player tables and rankings)")
+		"what to run: all, matches, reference (player tables and rankings), or reconcile")
+	flag.StringVar(&cfg.overrides, "overrides", "configs/player_overrides.json",
+		"identity decisions made by hand")
+	flag.BoolVar(&cfg.dryRun, "dry-run", false,
+		"for the reconcile stage: report what would be merged without doing it")
 	flag.BoolVar(&cfg.verbose, "v", false, "verbose logging")
 	flag.Parse()
 
@@ -100,21 +110,27 @@ func run(ctx context.Context, cfg config) error {
 	defer pool.Close()
 
 	switch cfg.stage {
-	case stageAll, stageMatches, stageReference:
+	case stageAll, stageMatches, stageReference, stageReconcile:
 	default:
-		return fmt.Errorf("unknown stage %q: want all, matches or reference", cfg.stage)
+		return fmt.Errorf("unknown stage %q: want all, matches, reference or reconcile", cfg.stage)
 	}
 
 	store := ingest.NewStore(pool)
 	fetcher := chooseFetcher(cfg.localPath)
 
-	if cfg.stage != stageReference {
+	if cfg.stage == stageAll || cfg.stage == stageMatches {
 		if err := runMatches(ctx, cfg, registry, fetcher, store, seasons, tours); err != nil {
 			return err
 		}
 	}
-	if cfg.stage != stageMatches {
+	if cfg.stage == stageAll || cfg.stage == stageReference {
 		if err := runReference(ctx, cfg, registry, fetcher, store); err != nil {
+			return err
+		}
+	}
+	// Last: it needs every player that any source is going to create.
+	if cfg.stage == stageAll || cfg.stage == stageReconcile {
+		if err := runReconcile(ctx, cfg, pool, tours); err != nil {
 			return err
 		}
 	}
@@ -128,6 +144,29 @@ func run(ctx context.Context, cfg config) error {
 		"matches", counts["matches"], "match_players", counts["match_players"],
 		"rankings", counts["rankings"])
 	return nil
+}
+
+func runReconcile(ctx context.Context, cfg config, pool *pgxpool.Pool, tours []ingest.Tour) error {
+	overrides, err := identity.LoadOverrides(cfg.overrides)
+	if err != nil {
+		return err
+	}
+	names := make([]string, 0, len(tours))
+	for _, t := range tours {
+		names = append(names, string(t))
+	}
+	if len(names) == 0 {
+		names = []string{string(ingest.TourATP), string(ingest.TourWTA)}
+	}
+
+	runner := &identity.Runner{
+		Store:     identity.NewStore(pool),
+		Decisions: overrides.Index(),
+		Log:       slog.Default(),
+		DryRun:    cfg.dryRun,
+	}
+	_, err = runner.Run(ctx, names)
+	return err
 }
 
 func runMatches(ctx context.Context, cfg config, registry *ingest.Registry,
