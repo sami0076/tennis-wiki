@@ -84,7 +84,18 @@ Over **115,000 players** across both tours. WTA records reach back to 1923.
 Depth is uneven and the site is explicit about it rather than hiding it: Futures and ITF
 matches support win/loss, head-to-head, and Elo but carry no point-level data, so they
 cannot feed the simulator. Where a statistic does not exist, the site explains why instead
-of showing a zero. Full detail in [`DATA_LICENSE.md`](DATA_LICENSE.md).
+of showing a zero.
+
+**There is a currency gap, and it is disclosed rather than papered over.** Full-schema data
+runs through **2026-01-17 (ATP)** and **2024-12-31 (WTA)**; the upstream repositories were
+withdrawn mid-project and the mirrors stop there. Filling it with results-only data would
+put two data regimes in one database and produce plausible-looking wrong numbers, so
+[ADR-0006](docs/decisions/0006-accept-and-disclose-the-coverage-gap.md) accepts the gap
+instead. `GET /api/v1/coverage` reports the real dates, queried from the database, so the
+claim cannot drift from the data.
+
+Full detail in [`docs/methodology.md`](docs/methodology.md) and
+[`DATA_LICENSE.md`](DATA_LICENSE.md).
 
 ## Run it locally
 
@@ -117,6 +128,7 @@ Useful targets — `make help` lists them all:
 
 ```
 GET /api/v1/health                        readiness, including a database round trip
+GET /api/v1/coverage                      what is actually in the database, and through when
 GET /api/v1/players?q=&tour=&limit=       fuzzy search, diacritic-insensitive
 GET /api/v1/players/:slug                 profile and career summary
 ```
@@ -215,5 +227,5 @@ that split.
 ## Documentation
 
 - [`docs/architecture.md`](docs/architecture.md) — system design _(pending)_
-- [`docs/methodology.md`](docs/methodology.md) — ratings and simulation in full _(pending)_
+- [`docs/methodology.md`](docs/methodology.md) — coverage now; ratings and simulation with Phases 2 and 3
 - [`docs/decisions/`](docs/decisions/) — architecture decision records
