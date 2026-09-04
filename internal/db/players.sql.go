@@ -228,18 +228,9 @@ const searchPlayers = `-- name: SearchPlayers :many
 WITH scored AS (
     SELECT p.id, p.slug, p.tour, p.full_name, p.country,
            similarity(p.full_name, $4::text)::real AS score,
-           st.matches,
-           st.best_tier
+           p.career_matches::bigint                   AS matches,
+           coalesce(p.best_tier::text, '')            AS best_tier
       FROM players p
-      LEFT JOIN LATERAL (
-          -- Enum order is tour, challenger, futures, itf, so min() is the best.
-          SELECT count(*)::bigint AS matches,
-                 coalesce(min(t.tier)::text, '') AS best_tier
-            FROM match_players mp
-            JOIN matches m ON m.id = mp.match_id
-            JOIN tournaments t ON t.id = m.tournament_id
-           WHERE mp.player_id = p.id
-      ) st ON true
      WHERE p.full_name % $4::text
        AND ($5::tour IS NULL OR p.tour = $5::tour)
 ),

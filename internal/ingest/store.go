@@ -289,6 +289,14 @@ func (s *Store) upsertMatches(
 ) (map[matchKey]int64, int, error) {
 	ids := make(map[matchKey]int64, len(rows))
 	collapsed := 0
+
+	// One round trip per row was the measured bottleneck of a full ingest: at
+	// 1.6 million matches the connection spends its life idle in transaction
+	// waiting for the next statement. A pipelined batch sends them together.
+	batch := &pgx.Batch{}
+	keys := make([]matchKey, 0, len(rows))
+	labels := make([]string, 0, len(rows))
+
 	for _, r := range rows {
 		tid, ok := tournaments[tourneyKey{r.TourneyID, r.TourneyDate.Year(), src.Tour}]
 		if !ok {
@@ -300,8 +308,7 @@ func (s *Store) upsertMatches(
 		}
 
 		parsed := classifyScore(r.Score)
-		var id int64
-		err := tx.QueryRow(ctx,
+		batch.Queue(
 			`INSERT INTO matches (tournament_id, match_num, round, best_of, surface, score,
 			                      minutes, winner_id, played_on, incomplete, is_qualifying,
 			                      is_team_event, has_detailed_stats, indoor, source)
@@ -324,15 +331,31 @@ func (s *Store) upsertMatches(
 			 RETURNING id`,
 			tid, r.MatchNum, r.Round, r.BestOf, r.Surface, r.Score, r.Minutes,
 			winnerID, r.TourneyDate, parsed.incomplete, r.IsQualifying(),
-			isTeamEvent(r.Level), r.HasDetailedStats(), r.Indoor, src.Name).Scan(&id)
-		if err != nil {
-			return nil, 0, fmt.Errorf("upsert match %s/%d: %w", r.TourneyID, r.MatchNum, err)
+			isTeamEvent(r.Level), r.HasDetailedStats(), r.Indoor, src.Name)
+
+		keys = append(keys, matchKey{tid, r.MatchNum, r.IsQualifying()})
+		labels = append(labels, fmt.Sprintf("%s/%d", r.TourneyID, r.MatchNum))
+	}
+	if len(keys) == 0 {
+		return ids, 0, nil
+	}
+
+	results := tx.SendBatch(ctx, batch)
+	// Results arrive in the order they were queued, so index correlates a row
+	// with the match it came from.
+	for i, key := range keys {
+		var id int64
+		if err := results.QueryRow().Scan(&id); err != nil {
+			return nil, 0, errors.Join(
+				fmt.Errorf("upsert match %s: %w", labels[i], err), results.Close())
 		}
-		key := matchKey{tid, r.MatchNum, r.IsQualifying()}
 		if _, dup := ids[key]; dup {
 			collapsed++
 		}
 		ids[key] = id
+	}
+	if err := results.Close(); err != nil {
+		return nil, 0, fmt.Errorf("close match batch: %w", err)
 	}
 	return ids, collapsed, nil
 }

@@ -39,6 +39,25 @@ func newHarness(t *testing.T) *harness {
 	return &harness{Queries: New(tx), tx: tx, ctx: ctx, t: t}
 }
 
+// refreshProminence recomputes the columns search ranks by. Ingest does this
+// after a run; a test that inserts players has to do it too, or every candidate
+// ranks as though it had never played.
+func (h *harness) refreshProminence() {
+	h.t.Helper()
+	_, err := h.tx.Exec(h.ctx, `
+		UPDATE players p
+		   SET career_matches = s.matches, best_tier = s.best_tier
+		  FROM (SELECT mp.player_id, count(*)::int AS matches, min(t.tier) AS best_tier
+		          FROM match_players mp
+		          JOIN matches m     ON m.id = mp.match_id
+		          JOIN tournaments t ON t.id = m.tournament_id
+		         GROUP BY mp.player_id) s
+		 WHERE p.id = s.player_id`)
+	if err != nil {
+		h.t.Fatalf("refresh prominence: %v", err)
+	}
+}
+
 func (h *harness) player(slug, name string, tour Tour) int64 {
 	h.t.Helper()
 	var id int64
@@ -237,6 +256,8 @@ func TestSearchRanksByTierWithinEqualSimilarity(t *testing.T) {
 	pts := int16(70)
 	h.match(tour, big, bigOpp, 1, "F", &pts, false)
 	h.match(futures, small, smallOpp, 2, "F", &pts, false)
+
+	h.refreshProminence()
 
 	rows, err := h.SearchPlayers(h.ctx, SearchPlayersParams{Query: "zzverev", RowLimit: 10})
 	if err != nil {

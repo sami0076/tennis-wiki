@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -133,6 +134,15 @@ func run(ctx context.Context, cfg config) error {
 		if err := runReconcile(ctx, cfg, pool, tours); err != nil {
 			return err
 		}
+	}
+
+	// Search ranks off this view, so it is stale the moment matches change.
+	if cfg.stage != stageReconcile {
+		started := time.Now()
+		if err := store.RefreshProminence(ctx); err != nil {
+			return err
+		}
+		slog.Info("refreshed search ranking", "took", time.Since(started).Round(time.Millisecond))
 	}
 
 	counts, err := store.Counts(ctx)

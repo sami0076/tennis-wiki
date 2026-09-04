@@ -175,3 +175,32 @@ func (s *Store) RecordUnresolved(ctx context.Context, source, kind string, count
 	}
 	return nil
 }
+
+// RefreshProminence recomputes the columns search ranks by.
+//
+// One pass over match_players rather than an aggregate per candidate at query
+// time. Only rows whose values actually changed are written, so a re-run over
+// unchanged data does no work.
+func (s *Store) RefreshProminence(ctx context.Context) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE players p
+		   SET career_matches = s.matches,
+		       best_tier      = s.best_tier
+		  FROM (
+		        SELECT mp.player_id,
+		               count(*)::int AS matches,
+		               -- Enum order is tour, challenger, futures, itf.
+		               min(t.tier)   AS best_tier
+		          FROM match_players mp
+		          JOIN matches m     ON m.id = mp.match_id
+		          JOIN tournaments t ON t.id = m.tournament_id
+		         GROUP BY mp.player_id
+		       ) s
+		 WHERE p.id = s.player_id
+		   AND (p.career_matches IS DISTINCT FROM s.matches
+		     OR p.best_tier      IS DISTINCT FROM s.best_tier)`)
+	if err != nil {
+		return fmt.Errorf("refresh player prominence: %w", err)
+	}
+	return nil
+}

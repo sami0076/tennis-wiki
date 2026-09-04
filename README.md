@@ -247,4 +247,5 @@ that split.
 
 - [`docs/architecture.md`](docs/architecture.md) — system design _(pending)_
 - [`docs/methodology.md`](docs/methodology.md) — coverage now; ratings and simulation with Phases 2 and 3
+- [`docs/performance.md`](docs/performance.md) — measured ingest, size and query cost at scale
 - [`docs/decisions/`](docs/decisions/) — architecture decision records
