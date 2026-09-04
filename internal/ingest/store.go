@@ -365,6 +365,7 @@ func (s *Store) upsertMatchPlayers(
 	players map[playerKey]int64, tournaments map[tourneyKey]int64, matches map[matchKey]int64,
 ) (err error) {
 	batch := &pgx.Batch{}
+	labels := make([]string, 0, len(rows)*2)
 	for _, r := range rows {
 		tid, ok := tournaments[tourneyKey{r.TourneyID, r.TourneyDate.Year(), src.Tour}]
 		if !ok {
@@ -385,6 +386,10 @@ func (s *Store) upsertMatchPlayers(
 					r.TourneyID, r.MatchNum, side.p.SourceID)
 			}
 			queueMatchPlayer(batch, matchID, pid, side.won, side.p)
+			// Batch results come back by position, so this is the only way to
+			// name the row a constraint violation came from. "statement 138"
+			// on its own is untraceable in a 1.6 million row ingest.
+			labels = append(labels, fmt.Sprintf("%s/%d %s", r.TourneyID, r.MatchNum, side.p.Name))
 		}
 	}
 
@@ -396,7 +401,11 @@ func (s *Store) upsertMatchPlayers(
 	}()
 	for i := 0; i < batch.Len(); i++ {
 		if _, err := results.Exec(); err != nil {
-			return fmt.Errorf("write match_players (statement %d): %w", i, err)
+			who := "unknown row"
+			if i < len(labels) {
+				who = labels[i]
+			}
+			return fmt.Errorf("write match_players for %s: %w", who, err)
 		}
 	}
 	return nil
