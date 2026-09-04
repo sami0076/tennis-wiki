@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# A newer push makes the previous run's verdict worthless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      # The version is pinned in the Makefile so local runs and CI agree.
+      - id: version
+        run: echo "golangci=$(make -s print-GOLANGCI_VERSION)" >> "$GITHUB_OUTPUT"
+
+      # govet is enabled in .golangci.yml, so this covers go vet as well.
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: ${{ steps.version.outputs.golangci }}
+
+  tidy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - run: go mod verify
+
+      - name: go.mod and go.sum are tidy
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16.10-alpine
+        env:
+          POSTGRES_USER: tennis
+          POSTGRES_PASSWORD: tennis
+          # The integration tests refuse to truncate a database whose name
+          # does not mark it as disposable.
+          POSTGRES_DB: tennis_test
+        # The port the compose file and Makefile already use, so the default
+        # DSNs work here unchanged.
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U tennis -d tennis_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - run: make build
+
+      - run: make migrate-test
+        env:
+          # setup-go pins GOTOOLCHAIN=local and goose needs Go 1.26. Let the
+          # tool fetch its own toolchain; our code still builds at the floor.
+          GOTOOLCHAIN: auto
+
+      # Without TEST_DATABASE_URL the integration tests skip. The Makefile
+      # exports it, so this is the first place they have ever actually run.
+      - run: make test-race
+
+  migrations:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16.10-alpine
+        env:
+          POSTGRES_USER: tennis
+          POSTGRES_PASSWORD: tennis
+          POSTGRES_DB: tennis
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U tennis -d tennis"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      # Reapplying after a full rollback is the only thing that exercises the
+      # down steps, which nothing else runs.
+      - name: apply, roll back, reapply
+        env:
+          GOTOOLCHAIN: auto
+        run: |
+          make migrate-up
+          make migrate-reset
+          make migrate-up
+
+      # Every data-quality query runs against the fresh schema, so a migration
+      # that has drifted from the code fails here rather than in production.
+      - run: make dataqual

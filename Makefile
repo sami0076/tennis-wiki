@@ -55,6 +55,12 @@ export TEST_DATABASE_URL
 ## testdb: create the disposable database the integration tests truncate
 testdb:
 	-docker compose exec -T postgres psql -U $(POSTGRES_USER) -d $(POSTGRES_DB) -c "CREATE DATABASE tennis_test"
+	$(MAKE) migrate-test
+
+## migrate-test: apply migrations to the test database
+# Split out of testdb because CI gets its database from a service container and
+# so needs the migration step without the compose call above.
+migrate-test:
 	$(GO) run github.com/pressly/goose/v3/cmd/goose@$(GOOSE_VERSION) -dir $(MIGRATIONS) postgres "$(TEST_DATABASE_URL)" up
 
 ## test: run the test suite
@@ -84,6 +90,10 @@ migrate-up:
 migrate-down:
 	$(GO) run github.com/pressly/goose/v3/cmd/goose@$(GOOSE_VERSION) -dir $(MIGRATIONS) postgres "$(DATABASE_URL)" down
 
+## migrate-reset: roll every migration back, dropping every table
+migrate-reset:
+	$(GO) run github.com/pressly/goose/v3/cmd/goose@$(GOOSE_VERSION) -dir $(MIGRATIONS) postgres "$(DATABASE_URL)" down-to 0
+
 ## sqlc: regenerate typed queries from migrations
 sqlc:
 	$(GO) run github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION) generate
@@ -108,4 +118,9 @@ validate:
 clean:
 	$(call RM_DIR,$(BIN))
 
-.PHONY: help up down reset psql testdb build test test-race fmt lint migrate-up migrate-down sqlc ingest ingest-full dataqual validate clean
+.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc ingest ingest-full dataqual validate clean
+
+# print-VAR: echo a make variable, so CI can read the pinned tool versions
+# from here rather than duplicating them in a workflow file.
+print-%:
+	@echo $($*)
