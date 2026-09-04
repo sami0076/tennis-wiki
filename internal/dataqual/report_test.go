@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"os"
 	"strings"
 	"testing"
 
 	"github.com/sami0076/tennis-wiki/internal/db"
+	"github.com/sami0076/tennis-wiki/internal/testdb"
 )
 
 func TestComma(t *testing.T) {
@@ -137,10 +137,7 @@ func TestChecksAreDocumented(t *testing.T) {
 // The queries must actually run against the real schema. A typo here is only
 // discoverable against a database.
 func TestChecksRunAgainstRealSchema(t *testing.T) {
-	dsn := os.Getenv("TEST_DATABASE_URL")
-	if dsn == "" {
-		t.Skip("TEST_DATABASE_URL not set; skipping database integration test")
-	}
+	dsn := testdb.Start(t)
 	ctx := context.Background()
 	pool, err := db.Open(ctx, db.Config{DSN: dsn, MaxConns: 4, MinConns: 1})
 	if err != nil {
