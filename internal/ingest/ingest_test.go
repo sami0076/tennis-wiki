@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"unicode/utf8"
 )
 
 // fixture opens a real CSV sample committed under testdata.
@@ -319,6 +320,58 @@ func TestGrandSlamInQualFileIsTourTier(t *testing.T) {
 	for _, r := range all(t, fixture(t, "atp_matches_qual_chall_2022.csv", src)) {
 		if r.Level == "G" && r.Tier(src.Tier) != "tour" {
 			t.Errorf("Grand Slam row filed as %q", r.Tier(src.Tier))
+		}
+	}
+}
+
+// The sources contain stat lines that cannot describe a real match: more first
+// serves in than points served. Storing one would put an impossible percentage
+// on a player page, and the schema rejects it -- which used to abort a whole
+// 1.6 million row ingest over a handful of rows.
+func TestInconsistentStatsAreDropped(t *testing.T) {
+	cases := []struct {
+		name     string
+		svpt     int
+		firstIn  int
+		firstWon int
+		wantDrop bool
+	}{
+		{"consistent", 70, 42, 30, false},
+		{"all equal is fine", 70, 70, 70, false},
+		{"more first serves in than points served", 70, 90, 30, true},
+		{"more first serves won than made", 70, 42, 50, true},
+		{"zero is a real recorded value", 0, 0, 0, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			s := &Stats{ServePoints: c.svpt, FirstIn: c.firstIn, FirstWon: c.firstWon}
+			if got := !s.consistent(); got != c.wantDrop {
+				t.Errorf("consistent() dropped=%v, want %v for svpt=%d in=%d won=%d",
+					got, c.wantDrop, c.svpt, c.firstIn, c.firstWon)
+			}
+		})
+	}
+}
+
+// Some WTA files are not UTF-8. Postgres refuses a statement carrying a stray
+// byte with "invalid byte sequence for encoding UTF8", and one such byte used
+// to abort an ingest of 1.6 million rows.
+func TestCleanTextGuaranteesValidUTF8(t *testing.T) {
+	cases := map[string]string{
+		"Iga Swiatek":  "Iga Swiatek",
+		"  padded  ":   "padded",
+		"":             "",
+		"Ka\xc2rolina": "Karolina", // bare 0xC2, the byte seen in the wild
+		"caf\xc3\xa9":  "café",     // already valid, left alone
+		"\xff\xfe":     "",         // nothing salvageable
+	}
+	for in, want := range cases {
+		got := cleanText(in)
+		if got != want {
+			t.Errorf("cleanText(%q) = %q, want %q", in, got, want)
+		}
+		if !utf8.ValidString(got) {
+			t.Errorf("cleanText(%q) returned invalid UTF-8", in)
 		}
 	}
 }

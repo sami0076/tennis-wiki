@@ -10,6 +10,10 @@ services:
       - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # Docker gives a container 64MB of /dev/shm, which Postgres uses for
+    # parallel query workers. At 1.6M matches the data-quality report failed
+    # with "could not resize shared memory segment: No space left on device".
+    shm_size: 1gb
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tennis} -d ${POSTGRES_DB:-tennis}"]
       interval: 5s

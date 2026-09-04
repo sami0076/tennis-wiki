@@ -185,7 +185,7 @@ func parseStats(c *columns, rec []string, prefix string) *Stats {
 	if svpt == nil {
 		return nil
 	}
-	return &Stats{
+	stats := &Stats{
 		Aces:         atoiOr(c.get(rec, prefix+"ace"), 0),
 		DoubleFaults: atoiOr(c.get(rec, prefix+"df"), 0),
 		ServePoints:  *svpt,
@@ -196,6 +196,23 @@ func parseStats(c *columns, rec []string, prefix string) *Stats {
 		BPSaved:      atoiOr(c.get(rec, prefix+"bpSaved"), 0),
 		BPFaced:      atoiOr(c.get(rec, prefix+"bpFaced"), 0),
 	}
+	if !stats.consistent() {
+		return nil
+	}
+	return stats
+}
+
+// consistent reports whether the stat line can describe a real match.
+//
+// More first serves in than points served, or more first-serve points won than
+// first serves in, is arithmetically impossible: the row is corrupt. Keeping it
+// would put an impossible percentage on a player page, and the schema rejects
+// it anyway -- which used to abort the whole ingest over a handful of rows in
+// 1.6 million.
+//
+// The match itself is still real, so only the statistics are dropped.
+func (s *Stats) consistent() bool {
+	return s.FirstIn <= s.ServePoints && s.FirstWon <= s.FirstIn
 }
 
 func parseIndoor(c *columns, rec []string) *bool {
