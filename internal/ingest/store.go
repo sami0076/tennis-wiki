@@ -179,9 +179,12 @@ func (s *Store) upsertPlayer(ctx context.Context, tx pgx.Tx, tour Tour, p Player
 			        last_name  = COALESCE(NULLIF($4, ''), last_name),
 			        country    = COALESCE(NULLIF($5, '')::char(3), country),
 			        hand       = COALESCE(NULLIF($6, '')::hand, hand),
-			        height_cm  = COALESCE($7, height_cm)
+			        height_cm  = COALESCE($7, height_cm),
+			        birth_date = COALESCE($8, birth_date),
+			        wikidata_id = COALESCE(NULLIF($9, ''), wikidata_id)
 			  WHERE id = $1`,
-			id, p.Name, firstName(p.Name), lastName(p.Name), p.Country, p.Hand, p.HeightCM); err != nil {
+			id, p.Name, firstName(p.Name), lastName(p.Name), p.Country, p.Hand, p.HeightCM,
+			p.BirthDate, p.WikidataID); err != nil {
 			return 0, fmt.Errorf("update player %s: %w", p.SourceID, err)
 		}
 		return id, nil
@@ -205,13 +208,13 @@ func (s *Store) upsertPlayer(ctx context.Context, tx pgx.Tx, tour Tour, p Player
 		}
 		err = sp.QueryRow(ctx,
 			`INSERT INTO players (source_id, tour, slug, full_name, first_name, last_name,
-			                      country, hand, height_cm)
+			                      country, hand, height_cm, birth_date, wikidata_id)
 			 VALUES ($1, $2, $3, $4, NULLIF($5, ''), NULLIF($6, ''),
-			         NULLIF($7, '')::char(3), NULLIF($8, '')::hand, $9)
+			         NULLIF($7, '')::char(3), NULLIF($8, '')::hand, $9, $10, NULLIF($11, ''))
 			 ON CONFLICT (source_id, tour) DO UPDATE SET full_name = EXCLUDED.full_name
 			 RETURNING id`,
 			p.SourceID, tour, slug, p.Name, firstName(p.Name), lastName(p.Name),
-			p.Country, p.Hand, p.HeightCM).Scan(&id)
+			p.Country, p.Hand, p.HeightCM, p.BirthDate, p.WikidataID).Scan(&id)
 		if err == nil {
 			if err := sp.Commit(ctx); err != nil {
 				return 0, fmt.Errorf("commit player %s: %w", p.SourceID, err)
@@ -429,7 +432,7 @@ func (s *Store) TableChecksum(ctx context.Context) (string, error) {
 // Counts returns row counts for the ingested tables.
 func (s *Store) Counts(ctx context.Context) (map[string]int, error) {
 	out := map[string]int{}
-	for _, table := range []string{"players", "tournaments", "matches", "match_players"} {
+	for _, table := range []string{"players", "tournaments", "matches", "match_players", "rankings"} {
 		var n int
 		if err := s.pool.QueryRow(ctx, `SELECT count(*) FROM `+table).Scan(&n); err != nil {
 			return nil, fmt.Errorf("count %s: %w", table, err)
