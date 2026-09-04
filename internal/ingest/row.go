@@ -204,15 +204,19 @@ func parseStats(c *columns, rec []string, prefix string) *Stats {
 
 // consistent reports whether the stat line can describe a real match.
 //
-// More first serves in than points served, or more first-serve points won than
-// first serves in, is arithmetically impossible: the row is corrupt. Keeping it
-// would put an impossible percentage on a player page, and the schema rejects
-// it anyway -- which used to abort the whole ingest over a handful of rows in
-// 1.6 million.
+// Each condition is arithmetically impossible rather than merely unlikely, so a
+// row failing one is corrupt. Keeping it would put a percentage above 100 on a
+// player page, and the first two abort the ingest outright because the schema
+// rejects them.
 //
 // The match itself is still real, so only the statistics are dropped.
 func (s *Stats) consistent() bool {
-	return s.FirstIn <= s.ServePoints && s.FirstWon <= s.FirstIn
+	// Second serves are the serve points that missed the first.
+	secondServes := s.ServePoints - s.FirstIn
+	return s.FirstIn <= s.ServePoints &&
+		s.FirstWon <= s.FirstIn &&
+		s.SecondWon <= secondServes &&
+		s.BPSaved <= s.BPFaced
 }
 
 func parseIndoor(c *columns, rec []string) *bool {

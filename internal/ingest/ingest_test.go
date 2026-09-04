@@ -331,23 +331,33 @@ func TestGrandSlamInQualFileIsTourTier(t *testing.T) {
 func TestInconsistentStatsAreDropped(t *testing.T) {
 	cases := []struct {
 		name     string
-		svpt     int
-		firstIn  int
-		firstWon int
+		stats    Stats
 		wantDrop bool
 	}{
-		{"consistent", 70, 42, 30, false},
-		{"all equal is fine", 70, 70, 70, false},
-		{"more first serves in than points served", 70, 90, 30, true},
-		{"more first serves won than made", 70, 42, 50, true},
-		{"zero is a real recorded value", 0, 0, 0, false},
+		{"consistent", Stats{ServePoints: 70, FirstIn: 42, FirstWon: 30, SecondWon: 18}, false},
+		{"all equal is fine", Stats{ServePoints: 70, FirstIn: 70, FirstWon: 70}, false},
+		{"more first serves in than points served",
+			Stats{ServePoints: 70, FirstIn: 90, FirstWon: 30}, true},
+		{"more first serves won than made",
+			Stats{ServePoints: 70, FirstIn: 42, FirstWon: 50}, true},
+		{"zero is a real recorded value", Stats{}, false},
+
+		// Both measured on the full dataset, five rows between them.
+		{"second serves won when none were played",
+			Stats{ServePoints: 25, FirstIn: 25, SecondWon: 6}, true},
+		{"more second serves won than played",
+			Stats{ServePoints: 135, FirstIn: 122, SecondWon: 21}, true},
+		{"every second serve won is fine",
+			Stats{ServePoints: 135, FirstIn: 122, SecondWon: 13}, false},
+		{"more break points saved than faced",
+			Stats{ServePoints: 70, FirstIn: 42, BPSaved: 4, BPFaced: 2}, true},
+		{"every break point saved is fine",
+			Stats{ServePoints: 70, FirstIn: 42, BPSaved: 2, BPFaced: 2}, false},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			s := &Stats{ServePoints: c.svpt, FirstIn: c.firstIn, FirstWon: c.firstWon}
-			if got := !s.consistent(); got != c.wantDrop {
-				t.Errorf("consistent() dropped=%v, want %v for svpt=%d in=%d won=%d",
-					got, c.wantDrop, c.svpt, c.firstIn, c.firstWon)
+			if got := !c.stats.consistent(); got != c.wantDrop {
+				t.Errorf("consistent() dropped=%v, want %v for %+v", got, c.wantDrop, c.stats)
 			}
 		})
 	}
