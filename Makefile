@@ -102,13 +102,20 @@ migrate-reset:
 sqlc:
 	$(GO) run github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION) generate
 
+## seed: start the stack, migrate, and load the seed fixture
+seed: up migrate-up ingest
+
 ## api: run the HTTP API on port 8080
 api:
 	$(GO) run ./cmd/api
 
+# The seasons the seed fixture covers. Narrowing the plan keeps the run quiet
+# rather than reporting three hundred files the fixture was never going to have.
+SEED_SEASONS := 1975,2015,2019
+
 ## ingest: load the small seed fixture (fast, for local development)
 ingest:
-	$(GO) run ./cmd/ingest --local-path ./testdata
+	$(GO) run ./cmd/ingest --local-path ./testdata --seasons $(SEED_SEASONS)
 
 ## ingest-full: load the complete dataset from the configured sources
 ingest-full:
@@ -126,7 +133,7 @@ validate:
 clean:
 	$(call RM_DIR,$(BIN))
 
-.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc api ingest ingest-full dataqual validate clean
+.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc seed api ingest ingest-full dataqual validate clean
 
 # print-VAR: echo a make variable, so CI can read the pinned tool versions
 # from here rather than duplicating them in a workflow file.

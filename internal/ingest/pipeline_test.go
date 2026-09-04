@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 )
@@ -221,5 +222,54 @@ func TestOptionDefaults(t *testing.T) {
 	o = Options{Workers: 3, BatchSize: 7}
 	if o.workers() != 3 || o.batchSize() != 7 {
 		t.Error("explicit options should win")
+	}
+}
+
+// Tolerating a missing file is right for mirrors, whose coverage genuinely
+// differs. Tolerating every file being missing is how `make ingest` reported
+// success while doing nothing for as long as it pointed at a directory that
+// did not exist.
+func TestPipelineFailsWhenNothingWasRead(t *testing.T) {
+	p := &Pipeline{
+		Registry: &Registry{Sources: []Source{{
+			Name: "f", Tour: TourATP, Tier: "tour", Profile: "sackmann",
+			BaseURL: "https://x", Path: "atp_matches_{season}.csv",
+			FirstSeason: 1800, LastSeason: 1802,
+		}}},
+		Fetcher: LocalFetcher{Root: "testdata"},
+		Store:   &memWriter{},
+		Options: Options{Workers: 2, BatchSize: 100},
+	}
+
+	stats, err := p.Run(context.Background())
+	if err == nil {
+		t.Fatal("an ingest that read nothing reported success")
+	}
+	if !strings.Contains(err.Error(), "no source files found") {
+		t.Errorf("error = %q, should say no files were found", err)
+	}
+	if stats.FilesMissing != 3 {
+		t.Errorf("FilesMissing = %d, want 3: every planned file was absent", stats.FilesMissing)
+	}
+}
+
+// The counts have to balance, or a reader cannot tell a dropped row from a
+// deduplicated one.
+func TestRunStatsBalance(t *testing.T) {
+	w := &memWriter{}
+	p := &Pipeline{
+		Registry: testRegistry(),
+		Fetcher:  LocalFetcher{Root: "testdata"},
+		Store:    w,
+		Options:  Options{Workers: 2, BatchSize: 100},
+	}
+	stats, err := p.Run(context.Background())
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	got := stats.RowsWritten + stats.RowsRejected + stats.RowsCollapsed
+	if got != stats.RowsSeen {
+		t.Errorf("%d seen but %d written + %d rejected + %d collapsed = %d",
+			stats.RowsSeen, stats.RowsWritten, stats.RowsRejected, stats.RowsCollapsed, got)
 	}
 }

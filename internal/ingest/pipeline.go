@@ -46,6 +46,10 @@ type RunStats struct {
 	RowsSeen     int
 	RowsWritten  int
 	RowsRejected int
+	// RowsCollapsed are rows that shared a natural key with another row in the
+	// same batch. Seen = written + rejected + collapsed, and the summary should
+	// balance.
+	RowsCollapsed int
 }
 
 // BatchWriter persists a batch. It is an interface so the pipeline's
@@ -80,6 +84,8 @@ type chunk struct {
 	seen   int
 	// rejected counts rows this chunk could not parse.
 	rejected int
+	// missing marks a source file the fetcher did not have.
+	missing bool
 }
 
 // Run executes the pipeline.
@@ -138,6 +144,10 @@ func (p *Pipeline) Run(ctx context.Context) (RunStats, error) {
 	for c := range chunkCh {
 		stats.RowsSeen += c.seen
 		stats.RowsRejected += c.rejected
+		if c.missing {
+			stats.FilesMissing++
+			continue
+		}
 		if c.rows == nil {
 			stats.FilesRead++
 			continue
@@ -151,6 +161,7 @@ func (p *Pipeline) Run(ctx context.Context) (RunStats, error) {
 			continue
 		}
 		stats.RowsWritten += res.Matches
+		stats.RowsCollapsed += res.Collapsed
 	}
 
 	for err := range readErrs {
@@ -162,9 +173,17 @@ func (p *Pipeline) Run(ctx context.Context) (RunStats, error) {
 		return stats, writeErr
 	}
 
+	// An ingest that read nothing at all is a misconfiguration, not an empty
+	// result. Reporting success here is how `make ingest` silently did nothing
+	// for as long as it pointed at a directory that did not exist.
+	if stats.FilesRead == 0 {
+		return stats, fmt.Errorf("no source files found: %d planned, %d missing", len(jobs), stats.FilesMissing)
+	}
+
 	log.InfoContext(ctx, "ingest finished",
 		"rows_seen", stats.RowsSeen, "rows_written", stats.RowsWritten,
-		"rejected", stats.RowsRejected, "files", stats.FilesRead)
+		"rejected", stats.RowsRejected, "collapsed", stats.RowsCollapsed,
+		"files_read", stats.FilesRead, "files_missing", stats.FilesMissing)
 	return stats, nil
 }
 
@@ -196,6 +215,10 @@ func (p *Pipeline) readFile(ctx context.Context, j job, out chan<- chunk, log *s
 	body, err := p.Fetcher.Open(ctx, j.source, j.season)
 	if errors.Is(err, ErrNotFound) {
 		log.DebugContext(ctx, "source file absent", "source", j.source.Name, "season", j.season)
+		select {
+		case out <- chunk{source: j.source, missing: true}:
+		case <-ctx.Done():
+		}
 		return nil
 	}
 	if err != nil {
