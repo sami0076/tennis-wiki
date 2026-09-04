@@ -3,11 +3,12 @@ package db
 import (
 	"context"
 	"errors"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/jackc/pgx/v5"
+
+	"github.com/sami0076/tennis-wiki/internal/testdb"
 )
 
 // harness owns one rolled-back transaction. Nothing these tests write is ever
@@ -22,10 +23,7 @@ type harness struct {
 
 func newHarness(t *testing.T) *harness {
 	t.Helper()
-	dsn := os.Getenv("TEST_DATABASE_URL")
-	if dsn == "" {
-		t.Skip("TEST_DATABASE_URL not set; skipping database integration test")
-	}
+	dsn := testdb.Start(t)
 	ctx := context.Background()
 	pool, err := Open(ctx, Config{DSN: dsn, MaxConns: 2, MinConns: 1})
 	if err != nil {

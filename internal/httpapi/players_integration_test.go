@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"testing"
 
 	"github.com/jackc/pgx/v5"
 
 	"github.com/sami0076/tennis-wiki/internal/db"
+	"github.com/sami0076/tennis-wiki/internal/testdb"
 )
 
 // apiFixture runs the whole stack — router, middleware, generated queries —
@@ -25,10 +25,7 @@ type apiFixture struct {
 
 func newAPIFixture(t *testing.T) *apiFixture {
 	t.Helper()
-	dsn := os.Getenv("TEST_DATABASE_URL")
-	if dsn == "" {
-		t.Skip("TEST_DATABASE_URL not set; skipping database integration test")
-	}
+	dsn := testdb.Start(t)
 	ctx := context.Background()
 	pool, err := db.Open(ctx, db.Config{DSN: dsn, MaxConns: 2, MinConns: 1})
 	if err != nil {
