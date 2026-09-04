@@ -366,6 +366,11 @@ func percent(numerator, denominator int64) *float64 {
 	if denominator <= 0 {
 		return nil
 	}
+	// A ratio above 1 means the underlying rows contradict each other. Withhold
+	// it rather than serve a percentage above 100, which reads as a real figure.
+	if numerator > denominator {
+		return nil
+	}
 	v := round1(100 * float64(numerator) / float64(denominator))
 	return &v
 }

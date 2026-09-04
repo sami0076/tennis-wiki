@@ -135,6 +135,31 @@ func TestServeRatesDistinguishZeroFromUndefined(t *testing.T) {
 	}
 }
 
+// Rows predating the ingest's consistency check can still be in a database, and
+// one of them made a player page show a second-serve percentage above 100.
+func TestServeRatesWithholdImpossiblePercentages(t *testing.T) {
+	summary := db.GetPlayerCareerSummaryRow{
+		Matches: 1, StatMatches: 1, LastMatch: season(2019),
+		// No second serves were played, yet six were won.
+		ServePoints: 25, FirstIn: 25, FirstWon: 20, SecondWon: 6,
+		BpSaved: 4, BpFaced: 2,
+	}
+	got := buildServe(summary, []db.GetPlayerTierSplitsRow{tierRow(db.TierTour, 1, 1)})
+	if got.Rates == nil {
+		t.Fatal("rates should be present")
+	}
+	if got.Rates.SecondServeWon != nil {
+		t.Errorf("second_serve_won = %v, want null", *got.Rates.SecondServeWon)
+	}
+	if got.Rates.BreakPointsSaved != nil {
+		t.Errorf("break_points_saved = %v, want null", *got.Rates.BreakPointsSaved)
+	}
+	// The rates that are still arithmetically possible stay.
+	if got.Rates.FirstServeIn == nil || *got.Rates.FirstServeIn != 100 {
+		t.Errorf("first_serve_in = %v, want 100", got.Rates.FirstServeIn)
+	}
+}
+
 func TestBuildCareerCountsRetirementsInWinLoss(t *testing.T) {
 	summary := db.GetPlayerCareerSummaryRow{
 		Matches: 10, Wins: 7, Losses: 3, IncompleteMatches: 2, Titles: 1,
