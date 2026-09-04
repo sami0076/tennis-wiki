@@ -25,8 +25,18 @@ type config struct {
 	tours     string
 	workers   int
 	batchSize int
+	stage     string
 	verbose   bool
 }
+
+// Stages. Reference data runs after matches so the player tables, which carry
+// the canonical name, get the last word on it -- and so rankings resolve
+// against every player, however they were created.
+const (
+	stageAll       = "all"
+	stageMatches   = "matches"
+	stageReference = "reference"
+)
 
 func main() {
 	var cfg config
@@ -37,6 +47,8 @@ func main() {
 	flag.StringVar(&cfg.tours, "tours", "", "tours to ingest: atp, wta (default: both)")
 	flag.IntVar(&cfg.workers, "workers", 0, "concurrent file readers (default: GOMAXPROCS)")
 	flag.IntVar(&cfg.batchSize, "batch", ingest.DefaultBatchSize, "rows per transaction")
+	flag.StringVar(&cfg.stage, "stage", stageAll,
+		"what to ingest: all, matches, or reference (player tables and rankings)")
 	flag.BoolVar(&cfg.verbose, "v", false, "verbose logging")
 	flag.Parse()
 
@@ -87,9 +99,39 @@ func run(ctx context.Context, cfg config) error {
 	}
 	defer pool.Close()
 
+	switch cfg.stage {
+	case stageAll, stageMatches, stageReference:
+	default:
+		return fmt.Errorf("unknown stage %q: want all, matches or reference", cfg.stage)
+	}
+
 	store := ingest.NewStore(pool)
 	fetcher := chooseFetcher(cfg.localPath)
 
+	if cfg.stage != stageReference {
+		if err := runMatches(ctx, cfg, registry, fetcher, store, seasons, tours); err != nil {
+			return err
+		}
+	}
+	if cfg.stage != stageMatches {
+		if err := runReference(ctx, cfg, registry, fetcher, store); err != nil {
+			return err
+		}
+	}
+
+	counts, err := store.Counts(ctx)
+	if err != nil {
+		return err
+	}
+	slog.Info("database totals",
+		"players", counts["players"], "tournaments", counts["tournaments"],
+		"matches", counts["matches"], "match_players", counts["match_players"],
+		"rankings", counts["rankings"])
+	return nil
+}
+
+func runMatches(ctx context.Context, cfg config, registry *ingest.Registry,
+	fetcher ingest.Fetcher, store *ingest.Store, seasons []int, tours []ingest.Tour) error {
 	runID, err := store.StartRun(ctx, sourceLabel(cfg))
 	if err != nil {
 		return err
@@ -114,18 +156,38 @@ func run(ctx context.Context, cfg config) error {
 	if err := store.FinishRun(ctx, runID, stats.RowsSeen, stats.RowsWritten, runErr); err != nil {
 		slog.Error("could not record ingest run", "error", err)
 	}
-	if runErr != nil {
-		return runErr
+	return runErr
+}
+
+func runReference(ctx context.Context, cfg config, registry *ingest.Registry,
+	fetcher ingest.Fetcher, store *ingest.Store) error {
+	if len(registry.Reference) == 0 {
+		slog.Warn("no reference sources configured; skipping player tables and rankings")
+		return nil
+	}
+	paths, ok := fetcher.(ingest.PathFetcher)
+	if !ok {
+		return errors.New("fetcher cannot open reference files")
 	}
 
-	counts, err := store.Counts(ctx)
+	runID, err := store.StartRun(ctx, sourceLabel(cfg)+" (reference)")
 	if err != nil {
 		return err
 	}
-	slog.Info("database totals",
-		"players", counts["players"], "tournaments", counts["tournaments"],
-		"matches", counts["matches"], "match_players", counts["match_players"])
-	return nil
+
+	loader := &ingest.ReferenceLoader{
+		Sources:   registry.Reference,
+		Fetcher:   paths,
+		Store:     store,
+		Log:       slog.Default(),
+		BatchSize: cfg.batchSize,
+	}
+	stats, runErr := loader.Run(ctx)
+	written := int(stats.RankingsWritten) + stats.Players
+	if err := store.FinishRun(ctx, runID, stats.RankingRowsSeen+stats.Players, written, runErr); err != nil {
+		slog.Error("could not record reference run", "error", err)
+	}
+	return runErr
 }
 
 func chooseFetcher(localPath string) ingest.Fetcher {

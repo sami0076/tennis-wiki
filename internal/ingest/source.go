@@ -75,6 +75,20 @@ func (s Source) RelPath(season int) string {
 // Registry is the configured set of sources.
 type Registry struct {
 	Sources []Source `json:"sources"`
+	// Reference holds the player tables and ranking history, which are not
+	// seasonal and so do not fit Source.
+	Reference []RefSource `json:"reference,omitempty"`
+}
+
+// ReferenceFor returns the reference sources of one kind.
+func (r *Registry) ReferenceFor(kind RefKind) []RefSource {
+	var out []RefSource
+	for _, s := range r.Reference {
+		if s.Kind == kind {
+			out = append(out, s)
+		}
+	}
+	return out
 }
 
 // LoadRegistry reads a registry from a JSON file.
@@ -96,6 +110,11 @@ func LoadRegistry(path string) (*Registry, error) {
 func (r *Registry) validate() error {
 	if len(r.Sources) == 0 {
 		return fmt.Errorf("source registry is empty")
+	}
+	for _, ref := range r.Reference {
+		if err := ref.validate(); err != nil {
+			return err
+		}
 	}
 	seen := make(map[string]struct{}, len(r.Sources))
 	for _, s := range r.Sources {
