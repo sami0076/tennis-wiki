@@ -59,6 +59,7 @@ func (a *API) Router() http.Handler {
 // routes registers the data endpoints. Kept separate so the middleware stack
 // above stays readable as endpoints are added.
 func (a *API) routes(r chi.Router) {
+	r.Get("/coverage", a.handleCoverage)
 	r.Get("/players", a.handlePlayerSearch)
 	r.Get("/players/{slug}", a.handlePlayer)
 }
