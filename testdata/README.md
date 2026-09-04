@@ -33,6 +33,18 @@ than discovering them after a twenty-minute ingest.
 | `atp_matches_futures_2015.csv` | 682 | 22 | 0 of 682 (0%) |
 | `atp_matches_1975.csv` | 699 | 24 | 0 of 699 (0%) |
 
+### Players and rankings
+
+| file | rows |
+|---|---|
+| `atp_players.csv` | 1129 |
+| `wta_players.csv` | 511 |
+| `atp_rankings_10s.csv`, `wta_rankings_10s.csv`, `atp_rankings_70s.csv` | 12032 |
+
+Filtered to exactly the players the seed matches reference, so every biography and every
+ranking belongs to someone with a page. Ranking history is sampled at one date a month —
+weekly rankings for even this many players would dwarf every match file put together.
+
 That covers every case the API's `serve.availability` field distinguishes:
 
 - **`recorded`** — the 2019 tour and Challenger files
