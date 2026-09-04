@@ -3,8 +3,9 @@ name: CI
 on:
   push:
     branches: [main]
+  # No branch filter: a pull request stacked on another feature branch needs
+  # checking too, and filtering on main silently gave those no checks at all.
   pull_request:
-    branches: [main]
 
 # A newer push makes the previous run's verdict worthless.
 concurrency:
