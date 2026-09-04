@@ -3,5 +3,5 @@
 //
 // There is no ORM here by design: the statistical work leans on PostgreSQL
 // window functions, and sqlc gives type safety without hiding the SQL. See
-// ADR-0004.
+// ADR-0005.
 package db
