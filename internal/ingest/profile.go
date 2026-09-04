@@ -3,6 +3,7 @@ package ingest
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 )
 
 // profile names the column layout of a source file. Layouts differ in column
@@ -73,7 +74,26 @@ func (c *columns) get(rec []string, name string) string {
 	if !ok || i >= len(rec) {
 		return ""
 	}
-	return strings.TrimSpace(rec[i])
+	return cleanText(rec[i])
+}
+
+// cleanText trims a field and guarantees it is valid UTF-8.
+//
+// Some of the WTA files are not UTF-8 -- they carry stray bytes such as a bare
+// 0xC2 in player names -- and Postgres refuses the whole statement with
+// "invalid byte sequence for encoding UTF8". One such byte used to abort an
+// ingest of 1.6 million rows.
+//
+// The bad bytes are dropped rather than transcoded: the sources are
+// inconsistent about which encoding they meant, guessing would silently corrupt
+// names, and a name missing a character still slugs and searches correctly
+// because diacritics are folded anyway.
+func cleanText(s string) string {
+	s = strings.TrimSpace(s)
+	if utf8.ValidString(s) {
+		return s
+	}
+	return strings.ToValidUTF8(s, "")
 }
 
 // has reports whether the layout carries a column at all, which is different
