@@ -2,7 +2,10 @@ package ingest
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
+	"github.com/jackc/pgx/v5"
 )
 
 // inconsistentStats is Stats.consistent expressed in SQL. The two must agree:
@@ -28,12 +31,11 @@ type PruneResult struct {
 // million rows, which takes an hour. This reaches the same state in seconds by
 // doing to the stored row what the parser does to the source row: drop the
 // statistics and keep the match, which is real either way.
-func (s *Store) PruneStats(ctx context.Context, dryRun bool) (PruneResult, error) {
-	var res PruneResult
+func (s *Store) PruneStats(ctx context.Context, dryRun bool) (res PruneResult, err error) {
 	if dryRun {
-		err := s.pool.QueryRow(ctx,
-			`SELECT count(*) FROM match_players WHERE `+inconsistentStats).Scan(&res.StatLines)
-		if err != nil {
+		if err := s.pool.QueryRow(ctx,
+			`SELECT count(*) FROM match_players WHERE `+inconsistentStats).
+			Scan(&res.StatLines); err != nil {
 			return res, fmt.Errorf("count inconsistent stat lines: %w", err)
 		}
 		return res, nil
@@ -41,9 +43,14 @@ func (s *Store) PruneStats(ctx context.Context, dryRun bool) (PruneResult, error
 
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return res, err
+		return res, fmt.Errorf("begin transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		// A rollback after a successful commit is a harmless no-op.
+		if rbErr := tx.Rollback(ctx); rbErr != nil && !errors.Is(rbErr, pgx.ErrTxClosed) {
+			err = errors.Join(err, rbErr)
+		}
+	}()
 
 	rows, err := tx.Query(ctx,
 		`UPDATE match_players
