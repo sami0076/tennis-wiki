@@ -28,14 +28,10 @@ linters:
 
   exclusions:
     generated: lax
+    # sqlc output carries the standard "Code generated ... DO NOT EDIT" header,
+    # so `generated: lax` above already skips it. Excluding internal/db by path
+    # would also stop linting the hand-written pool that lives beside it.
     rules:
-      # sqlc output is generated; linting it reports on code we do not write.
-      - path: internal/db/
-        linters:
-          - errcheck
-          - govet
-          - staticcheck
-          - revive
       # Table-driven tests routinely ignore errors that matter in production.
       - path: _test\.go
         linters:
