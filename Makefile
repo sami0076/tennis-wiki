@@ -64,14 +64,18 @@ migrate-test:
 	$(GO) run github.com/pressly/goose/v3/cmd/goose@$(GOOSE_VERSION) -dir $(MIGRATIONS) postgres "$(TEST_DATABASE_URL)" up
 
 ## test: run the test suite
+# -p 1 because the integration tests across packages share one database: the
+# ingest suite truncates every table while the api and db suites hold open
+# transactions, which deadlocks. Issue #13 replaces this with a container per
+# package.
 test:
-	$(GO) test ./...
+	$(GO) test -p 1 ./...
 
 ## test-race: run the test suite with the race detector (used by CI)
 # The race detector is unsupported on windows/arm64, so this is a separate
 # target rather than the default. CI runs on linux/amd64 and always uses it.
 test-race:
-	$(GO) test -race ./...
+	$(GO) test -race -p 1 ./...
 
 ## fmt: format and tidy
 fmt:
@@ -98,6 +102,10 @@ migrate-reset:
 sqlc:
 	$(GO) run github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION) generate
 
+## api: run the HTTP API on port 8080
+api:
+	$(GO) run ./cmd/api
+
 ## ingest: load the small seed fixture (fast, for local development)
 ingest:
 	$(GO) run ./cmd/ingest --local-path ./testdata
@@ -118,7 +126,7 @@ validate:
 clean:
 	$(call RM_DIR,$(BIN))
 
-.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc ingest ingest-full dataqual validate clean
+.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc api ingest ingest-full dataqual validate clean
 
 # print-VAR: echo a make variable, so CI can read the pinned tool versions
 # from here rather than duplicating them in a workflow file.
