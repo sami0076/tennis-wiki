@@ -70,12 +70,16 @@ func (f *apiFixture) player(slug, fullName string, tour db.Tour) int64 {
 }
 
 func (f *apiFixture) tournament(sourceID string, tier db.Tier, season int) int64 {
+	return f.tourTournament(sourceID, tier, season, db.TourAtp)
+}
+
+func (f *apiFixture) tourTournament(sourceID string, tier db.Tier, season int, tour db.Tour) int64 {
 	f.t.Helper()
 	var id int64
 	err := f.tx.QueryRow(f.ctx,
 		`INSERT INTO tournaments (source_id, tour, name, level, tier, surface, start_date, season)
-		 VALUES ($1, 'atp', $1, 'A', $2, 'clay', make_date($3, 5, 1), $3) RETURNING id`,
-		sourceID, tier, season).Scan(&id)
+		 VALUES ($1, $4, $1, 'A', $2, 'clay', make_date($3, 5, 1), $3) RETURNING id`,
+		sourceID, tier, season, tour).Scan(&id)
 	if err != nil {
 		f.t.Fatalf("insert tournament: %v", err)
 	}
