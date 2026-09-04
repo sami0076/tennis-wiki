@@ -37,6 +37,10 @@ type Player struct {
 	Rank       *int
 	RankPoints *int
 	Stats      *Stats
+	// Set only by the player tables, which are the canonical source for
+	// biography. Match rows leave these nil and the upsert keeps what is there.
+	BirthDate  *time.Time
+	WikidataID string
 }
 
 // MatchRow is one source row, normalised across schema profiles. It stays
