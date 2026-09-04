@@ -174,6 +174,35 @@ var anomalyChecks = []Check{
 		          ORDER BY occurrences DESC LIMIT 5`,
 	},
 	{
+		Name:     "identities_awaiting_review",
+		Severity: Warning,
+		Why: "Pairs that look like the same person but are not certain. A wrong merge is " +
+			"invisible, so these wait for a decision in configs/player_overrides.json.",
+		Query: `SELECT count(*) FROM identity_reviews`,
+		Sample: `SELECT source || ' ' || source_id || ' -> player ' || candidate ||
+		                ' (' || confidence || ', ' || reason || ')'
+		           FROM identity_reviews ORDER BY confidence DESC LIMIT 5`,
+	},
+	{
+		Name:     "unreconciled_source_ids",
+		Severity: Warning,
+		Why: "Players carrying a non-numeric source id with no alias: the ATP data from 2025 " +
+			"uses alphanumeric ids that do not join to the numeric ones used before it.",
+		Query: `SELECT count(*) FROM players p
+		         WHERE p.source_id !~ '^[0-9]+$'
+		           AND NOT EXISTS (SELECT 1 FROM player_aliases a WHERE a.player_id = p.id)`,
+		Sample: `SELECT tour || ' ' || source_id || ' ' || full_name FROM players p
+		          WHERE p.source_id !~ '^[0-9]+$'
+		            AND NOT EXISTS (SELECT 1 FROM player_aliases a WHERE a.player_id = p.id)
+		          LIMIT 5`,
+	},
+	{
+		Name:     "reconciled_identities",
+		Severity: Info,
+		Why:      "Source ids folded into a canonical player by identity reconciliation.",
+		Query:    `SELECT count(*) FROM player_aliases`,
+	},
+	{
 		Name:     "players_without_biography",
 		Severity: Info,
 		Why: "No date of birth: either the player table has none, or the player appears only in " +

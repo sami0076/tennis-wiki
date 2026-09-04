@@ -1,0 +1,14 @@
+{
+  "_comment": [
+    "Identity decisions made by hand, applied by the reconcile stage of cmd/ingest.",
+    "A wrong automatic merge is invisible -- two careers become one and every total is",
+    "quietly wrong -- so anything the scorer is not convinced by waits in",
+    "identity_reviews for a decision here.",
+    "",
+    "Each entry names the id being folded away and the one being kept. Set",
+    "same_person to false to record that two rows which look alike are different",
+    "people; that is as useful a decision as a merge, and stops the pair being",
+    "re-proposed on every run."
+  ],
+  "overrides": []
+}

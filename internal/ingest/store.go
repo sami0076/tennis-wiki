@@ -168,9 +168,26 @@ func detail(p Player) int {
 // trying the stable alternatives from DisambiguateSlug in order.
 func (s *Store) upsertPlayer(ctx context.Context, tx pgx.Tx, tour Tour, p Player) (int64, error) {
 	// An existing row keeps its slug: changing it would break bookmarked URLs.
+	//
+	// The alias lookup comes first so a reconciled id resolves to the player it
+	// was merged into. Without it every re-ingest would recreate the duplicate
+	// that identity reconciliation had just folded away.
 	var id int64
-	err := tx.QueryRow(ctx,
-		`SELECT id FROM players WHERE source_id = $1 AND tour = $2`, p.SourceID, tour).Scan(&id)
+	var found *int64
+	err := tx.QueryRow(ctx, `
+		SELECT coalesce(
+		         (SELECT a.player_id FROM player_aliases a
+		            JOIN players ap ON ap.id = a.player_id
+		           WHERE a.source_id = $1 AND ap.tour = $2 LIMIT 1),
+		         (SELECT id FROM players WHERE source_id = $1 AND tour = $2))`,
+		p.SourceID, tour).Scan(&found)
+	// Neither subquery matched, so this is a player we have not seen.
+	if err == nil && found == nil {
+		err = pgx.ErrNoRows
+	}
+	if found != nil {
+		id = *found
+	}
 	if err == nil {
 		if _, err := tx.Exec(ctx,
 			`UPDATE players
