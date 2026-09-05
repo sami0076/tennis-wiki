@@ -32,6 +32,7 @@ type config struct {
 	stage     string
 	overrides string
 	dryRun    bool
+	force     bool
 	verbose   bool
 }
 
@@ -63,6 +64,8 @@ func main() {
 		"identity decisions made by hand")
 	flag.BoolVar(&cfg.dryRun, "dry-run", false,
 		"for reconcile and prune: report what would change without doing it")
+	flag.BoolVar(&cfg.force, "force", false,
+		"re-read every file, even one the ledger says has not changed")
 	flag.BoolVar(&cfg.verbose, "v", false, "verbose logging")
 	flag.Parse()
 
@@ -221,12 +224,14 @@ func runMatches(ctx context.Context, cfg config, registry *ingest.Registry,
 		Registry: registry,
 		Fetcher:  fetcher,
 		Store:    store,
+		Ledger:   store,
 		Log:      slog.Default(),
 		Options: ingest.Options{
 			Workers:   cfg.workers,
 			BatchSize: cfg.batchSize,
 			Seasons:   seasons,
 			Tours:     tours,
+			Force:     cfg.force,
 		},
 	}
 
@@ -259,8 +264,10 @@ func runReference(ctx context.Context, cfg config, registry *ingest.Registry,
 		Sources:   registry.Reference,
 		Fetcher:   paths,
 		Store:     store,
+		Ledger:    store,
 		Log:       slog.Default(),
 		BatchSize: cfg.batchSize,
+		Force:     cfg.force,
 	}
 	stats, runErr := loader.Run(ctx)
 	written := int(stats.RankingsWritten) + stats.Players

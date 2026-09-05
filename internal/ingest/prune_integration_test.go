@@ -6,6 +6,36 @@ import (
 	"testing"
 )
 
+// fuseMatchOne recreates what the old natural key did: the two draw blocks'
+// match 1 becomes one row holding four players.
+func fuseMatchOne(ctx context.Context, t *testing.T, store *Store) {
+	t.Helper()
+	var keep, drop int64
+	err := store.pool.QueryRow(ctx,
+		`SELECT min(id), max(id) FROM matches WHERE match_num = 1`).Scan(&keep, &drop)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Deferred, because the winner foreign key points the other way for as long
+	// as the participants are moving.
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, stmt := range []string{
+		`SET CONSTRAINTS ALL DEFERRED`,
+		fmt.Sprintf(`UPDATE match_players SET match_id = %d WHERE match_id = %d`, keep, drop),
+		fmt.Sprintf(`DELETE FROM matches WHERE id = %d`, drop),
+	} {
+		if _, err := tx.Exec(ctx, stmt); err != nil {
+			t.Fatalf("fuse (%s): %v", stmt, err)
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		t.Fatalf("fuse: %v", err)
+	}
+}
+
 // findStatRow returns the index of a row whose winner has statistics.
 func findStatRow(t *testing.T, rows []MatchRow) int {
 	t.Helper()
@@ -172,30 +202,7 @@ func TestPruneDeletesCollapsedMatchesAndSaysWhatToReingest(t *testing.T) {
 	if _, err := store.WriteBatch(ctx, wtaTour, rows); err != nil {
 		t.Fatalf("write: %v", err)
 	}
-	var keep, drop int64
-	err := store.pool.QueryRow(ctx,
-		`SELECT min(id), max(id) FROM matches WHERE match_num = 1`).Scan(&keep, &drop)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Deferred, because the winner foreign key points the other way for as long
-	// as the participants are moving.
-	tx, err := store.pool.Begin(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, stmt := range []string{
-		`SET CONSTRAINTS ALL DEFERRED`,
-		fmt.Sprintf(`UPDATE match_players SET match_id = %d WHERE match_id = %d`, keep, drop),
-		fmt.Sprintf(`DELETE FROM matches WHERE id = %d`, drop),
-	} {
-		if _, err := tx.Exec(ctx, stmt); err != nil {
-			t.Fatalf("fuse (%s): %v", stmt, err)
-		}
-	}
-	if err := tx.Commit(ctx); err != nil {
-		t.Fatalf("fuse: %v", err)
-	}
+	fuseMatchOne(ctx, t, store)
 
 	res, err := store.Prune(ctx, true)
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -112,6 +113,13 @@ func (s *Store) Prune(ctx context.Context, dryRun bool) (res PruneResult, err er
 	}
 	res.Collapsed = int(tag.RowsAffected())
 
+	// The ledger says those files are ingested, and after this they are not.
+	// Leaving the entries would make the next run skip exactly the files that
+	// have to be read again.
+	if err := forget(ctx, tx, res.Refill); err != nil {
+		return res, err
+	}
+
 	if err := tx.Commit(ctx); err != nil {
 		return res, fmt.Errorf("commit prune: %w", err)
 	}
@@ -165,4 +173,25 @@ func collapsedSeasons(ctx context.Context, q querier) ([]SourceSeason, error) {
 		out = append(out, s)
 	}
 	return out, rows.Err()
+}
+
+// forget removes ledger entries so the named files are read again.
+func forget(ctx context.Context, tx pgx.Tx, files []SourceSeason) error {
+	if len(files) == 0 {
+		return nil
+	}
+	sources := make([]string, 0, len(files))
+	units := make([]string, 0, len(files))
+	for _, f := range files {
+		sources = append(sources, f.Source)
+		units = append(units, strconv.Itoa(f.Season))
+	}
+	_, err := tx.Exec(ctx, `
+		DELETE FROM ingest_files f
+		 USING unnest($1::text[], $2::text[]) AS n(source, unit)
+		 WHERE f.source = n.source AND f.unit = n.unit`, sources, units)
+	if err != nil {
+		return fmt.Errorf("forget ingested files: %w", err)
+	}
+	return nil
 }
