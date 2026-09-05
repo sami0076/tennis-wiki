@@ -80,6 +80,10 @@ zeroes.
   played, more break points saved than faced: each is arithmetically impossible, so the row
   is corrupt rather than surprising. `cmd/dataqual` counts any that predate the check, and
   `ingest --stage prune` clears them.
+- **Rows repeating a match already read** are collapsed rather than counted twice. The WTA
+  qualifying files carry 2,700 byte-identical repeats across three seasons alone; a match is
+  identified by its draw, its number and the pair who played it, so a repeat updates the
+  match instead of inventing a second one.
 - **Team events** (Davis Cup, Billie Jean King Cup) are flagged and excluded from rating
   calculations by default.
 

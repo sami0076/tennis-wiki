@@ -66,6 +66,24 @@ var integrityChecks = []Check{
 		          ) LIMIT 5`,
 	},
 	{
+		Name:     "loser_did_not_lose",
+		Severity: Integrity,
+		Why: "matches.loser_id is half the natural key as well as a denormalisation. " +
+			"If it names a player who won, or who did not play, the key identifies " +
+			"the wrong match and the next ingest writes a duplicate.",
+		Query: `SELECT count(*) FROM matches m
+		         WHERE NOT EXISTS (
+		           SELECT 1 FROM match_players mp
+		            WHERE mp.match_id = m.id AND mp.player_id = m.loser_id AND NOT mp.won
+		         )`,
+		Sample: `SELECT t.name || ' ' || t.season || ' match ' || m.match_num
+		           FROM matches m JOIN tournaments t ON t.id = m.tournament_id
+		          WHERE NOT EXISTS (
+		            SELECT 1 FROM match_players mp
+		             WHERE mp.match_id = m.id AND mp.player_id = m.loser_id AND NOT mp.won
+		          ) LIMIT 5`,
+	},
+	{
 		Name:     "matches_without_one_winner",
 		Severity: Integrity,
 		Why:      "A match has exactly one winner. Two or zero breaks every aggregate.",

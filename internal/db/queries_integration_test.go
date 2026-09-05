@@ -92,10 +92,10 @@ func (h *harness) match(tournamentID, winnerID, loserID int64, num int, round st
 	var matchID int64
 	err := h.tx.QueryRow(h.ctx,
 		`INSERT INTO matches (tournament_id, match_num, round, best_of, surface, winner_id,
-		                      played_on, incomplete, has_detailed_stats, source)
-		 VALUES ($1, $2, $3, 3, 'hard', $4, make_date(2019, 6, 1), $5, $6, 'test')
+		                      loser_id, played_on, incomplete, has_detailed_stats, source)
+		 VALUES ($1, $2, $3, 3, 'hard', $4, $5, make_date(2019, 6, 1), $6, $7, 'test')
 		 RETURNING id`,
-		tournamentID, num, round, winnerID, incomplete, servePoints != nil).Scan(&matchID)
+		tournamentID, num, round, winnerID, loserID, incomplete, servePoints != nil).Scan(&matchID)
 	if err != nil {
 		h.t.Fatalf("insert match: %v", err)
 	}

@@ -2,6 +2,7 @@ package ingest
 
 import (
 	"context"
+	"fmt"
 	"testing"
 )
 
@@ -78,7 +79,7 @@ func TestPruneReachesTheStateAReingestWould(t *testing.T) {
 		t.Fatalf("write the corrupt state: %v", err)
 	}
 
-	res, err := store.PruneStats(ctx, true)
+	res, err := store.Prune(ctx, true)
 	if err != nil {
 		t.Fatalf("dry run: %v", err)
 	}
@@ -89,7 +90,7 @@ func TestPruneReachesTheStateAReingestWould(t *testing.T) {
 		t.Error("dry run cleared the row it was only supposed to count")
 	}
 
-	res, err = store.PruneStats(ctx, false)
+	res, err = store.Prune(ctx, false)
 	if err != nil {
 		t.Fatalf("prune: %v", err)
 	}
@@ -121,7 +122,7 @@ func TestPruneKeepsTheMatchAndTheOtherSide(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := store.PruneStats(ctx, false); err != nil {
+	if _, err := store.Prune(ctx, false); err != nil {
 		t.Fatalf("prune: %v", err)
 	}
 
@@ -151,11 +152,88 @@ func TestPruneKeepsTheMatchAndTheOtherSide(t *testing.T) {
 	}
 
 	// A second pass has nothing left to do.
-	res, err := store.PruneStats(ctx, false)
+	res, err := store.Prune(ctx, false)
 	if err != nil {
 		t.Fatalf("second prune: %v", err)
 	}
 	if res.StatLines != 0 {
 		t.Errorf("second prune cleared %d more stat lines", res.StatLines)
+	}
+}
+
+// The repair for a collapsed match is delete then re-ingest, because the row is
+// a mixture of two matches and nothing in it says which half is which.
+func TestPruneDeletesCollapsedMatchesAndSaysWhatToReingest(t *testing.T) {
+	store, ctx := testStore(t)
+	rows := fixtureRows(t, "wta_matches_1937.csv", wtaTour)
+
+	// Fuse the two blocks' match 1 the way the old natural key did: one match
+	// row carrying four participants.
+	if _, err := store.WriteBatch(ctx, wtaTour, rows); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	var keep, drop int64
+	err := store.pool.QueryRow(ctx,
+		`SELECT min(id), max(id) FROM matches WHERE match_num = 1`).Scan(&keep, &drop)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Deferred, because the winner foreign key points the other way for as long
+	// as the participants are moving.
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, stmt := range []string{
+		`SET CONSTRAINTS ALL DEFERRED`,
+		fmt.Sprintf(`UPDATE match_players SET match_id = %d WHERE match_id = %d`, keep, drop),
+		fmt.Sprintf(`DELETE FROM matches WHERE id = %d`, drop),
+	} {
+		if _, err := tx.Exec(ctx, stmt); err != nil {
+			t.Fatalf("fuse (%s): %v", stmt, err)
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		t.Fatalf("fuse: %v", err)
+	}
+
+	res, err := store.Prune(ctx, true)
+	if err != nil {
+		t.Fatalf("dry run: %v", err)
+	}
+	if res.Collapsed != 1 {
+		t.Errorf("dry run found %d collapsed matches, want 1", res.Collapsed)
+	}
+	if len(res.Refill) != 1 || res.Refill[0].Source != wtaTour.Name || res.Refill[0].Season != 1937 {
+		t.Errorf("refill = %+v, want one entry naming %s 1937", res.Refill, wtaTour.Name)
+	}
+
+	res, err = store.Prune(ctx, false)
+	if err != nil {
+		t.Fatalf("prune: %v", err)
+	}
+	if res.Collapsed != 1 {
+		t.Errorf("prune deleted %d collapsed matches, want 1", res.Collapsed)
+	}
+
+	// Re-ingesting the season it named writes both matches back, separated.
+	if _, err := store.WriteBatch(ctx, wtaTour, rows); err != nil {
+		t.Fatalf("re-ingest: %v", err)
+	}
+	counts, err := store.Counts(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if counts["matches"] != 6 || counts["match_players"] != 12 {
+		t.Errorf("after repair: %d matches and %d participants, want 6 and 12",
+			counts["matches"], counts["match_players"])
+	}
+
+	after, err := store.Prune(ctx, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if after.Collapsed != 0 {
+		t.Errorf("%d matches still collapsed after the repair", after.Collapsed)
 	}
 }

@@ -116,8 +116,8 @@ func seedMatch(ctx context.Context, t *testing.T, tx pgx.Tx) (matchID, playerID 
 	}
 	err = tx.QueryRow(ctx,
 		`INSERT INTO matches (tournament_id, match_num, round, best_of, winner_id,
-		                      played_on, has_detailed_stats, source)
-		 VALUES ($1, 1, 'F', 3, $2, make_date(2019, 6, 1), true, 'test') RETURNING id`,
+		                      loser_id, played_on, has_detailed_stats, source)
+		 VALUES ($1, 1, 'F', 3, $2, $2, make_date(2019, 6, 1), true, 'test') RETURNING id`,
 		tournamentID, playerID).Scan(&matchID)
 	if err != nil {
 		t.Fatalf("insert match: %v", err)

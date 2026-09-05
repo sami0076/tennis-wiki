@@ -46,7 +46,7 @@ to import it, which so far nothing does.
 
 ## Schema decisions
 
-Reasoning for individual columns lives in comments in `migrations/`. Three choices are
+Reasoning for individual columns lives in comments in `migrations/`. A few choices are
 worth stating here because they are not obvious from any single file.
 
 **`rating_surface` is a separate enum from `surface`.** The `ratings` primary key includes
@@ -55,11 +55,18 @@ primary key, and a generated `COALESCE(surface::text, 'overall')` column is reje
 the enum-to-text cast is only STABLE, not IMMUTABLE. A dedicated enum with an `overall`
 member is simpler than either and says what it means.
 
-**`matches.winner_id` is denormalised, and constrained.** A deferred composite foreign key
-to `match_players (match_id, player_id)` guarantees the winner actually played. The
-constraint is deferred because a match row is written before its participants inside one
-transaction. It does not enforce that the winner's `won` is true — that stays a `cmd/dataqual`
-check.
+**`matches.winner_id` and `matches.loser_id` are denormalised, and constrained.** A deferred
+composite foreign key each, to `match_players (match_id, player_id)`, guarantees both
+players actually played. The constraints are deferred because a match row is written before
+its participants inside one transaction. They do not enforce that the winner's `won` is true
+and the loser's is false — that stays a `cmd/dataqual` check.
+
+**A match is identified by its draw, its number, and the pair who played it.** `match_num` is
+unique within a draw block, not within a tournament, and one `tourney_id` can hold more than
+one block — with nothing in the source to tell them apart. Keyed on the number alone, two
+different matches share a row and accumulate four participants. The pair is stored unordered
+in the index, so a source correcting who won updates the match rather than duplicating it.
+Migrations 00007 and 00011 carry the measurements.
 
 **`matches` is not partitioned yet.** At ~1.63M rows it does not need to be, and
 partitioning by season would force the partition key into the primary key and every

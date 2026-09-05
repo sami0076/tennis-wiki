@@ -87,6 +87,99 @@ func TestIdempotentReingest(t *testing.T) {
 	}
 }
 
+var wtaTour = Source{
+	Name: "fixture-wta", Tour: TourWTA, Tier: "tour", Profile: "sackmann",
+	BaseURL: "https://x", Path: "wta_matches_{season}.csv",
+}
+
+// Berkeley Pac Coast 1937 is filed under one tourney_id as two draw blocks,
+// each numbering its matches from 1. Keyed on the number alone the two blocks'
+// match 1 collapse into one row holding four players, which is two head-to-head
+// records that never happened.
+func TestSameMatchNumberDifferentPlayersStayApart(t *testing.T) {
+	store, ctx := testStore(t)
+	rows := fixtureRows(t, "wta_matches_1937.csv", wtaTour)
+	if len(rows) != 6 {
+		t.Fatalf("fixture has %d rows, want 6", len(rows))
+	}
+
+	res, err := store.WriteBatch(ctx, wtaTour, rows)
+	if err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	if res.Collapsed != 0 {
+		t.Errorf("%d rows collapsed; every row is a different pair of players", res.Collapsed)
+	}
+
+	counts, err := store.Counts(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if counts["matches"] != 6 {
+		t.Errorf("%d matches written, want one per source row", counts["matches"])
+	}
+	if counts["match_players"] != 12 {
+		t.Errorf("%d participants, want two per match", counts["match_players"])
+	}
+
+	var wrong int
+	if err := store.pool.QueryRow(ctx, `
+		SELECT count(*) FROM (
+		  SELECT match_id FROM match_players GROUP BY match_id HAVING count(*) <> 2
+		) x`).Scan(&wrong); err != nil {
+		t.Fatal(err)
+	}
+	if wrong != 0 {
+		t.Errorf("%d matches do not have exactly two participants", wrong)
+	}
+
+	// Both blocks kept their own match 1.
+	var num1 int
+	if err := store.pool.QueryRow(ctx,
+		`SELECT count(*) FROM matches WHERE match_num = 1`).Scan(&num1); err != nil {
+		t.Fatal(err)
+	}
+	if num1 != 2 {
+		t.Errorf("%d matches numbered 1, want both blocks", num1)
+	}
+}
+
+// The pair is unordered, so a source correcting who won updates the match
+// instead of leaving the old result beside the new one.
+func TestCorrectedWinnerUpdatesRatherThanDuplicates(t *testing.T) {
+	store, ctx := testStore(t)
+	rows := fixtureRows(t, "wta_matches_1937.csv", wtaTour)[:1]
+	if _, err := store.WriteBatch(ctx, wtaTour, rows); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	corrected := rows[0]
+	corrected.Winner, corrected.Loser = rows[0].Loser, rows[0].Winner
+	corrected.Score = "7-5 6-4"
+	if _, err := store.WriteBatch(ctx, wtaTour, []MatchRow{corrected}); err != nil {
+		t.Fatalf("rewrite: %v", err)
+	}
+
+	counts, err := store.Counts(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if counts["matches"] != 1 {
+		t.Errorf("%d matches, want the correction to replace the original", counts["matches"])
+	}
+
+	var score, winner string
+	err = store.pool.QueryRow(ctx, `
+		SELECT m.score, p.full_name FROM matches m
+		  JOIN players p ON p.id = m.winner_id`).Scan(&score, &winner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if score != "7-5 6-4" || winner != corrected.Winner.Name {
+		t.Errorf("match reads %s to %s, want the corrected result", score, winner)
+	}
+}
+
 // Pre-1991 statistics must land as NULL, never as zero.
 func TestPre1991StatsStoredAsNull(t *testing.T) {
 	store, ctx := testStore(t)
