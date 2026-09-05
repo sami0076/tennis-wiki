@@ -55,6 +55,27 @@ about 23 minutes, and identity reconciliation over 126,114 players in **20 secon
 dominated by fetching a few hundred files. `make ingest` loads the seed fixture in ten
 seconds precisely so this is not on anyone's critical path.
 
+### A second run over unchanged sources costs almost nothing
+
+An ingest used to re-read every configured file from the start and re-upsert rows it already
+had. `ingest_files` now records, per file, the validator the mirror gave for the content that
+was read, and the next run asks for that file conditionally.
+
+```
+GET wta_matches_1937.csv                          200, 498,854 bytes
+GET wta_matches_1937.csv  If-None-Match: "bd83…"  304,       0 bytes
+```
+
+A file is recorded only after every one of its rows has been committed, so a recorded file
+is one the database genuinely holds — which is also what makes an interrupted run resume at
+the file it died on rather than at the beginning. `--force` re-reads regardless.
+
+Two things deliberately do **not** get recorded. A ranking file with rows referencing a
+player who does not exist yet stays unrecorded, because skipping it on the run that finally
+has that player would lose those rankings for good. And `ingest --stage prune` un-records
+the files whose matches it deletes, since leaving them would make the next run skip exactly
+the files it has to read again.
+
 ### Run it in chunks, not one shot
 
 A full ingest from empty is long enough that anything interrupting it — a machine running
