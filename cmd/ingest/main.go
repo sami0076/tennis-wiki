@@ -166,17 +166,24 @@ func run(ctx context.Context, cfg config) error {
 }
 
 func runPrune(ctx context.Context, cfg config, store *ingest.Store) error {
-	res, err := store.PruneStats(ctx, cfg.dryRun)
+	res, err := store.Prune(ctx, cfg.dryRun)
 	if err != nil {
 		return err
 	}
+	verb := "cleared"
 	if cfg.dryRun {
-		slog.Info("prune: would clear stat lines that cannot describe a real match",
-			"stat_lines", res.StatLines)
-		return nil
+		verb = "would clear"
 	}
-	slog.Info("prune: cleared stat lines that cannot describe a real match",
+	slog.Info("prune: "+verb+" stat lines that cannot describe a real match",
 		"stat_lines", res.StatLines, "matches_no_longer_claiming_stats", res.Matches)
+	slog.Info("prune: "+verb+" matches holding other than two players",
+		"matches", res.Collapsed)
+
+	// Deleting is only half the repair, so name the work that finishes it.
+	for _, r := range res.Refill {
+		slog.Warn("prune: re-ingest to write these matches back separately",
+			"source", r.Source, "season", r.Season, "matches", r.Count)
+	}
 	return nil
 }
 
