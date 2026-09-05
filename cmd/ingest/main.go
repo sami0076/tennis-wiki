@@ -43,6 +43,8 @@ const (
 	stageMatches   = "matches"
 	stageReference = "reference"
 	stageReconcile = "reconcile"
+	// Repair, not part of a run: a full ingest overwrites what it would clear.
+	stagePrune = "prune"
 )
 
 func main() {
@@ -55,11 +57,12 @@ func main() {
 	flag.IntVar(&cfg.workers, "workers", 0, "concurrent file readers (default: GOMAXPROCS)")
 	flag.IntVar(&cfg.batchSize, "batch", ingest.DefaultBatchSize, "rows per transaction")
 	flag.StringVar(&cfg.stage, "stage", stageAll,
-		"what to run: all, matches, reference (player tables and rankings), or reconcile")
+		"what to run: all, matches, reference (player tables and rankings), reconcile, "+
+			"or prune (clear stat lines the parser now rejects)")
 	flag.StringVar(&cfg.overrides, "overrides", "configs/player_overrides.json",
 		"identity decisions made by hand")
 	flag.BoolVar(&cfg.dryRun, "dry-run", false,
-		"for the reconcile stage: report what would be merged without doing it")
+		"for reconcile and prune: report what would change without doing it")
 	flag.BoolVar(&cfg.verbose, "v", false, "verbose logging")
 	flag.Parse()
 
@@ -111,9 +114,10 @@ func run(ctx context.Context, cfg config) error {
 	defer pool.Close()
 
 	switch cfg.stage {
-	case stageAll, stageMatches, stageReference, stageReconcile:
+	case stageAll, stageMatches, stageReference, stageReconcile, stagePrune:
 	default:
-		return fmt.Errorf("unknown stage %q: want all, matches, reference or reconcile", cfg.stage)
+		return fmt.Errorf("unknown stage %q: want all, matches, reference, reconcile or prune",
+			cfg.stage)
 	}
 
 	store := ingest.NewStore(pool)
@@ -135,9 +139,14 @@ func run(ctx context.Context, cfg config) error {
 			return err
 		}
 	}
+	if cfg.stage == stagePrune {
+		if err := runPrune(ctx, cfg, store); err != nil {
+			return err
+		}
+	}
 
 	// Search ranks off this view, so it is stale the moment matches change.
-	if cfg.stage != stageReconcile {
+	if cfg.stage == stageAll || cfg.stage == stageMatches || cfg.stage == stageReference {
 		started := time.Now()
 		if err := store.RefreshProminence(ctx); err != nil {
 			return err
@@ -153,6 +162,21 @@ func run(ctx context.Context, cfg config) error {
 		"players", counts["players"], "tournaments", counts["tournaments"],
 		"matches", counts["matches"], "match_players", counts["match_players"],
 		"rankings", counts["rankings"])
+	return nil
+}
+
+func runPrune(ctx context.Context, cfg config, store *ingest.Store) error {
+	res, err := store.PruneStats(ctx, cfg.dryRun)
+	if err != nil {
+		return err
+	}
+	if cfg.dryRun {
+		slog.Info("prune: would clear stat lines that cannot describe a real match",
+			"stat_lines", res.StatLines)
+		return nil
+	}
+	slog.Info("prune: cleared stat lines that cannot describe a real match",
+		"stat_lines", res.StatLines, "matches_no_longer_claiming_stats", res.Matches)
 	return nil
 }
 

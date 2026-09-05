@@ -75,6 +75,11 @@ zeroes.
 - **Rows with no `serve_points`** are excluded from rate denominators. They are never
   treated as zero: a zeroed ace count for a 1970s match is wrong but plausible-looking,
   which is the worst failure mode available.
+- **Stat lines that contradict themselves** are dropped at ingest, keeping the match. More
+  first serves in than points served, more won than made, more second serves won than were
+  played, more break points saved than faced: each is arithmetically impossible, so the row
+  is corrupt rather than surprising. `cmd/dataqual` counts any that predate the check, and
+  `ingest --stage prune` clears them.
 - **Team events** (Davis Cup, Billie Jean King Cup) are flagged and excluded from rating
   calculations by default.
 

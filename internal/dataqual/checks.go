@@ -89,12 +89,27 @@ var integrityChecks = []Check{
 	{
 		Name:     "impossible_serve_numbers",
 		Severity: Integrity,
-		Why:      "Points won on serve cannot exceed points served.",
+		Why: "Points won on serve cannot exceed points served, and second serves " +
+			"are the serve points that missed the first. Each condition mirrors " +
+			"one the ingest rejects, so a count above zero is a row that predates " +
+			"the rejection.",
 		Query: `SELECT count(*) FROM match_players
 		         WHERE serve_points IS NOT NULL
 		           AND (first_in > serve_points
 		             OR first_won > first_in
+		             OR second_won > serve_points - first_in
 		             OR COALESCE(bp_saved, 0) > COALESCE(bp_faced, 0))`,
+		Sample: `SELECT 'match ' || match_id || ' player ' || player_id ||
+		                ': serve_points=' || serve_points || ' first_in=' || first_in ||
+		                ' first_won=' || first_won || ' second_won=' || second_won ||
+		                ' bp_saved=' || COALESCE(bp_saved, 0) || '/' || COALESCE(bp_faced, 0)
+		           FROM match_players
+		          WHERE serve_points IS NOT NULL
+		            AND (first_in > serve_points
+		              OR first_won > first_in
+		              OR second_won > serve_points - first_in
+		              OR COALESCE(bp_saved, 0) > COALESCE(bp_faced, 0))
+		          LIMIT 5`,
 	},
 	{
 		Name:     "rankings_without_player",
