@@ -66,6 +66,24 @@ GET wta_matches_1937.csv                          200, 498,854 bytes
 GET wta_matches_1937.csv  If-None-Match: "bd83…"  304,       0 bytes
 ```
 
+Measured on the full database, two slices:
+
+| slice | files | rows | cold | unchanged |
+|---|---|---|---|---|
+| ATP 2015–2024 | 27 | 224,752 | 376s | **16s** |
+| WTA 1990–2000 | 22 | 111,823 | 116s | **4s** |
+
+Both unchanged runs read zero rows. `--force` over WTA 1990–1992 reported `already_ingested=0`
+and read all six files, as it should.
+
+**Interruption, tested by killing the process mid-run.** Four files had committed; the ledger
+held exactly those four, and re-running the same command skipped them and read the remaining
+eighteen:
+
+```
+ingest finished  files_read=18  files_skipped=4  files_missing=0
+```
+
 A file is recorded only after every one of its rows has been committed, so a recorded file
 is one the database genuinely holds — which is also what makes an interrupted run resume at
 the file it died on rather than at the beginning. `--force` re-reads regardless.
@@ -78,12 +96,13 @@ the files it has to read again.
 
 ### Run it in chunks, not one shot
 
-A full ingest from empty is long enough that anything interrupting it — a machine running
-low on memory, a transient DNS failure, one row Postgres refuses — costs the whole run,
-because the ingest has no resume: it re-reads every file from the start and re-upserts rows
-it already has.
+A full ingest from empty is long enough that something will interrupt it — a machine running
+low on memory, a transient DNS failure, one row Postgres refuses. That used to cost the whole
+run. It now costs the file that was in flight, because every file completed before the
+interruption is recorded and skipped on the next attempt.
 
-Chunking by tour and season bounds that loss:
+Chunking by tour and season is still worth doing on a first run, to bound how much a single
+attempt has to get through:
 
 ```
 ingest --stage matches --tours wta --seasons 1922-1989
@@ -93,8 +112,8 @@ ingest --stage reference
 ingest --stage reconcile
 ```
 
-Each chunk is idempotent, so a failed one is simply repeated. Resumability that skips
-already-complete (source, season) pairs would be a real improvement.
+Each chunk is idempotent, so a failed one is simply repeated — and now a repeated one is
+nearly free.
 
 ### Repair a few rows without re-reading 1.6 million
 
