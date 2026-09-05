@@ -90,10 +90,11 @@ func (f *apiFixture) match(tournamentID, winnerID, loserID int64, num int, round
 	var matchID int64
 	err := f.tx.QueryRow(f.ctx,
 		`INSERT INTO matches (tournament_id, match_num, round, best_of, surface, winner_id,
-		                      played_on, incomplete, has_detailed_stats, source)
-		 VALUES ($1, $2, $3, 3, 'clay', $4, make_date($5, 5, 2), $6, $7, 'test')
+		                      loser_id, played_on, incomplete, has_detailed_stats, source)
+		 VALUES ($1, $2, $3, 3, 'clay', $4, $5, make_date($6, 5, 2), $7, $8, 'test')
 		 RETURNING id`,
-		tournamentID, num, round, winnerID, season, incomplete, servePoints != nil).Scan(&matchID)
+		tournamentID, num, round, winnerID, loserID, season, incomplete,
+		servePoints != nil).Scan(&matchID)
 	if err != nil {
 		f.t.Fatalf("insert match: %v", err)
 	}

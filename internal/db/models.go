@@ -267,6 +267,7 @@ type Match struct {
 	HasDetailedStats bool
 	Indoor           *bool
 	Source           string
+	LoserID          int64
 }
 
 type MatchPlayer struct {

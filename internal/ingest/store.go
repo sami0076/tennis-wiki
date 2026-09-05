@@ -114,12 +114,24 @@ type tourneyKey struct {
 	tour     Tour
 }
 
-// matchKey identifies a match by its natural key. is_qualifying is part of it
-// because match_num is only unique within a draw; see migration 00007.
+// matchKey identifies a match by its natural key: the draw it sits in, its
+// number within that draw, and the pair who played it. The number alone is not
+// unique within a tournament and neither is the draw; see migrations 00007 and
+// 00011. The pair is stored low id first, so a correction that swaps winner and
+// loser is the same match.
 type matchKey struct {
 	tournamentID int64
 	matchNum     int
 	qualifying   bool
+	lowPlayerID  int64
+	highPlayerID int64
+}
+
+func newMatchKey(tournamentID int64, matchNum int, qualifying bool, a, b int64) matchKey {
+	if a > b {
+		a, b = b, a
+	}
+	return matchKey{tournamentID, matchNum, qualifying, a, b}
 }
 
 func (s *Store) upsertPlayers(ctx context.Context, tx pgx.Tx, src Source, rows []MatchRow) (map[playerKey]int64, error) {
@@ -306,21 +318,27 @@ func (s *Store) upsertMatches(
 		if !ok {
 			return nil, 0, fmt.Errorf("match %s/%d: winner not written", r.TourneyID, r.MatchNum)
 		}
+		loserID, ok := players[playerKey{r.Loser.SourceID, src.Tour}]
+		if !ok {
+			return nil, 0, fmt.Errorf("match %s/%d: loser not written", r.TourneyID, r.MatchNum)
+		}
 
 		parsed := classifyScore(r.Score)
 		batch.Queue(
 			`INSERT INTO matches (tournament_id, match_num, round, best_of, surface, score,
-			                      minutes, winner_id, played_on, incomplete, is_qualifying,
-			                      is_team_event, has_detailed_stats, indoor, source)
+			                      minutes, winner_id, loser_id, played_on, incomplete,
+			                      is_qualifying, is_team_event, has_detailed_stats, indoor, source)
 			 VALUES ($1, $2, $3, $4, NULLIF($5, '')::surface, NULLIF($6, ''), $7, $8, $9,
-			         $10, $11, $12, $13, $14, $15)
-			 ON CONFLICT (tournament_id, match_num, is_qualifying) DO UPDATE
+			         $10, $11, $12, $13, $14, $15, $16)
+			 ON CONFLICT (tournament_id, match_num, is_qualifying,
+			              least(winner_id, loser_id), greatest(winner_id, loser_id)) DO UPDATE
 			    SET round              = EXCLUDED.round,
 			        best_of            = EXCLUDED.best_of,
 			        surface            = COALESCE(EXCLUDED.surface, matches.surface),
 			        score              = COALESCE(EXCLUDED.score, matches.score),
 			        minutes            = COALESCE(EXCLUDED.minutes, matches.minutes),
 			        winner_id          = EXCLUDED.winner_id,
+			        loser_id           = EXCLUDED.loser_id,
 			        played_on          = EXCLUDED.played_on,
 			        incomplete         = EXCLUDED.incomplete,
 			        is_qualifying      = EXCLUDED.is_qualifying,
@@ -330,10 +348,10 @@ func (s *Store) upsertMatches(
 			        source             = EXCLUDED.source
 			 RETURNING id`,
 			tid, r.MatchNum, r.Round, r.BestOf, r.Surface, r.Score, r.Minutes,
-			winnerID, r.TourneyDate, parsed.incomplete, r.IsQualifying(),
+			winnerID, loserID, r.TourneyDate, parsed.incomplete, r.IsQualifying(),
 			isTeamEvent(r.Level), r.HasDetailedStats(), r.Indoor, src.Name)
 
-		keys = append(keys, matchKey{tid, r.MatchNum, r.IsQualifying()})
+		keys = append(keys, newMatchKey(tid, r.MatchNum, r.IsQualifying(), winnerID, loserID))
 		labels = append(labels, fmt.Sprintf("%s/%d", r.TourneyID, r.MatchNum))
 	}
 	if len(keys) == 0 {
@@ -371,21 +389,22 @@ func (s *Store) upsertMatchPlayers(
 		if !ok {
 			return fmt.Errorf("match %s/%d: tournament not written", r.TourneyID, r.MatchNum)
 		}
-		matchID, ok := matches[matchKey{tid, r.MatchNum, r.IsQualifying()}]
+		winnerID, wok := players[playerKey{r.Winner.SourceID, src.Tour}]
+		loserID, lok := players[playerKey{r.Loser.SourceID, src.Tour}]
+		if !wok || !lok {
+			return fmt.Errorf("match %s/%d: a player was not written", r.TourneyID, r.MatchNum)
+		}
+		matchID, ok := matches[newMatchKey(tid, r.MatchNum, r.IsQualifying(), winnerID, loserID)]
 		if !ok {
 			return fmt.Errorf("match %s/%d: not written", r.TourneyID, r.MatchNum)
 		}
 
 		for _, side := range []struct {
+			id  int64
 			p   Player
 			won bool
-		}{{r.Winner, true}, {r.Loser, false}} {
-			pid, ok := players[playerKey{side.p.SourceID, src.Tour}]
-			if !ok {
-				return fmt.Errorf("match %s/%d: player %s not written",
-					r.TourneyID, r.MatchNum, side.p.SourceID)
-			}
-			queueMatchPlayer(batch, matchID, pid, side.won, side.p)
+		}{{winnerID, r.Winner, true}, {loserID, r.Loser, false}} {
+			queueMatchPlayer(batch, matchID, side.id, side.won, side.p)
 			// Batch results come back by position, so this is the only way to
 			// name the row a constraint violation came from. "statement 138"
 			// on its own is untraceable in a 1.6 million row ingest.

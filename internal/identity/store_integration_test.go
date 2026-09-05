@@ -73,9 +73,9 @@ func (f *fixture) match(tournamentID, winner, loser int64, num int, source strin
 	var matchID int64
 	err = tx.QueryRow(f.ctx,
 		`INSERT INTO matches (tournament_id, match_num, round, best_of, surface, winner_id,
-		                      played_on, source)
-		 VALUES ($1, $2, 'F', 3, 'hard', $3, make_date(2025, 5, 2), $4) RETURNING id`,
-		tournamentID, num, winner, source).Scan(&matchID)
+		                      loser_id, played_on, source)
+		 VALUES ($1, $2, 'F', 3, 'hard', $3, $4, make_date(2025, 5, 2), $5) RETURNING id`,
+		tournamentID, num, winner, loser, source).Scan(&matchID)
 	if err != nil {
 		f.t.Fatalf("insert match: %v", err)
 	}

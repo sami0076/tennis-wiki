@@ -81,9 +81,16 @@ func (s *Store) Merge(ctx context.Context, m Match) (err error) {
 	// ON CONFLICT DO NOTHING throughout: if the same match or ranking date
 	// arrived from both sources, the canonical row already has it and the
 	// duplicate's copy is redundant rather than a conflict to resolve.
+	// Both sides move: loser_id is half the match's natural key, so leaving it
+	// on the duplicate would strand the row behind a player that no longer
+	// exists and break the key on the next ingest.
 	if _, err := tx.Exec(ctx, `
 		UPDATE matches SET winner_id = $1 WHERE winner_id = $2`, canonical, dup); err != nil {
 		return fmt.Errorf("move match winners: %w", err)
+	}
+	if _, err := tx.Exec(ctx, `
+		UPDATE matches SET loser_id = $1 WHERE loser_id = $2`, canonical, dup); err != nil {
+		return fmt.Errorf("move match losers: %w", err)
 	}
 	if _, err := tx.Exec(ctx, `
 		INSERT INTO match_players (match_id, player_id, won, seed, entry, rank, rank_points,
