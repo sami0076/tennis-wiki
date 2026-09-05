@@ -27,6 +27,8 @@ type RefStats struct {
 	Unresolved          int
 	FilesRead           int
 	FilesMissing        int
+	// FilesSkipped were unchanged since the last run and were not transferred.
+	FilesSkipped int
 }
 
 // ReferenceLoader ingests player tables and ranking history.
@@ -39,6 +41,12 @@ type ReferenceLoader struct {
 	Store     ReferenceStore
 	Log       *slog.Logger
 	BatchSize int
+	// Ledger makes a run resumable; nil reads every file as before.
+	Ledger Ledger
+	// Force re-reads every file even if the ledger says it has not changed.
+	Force bool
+
+	known map[FileKey]string
 }
 
 func (l *ReferenceLoader) batchSize() int {
@@ -61,6 +69,13 @@ func (l *ReferenceLoader) log() *slog.Logger {
 func (l *ReferenceLoader) Run(ctx context.Context) (RefStats, error) {
 	var stats RefStats
 
+	if _, conditional := l.Fetcher.(ConditionalFetcher); conditional && l.Ledger != nil && !l.Force {
+		var err error
+		if l.known, err = l.Ledger.IngestedFiles(ctx); err != nil {
+			return stats, err
+		}
+	}
+
 	for _, src := range l.Sources {
 		if src.Kind != RefPlayers {
 			continue
@@ -79,7 +94,8 @@ func (l *ReferenceLoader) Run(ctx context.Context) (RefStats, error) {
 		}
 	}
 
-	if stats.FilesRead == 0 {
+	// A file skipped as unchanged still counts as found.
+	if stats.FilesRead == 0 && stats.FilesSkipped == 0 {
 		return stats, fmt.Errorf("no reference files found: %d missing", stats.FilesMissing)
 	}
 	l.log().InfoContext(ctx, "reference ingest finished",
@@ -88,12 +104,42 @@ func (l *ReferenceLoader) Run(ctx context.Context) (RefStats, error) {
 		"ranking_rows_seen", stats.RankingRowsSeen,
 		"ranking_rows_rejected", stats.RankingRowsRejected,
 		"unresolved_players", stats.Unresolved,
-		"files_read", stats.FilesRead, "files_missing", stats.FilesMissing)
+		"files_read", stats.FilesRead, "files_skipped", stats.FilesSkipped,
+		"files_missing", stats.FilesMissing)
 	return stats, nil
 }
 
+// open asks conditionally when the fetcher can, and returns ErrUnchanged for a
+// file the mirror says is byte-for-byte what was read last time.
+func (l *ReferenceLoader) open(ctx context.Context, src RefSource, path string) (
+	io.ReadCloser, string, error) {
+	if c, ok := l.Fetcher.(ConditionalFetcher); ok {
+		return c.OpenPathIfChanged(ctx, src.BaseURL, path, l.known[PathKey(src.Name, path)])
+	}
+	body, err := l.Fetcher.OpenPath(ctx, src.BaseURL, path)
+	return body, "", err
+}
+
+// record stores a file's validator. A failure loses the shortcut, not the data.
+func (l *ReferenceLoader) record(ctx context.Context, src RefSource, path, validator string,
+	seen, written int) {
+	if l.Ledger == nil || validator == "" {
+		return
+	}
+	if err := l.Ledger.RecordFile(ctx, PathKey(src.Name, path), validator, seen, written); err != nil {
+		l.log().WarnContext(ctx, "could not record an ingested file",
+			"source", src.Name, "path", path, "error", err)
+	}
+}
+
 func (l *ReferenceLoader) loadPlayers(ctx context.Context, src RefSource, stats *RefStats) error {
-	body, err := l.Fetcher.OpenPath(ctx, src.BaseURL, src.Path)
+	body, validator, err := l.open(ctx, src, src.Path)
+	if errors.Is(err, ErrUnchanged) {
+		stats.FilesSkipped++
+		l.log().InfoContext(ctx, "player table unchanged since the last ingest",
+			"source", src.Name, "path", src.Path)
+		return nil
+	}
 	if errors.Is(err, ErrNotFound) {
 		stats.FilesMissing++
 		l.log().WarnContext(ctx, "player table absent", "source", src.Name, "path", src.Path)
@@ -141,6 +187,7 @@ func (l *ReferenceLoader) loadPlayers(ctx context.Context, src RefSource, stats 
 	}
 
 	stats.FilesRead++
+	l.record(ctx, src, src.Path, validator, reader.Rows(), reader.Rows())
 	l.log().InfoContext(ctx, "player table loaded",
 		"source", src.Name, "tour", src.Tour, "rows", reader.Rows())
 	return nil
@@ -182,7 +229,13 @@ func (l *ReferenceLoader) loadRankings(ctx context.Context, src RefSource, stats
 
 func (l *ReferenceLoader) loadRankingFile(ctx context.Context, src RefSource, path string,
 	ids map[string]int64, unresolved map[string]int, stats *RefStats) error {
-	body, err := l.Fetcher.OpenPath(ctx, src.BaseURL, path)
+	body, validator, err := l.open(ctx, src, path)
+	if errors.Is(err, ErrUnchanged) {
+		stats.FilesSkipped++
+		l.log().InfoContext(ctx, "ranking file unchanged since the last ingest",
+			"source", src.Name, "path", path)
+		return nil
+	}
 	if errors.Is(err, ErrNotFound) {
 		stats.FilesMissing++
 		l.log().DebugContext(ctx, "ranking file absent", "source", src.Name, "path", path)
@@ -203,13 +256,16 @@ func (l *ReferenceLoader) loadRankingFile(ctx context.Context, src RefSource, pa
 	}
 
 	batch := make([]rankingWrite, 0, l.batchSize())
+	var written int64
 	flush := func() error {
 		n, err := l.Store.WriteRankings(ctx, batch)
 		stats.RankingsWritten += n
+		written += n
 		batch = batch[:0]
 		return err
 	}
 
+	skipped := 0
 	for {
 		entry, err := reader.Next()
 		if errors.Is(err, io.EOF) {
@@ -222,6 +278,7 @@ func (l *ReferenceLoader) loadRankingFile(ctx context.Context, src RefSource, pa
 		id, ok := ids[entry.SourceID]
 		if !ok {
 			unresolved[entry.SourceID]++
+			skipped++
 			continue
 		}
 		batch = append(batch, rankingWrite{
@@ -240,5 +297,15 @@ func (l *ReferenceLoader) loadRankingFile(ctx context.Context, src RefSource, pa
 	stats.FilesRead++
 	stats.RankingRowsSeen += reader.Rows()
 	stats.RankingRowsRejected += reader.Rejected()
+
+	// A file with rows waiting on a player who does not exist yet is not
+	// finished with. Recording it would skip the file on the run that finally
+	// has that player, and those rankings would never arrive.
+	if skipped > 0 {
+		l.log().DebugContext(ctx, "not recording a ranking file with unresolved rows",
+			"source", src.Name, "path", path, "rows", skipped)
+		return nil
+	}
+	l.record(ctx, src, path, validator, reader.Rows(), int(written))
 	return nil
 }

@@ -23,6 +23,8 @@ type Options struct {
 	Seasons []int
 	// Tours limits the run; empty means both.
 	Tours []Tour
+	// Force re-reads every file even if the ledger says it has not changed.
+	Force bool
 }
 
 func (o Options) workers() int {
@@ -43,6 +45,8 @@ func (o Options) batchSize() int {
 type RunStats struct {
 	FilesRead    int
 	FilesMissing int
+	// FilesSkipped were unchanged since the last run and were not transferred.
+	FilesSkipped int
 	RowsSeen     int
 	RowsWritten  int
 	RowsRejected int
@@ -69,6 +73,9 @@ type Pipeline struct {
 	Store    BatchWriter
 	Log      *slog.Logger
 	Options  Options
+	// Ledger makes a run resumable. Nil, or a Fetcher that cannot fetch
+	// conditionally, and every file is read as before.
+	Ledger Ledger
 }
 
 // job is one source file.
@@ -77,15 +84,23 @@ type job struct {
 	season int
 }
 
+func (j job) key() FileKey { return SeasonKey(j.source.Name, j.season) }
+
 // chunk is a batch of parsed rows travelling to the writer.
 type chunk struct {
 	source Source
+	key    FileKey
 	rows   []MatchRow
 	seen   int
 	// rejected counts rows this chunk could not parse.
 	rejected int
 	// missing marks a source file the fetcher did not have.
 	missing bool
+	// skipped marks a file the ledger and the mirror agreed had not changed.
+	skipped bool
+	// validator describes the content read, and is recorded once every row of
+	// the file is committed. Set on the chunk that closes a file.
+	validator string
 }
 
 // Run executes the pipeline.
@@ -99,8 +114,13 @@ func (p *Pipeline) Run(ctx context.Context) (RunStats, error) {
 	if len(jobs) == 0 {
 		return RunStats{}, errors.New("no source files selected")
 	}
+	known, err := p.ledger(ctx)
+	if err != nil {
+		return RunStats{}, err
+	}
 	log.InfoContext(ctx, "ingest starting",
-		"files", len(jobs), "workers", p.Options.workers(), "batch", p.Options.batchSize())
+		"files", len(jobs), "workers", p.Options.workers(), "batch", p.Options.batchSize(),
+		"already_ingested", len(known))
 
 	jobCh := make(chan job)
 	chunkCh := make(chan chunk, p.Options.workers())
@@ -113,7 +133,7 @@ func (p *Pipeline) Run(ctx context.Context) (RunStats, error) {
 		go func() {
 			defer readers.Done()
 			for j := range jobCh {
-				if err := p.readFile(ctx, j, chunkCh, log); err != nil {
+				if err := p.readFile(ctx, j, known[j.key()], chunkCh, log); err != nil {
 					readErrs <- err
 					return
 				}
@@ -141,15 +161,34 @@ func (p *Pipeline) Run(ctx context.Context) (RunStats, error) {
 	// Single writer: batches arrive here and nowhere else.
 	var stats RunStats
 	var writeErr error
+	// Rows are counted per file so that the ledger entry, written when the file
+	// closes, describes that file rather than the run.
+	tally := map[FileKey]*fileTally{}
 	for c := range chunkCh {
 		stats.RowsSeen += c.seen
 		stats.RowsRejected += c.rejected
+		if c.skipped {
+			stats.FilesSkipped++
+			continue
+		}
 		if c.missing {
 			stats.FilesMissing++
 			continue
 		}
+		t, ok := tally[c.key]
+		if !ok {
+			t = &fileTally{}
+			tally[c.key] = t
+		}
+		t.seen += c.seen
 		if c.rows == nil {
 			stats.FilesRead++
+			// Recorded only after every batch of this file committed, so a
+			// recorded file is one the database genuinely holds.
+			if writeErr == nil {
+				p.record(ctx, c.key, c.validator, *t, log)
+			}
+			delete(tally, c.key)
 			continue
 		}
 		if writeErr != nil {
@@ -160,6 +199,7 @@ func (p *Pipeline) Run(ctx context.Context) (RunStats, error) {
 			writeErr = err
 			continue
 		}
+		t.written += res.Matches
 		stats.RowsWritten += res.Matches
 		stats.RowsCollapsed += res.Collapsed
 	}
@@ -175,16 +215,45 @@ func (p *Pipeline) Run(ctx context.Context) (RunStats, error) {
 
 	// An ingest that read nothing at all is a misconfiguration, not an empty
 	// result. Reporting success here is how `make ingest` silently did nothing
-	// for as long as it pointed at a directory that did not exist.
-	if stats.FilesRead == 0 {
+	// for as long as it pointed at a directory that did not exist. A file
+	// skipped as unchanged still counts as found: that is a resumed run
+	// working, not a broken one.
+	if stats.FilesRead == 0 && stats.FilesSkipped == 0 {
 		return stats, fmt.Errorf("no source files found: %d planned, %d missing", len(jobs), stats.FilesMissing)
 	}
 
 	log.InfoContext(ctx, "ingest finished",
 		"rows_seen", stats.RowsSeen, "rows_written", stats.RowsWritten,
 		"rejected", stats.RowsRejected, "collapsed", stats.RowsCollapsed,
-		"files_read", stats.FilesRead, "files_missing", stats.FilesMissing)
+		"files_read", stats.FilesRead, "files_skipped", stats.FilesSkipped,
+		"files_missing", stats.FilesMissing)
 	return stats, nil
+}
+
+// fileTally counts one file's rows as its batches go past the writer.
+type fileTally struct{ seen, written int }
+
+// ledger returns what has already been ingested, or nothing when the run cannot
+// resume: no ledger, a fetcher that cannot ask, or --force.
+func (p *Pipeline) ledger(ctx context.Context) (map[FileKey]string, error) {
+	_, conditional := p.Fetcher.(ConditionalFetcher)
+	if p.Ledger == nil || !conditional || p.Options.Force {
+		return nil, nil
+	}
+	return p.Ledger.IngestedFiles(ctx)
+}
+
+// record stores a file's validator. A failure here loses the shortcut, not the
+// data, so it is reported rather than fatal.
+func (p *Pipeline) record(ctx context.Context, k FileKey, validator string,
+	t fileTally, log *slog.Logger) {
+	if p.Ledger == nil || validator == "" {
+		return
+	}
+	if err := p.Ledger.RecordFile(ctx, k, validator, t.seen, t.written); err != nil {
+		log.WarnContext(ctx, "could not record an ingested file",
+			"source", k.Source, "unit", k.Unit, "error", err)
+	}
 }
 
 // plan expands the registry into one job per source file.
@@ -211,12 +280,22 @@ func (p *Pipeline) plan() []job {
 
 // readFile streams one file, emitting batches. A file the source does not have
 // is normal and not an error: mirrors differ in coverage.
-func (p *Pipeline) readFile(ctx context.Context, j job, out chan<- chunk, log *slog.Logger) error {
-	body, err := p.Fetcher.Open(ctx, j.source, j.season)
+func (p *Pipeline) readFile(ctx context.Context, j job, validator string,
+	out chan<- chunk, log *slog.Logger) error {
+	body, current, err := p.open(ctx, j, validator)
+	if errors.Is(err, ErrUnchanged) {
+		log.DebugContext(ctx, "source file unchanged since the last ingest",
+			"source", j.source.Name, "season", j.season)
+		select {
+		case out <- chunk{source: j.source, key: j.key(), skipped: true}:
+		case <-ctx.Done():
+		}
+		return nil
+	}
 	if errors.Is(err, ErrNotFound) {
 		log.DebugContext(ctx, "source file absent", "source", j.source.Name, "season", j.season)
 		select {
-		case out <- chunk{source: j.source, missing: true}:
+		case out <- chunk{source: j.source, key: j.key(), missing: true}:
 		case <-ctx.Done():
 		}
 		return nil
@@ -239,7 +318,7 @@ func (p *Pipeline) readFile(ctx context.Context, j job, out chan<- chunk, log *s
 	seen, rejected := 0, 0
 
 	flush := func() bool {
-		c := chunk{source: j.source, rows: batch, seen: seen, rejected: rejected}
+		c := chunk{source: j.source, key: j.key(), rows: batch, seen: seen, rejected: rejected}
 		seen, rejected = 0, 0
 		select {
 		case out <- c:
@@ -278,11 +357,22 @@ func (p *Pipeline) readFile(ctx context.Context, j job, out chan<- chunk, log *s
 		}
 	}
 
-	// A nil-rows chunk marks the file as finished.
+	// A nil-rows chunk marks the file as finished, and carries the validator
+	// the writer records once it knows every batch went in.
 	select {
-	case out <- chunk{source: j.source}:
+	case out <- chunk{source: j.source, key: j.key(), validator: current}:
 	case <-ctx.Done():
 		return ctx.Err()
 	}
 	return nil
+}
+
+// open asks conditionally when the fetcher can, and unconditionally otherwise.
+func (p *Pipeline) open(ctx context.Context, j job, validator string) (
+	io.ReadCloser, string, error) {
+	if c, ok := p.Fetcher.(ConditionalFetcher); ok {
+		return c.OpenPathIfChanged(ctx, j.source.BaseURL, j.source.RelPath(j.season), validator)
+	}
+	body, err := p.Fetcher.Open(ctx, j.source, j.season)
+	return body, "", err
 }

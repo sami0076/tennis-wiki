@@ -118,15 +118,19 @@ SEED_SEASONS := 1975,2015,2019,2026
 ingest:
 	$(GO) run ./cmd/ingest --local-path ./testdata --seasons $(SEED_SEASONS)
 
-## ingest-full: load the complete dataset from the configured sources
+## ingest-full: load the complete dataset (skips files unchanged since the last run)
 ingest-full:
 	$(GO) run ./cmd/ingest
+
+## ingest-force: as ingest-full, but re-read every file regardless
+ingest-force:
+	$(GO) run ./cmd/ingest --force
 
 ## dataqual: report data-quality anomalies
 dataqual:
 	$(GO) run ./cmd/dataqual
 
-## prune: clear stat lines that cannot describe a real match
+## prune: repair rows that predate a rule the ingest now enforces
 prune:
 	$(GO) run ./cmd/ingest --stage prune
 
@@ -138,7 +142,7 @@ validate:
 clean:
 	$(call RM_DIR,$(BIN))
 
-.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc seed api ingest ingest-full prune dataqual validate clean
+.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc seed api ingest ingest-full ingest-force prune dataqual validate clean
 
 # print-VAR: echo a make variable, so CI can read the pinned tool versions
 # from here rather than duplicating them in a workflow file.

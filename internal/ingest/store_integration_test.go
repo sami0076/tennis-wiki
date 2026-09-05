@@ -22,7 +22,7 @@ func testStore(t *testing.T) (*Store, context.Context) {
 	// keeps the schema, which migrations own.
 	if _, err := pool.Exec(ctx,
 		`TRUNCATE match_players, matches, tournaments, player_aliases, players,
-		          rankings, ratings, ingest_runs RESTART IDENTITY CASCADE`); err != nil {
+		          rankings, ratings, ingest_runs, ingest_files RESTART IDENTITY CASCADE`); err != nil {
 		t.Fatalf("truncate: %v", err)
 	}
 	return NewStore(pool), ctx
