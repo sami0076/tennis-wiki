@@ -1,0 +1,7 @@
+tourney_id,tourney_name,surface,draw_size,tourney_level,tourney_date,match_num,winner_id,winner_seed,winner_entry,winner_name,winner_hand,winner_ht,winner_ioc,winner_age,loser_id,loser_seed,loser_entry,loser_name,loser_hand,loser_ht,loser_ioc,loser_age,score,best_of,round,minutes,w_ace,w_df,w_svpt,w_1stIn,w_1stWon,w_2ndWon,w_SvGms,w_bpSaved,w_bpFaced,l_ace,l_df,l_svpt,l_1stIn,l_1stWon,l_2ndWon,l_SvGms,l_bpSaved,l_bpFaced,winner_rank,winner_rank_points,loser_rank,loser_rank_points
+1937-1376,Berkeley Pac Coast,Hard,,W,19371003,1,237785,,,Sylvia Henrotin,U,,FRA,33.2320328542,238687,,,Helen Drendell,U,,USA,,6-2 6-1,3,R16,,,,,,,,,,,,,,,,,,,,,,,
+1937-1376,Berkeley Pac Coast,Hard,,W,19371003,2,232637,,,Kay Stammers,L,,GBR,23.5017111567,228837,,,Frances Umphred,U,,AUS,,5-7 6-2 6-4,3,R16,,,,,,,,,,,,,,,,,,,,,,,
+1937-1376,Berkeley Pac Coast,Hard,,W,19371003,15,227416,,,Anita Lizana,R,159,CHI,21.8726899384,229142,,,Margot Lumb,L,,GBR,25.2566735113,6-2 6-2,3,F,,,,,,,,,,,,,,,,,,,,,,,
+1937-1376,Berkeley Pac Coast,Hard,,W,19371003,1,231399,,,Margaret Osborne,U,,GBR,,237360,,,Barbara Miller,U,,USA,,6-1 6-2,3,R32,,,,,,,,,,,,,,,,,,,,,,,
+1937-1376,Berkeley Pac Coast,Hard,,W,19371003,2,232708,,,Mary Lou Gates,U,,USA,,237352,,,Alice Surber,U,,USA,,6-3 6-0,3,R32,,,,,,,,,,,,,,,,,,,,,,,
+1937-1376,Berkeley Pac Coast,Hard,,W,19371003,21,234609,,,Joan Ingram,U,,GBR,27.5947980835,237364,,,Maria Mack,U,,USA,,6-2 6-2,3,R16,,,,,,,,,,,,,,,,,,,,,,,

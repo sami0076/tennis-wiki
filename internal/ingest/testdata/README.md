@@ -13,6 +13,7 @@ Five or seven rows each, chosen to cover the cases that matter:
 | `atp_matches_futures_2015.csv` | Futures: no statistics in any year |
 | `atp_matches_qual_chall_2022.csv` | Qualifying rounds bundled with the main draw |
 | `tml_2026.csv` | Different column order, extra `indoor`, alphanumeric player ids |
+| `wta_matches_1937.csv` | Two draw blocks under one `tourney_id`, both numbering from 1 |
 
 ## Attribution
 
