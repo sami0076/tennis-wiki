@@ -77,10 +77,22 @@ already-complete (source, season) pairs would be a real improvement.
 
 ### Repair a few rows without re-reading 1.6 million
 
-Every write is an upsert, so tightening a parse-time rule does not remove the rows already
-written under the old one -- only a re-ingest does, and that is an hour to clear seven rows.
+Every write is an upsert, so tightening a rule does not remove the rows already written
+under the old one — only a re-ingest does, and that is an hour to clear seven rows.
 `ingest --stage prune` reaches the same state in seconds by applying the current rules to
 the stored rows instead of the source rows. `--dry-run` counts first.
+
+It does two repairs. A stat line that cannot describe a match loses its statistics and keeps
+its match. A match holding other than two players cannot be repaired in place at all — it is
+two source rows fused by an outgrown natural key — so it is deleted, and prune names the
+(source, season) pairs to re-ingest:
+
+```
+prune: cleared matches holding other than two players matches=131
+prune: re-ingest to write these matches back separately source=sackmann-wta-tour season=1939 matches=30
+```
+
+Repairing all 131 that way took **under two minutes**: 24 files rather than 1,073.
 
 ### Concurrency defaults are too aggressive for a busy machine
 
