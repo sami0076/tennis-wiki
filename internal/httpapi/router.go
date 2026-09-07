@@ -62,6 +62,7 @@ func (a *API) routes(r chi.Router) {
 	r.Get("/coverage", a.handleCoverage)
 	r.Get("/players", a.handlePlayerSearch)
 	r.Get("/players/{slug}", a.handlePlayer)
+	r.Get("/players/{slug}/matches", a.handlePlayerMatches)
 }
 
 // writeJSON sends a successful response. Errors go through WriteProblem instead.
