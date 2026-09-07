@@ -19,6 +19,15 @@ export function App() {
         <Route path="/players/:slug" element={<NotBuiltYet page="player page" issue={47} />} />
         <Route path="/h2h/:a/:b" element={<NotBuiltYet page="head-to-head page" issue={48} />} />
         <Route path="/rankings" element={<NotBuiltYet page="rankings page" issue={45} />} />
+        <Route
+          path="/simulator"
+          element={
+            <NotBuiltYet
+              page="simulator"
+              note="Nothing is built behind it yet: simulation is Phase 3, and internal/simulate is still a package comment."
+            />
+          }
+        />
         <Route path="/_components" element={<Gallery />} />
         <Route
           path="*"

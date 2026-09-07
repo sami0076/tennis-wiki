@@ -6,9 +6,13 @@ interface LayoutProps {
   children: ReactNode
 }
 
+// The nav in home.png, in its order. Simulator is Phase 3 and leads to a
+// placeholder for now: leaving it out would mean every later page had to come
+// back and edit the layout, and the design already says how many tabs there are.
 const links = [
-  { to: '/rankings', label: 'Rankings' },
   { to: '/players', label: 'Players' },
+  { to: '/rankings', label: 'Rankings' },
+  { to: '/simulator', label: 'Simulator' },
 ]
 
 /**
