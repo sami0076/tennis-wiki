@@ -16,6 +16,23 @@ permissions:
   contents: read
 
 jobs:
+  # Whether this change touches the frontend at all. The Go jobs stay
+  # unconditional -- they are the ones that can break the API -- but a Go-only
+  # pull request should not wait on npm install.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            web:
+              - 'web/**'
+              - '.github/workflows/**'
+
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -98,3 +115,48 @@ jobs:
       # Every data-quality query runs against the fresh schema, so a migration
       # that has drifted from the code fails here rather than in production.
       - run: make dataqual
+
+  web:
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # One install, then each check as its own step so a failure names itself
+      # rather than being "the frontend job".
+      - run: npm ci
+      - name: tsc
+        run: npm run typecheck
+      - name: eslint
+        run: npm run lint
+      - name: vitest
+        run: npm run test
+      - name: build
+        run: npm run build
+
+  # Deliberately not gated on web/ changing: it is a change to a Go response
+  # struct that makes the generated types stale, and that change touches no
+  # file under web/. Running this everywhere is what turns a shape change into
+  # a failed check rather than a runtime surprise in the browser.
+  web-types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: regenerate the API types
+        run: make web-types
+
+      - name: web/src/api/types.gen.ts is up to date with the Go structs
+        run: git diff --exit-code -- web/src/api/types.gen.ts

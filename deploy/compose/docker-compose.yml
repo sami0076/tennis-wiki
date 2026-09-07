@@ -33,6 +33,43 @@ services:
       - -c
       - synchronous_commit=off
 
+  # The application services. `make up` starts only postgres and redis, which
+  # is the fast loop for working on the Go side; `docker compose up` builds and
+  # runs the whole site.
+  api:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/api.Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-tennis}:${POSTGRES_PASSWORD:-tennis}@postgres:5432/${POSTGRES_DB:-tennis}?sslmode=disable
+      API_ADDR: ":8080"
+      # The frontend is served from the same origin through nginx, so the only
+      # cross-origin caller is the Vite dev server.
+      CORS_ORIGINS: http://localhost:5173
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8080/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  web:
+    build:
+      context: ../../web
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-5174}:80"
+    depends_on:
+      api:
+        condition: service_started
+
   redis:
     image: redis:7.4-alpine
     restart: unless-stopped
