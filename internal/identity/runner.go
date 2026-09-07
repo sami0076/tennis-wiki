@@ -13,6 +13,9 @@ type Stats struct {
 	Queued   int
 	// Rejected are pairs the scorer proposed and a human has already ruled out.
 	Rejected int
+	// Reclaimed are merged players moved back onto the undisambiguated slug a
+	// merge freed, which is a repair of earlier passes as much as of this one.
+	Reclaimed int
 }
 
 // Runner reconciles one tour at a time.
@@ -72,11 +75,18 @@ func (r *Runner) Run(ctx context.Context, tours []string) (Stats, error) {
 				return stats, err
 			}
 		}
+
+		reclaimed, err := r.Store.ReclaimFreedSlugs(ctx, tour, r.DryRun)
+		if err != nil {
+			return stats, err
+		}
+		stats.Reclaimed += reclaimed
 	}
 
 	r.log().InfoContext(ctx, "identity reconciliation finished",
 		"players", stats.Players, "proposed", stats.Proposed,
 		"merged", stats.Merged, "queued_for_review", stats.Queued,
-		"ruled_out_by_hand", stats.Rejected, "dry_run", r.DryRun)
+		"ruled_out_by_hand", stats.Rejected, "slugs_reclaimed", stats.Reclaimed,
+		"dry_run", r.DryRun)
 	return stats, nil
 }

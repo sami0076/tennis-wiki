@@ -36,15 +36,31 @@ func newFixture(t *testing.T) *fixture {
 
 func (f *fixture) player(sourceID, full, country string, born *time.Time) int64 {
 	f.t.Helper()
+	return f.playerSlug(sourceID, sourceID, full, country, born)
+}
+
+// playerSlug inserts a player whose slug is something other than its source id,
+// which is what the disambiguated-slug cases need.
+func (f *fixture) playerSlug(sourceID, slug, full, country string, born *time.Time) int64 {
+	f.t.Helper()
 	var id int64
 	err := f.pool.QueryRow(f.ctx,
 		`INSERT INTO players (source_id, tour, slug, full_name, country, birth_date)
-		 VALUES ($1, 'atp', $1, $2, $3, $4) RETURNING id`,
-		sourceID, full, country, born).Scan(&id)
+		 VALUES ($1, 'atp', $2, $3, $4, $5) RETURNING id`,
+		sourceID, slug, full, country, born).Scan(&id)
 	if err != nil {
 		f.t.Fatalf("insert player %s: %v", sourceID, err)
 	}
 	return id
+}
+
+func (f *fixture) slugOf(id int64) string {
+	f.t.Helper()
+	var slug string
+	if err := f.pool.QueryRow(f.ctx, `SELECT slug FROM players WHERE id = $1`, id).Scan(&slug); err != nil {
+		f.t.Fatalf("read slug of %d: %v", id, err)
+	}
+	return slug
 }
 
 func (f *fixture) tournament(sourceID string, season int) int64 {
@@ -204,6 +220,111 @@ func TestMergeToleratesAMatchPresentOnBothSides(t *testing.T) {
 	}
 	if n := f.count(`SELECT count(*) FROM rankings WHERE player_id = $1`, canonical); n != 1 {
 		t.Errorf("%d ranking rows for the shared date, want the one that was already there", n)
+	}
+}
+
+// Both source ids are named "Taylor Fritz", so one of them was disambiguated at
+// ingest. When the merge deletes the row holding the plain slug, the survivor
+// has to move onto it or /players/taylor-fritz stays a 404 while
+// /players/taylor-fritz-atp works.
+func TestReconciliationReclaimsTheFreedSlug(t *testing.T) {
+	f := newFixture(t)
+	born := date(t, "1997-10-28")
+	// The alphanumeric row was written first and took the plain slug; the
+	// longer career, which becomes canonical, got the suffix.
+	dup := f.playerSlug("FB98", "taylor-fritz", "Taylor Fritz", "USA", born)
+	canonical := f.playerSlug("126203", "taylor-fritz-atp", "Taylor Fritz", "USA", born)
+	opponent := f.player("100001", "Some Opponent", "FRA", nil)
+	open := f.tournament("open", 2025)
+	f.match(open, dup, opponent, 1, "tml-atp-current")
+
+	runner := &Runner{Store: f.Store, Decisions: (&Overrides{}).Index()}
+	if _, err := runner.Run(f.ctx, []string{"atp"}); err != nil {
+		t.Fatalf("first pass: %v", err)
+	}
+	if got := f.slugOf(canonical); got != "taylor-fritz" {
+		t.Errorf("slug after the merge = %q, want the freed taylor-fritz", got)
+	}
+
+	// A second pass has nothing to free, so it must not move anything.
+	if _, err := runner.Run(f.ctx, []string{"atp"}); err != nil {
+		t.Fatalf("second pass: %v", err)
+	}
+	if got := f.slugOf(canonical); got != "taylor-fritz" {
+		t.Errorf("slug after a second pass = %q, want it unchanged", got)
+	}
+}
+
+// Every merge that ran before the repair existed left its survivor on a
+// suffixed slug, and no later pass will merge that pair again -- the duplicate
+// is gone. The alias is the only remaining evidence a merge happened.
+func TestReconciliationRepairsAnEarlierMerge(t *testing.T) {
+	f := newFixture(t)
+	merged := f.playerSlug("126203", "taylor-fritz-atp", "Taylor Fritz", "USA", date(t, "1997-10-28"))
+	// A suffixed slug on a player no merge has touched is a live collision with
+	// someone else, not a leftover, so it must be left alone.
+	untouched := f.playerSlug("111111", "steve-johnson-atp", "Steve Johnson", "USA", nil)
+	if _, err := f.pool.Exec(f.ctx,
+		`INSERT INTO player_aliases (source, source_id, player_id, confidence)
+		 VALUES ('tml-atp-current', 'FB98', $1, 1.0)`, merged); err != nil {
+		t.Fatal(err)
+	}
+
+	runner := &Runner{Store: f.Store, Decisions: (&Overrides{}).Index(), DryRun: true}
+	stats, err := runner.Run(f.ctx, []string{"atp"})
+	if err != nil {
+		t.Fatalf("dry run: %v", err)
+	}
+	if stats.Reclaimed != 1 {
+		t.Errorf("dry run reported %d slugs reclaimed, want the 1 it would move", stats.Reclaimed)
+	}
+	if got := f.slugOf(merged); got != "taylor-fritz-atp" {
+		t.Errorf("a dry run moved a slug to %q", got)
+	}
+
+	runner.DryRun = false
+	stats, err = runner.Run(f.ctx, []string{"atp"})
+	if err != nil {
+		t.Fatalf("repair pass: %v", err)
+	}
+	if stats.Reclaimed != 1 {
+		t.Errorf("reclaimed %d, want 1", stats.Reclaimed)
+	}
+	if got := f.slugOf(merged); got != "taylor-fritz" {
+		t.Errorf("slug = %q, want the repaired taylor-fritz", got)
+	}
+	if got := f.slugOf(untouched); got != "steve-johnson-atp" {
+		t.Errorf("an unmerged player's slug moved to %q", got)
+	}
+
+	stats, err = runner.Run(f.ctx, []string{"atp"})
+	if err != nil {
+		t.Fatalf("second repair pass: %v", err)
+	}
+	if stats.Reclaimed != 0 {
+		t.Errorf("a second pass reclaimed %d, want nothing left to repair", stats.Reclaimed)
+	}
+}
+
+// The exception is narrow: only a slug the merge itself freed may be taken. A
+// different player holding it keeps it, because that one is a live URL.
+func TestMergeLeavesASlugAnotherPlayerHolds(t *testing.T) {
+	f := newFixture(t)
+	// A genuinely different Taylor Fritz -- different date of birth -- who was
+	// written first and holds the plain slug.
+	f.playerSlug("111111", "taylor-fritz", "Taylor Fritz", "USA", date(t, "1972-01-01"))
+	canonical := f.playerSlug("126203", "taylor-fritz-atp", "Taylor Fritz", "USA", date(t, "1997-10-28"))
+	dup := f.playerSlug("FB98", "taylor-fritz-atp-1", "Taylor Fritz", "USA", date(t, "1997-10-28"))
+
+	err := f.Merge(f.ctx, Match{
+		Canonical: Player{ID: canonical, SourceID: "126203"},
+		Duplicate: Player{ID: dup, SourceID: "FB98"}, Confidence: 1.0, Reason: "test",
+	})
+	if err != nil {
+		t.Fatalf("Merge: %v", err)
+	}
+	if got := f.slugOf(canonical); got != "taylor-fritz-atp" {
+		t.Errorf("slug = %q, want it left alone while another player holds the base", got)
 	}
 }
 

@@ -7,6 +7,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/sami0076/tennis-wiki/internal/name"
 )
 
 // Store is the database side of reconciliation.
@@ -139,10 +141,116 @@ func (s *Store) Merge(ctx context.Context, m Match) (err error) {
 		return fmt.Errorf("remove duplicate player: %w", err)
 	}
 
+	if _, err := reclaimSlug(ctx, tx, canonical); err != nil {
+		return err
+	}
+
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("commit merge: %w", err)
 	}
 	return nil
+}
+
+// reclaimSlug moves a merged player onto the undisambiguated form of its slug
+// when the merge has just freed it.
+//
+// This is the one place in the project a slug moves, and the rule everywhere
+// else is that it never does, because a slug is a URL. The exception is narrow:
+// the slug being claimed was held by the row deleted moments ago in this same
+// transaction, and the alternative is a player permanently parked on
+// taylor-fritz-atp while /players/taylor-fritz 404s. Both source ids carry the
+// same name, so which row got the suffix at ingest is an accident of write
+// order rather than anything a visitor could reason about.
+func reclaimSlug(ctx context.Context, tx pgx.Tx, playerID int64) (bool, error) {
+	var slug, fullName string
+	err := tx.QueryRow(ctx,
+		`SELECT slug, full_name FROM players WHERE id = $1`, playerID).Scan(&slug, &fullName)
+	if err != nil {
+		return false, fmt.Errorf("read the merged player's slug: %w", err)
+	}
+
+	base := name.Slug(fullName)
+	if base == "" || base == slug {
+		return false, nil
+	}
+
+	// NOT EXISTS rather than ON CONFLICT: a third player legitimately holding
+	// the base slug keeps it, and this player stays where it is.
+	tag, err := tx.Exec(ctx, `
+		UPDATE players SET slug = $2
+		 WHERE id = $1 AND NOT EXISTS (SELECT 1 FROM players WHERE slug = $2)`,
+		playerID, base)
+	if err != nil {
+		return false, fmt.Errorf("reclaim the slug %q: %w", base, err)
+	}
+	return tag.RowsAffected() == 1, nil
+}
+
+// ReclaimFreedSlugs repairs players merged before a merge knew to do it. Every
+// merge that ever ran left its survivor on a suffixed slug, and those URLs are
+// dead until something moves them; a re-merge cannot, because the pair is gone.
+//
+// Only players carrying an alias are considered, which is to say only players a
+// merge has touched. A suffixed slug on any other player is a live collision,
+// not a leftover.
+//
+// A dry run does the work and rolls it back, so what it reports is what a real
+// run would do rather than a second implementation of the same rule.
+func (s *Store) ReclaimFreedSlugs(ctx context.Context, tour string, dryRun bool) (n int, err error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT p.id FROM players p
+		 WHERE p.tour = $1::tour
+		   AND EXISTS (SELECT 1 FROM player_aliases a WHERE a.player_id = p.id)
+		 ORDER BY p.id`, tour)
+	if err != nil {
+		return 0, fmt.Errorf("find merged players: %w", err)
+	}
+	defer rows.Close()
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return 0, fmt.Errorf("find merged players: %w", err)
+		}
+		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		return 0, fmt.Errorf("find merged players: %w", err)
+	}
+	if len(ids) == 0 {
+		return 0, nil
+	}
+
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("begin transaction: %w", err)
+	}
+	defer func() {
+		if rbErr := tx.Rollback(ctx); rbErr != nil && !errors.Is(rbErr, pgx.ErrTxClosed) {
+			err = errors.Join(err, rbErr)
+		}
+	}()
+
+	// One statement per player rather than one over all of them: two merged
+	// players can want the same base slug, and running them in sequence lets
+	// the second see that the first has taken it.
+	for _, id := range ids {
+		moved, err := reclaimSlug(ctx, tx, id)
+		if err != nil {
+			return 0, err
+		}
+		if moved {
+			n++
+		}
+	}
+
+	if dryRun {
+		return n, nil
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("commit slug reclaim: %w", err)
+	}
+	return n, nil
 }
 
 // Queue records a pair for a human to settle.
