@@ -174,12 +174,20 @@ matches move their rating far more than their five-hundredth:
 
 $$K(n) = \frac{250}{(n + 5)^{0.4}}$$
 
-where `n` is the number of tour-level matches completed **before** the current one. This
-gives K ≈ 130 for a debutant and K ≈ 25 for a veteran with 500 matches, then scales by a
-match-importance weight (Grand Slam final 1.20 down to team events 0.80).
+where `n` is the number of matches that player has completed **before** the current one, in
+that series. This gives K = 131.33 for a debutant and K = 20.73 at 500 matches — the spec's
+gloss of "about 25" is wrong, and K reaches 25 at roughly 311 matches
+([ADR-0004](docs/decisions/0004-tier-taxonomy-and-elo-pool.md)). K then scales by a
+match-importance weight, from a Grand Slam final at 1.20 down to Futures at 0.60.
 
-Four independent rating series are kept per player — overall, hard, clay, grass. For
-display and simulation they are blended:
+Matches are replayed in draw order, not date order: nearly every tournament in the source
+carries a single date for all of its matches, so ordering by date alone would rate a final
+before the semi-final that produced its finalist. Walkovers are not rated — nobody played
+them — and team events are excluded by default.
+
+Five independent rating series are kept per player — overall, hard, clay, grass, carpet.
+A series is snapshotted only in the weeks it moved, which is what keeps the table at three
+million rows instead of two billion. For display and simulation they are blended:
 
 $$\text{blended} = w \cdot \text{surface elo} + (1 - w) \cdot \text{overall elo}, \qquad w = \min\left(0.75, \frac{\text{surface matches}}{40}\right)$$
 
