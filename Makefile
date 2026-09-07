@@ -134,6 +134,10 @@ dataqual:
 prune:
 	$(GO) run ./cmd/ingest --stage prune
 
+## rate: recompute Elo ratings from scratch over every match
+rate:
+	$(GO) run ./cmd/rate
+
 ## validate: report the rating-engine validation checks
 validate:
 	$(GO) run ./cmd/validate
@@ -142,7 +146,7 @@ validate:
 clean:
 	$(call RM_DIR,$(BIN))
 
-.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc seed api ingest ingest-full ingest-force prune dataqual validate clean
+.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc seed api ingest ingest-full ingest-force prune dataqual rate validate clean
 
 # print-VAR: echo a make variable, so CI can read the pinned tool versions
 # from here rather than duplicating them in a workflow file.
