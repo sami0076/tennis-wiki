@@ -1,0 +1,53 @@
+/* The token set from docs/design/design-system.md. Nothing here is decorative:
+   hue means surface, the ink ramp doubles as the player-pair palette, and
+   --win / --loss are for W/L marks and rank deltas only. */
+:root {
+  /* ground */
+  --paper: #f7f7f5;
+  --chalk: #e2e2dd;
+  --chalk-hard: #14161a;
+
+  /* ink ramp - also the player-pair palette */
+  --ink: #14161a;
+  --ink-2: #5a5d61;
+  --ink-3: #9a9da1;
+  --ink-4: #c9cac6;
+  --muted: #6e7175;
+
+  /* surface semantics - never decorative */
+  --clay: #c4622d;
+  --hard: #2e6fa8;
+  --grass: #4a7a3f;
+  --indoor: #6b5b95;
+  --carpet: #6b5b95;
+  --clay-wash: #fcf6f1;
+
+  /* outcomes */
+  --win: #4a7a3f;
+  --loss: #b0483a;
+
+  /* type scale, 1.25. Do not invent sizes between steps. */
+  --t-11: 11px;
+  --t-12: 12px;
+  --t-13: 13px;
+  --t-14: 14px;
+  --t-16: 16px;
+  --t-20: 20px;
+  --t-24: 24px;
+
+  --font: Archivo, "Helvetica Neue", Arial, sans-serif;
+
+  /* spacing */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+
+  /* The one breakpoint. Below it the design is the primary one. */
+  --wide: 880px;
+
+  --hairline: 1px solid var(--chalk);
+}
