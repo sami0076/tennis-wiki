@@ -1,0 +1,12 @@
+.mark {
+  font-weight: 700;
+  font-size: var(--t-13);
+}
+
+.win {
+  color: var(--win);
+}
+
+.loss {
+  color: var(--loss);
+}

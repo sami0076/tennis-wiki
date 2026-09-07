@@ -1,0 +1,34 @@
+.button {
+  display: inline-block;
+  padding: 8px 14px;
+  border: 1px solid var(--ink);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--t-13);
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.button:disabled {
+  border-color: var(--ink-3);
+  color: var(--ink-3);
+  cursor: default;
+}
+
+.button:disabled:hover {
+  background: transparent;
+  color: var(--ink-3);
+}
+
+/* A link that acts as a button keeps the border it was given, not the one
+   every anchor gets. */
+a.button {
+  border-bottom: 1px solid var(--ink);
+}

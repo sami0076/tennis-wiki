@@ -1,0 +1,76 @@
+.wrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-13);
+  font-variant-numeric: tabular-nums;
+}
+
+.caption {
+  text-align: left;
+  font-size: var(--t-11);
+  color: var(--muted);
+  padding-bottom: var(--s-2);
+}
+
+.th {
+  padding: var(--s-2) var(--s-2);
+  border-bottom: var(--hairline);
+  font-size: var(--t-11);
+  font-weight: 600;
+  color: var(--muted);
+  text-align: left;
+  white-space: nowrap;
+  background: var(--paper);
+}
+
+.right {
+  text-align: right;
+}
+
+.sort {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sort:hover {
+  color: var(--ink);
+}
+
+/* The direction marker is a character, not a colour or an icon set. */
+.marker {
+  color: var(--ink);
+}
+
+.td {
+  padding: var(--s-2);
+  border-bottom: var(--hairline);
+  line-height: 1.2;
+}
+
+.row:last-child .td {
+  border-bottom: 0;
+}
+
+/* A ledger total: the heavier rule is what makes it read as a total. */
+.aggregate .td {
+  border-top: 1px solid var(--chalk-hard);
+  border-bottom: 0;
+  font-weight: 600;
+}
+
+@media (min-width: 880px) {
+  .th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+}

@@ -1,0 +1,25 @@
+.block {
+  background: var(--chalk);
+  border-radius: 2px;
+}
+
+.line {
+  height: 13px;
+  margin-bottom: var(--s-2);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .block {
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}

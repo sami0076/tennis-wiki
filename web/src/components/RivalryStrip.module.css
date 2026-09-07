@@ -1,0 +1,21 @@
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: var(--s-2) 0;
+}
+
+.square {
+  width: 13px;
+  height: 13px;
+  border-radius: 2px;
+  border: 1px solid;
+  box-sizing: border-box;
+}
+
+.caption {
+  margin-top: var(--s-1);
+  font-size: var(--t-11);
+  line-height: 1.5;
+  color: var(--muted);
+}
