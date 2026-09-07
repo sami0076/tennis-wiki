@@ -25,7 +25,7 @@ export function Layout({ children }: LayoutProps) {
       <header>
         <nav className={styles.nav}>
           <Link to="/" className={styles.brand}>
-            Tennis Wiki
+            Deucepoint
           </Link>
           <div className={styles.links}>
             {links.map((link) => (
@@ -46,15 +46,7 @@ export function Layout({ children }: LayoutProps) {
       <main className={styles.main}>{children}</main>
 
       <footer className={styles.footer}>
-        <p>
-          Built on data originating from the work of Jeff Sackmann and Tennis Abstract,
-          licensed CC BY-NC-SA 4.0. This site is non-commercial and is not affiliated with
-          the ATP, the WTA or the ITF.
-        </p>
-        <p>
-          Where a statistic was never recorded, this site says so rather than showing a
-          zero.
-        </p>
+        <p>Data: Jeff Sackmann&apos;s tennis_atp and tennis_wta, CC BY-NC-SA 4.0</p>
       </footer>
     </div>
   )

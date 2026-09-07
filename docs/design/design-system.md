@@ -91,6 +91,10 @@ Rules that make the palette work:
   filter IS a surface).
 - Every caption or footnote that explains a symbol lives directly under the element it
   explains, 11px `--muted`.
+- Meta strings join their parts with a middle dot and hair-thin spacing: "Spain ·
+  right-handed · 23 · turned pro 2018", "Cincinnati QF · 6–4 7–5", "ATP · all surfaces".
+  Always through the `Meta` component, so the separator and its spacing cannot drift
+  between screens, and never as a decorative flourish anywhere else.
 
 ## The absence system
 
@@ -137,6 +141,7 @@ truth about it.
 | `RankDelta` | Signed integer in `--win`/`--loss`, `0` in `--muted`. |
 | `Sparkline` | Hand-rolled SVG, no axes, no labels, single `--ink` line, baseline hairline. |
 | `RivalryStrip` | Row of 13px squares: filled = player A won, outlined = player B won; fill/stroke color = surface. Legend caption underneath. |
+| `Meta` | Joins meta parts with a middle dot. Empty and absent parts drop out rather than leaving a stranded separator. |
 | `Button` | As in Structure above. Label says what happens: "Simulate this matchup", not "Go". |
 
 ## Screen index
@@ -169,7 +174,7 @@ static render — that draw is the site's entire ambient motion budget.
 ## Do not
 
 - No shadows, cards, gradients, or icon sets.
-- No all-caps, no middle-dot meta strings, no arrows appended to button text.
+- No all-caps, no arrows appended to button text.
 - No hue for anything except surfaces and win/loss.
 - No charting library in the scaffold.
 - No component library. The inventory above is the component library.

@@ -1,4 +1,4 @@
-# Tennis Wiki
+# Deucepoint
 
 [![CI](https://github.com/sami0076/tennis-wiki/actions/workflows/ci.yml/badge.svg)](https://github.com/sami0076/tennis-wiki/actions/workflows/ci.yml)
 
@@ -173,6 +173,10 @@ make web        # Vite dev server on :5173, proxying /api to the local API
 make site       # the whole stack in Docker: site on :5174, API on :8080
 make web-build  # tsc, eslint, vitest and a production build
 ```
+
+The site is **Deucepoint**; the repository, the Go module and the compose project keep the
+name `tennis-wiki`, which is an identifier rather than a brand and is not worth the churn of
+renaming.
 
 React, TypeScript and Vite under `web/`, styled with CSS Modules and custom properties.
 No Tailwind, no component library, no charting library — the design rests on a small token

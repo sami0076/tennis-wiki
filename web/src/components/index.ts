@@ -1,6 +1,7 @@
 export { AbsentCell, ABSENT_SORT_KEY } from './AbsentCell'
 export { Button, ButtonLink } from './Button'
 export { EmptyState } from './EmptyState'
+export { Meta } from './Meta'
 export { PartialAggregate } from './PartialAggregate'
 export { RankDelta } from './RankDelta'
 export { RivalryStrip } from './RivalryStrip'

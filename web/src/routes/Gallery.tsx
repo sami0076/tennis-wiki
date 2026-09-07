@@ -10,6 +10,7 @@ import {
   Button,
   ButtonLink,
   EmptyState,
+  Meta,
   PartialAggregate,
   RankDelta,
   RivalryStrip,
@@ -134,6 +135,18 @@ export function Gallery() {
             aggregate={['Total', '', '', '', '27']}
           />
         </PartialAggregate>
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>Meta</h2>
+        <p className={styles.note}>
+          The one place a middle dot is allowed. Absent parts drop out rather than leaving a
+          separator with nothing after it.
+        </p>
+        <Meta parts={['Spain', 'right-handed', 23, 'turned pro 2018']} />
+        <Meta parts={['Sweden', 'right-handed', '1973-1983']} />
+        <Meta parts={['Cincinnati QF', '6-4 7-5']} />
+        <Meta parts={['Unknown country', null, '', 'no hand recorded']} />
       </section>
 
       <section className={styles.block}>
