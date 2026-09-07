@@ -86,6 +86,9 @@ zeroes.
   match instead of inventing a second one.
 - **Team events** (Davis Cup, Billie Jean King Cup) are flagged and excluded from rating
   calculations by default.
+- **Walkovers** are excluded from ratings, because no tennis was played and rating one would
+  move two ratings on no evidence. A retirement is rated: it was played, and it has a
+  winner.
 
 ## Tiers
 

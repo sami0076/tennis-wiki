@@ -186,6 +186,65 @@ So the rule is not an optimisation, it is the difference between a table that fi
 that does not. The rating engine is Phase 2; this is recorded here so it is designed in
 rather than discovered.
 
+### The engine, measured on the full database
+
+`make rate` replays every match from scratch. Measured on 1,624,610 stored matches:
+
+| | |
+|---|---|
+| matches rated | 1,585,442 |
+| players rated | 75,128 |
+| **wall time** | **1m 36s** |
+| snapshots written | 3,065,844 |
+| active weeks | 5,114 |
+| `ratings` size | 449 MB |
+
+**The sparse rule holds, and one more turn of it was worth taking.** Three candidate
+snapshot rules, counted on this database:
+
+| Rule | Rows |
+|---|---|
+| Every player, every week, five series | ~1.92 billion |
+| Every week a player played, five series | 7,732,645 |
+| **Only the series that moved that week** | **3,065,844** |
+
+The middle row is the projection this document made before the engine existed, and it is
+right about the shape. The third is what is implemented: a clay week does not restate a
+player's grass rating, because nothing about it changed. Reading a rating "as of" any date
+is a lookup of the last row at or before it either way, so the extra sparsity costs the
+read path nothing. 1,546,529 active player-weeks produce two rows each on average — an
+overall series and the one surface that week was played on.
+
+**Two runs from scratch are byte-identical.** The match order is total (date, tournament,
+round, match number, id) and each week's rows are emitted sorted, so a rerun is safe to
+repeat rather than something to be careful with:
+
+```
+md5 of the whole table, run 1:  23bafa74a5b66787d940f6f6c3e4c877
+md5 of the whole table, run 2:  23bafa74a5b66787d940f6f6c3e4c877
+```
+
+**39,168 matches are not rated, and the run says so rather than implying it:**
+
+```
+rate finished  matches=1585442  players=75128  snapshots=3065844
+               excluded_team_events=27001  excluded_walkovers=12167
+```
+
+Team events are excluded by default — a Davis Cup tie is played for a country and the
+selection is not the player's — and `--team-events` includes them. A walkover is excluded
+because nobody played it; a retirement is rated, since tennis was played and someone won.
+The 2,224 players who appear in the database but not in the ratings are those whose only
+matches were one of those two kinds.
+
+**The pool mean sits at 1684, not 1500.** K decays per player, so a debutant beating a
+veteran gains more than the veteran loses and the pool's total rating is not conserved.
+Whether that inflation is acceptable, and what the tour-level mean should be alongside it,
+is exactly what the mean-reversion check in #42 is for; it is recorded here as an
+observation, not settled as a result. The names it produces are the right ones — Graf,
+Navratilova, Seles, Evert, Djokovic at the top of the all-time peaks — which says the
+replay is sane, not that the weights are calibrated.
+
 ## Player search
 
 Search ranks by trigram similarity weighted by the best tier a player has reached, so that
