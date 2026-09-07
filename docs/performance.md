@@ -245,6 +245,39 @@ observation, not settled as a result. The names it produces are the right ones �
 Navratilova, Seles, Evert, Djokovic at the top of the all-time peaks — which says the
 replay is sane, not that the weights are calibrated.
 
+## Player match history
+
+`GET /players/:slug/matches` is the list a player page is mostly made of, so it was measured
+against the longest career in the database: **Martina Navratilova, 1,735 matches**.
+
+End to end over HTTP, warm:
+
+| | |
+|---|---|
+| First page, 25 rows | 19ms |
+| Filtered to one surface and season | 9ms |
+| The profile endpoint on the same player, for comparison | 66ms |
+
+The query itself, timed in the server, is 39ms for the first page, 26ms for a page reached
+by cursor deep in the history, and 20ms filtered.
+
+**Every page costs about the same, and that is the shape to know.** The ordering key
+`played_on` lives on `matches` while the player is on `match_players`, so the database
+fetches all 1,735 of a player's matches, sorts them, and returns 25. The cursor stops a
+client paying more the deeper it pages — an OFFSET would — but it does not make the first
+page cheaper.
+
+**Cold, it is 590ms, and once it exceeded the API's 5-second statement timeout outright.**
+That happened on the first request after the test suite had evicted the page cache, and it
+is 1,735 primary-key lookups into `matches` at 0.24ms each when every one of them is a
+disk read. Worth knowing before the first request after a deploy is the one a visitor makes.
+
+If this needs to be faster, the fix is to carry `played_on` on `match_players` with an index
+on `(player_id, played_on DESC, match_id DESC)`, turning the whole thing into a keyset scan
+that reads 25 rows instead of 1,735. That is a schema change with an ingest cost, and 19ms
+warm on the worst case in the database does not justify it yet. Recorded here so the next
+person does not have to rediscover why it is the shape it is.
+
 ## Player search
 
 Search ranks by trigram similarity weighted by the best tier a player has reached, so that

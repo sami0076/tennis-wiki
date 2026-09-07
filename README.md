@@ -144,12 +144,17 @@ GET /api/v1/health                        readiness, including a database round 
 GET /api/v1/coverage                      what is actually in the database, and through when
 GET /api/v1/players?q=&tour=&limit=       fuzzy search, diacritic-insensitive
 GET /api/v1/players/:slug                 profile and career summary
+GET /api/v1/players/:slug/matches         match history, filterable and cursor-paged
 ```
 
 ```bash
 curl 'localhost:8080/api/v1/players?q=Djokovi%C4%87'
 curl localhost:8080/api/v1/players/novak-djokovic
+curl 'localhost:8080/api/v1/players/novak-djokovic/matches?surface=clay&season=2016'
 ```
+
+The history takes `surface`, `tier`, `season` and `opponent`, and they compose. Each row
+carries that player's serve line for the match, or the reason there is none.
 
 Statistics that were never recorded are reported as absent with a reason, never as zero —
 see [Coverage](#coverage). Errors are RFC 7807 `problem+json`, and list responses are
