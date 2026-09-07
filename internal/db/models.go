@@ -240,6 +240,15 @@ type IdentityReview struct {
 	SeenAt     pgtype.Timestamptz
 }
 
+type IngestFile struct {
+	Source      string
+	Unit        string
+	Validator   string
+	IngestedAt  pgtype.Timestamptz
+	RowsSeen    int32
+	RowsWritten int32
+}
+
 type IngestRun struct {
 	ID          int64
 	Source      string
