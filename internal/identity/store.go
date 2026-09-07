@@ -7,6 +7,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/sami0076/tennis-wiki/internal/name"
 )
 
 // Store is the database side of reconciliation.
@@ -139,8 +141,46 @@ func (s *Store) Merge(ctx context.Context, m Match) (err error) {
 		return fmt.Errorf("remove duplicate player: %w", err)
 	}
 
+	if err := reclaimSlug(ctx, tx, canonical); err != nil {
+		return err
+	}
+
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("commit merge: %w", err)
+	}
+	return nil
+}
+
+// reclaimSlug moves a merged player onto the undisambiguated form of its slug
+// when the merge has just freed it.
+//
+// This is the one place in the project a slug moves, and the rule everywhere
+// else is that it never does, because a slug is a URL. The exception is narrow:
+// the slug being claimed was held by the row deleted moments ago in this same
+// transaction, and the alternative is a player permanently parked on
+// taylor-fritz-atp while /players/taylor-fritz 404s. Both source ids carry the
+// same name, so which row got the suffix at ingest is an accident of write
+// order rather than anything a visitor could reason about.
+func reclaimSlug(ctx context.Context, tx pgx.Tx, playerID int64) error {
+	var slug, fullName string
+	err := tx.QueryRow(ctx,
+		`SELECT slug, full_name FROM players WHERE id = $1`, playerID).Scan(&slug, &fullName)
+	if err != nil {
+		return fmt.Errorf("read the merged player's slug: %w", err)
+	}
+
+	base := name.Slug(fullName)
+	if base == "" || base == slug {
+		return nil
+	}
+
+	// NOT EXISTS rather than ON CONFLICT: a third player legitimately holding
+	// the base slug keeps it, and this player stays where it is.
+	if _, err := tx.Exec(ctx, `
+		UPDATE players SET slug = $2
+		 WHERE id = $1 AND NOT EXISTS (SELECT 1 FROM players WHERE slug = $2)`,
+		playerID, base); err != nil {
+		return fmt.Errorf("reclaim the slug %q: %w", base, err)
 	}
 	return nil
 }
