@@ -147,8 +147,9 @@ export function Gallery() {
 
       <section className={styles.block}>
         <h2 className={styles.name}>SplitBar</h2>
-        <SplitBar label="Career meetings" left={11} right={7} />
-        <SplitBar label="On clay" left={2} right={6} />
+        <SplitBar label="Career meetings" left={11} right={7} max={11} />
+        <SplitBar label="Serve points won" left={72} right={68} max={100} format={(v) => `${v}%`} />
+        <SplitBar label="Return points won" left={43} right={45} max={100} format={(v) => `${v}%`} />
       </section>
 
       <section className={styles.block}>

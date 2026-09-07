@@ -18,8 +18,9 @@ describe('colour is never the only encoding', () => {
   it('RankDelta always shows the sign', () => {
     const { rerender } = render(<RankDelta delta={12} />)
     expect(screen.getByText('+12')).toBeInTheDocument()
+    // U+2212, not a hyphen: it has the same width as the plus above it.
     rerender(<RankDelta delta={-4} />)
-    expect(screen.getByText('-4')).toBeInTheDocument()
+    expect(screen.getByText('\u22124')).toBeInTheDocument()
     rerender(<RankDelta delta={0} />)
     expect(screen.getByText('0')).toBeInTheDocument()
   })

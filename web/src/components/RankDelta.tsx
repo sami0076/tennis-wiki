@@ -15,12 +15,13 @@ interface RankDeltaProps {
 export function RankDelta({ delta, label = 'places' }: RankDeltaProps) {
   const className =
     delta > 0 ? `${styles.delta} ${styles.up}` : delta < 0 ? `${styles.delta} ${styles.down}` : `${styles.delta} ${styles.level}`
-  const sign = delta > 0 ? '+' : ''
-  const description =
-    delta === 0 ? `Level on ${label}` : `${sign}${delta} ${label}`
+  // A real minus sign, not a hyphen: in a tabular-nums column the hyphen is
+  // narrower than the plus it sits under and the signs stop lining up.
+  const rendered = delta === 0 ? '0' : delta > 0 ? `+${delta}` : `\u2212${Math.abs(delta)}`
+  const description = delta === 0 ? `Level on ${label}` : `${rendered} ${label}`
   return (
     <span className={className} aria-label={description}>
-      {delta === 0 ? '0' : `${sign}${delta}`}
+      {rendered}
     </span>
   )
 }

@@ -32,16 +32,27 @@
   margin-top: var(--s-2);
 }
 
+/* Two halves that grow outward from the centre, so the length of each bar is
+   the size of that player's number rather than its share of the pair. */
+.half {
+  display: flex;
+  flex: 1 1 50%;
+  min-width: 0;
+}
+
+.halfLeft {
+  justify-content: flex-end;
+}
+
 .fillLeft {
   background: var(--ink);
 }
 
-.gap {
-  width: 1px;
-  background: var(--paper);
-  flex: 0 0 1px;
-}
-
 .fillRight {
   background: var(--ink-3);
+}
+
+.gap {
+  flex: 0 0 1px;
+  background: var(--paper);
 }

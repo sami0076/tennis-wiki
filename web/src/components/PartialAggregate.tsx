@@ -10,6 +10,8 @@ interface PartialAggregateProps {
   total: number
   /** What is being averaged, for the caption: "Averages", "Totals". */
   noun?: string
+  /** What the dash means, for the rows that have one. */
+  dashMeans?: string
 }
 
 /**
@@ -19,21 +21,26 @@ interface PartialAggregateProps {
  * could honestly be -- and the caption says so. An average that silently skips
  * the gaps is a correctness bug wearing a design costume, and the only thing
  * separating this component from that bug is the sentence underneath.
+ *
+ * The same caption explains the dash, because a reader meets both at once: the
+ * rows that are missing and the average that had to skip them.
  */
 export function PartialAggregate({
   children,
   recorded,
   total,
   noun = 'Averages',
+  dashMeans = "the tournament didn't record serve statistics",
 }: PartialAggregateProps) {
   const complete = recorded === total
   return (
     <>
       {children}
       <p className={styles.caption}>
+        {complete ? null : `\u2014 means ${dashMeans}. `}
         {complete
           ? `${noun} cover all ${total} matches.`
-          : `${noun} cover the ${recorded} of ${total} matches that recorded them.`}
+          : `${noun} cover the ${recorded} of ${total} matches that did.`}
       </p>
     </>
   )
