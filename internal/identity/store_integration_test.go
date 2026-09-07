@@ -255,6 +255,57 @@ func TestReconciliationReclaimsTheFreedSlug(t *testing.T) {
 	}
 }
 
+// Every merge that ran before the repair existed left its survivor on a
+// suffixed slug, and no later pass will merge that pair again -- the duplicate
+// is gone. The alias is the only remaining evidence a merge happened.
+func TestReconciliationRepairsAnEarlierMerge(t *testing.T) {
+	f := newFixture(t)
+	merged := f.playerSlug("126203", "taylor-fritz-atp", "Taylor Fritz", "USA", date(t, "1997-10-28"))
+	// A suffixed slug on a player no merge has touched is a live collision with
+	// someone else, not a leftover, so it must be left alone.
+	untouched := f.playerSlug("111111", "steve-johnson-atp", "Steve Johnson", "USA", nil)
+	if _, err := f.pool.Exec(f.ctx,
+		`INSERT INTO player_aliases (source, source_id, player_id, confidence)
+		 VALUES ('tml-atp-current', 'FB98', $1, 1.0)`, merged); err != nil {
+		t.Fatal(err)
+	}
+
+	runner := &Runner{Store: f.Store, Decisions: (&Overrides{}).Index(), DryRun: true}
+	stats, err := runner.Run(f.ctx, []string{"atp"})
+	if err != nil {
+		t.Fatalf("dry run: %v", err)
+	}
+	if stats.Reclaimed != 1 {
+		t.Errorf("dry run reported %d slugs reclaimed, want the 1 it would move", stats.Reclaimed)
+	}
+	if got := f.slugOf(merged); got != "taylor-fritz-atp" {
+		t.Errorf("a dry run moved a slug to %q", got)
+	}
+
+	runner.DryRun = false
+	stats, err = runner.Run(f.ctx, []string{"atp"})
+	if err != nil {
+		t.Fatalf("repair pass: %v", err)
+	}
+	if stats.Reclaimed != 1 {
+		t.Errorf("reclaimed %d, want 1", stats.Reclaimed)
+	}
+	if got := f.slugOf(merged); got != "taylor-fritz" {
+		t.Errorf("slug = %q, want the repaired taylor-fritz", got)
+	}
+	if got := f.slugOf(untouched); got != "steve-johnson-atp" {
+		t.Errorf("an unmerged player's slug moved to %q", got)
+	}
+
+	stats, err = runner.Run(f.ctx, []string{"atp"})
+	if err != nil {
+		t.Fatalf("second repair pass: %v", err)
+	}
+	if stats.Reclaimed != 0 {
+		t.Errorf("a second pass reclaimed %d, want nothing left to repair", stats.Reclaimed)
+	}
+}
+
 // The exception is narrow: only a slug the merge itself freed may be taken. A
 // different player holding it keeps it, because that one is a live URL.
 func TestMergeLeavesASlugAnotherPlayerHolds(t *testing.T) {
