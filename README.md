@@ -147,6 +147,7 @@ GET /api/v1/players/:slug                 profile and career summary
 GET /api/v1/players/:slug/matches         match history, filterable and cursor-paged
 GET /api/v1/players/:slug/ratings         Elo trajectory, per surface
 GET /api/v1/players/:slug/rankings        published ATP/WTA ranking over time
+GET /api/v1/h2h/:slug/:opponent           head-to-head, either way round
 ```
 
 ```bash
