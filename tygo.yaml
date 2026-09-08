@@ -10,6 +10,7 @@ packages:
     include_files:
       - "players.go"
       - "matches.go"
+      - "ratings.go"
       - "coverage.go"
       - "problem.go"
       - "cursor.go"

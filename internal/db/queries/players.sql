@@ -104,3 +104,45 @@ SELECT t.tier,
  WHERE mp.player_id = @player_id
  GROUP BY t.tier
  ORDER BY matches DESC;
+
+-- name: GetPlayerRatings :many
+-- Current and peak per series, in one pass over the player's rows.
+--
+-- The table is sparse -- a row exists only for a week a series moved -- so
+-- "current" is the last row, not a row at any particular date, and there is no
+-- date on which every series has one.
+--
+-- Ordered overall first and then by how much play backs each surface, which is
+-- the order the surface strip reads in.
+WITH latest AS (
+    SELECT DISTINCT ON (r.surface) r.surface, r.elo, r.as_of, r.matches_played
+      FROM ratings r
+     WHERE r.player_id = @player_id
+     ORDER BY r.surface, r.as_of DESC
+),
+peak AS (
+    SELECT DISTINCT ON (r.surface) r.surface, r.elo, r.as_of
+      FROM ratings r
+     WHERE r.player_id = @player_id
+     ORDER BY r.surface, r.elo DESC, r.as_of
+)
+SELECT l.surface,
+       l.matches_played,
+       l.elo::float8   AS current_elo,
+       l.as_of         AS current_as_of,
+       p.elo::float8   AS peak_elo,
+       p.as_of         AS peak_as_of
+  FROM latest l
+  JOIN peak p ON p.surface = l.surface
+ ORDER BY (l.surface <> 'overall'), l.matches_played DESC, l.surface;
+
+-- name: ListPlayerRatingSeries :many
+-- The whole trajectory for one series. Not paginated: a chart wants the line,
+-- and a page of a line is not one.
+SELECT as_of, elo::float8 AS elo, matches_played
+  FROM ratings
+ WHERE player_id = @player_id
+   AND surface = @surface::rating_surface
+   AND (sqlc.narg(from_date)::date IS NULL OR as_of >= sqlc.narg(from_date)::date)
+   AND (sqlc.narg(to_date)::date IS NULL OR as_of <= sqlc.narg(to_date)::date)
+ ORDER BY as_of;

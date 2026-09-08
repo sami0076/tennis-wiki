@@ -140,6 +140,74 @@ func (q *Queries) GetPlayerCareerSummary(ctx context.Context, playerID int64) (G
 	return i, err
 }
 
+const getPlayerRatings = `-- name: GetPlayerRatings :many
+WITH latest AS (
+    SELECT DISTINCT ON (r.surface) r.surface, r.elo, r.as_of, r.matches_played
+      FROM ratings r
+     WHERE r.player_id = $1
+     ORDER BY r.surface, r.as_of DESC
+),
+peak AS (
+    SELECT DISTINCT ON (r.surface) r.surface, r.elo, r.as_of
+      FROM ratings r
+     WHERE r.player_id = $1
+     ORDER BY r.surface, r.elo DESC, r.as_of
+)
+SELECT l.surface,
+       l.matches_played,
+       l.elo::float8   AS current_elo,
+       l.as_of         AS current_as_of,
+       p.elo::float8   AS peak_elo,
+       p.as_of         AS peak_as_of
+  FROM latest l
+  JOIN peak p ON p.surface = l.surface
+ ORDER BY (l.surface <> 'overall'), l.matches_played DESC, l.surface
+`
+
+type GetPlayerRatingsRow struct {
+	Surface       RatingSurface
+	MatchesPlayed int32
+	CurrentElo    float64
+	CurrentAsOf   time.Time
+	PeakElo       float64
+	PeakAsOf      time.Time
+}
+
+// Current and peak per series, in one pass over the player's rows.
+//
+// The table is sparse -- a row exists only for a week a series moved -- so
+// "current" is the last row, not a row at any particular date, and there is no
+// date on which every series has one.
+//
+// Ordered overall first and then by how much play backs each surface, which is
+// the order the surface strip reads in.
+func (q *Queries) GetPlayerRatings(ctx context.Context, playerID int64) ([]GetPlayerRatingsRow, error) {
+	rows, err := q.db.Query(ctx, getPlayerRatings, playerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetPlayerRatingsRow{}
+	for rows.Next() {
+		var i GetPlayerRatingsRow
+		if err := rows.Scan(
+			&i.Surface,
+			&i.MatchesPlayed,
+			&i.CurrentElo,
+			&i.CurrentAsOf,
+			&i.PeakElo,
+			&i.PeakAsOf,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPlayerSurfaceSplits = `-- name: GetPlayerSurfaceSplits :many
 SELECT m.surface,
        count(*)::bigint                            AS matches,
@@ -214,6 +282,56 @@ func (q *Queries) GetPlayerTierSplits(ctx context.Context, playerID int64) ([]Ge
 	for rows.Next() {
 		var i GetPlayerTierSplitsRow
 		if err := rows.Scan(&i.Tier, &i.Matches, &i.MatchesWithStats); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPlayerRatingSeries = `-- name: ListPlayerRatingSeries :many
+SELECT as_of, elo::float8 AS elo, matches_played
+  FROM ratings
+ WHERE player_id = $1
+   AND surface = $2::rating_surface
+   AND ($3::date IS NULL OR as_of >= $3::date)
+   AND ($4::date IS NULL OR as_of <= $4::date)
+ ORDER BY as_of
+`
+
+type ListPlayerRatingSeriesParams struct {
+	PlayerID int64
+	Surface  RatingSurface
+	FromDate *time.Time
+	ToDate   *time.Time
+}
+
+type ListPlayerRatingSeriesRow struct {
+	AsOf          time.Time
+	Elo           float64
+	MatchesPlayed int32
+}
+
+// The whole trajectory for one series. Not paginated: a chart wants the line,
+// and a page of a line is not one.
+func (q *Queries) ListPlayerRatingSeries(ctx context.Context, arg ListPlayerRatingSeriesParams) ([]ListPlayerRatingSeriesRow, error) {
+	rows, err := q.db.Query(ctx, listPlayerRatingSeries,
+		arg.PlayerID,
+		arg.Surface,
+		arg.FromDate,
+		arg.ToDate,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListPlayerRatingSeriesRow{}
+	for rows.Next() {
+		var i ListPlayerRatingSeriesRow
+		if err := rows.Scan(&i.AsOf, &i.Elo, &i.MatchesPlayed); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

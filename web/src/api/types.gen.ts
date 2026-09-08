@@ -142,6 +142,14 @@ export interface PlayerProfile {
    */
   career: Career | null;
   serve: ServeStats;
+  /**
+   * Ratings is null for a player nothing rated -- everyone whose only matches
+   * were team events or walkovers. A series they never played is absent from
+   * the list rather than sitting at the base rating.
+   * tstype, because a nil slice marshals to null and the generated type
+   * would otherwise promise an array that is sometimes not one.
+   */
+  ratings: SeriesRating[] | null;
 }
 /**
  * Career is the win/loss record. Retirements and walkovers are counted here and
@@ -270,3 +278,43 @@ export const TypeUnavailable = "/problems/unavailable";
  * would be worse than a stable relative reference.
  */
 export const TypeMethodInvalid = "/problems/method-not-allowed";
+
+//////////
+// source: ratings.go
+
+/**
+ * RatingPoint is one rating and the week it was taken.
+ */
+export interface RatingPoint {
+  elo: number /* float64 */;
+  as_of: string;
+}
+/**
+ * SeriesRating is what a player is worth in one series.
+ * Current and peak are both here because a page needs both: a player who
+ * retired in 1983 has a current rating -- the last one they were given -- and
+ * it is a real number that would be the wrong one to lead with.
+ */
+export interface SeriesRating {
+  surface: string;
+  /**
+   * Matches is how many matches feed this series, which is what says whether
+   * a surface rating is worth as much as the overall one.
+   */
+  matches: number /* int32 */;
+  current: RatingPoint;
+  peak: RatingPoint;
+}
+/**
+ * RatingSeries is a whole trajectory, for a chart.
+ */
+export interface RatingSeries {
+  surface: string;
+  /**
+   * From and To are the range actually covered, which is not the range asked
+   * for: a player has ratings for the weeks they played and no others.
+   */
+  from: string;
+  to: string;
+  points: RatingPoint[];
+}

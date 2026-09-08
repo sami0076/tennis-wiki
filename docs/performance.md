@@ -278,6 +278,29 @@ that reads 25 rows instead of 1,735. That is a schema change with an ingest cost
 warm on the worst case in the database does not justify it yet. Recorded here so the next
 person does not have to rediscover why it is the shape it is.
 
+## Player ratings
+
+Two queries, measured against the same career: Martina Navratilova, 807 rating rows across
+five series.
+
+| | Cold | Warm |
+|---|---|---|
+| Current and peak per series (on the profile) | 415ms | 9ms |
+| A whole trajectory, 406 weekly points | — | 3ms |
+
+Both read through the `ratings` primary key, which begins with `player_id`, so they touch
+only that player's rows. The profile endpoint went from 66ms to 67ms with the ratings block
+added — the cold figure is the first read of those pages off disk, the same shape as the
+match history above.
+
+The trajectory is deliberately not paginated. A chart wants the line, and a page of a line
+is not one; 406 points is a few kilobytes, and the longest careers in the database are not
+much longer.
+
+**Peak is not the last row**, which is why both are served. Navratilova's overall Elo peaked
+at 2920 in November 1984 — she went 86–1 that year — and her last rating, in 2005, is 2498.
+A page that showed only the current figure would describe a different player.
+
 ## Player search
 
 Search ranks by trigram similarity weighted by the best tier a player has reached, so that
