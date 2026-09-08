@@ -1,0 +1,11 @@
+{
+  "grand_slam_final": 1.2,
+  "grand_slam": 1.1,
+  "tour_finals": 1.1,
+  "masters": 1.05,
+  "tour": 1.0,
+  "team_event": 0.8,
+  "challenger": 0.8,
+  "futures": 0.6,
+  "qualifying": 0.9
+}
