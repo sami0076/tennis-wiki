@@ -46,9 +46,10 @@ SELECT id, slug, tour, full_name, country, score, matches, best_tier::text AS be
 WITH played AS (
     SELECT mp.won, mp.aces, mp.double_faults, mp.serve_points, mp.first_in,
            mp.first_won, mp.second_won, mp.serve_games, mp.bp_saved, mp.bp_faced,
-           m.incomplete, m.round, m.is_qualifying, m.played_on
+           m.incomplete, m.round, m.is_qualifying, m.played_on, t.level
       FROM match_players mp
-      JOIN matches m ON m.id = mp.match_id
+      JOIN matches m     ON m.id = mp.match_id
+      JOIN tournaments t ON t.id = m.tournament_id
      WHERE mp.player_id = @player_id
 ),
 counted AS (
@@ -58,6 +59,10 @@ counted AS (
            -- Retirements and walkovers count here but are excluded from rates.
            count(*) FILTER (WHERE incomplete)::bigint   AS incomplete_matches,
            count(*) FILTER (WHERE won AND round = 'F' AND NOT is_qualifying)::bigint AS titles,
+           -- Majors are titles at level G. Counted separately because 11 majors
+           -- and 66 titles are two different claims about the same career.
+           count(*) FILTER (WHERE won AND round = 'F' AND NOT is_qualifying
+                              AND level = 'G')::bigint AS majors,
            min(played_on)::date                         AS first_match,
            max(played_on)::date                         AS last_match
       FROM played
@@ -146,3 +151,13 @@ SELECT as_of, elo::float8 AS elo, matches_played
    AND (sqlc.narg(from_date)::date IS NULL OR as_of >= sqlc.narg(from_date)::date)
    AND (sqlc.narg(to_date)::date IS NULL OR as_of <= sqlc.narg(to_date)::date)
  ORDER BY as_of;
+
+-- name: ListPlayerRankingHistory :many
+-- The published ATP/WTA ranking over time. Not paginated, for the same reason
+-- the rating series is not: a line is not read a page at a time.
+SELECT ranking_date, rank, points
+  FROM rankings
+ WHERE player_id = @player_id
+   AND (sqlc.narg(from_date)::date IS NULL OR ranking_date >= sqlc.narg(from_date)::date)
+   AND (sqlc.narg(to_date)::date IS NULL OR ranking_date <= sqlc.narg(to_date)::date)
+ ORDER BY ranking_date;
