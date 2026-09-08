@@ -145,6 +145,7 @@ GET /api/v1/coverage                      what is actually in the database, and 
 GET /api/v1/players?q=&tour=&limit=       fuzzy search, diacritic-insensitive
 GET /api/v1/players/:slug                 profile and career summary
 GET /api/v1/players/:slug/matches         match history, filterable and cursor-paged
+GET /api/v1/players/:slug/ratings         Elo trajectory, per surface
 ```
 
 ```bash
@@ -155,6 +156,10 @@ curl 'localhost:8080/api/v1/players/novak-djokovic/matches?surface=clay&season=2
 
 The history takes `surface`, `tier`, `season` and `opponent`, and they compose. Each row
 carries that player's serve line for the match, or the reason there is none.
+
+The profile carries current and peak Elo for every series the player has one in — a surface
+they never played is absent rather than sitting at the base rating, and a player nothing
+rated has a null block rather than five 1500s.
 
 Statistics that were never recorded are reported as absent with a reason, never as zero —
 see [Coverage](#coverage). Errors are RFC 7807 `problem+json`, and list responses are
