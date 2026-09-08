@@ -62,11 +62,14 @@ type PlayerProfile struct {
 // Career is the win/loss record. Retirements and walkovers are counted here and
 // excluded from every rate in Serve.
 type Career struct {
-	Matches           int64          `json:"matches"`
-	Wins              int64          `json:"wins"`
-	Losses            int64          `json:"losses"`
-	WinPercentage     float64        `json:"win_percentage"`
-	Titles            int64          `json:"titles"`
+	Matches       int64   `json:"matches"`
+	Wins          int64   `json:"wins"`
+	Losses        int64   `json:"losses"`
+	WinPercentage float64 `json:"win_percentage"`
+	Titles        int64   `json:"titles"`
+	// Majors are the subset of titles won at a Grand Slam. Eleven majors and
+	// sixty-six titles are two different claims about the same career.
+	Majors            int64          `json:"majors"`
 	IncompleteMatches int64          `json:"incomplete_matches"`
 	FirstMatch        string         `json:"first_match"`
 	LastMatch         string         `json:"last_match"`
@@ -280,6 +283,7 @@ func buildCareer(s db.GetPlayerCareerSummaryRow,
 		Wins:              s.Wins,
 		Losses:            s.Losses,
 		Titles:            s.Titles,
+		Majors:            s.Majors,
 		IncompleteMatches: s.IncompleteMatches,
 		FirstMatch:        s.FirstMatch.Format(time.DateOnly),
 		LastMatch:         s.LastMatch.Format(time.DateOnly),

@@ -146,6 +146,7 @@ GET /api/v1/players?q=&tour=&limit=       fuzzy search, diacritic-insensitive
 GET /api/v1/players/:slug                 profile and career summary
 GET /api/v1/players/:slug/matches         match history, filterable and cursor-paged
 GET /api/v1/players/:slug/ratings         Elo trajectory, per surface
+GET /api/v1/players/:slug/rankings        published ATP/WTA ranking over time
 ```
 
 ```bash
@@ -187,7 +188,8 @@ React, TypeScript and Vite under `web/`, styled with CSS Modules and custom prop
 No Tailwind, no component library, no charting library — the design rests on a small token
 set and hairline structure, and the reasoning is in
 [`docs/design/design-system.md`](docs/design/design-system.md). `/_components` renders every
-component in every state, which is the fastest way to check the system against a design.
+component in every state, which is the fastest way to check the system against a design, and
+`/players/:slug` is the first real page.
 
 **The TypeScript types are generated from the Go response structs**, not written by hand.
 `make web-types` runs [tygo](https://github.com/gzuidhof/tygo) over `internal/httpapi` into

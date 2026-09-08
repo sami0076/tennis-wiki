@@ -1,0 +1,72 @@
+.identity {
+  padding-bottom: var(--s-4);
+}
+
+.name {
+  font-size: var(--t-24);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: var(--s-1);
+}
+
+.section {
+  padding: var(--s-5) 0;
+  border-bottom: var(--hairline);
+}
+
+.sectionTitle {
+  font-size: var(--t-14);
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: var(--s-3);
+}
+
+.trajectory {
+  padding: var(--s-4) 0;
+  border-bottom: var(--hairline);
+}
+
+.caption {
+  margin-top: var(--s-2);
+  font-size: var(--t-11);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.error {
+  max-width: 56ch;
+  font-size: var(--t-13);
+  color: var(--loss);
+}
+
+.more {
+  padding-top: var(--s-4);
+}
+
+.opponent {
+  border-bottom-color: var(--chalk);
+}
+
+.event {
+  color: var(--muted);
+  font-size: var(--t-11);
+}
+
+/* Mobile is the design. At 880px the identity and the ratings move left and the
+   tables take the wider column, which is the only structural change. */
+@media (min-width: 880px) {
+  .columns {
+    display: grid;
+    grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+    gap: 0 var(--s-6);
+    align-items: start;
+  }
+
+  .left > .section:first-child {
+    padding-top: 0;
+  }
+
+  .right > .section:first-child {
+    padding-top: 0;
+  }
+}

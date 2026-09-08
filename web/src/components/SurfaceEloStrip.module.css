@@ -1,0 +1,38 @@
+.strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  border-top: var(--hairline);
+  border-bottom: var(--hairline);
+  overflow-x: auto;
+}
+
+.cell {
+  padding: var(--s-4) var(--s-2);
+  text-align: center;
+  border-left: var(--hairline);
+  min-width: 88px;
+}
+
+.cell:first-child {
+  border-left: 0;
+}
+
+.label {
+  font-size: var(--t-13);
+  line-height: 1.2;
+}
+
+.value {
+  margin-top: var(--s-1);
+  font-size: var(--t-24);
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.matches {
+  margin-top: var(--s-1);
+  font-size: var(--t-11);
+  color: var(--muted);
+}

@@ -161,6 +161,11 @@ export interface Career {
   losses: number /* int64 */;
   win_percentage: number /* float64 */;
   titles: number /* int64 */;
+  /**
+   * Majors are the subset of titles won at a Grand Slam. Eleven majors and
+   * sixty-six titles are two different claims about the same career.
+   */
+  majors: number /* int64 */;
   incomplete_matches: number /* int64 */;
   first_match: string;
   last_match: string;
@@ -317,4 +322,27 @@ export interface RatingSeries {
   from: string;
   to: string;
   points: RatingPoint[];
+}
+/**
+ * RankingPoint is one published ranking and the week it was published.
+ */
+export interface RankingPoint {
+  date: string;
+  rank: number /* int32 */;
+  /**
+   * Points is null for the decades before the tours published them, which is
+   * not a week the player scored nothing.
+   */
+  points: number /* int32 */ | null;
+}
+/**
+ * RankingHistory is the published ATP or WTA ranking over time, which is a
+ * different claim from the Elo series beside it: one is what the tour said, the
+ * other is what this project computes.
+ */
+export interface RankingHistory {
+  from: string;
+  to: string;
+  best: RankingPoint | null;
+  points: RankingPoint[];
 }

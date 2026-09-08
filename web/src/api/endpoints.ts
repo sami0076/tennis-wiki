@@ -1,5 +1,13 @@
 import { request } from './client'
-import type { CoverageResponse, Page, PlayerMatch, PlayerProfile, PlayerSearchResult } from './types.gen'
+import type {
+  CoverageResponse,
+  Page,
+  PlayerMatch,
+  PlayerProfile,
+  PlayerSearchResult,
+  RankingHistory,
+  RatingSeries,
+} from './types.gen'
 
 /**
  * The endpoints the API actually serves today. Ratings and head-to-head arrive
@@ -33,6 +41,22 @@ export function getPlayerMatches(
     { ...filters },
     signal,
   )
+}
+
+export function getPlayerRatingSeries(
+  slug: string,
+  options: { surface?: string; from?: string; to?: string } = {},
+  signal?: AbortSignal,
+): Promise<RatingSeries> {
+  return request<RatingSeries>(
+    `/players/${encodeURIComponent(slug)}/ratings`,
+    { ...options },
+    signal,
+  )
+}
+
+export function getPlayerRankings(slug: string, signal?: AbortSignal): Promise<RankingHistory> {
+  return request<RankingHistory>(`/players/${encodeURIComponent(slug)}/rankings`, {}, signal)
 }
 
 export function searchPlayers(

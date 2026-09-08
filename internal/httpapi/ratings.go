@@ -88,6 +88,90 @@ func (a *API) playerRatings(r *http.Request, playerID int64) ([]SeriesRating, er
 	return out, nil
 }
 
+// RankingPoint is one published ranking and the week it was published.
+type RankingPoint struct {
+	Date string `json:"date"`
+	Rank int32  `json:"rank"`
+	// Points is null for the decades before the tours published them, which is
+	// not a week the player scored nothing.
+	Points *int32 `json:"points"`
+}
+
+// RankingHistory is the published ATP or WTA ranking over time, which is a
+// different claim from the Elo series beside it: one is what the tour said, the
+// other is what this project computes.
+type RankingHistory struct {
+	From   string         `json:"from"`
+	To     string         `json:"to"`
+	Best   *RankingPoint  `json:"best"`
+	Points []RankingPoint `json:"points"`
+}
+
+func (a *API) handlePlayerRankingHistory(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	player, err := a.Queries.GetPlayerBySlug(ctx, chi.URLParam(r, "slug"))
+	if errors.Is(err, pgx.ErrNoRows) {
+		NotFound(w, r, "No player has that slug.")
+		return
+	}
+	if err != nil {
+		Internal(w, r, err)
+		return
+	}
+
+	params := db.ListPlayerRankingHistoryParams{PlayerID: player.ID}
+	if err := dateRange(r, &params.FromDate, &params.ToDate); err != nil {
+		BadRequest(w, r, err.Error())
+		return
+	}
+
+	rows, err := a.Queries.ListPlayerRankingHistory(ctx, params)
+	if err != nil {
+		Internal(w, r, err)
+		return
+	}
+
+	history := RankingHistory{Points: make([]RankingPoint, 0, len(rows))}
+	for _, row := range rows {
+		point := RankingPoint{
+			Date: row.RankingDate.Format(time.DateOnly), Rank: row.Rank, Points: row.Points,
+		}
+		history.Points = append(history.Points, point)
+		// Best is the lowest number, and the first week they reached it.
+		if history.Best == nil || point.Rank < history.Best.Rank {
+			best := point
+			history.Best = &best
+		}
+	}
+	if len(history.Points) > 0 {
+		history.From = history.Points[0].Date
+		history.To = history.Points[len(history.Points)-1].Date
+	}
+
+	writeJSON(w, r, http.StatusOK, history)
+}
+
+// dateRange reads the from and to bounds shared by the two series endpoints.
+func dateRange(r *http.Request, from, to **time.Time) error {
+	query := r.URL.Query()
+	for _, bound := range []struct {
+		name string
+		into **time.Time
+	}{{"from", from}, {"to", to}} {
+		raw := query.Get(bound.name)
+		if raw == "" {
+			continue
+		}
+		parsed, err := time.Parse(time.DateOnly, raw)
+		if err != nil {
+			return errors.New(bound.name + " must be a date, as YYYY-MM-DD.")
+		}
+		*bound.into = &parsed
+	}
+	return nil
+}
+
 func (a *API) handlePlayerRatingSeries(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -113,20 +197,9 @@ func (a *API) handlePlayerRatingSeries(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := db.ListPlayerRatingSeriesParams{PlayerID: player.ID, Surface: surface}
-	for _, bound := range []struct {
-		name string
-		into **time.Time
-	}{{"from", &params.FromDate}, {"to", &params.ToDate}} {
-		raw := query.Get(bound.name)
-		if raw == "" {
-			continue
-		}
-		parsed, err := time.Parse(time.DateOnly, raw)
-		if err != nil {
-			BadRequest(w, r, bound.name+" must be a date, as YYYY-MM-DD.")
-			return
-		}
-		*bound.into = &parsed
+	if err := dateRange(r, &params.FromDate, &params.ToDate); err != nil {
+		BadRequest(w, r, err.Error())
+		return
 	}
 
 	rows, err := a.Queries.ListPlayerRatingSeries(ctx, params)

@@ -56,9 +56,10 @@ const getPlayerCareerSummary = `-- name: GetPlayerCareerSummary :one
 WITH played AS (
     SELECT mp.won, mp.aces, mp.double_faults, mp.serve_points, mp.first_in,
            mp.first_won, mp.second_won, mp.serve_games, mp.bp_saved, mp.bp_faced,
-           m.incomplete, m.round, m.is_qualifying, m.played_on
+           m.incomplete, m.round, m.is_qualifying, m.played_on, t.level
       FROM match_players mp
-      JOIN matches m ON m.id = mp.match_id
+      JOIN matches m     ON m.id = mp.match_id
+      JOIN tournaments t ON t.id = m.tournament_id
      WHERE mp.player_id = $1
 ),
 counted AS (
@@ -68,6 +69,10 @@ counted AS (
            -- Retirements and walkovers count here but are excluded from rates.
            count(*) FILTER (WHERE incomplete)::bigint   AS incomplete_matches,
            count(*) FILTER (WHERE won AND round = 'F' AND NOT is_qualifying)::bigint AS titles,
+           -- Majors are titles at level G. Counted separately because 11 majors
+           -- and 66 titles are two different claims about the same career.
+           count(*) FILTER (WHERE won AND round = 'F' AND NOT is_qualifying
+                              AND level = 'G')::bigint AS majors,
            min(played_on)::date                         AS first_match,
            max(played_on)::date                         AS last_match
       FROM played
@@ -89,7 +94,7 @@ served AS (
       FROM played
      WHERE serve_points IS NOT NULL AND NOT incomplete
 )
-SELECT matches, wins, losses, incomplete_matches, titles, first_match, last_match, stat_matches, aces, double_faults, serve_points, first_in, first_won, second_won, serve_games, bp_saved, bp_faced FROM counted, served
+SELECT matches, wins, losses, incomplete_matches, titles, majors, first_match, last_match, stat_matches, aces, double_faults, serve_points, first_in, first_won, second_won, serve_games, bp_saved, bp_faced FROM counted, served
 `
 
 type GetPlayerCareerSummaryRow struct {
@@ -98,6 +103,7 @@ type GetPlayerCareerSummaryRow struct {
 	Losses            int64
 	IncompleteMatches int64
 	Titles            int64
+	Majors            int64
 	FirstMatch        time.Time
 	LastMatch         time.Time
 	StatMatches       int64
@@ -124,6 +130,7 @@ func (q *Queries) GetPlayerCareerSummary(ctx context.Context, playerID int64) (G
 		&i.Losses,
 		&i.IncompleteMatches,
 		&i.Titles,
+		&i.Majors,
 		&i.FirstMatch,
 		&i.LastMatch,
 		&i.StatMatches,
@@ -282,6 +289,49 @@ func (q *Queries) GetPlayerTierSplits(ctx context.Context, playerID int64) ([]Ge
 	for rows.Next() {
 		var i GetPlayerTierSplitsRow
 		if err := rows.Scan(&i.Tier, &i.Matches, &i.MatchesWithStats); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPlayerRankingHistory = `-- name: ListPlayerRankingHistory :many
+SELECT ranking_date, rank, points
+  FROM rankings
+ WHERE player_id = $1
+   AND ($2::date IS NULL OR ranking_date >= $2::date)
+   AND ($3::date IS NULL OR ranking_date <= $3::date)
+ ORDER BY ranking_date
+`
+
+type ListPlayerRankingHistoryParams struct {
+	PlayerID int64
+	FromDate *time.Time
+	ToDate   *time.Time
+}
+
+type ListPlayerRankingHistoryRow struct {
+	RankingDate time.Time
+	Rank        int32
+	Points      *int32
+}
+
+// The published ATP/WTA ranking over time. Not paginated, for the same reason
+// the rating series is not: a line is not read a page at a time.
+func (q *Queries) ListPlayerRankingHistory(ctx context.Context, arg ListPlayerRankingHistoryParams) ([]ListPlayerRankingHistoryRow, error) {
+	rows, err := q.db.Query(ctx, listPlayerRankingHistory, arg.PlayerID, arg.FromDate, arg.ToDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListPlayerRankingHistoryRow{}
+	for rows.Next() {
+		var i ListPlayerRankingHistoryRow
+		if err := rows.Scan(&i.RankingDate, &i.Rank, &i.Points); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
