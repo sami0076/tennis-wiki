@@ -30,16 +30,18 @@ type Match struct {
 
 // Weights scale K by how much a result should count. Values are provisional
 // below tour level until the promotion-continuity check runs; see ADR-0004.
+// The tags name the fields in the JSON cmd/validate reads, so an alternative
+// weighting is a readable file rather than a struct dump.
 type Weights struct {
-	GrandSlamFinal float64
-	GrandSlam      float64
-	TourFinals     float64
-	Masters        float64
-	Tour           float64
-	TeamEvent      float64
-	Challenger     float64
-	Futures        float64
-	Qualifying     float64
+	GrandSlamFinal float64 `json:"grand_slam_final"`
+	GrandSlam      float64 `json:"grand_slam"`
+	TourFinals     float64 `json:"tour_finals"`
+	Masters        float64 `json:"masters"`
+	Tour           float64 `json:"tour"`
+	TeamEvent      float64 `json:"team_event"`
+	Challenger     float64 `json:"challenger"`
+	Futures        float64 `json:"futures"`
+	Qualifying     float64 `json:"qualifying"`
 }
 
 // DefaultWeights returns the values agreed in ADR-0004.

@@ -72,6 +72,11 @@ type Engine struct {
 	weights Weights
 	emit    func(Snapshot) error
 
+	// OnPrediction, when set, is called with what the engine believed just
+	// before each match was rated. Validation reads it; rating a database does
+	// not, and leaving it nil costs nothing.
+	OnPrediction func(Prediction)
+
 	series  map[key]*state
 	touched map[key]struct{}
 	week    time.Time
@@ -105,6 +110,10 @@ func (e *Engine) Add(r Result) error {
 		e.week = week
 	}
 
+	if e.OnPrediction != nil {
+		e.OnPrediction(e.predict(r))
+	}
+
 	weight := e.weights.For(r.Match)
 	e.rate(r.WinnerID, r.LoserID, Overall, weight)
 	if r.Surface != "" {
@@ -124,6 +133,61 @@ func (e *Engine) Rating(player int64, s Series) (elo float64, matches int) {
 		return Base, 0
 	}
 	return st.elo, st.matches
+}
+
+// Prediction is what the engine believed before one match was rated, which is
+// the only moment the belief is a prediction rather than a memory.
+type Prediction struct {
+	Tier     Tier
+	PlayedOn time.Time
+	WinnerID int64
+	LoserID  int64
+	// WinnerExpected is the probability the overall series gave the player who
+	// went on to win. Everything a validation run needs derives from it: the
+	// favourite is whichever side is above a half, and the loser's expectation
+	// is one minus this.
+	WinnerExpected float64
+	// Played is how many matches each player had before this one, overall.
+	// A prediction over two debutants is not evidence about anything.
+	WinnerPlayed int
+	LoserPlayed  int
+}
+
+// Favourite reports the probability given to the higher-rated player and
+// whether that player won.
+//
+// The tie is broken by id rather than by the result: breaking it in the
+// winner's favour would score every even match as a correct prediction.
+func (p Prediction) Favourite() (probability float64, won bool) {
+	switch {
+	case p.WinnerExpected > 0.5:
+		return p.WinnerExpected, true
+	case p.WinnerExpected < 0.5:
+		return 1 - p.WinnerExpected, false
+	default:
+		return 0.5, p.WinnerID < p.LoserID
+	}
+}
+
+func (e *Engine) predict(r Result) Prediction {
+	w, l := e.stateOf(r.WinnerID, Overall), e.stateOf(r.LoserID, Overall)
+	return Prediction{
+		Tier:           r.Match.Tier,
+		PlayedOn:       r.PlayedOn,
+		WinnerID:       r.WinnerID,
+		LoserID:        r.LoserID,
+		WinnerExpected: Expected(w.elo, l.elo),
+		WinnerPlayed:   w.matches,
+		LoserPlayed:    l.matches,
+	}
+}
+
+// EachRating calls fn for every series the replay ended holding, which is what
+// a mean over the pool is taken across.
+func (e *Engine) EachRating(fn func(player int64, series Series, elo float64, matches int)) {
+	for k, st := range e.series {
+		fn(k.player, k.series, st.elo, st.matches)
+	}
 }
 
 // Players counts the players the replay gave a rating to.

@@ -90,6 +90,49 @@ zeroes.
   move two ratings on no evidence. A retirement is rated: it was played, and it has a
   winner.
 
+## The tier weights, and the evidence for them
+
+A result at Futures level counts for less than a Grand Slam final. How much less is a
+judgement, and [ADR-0004](decisions/0004-tier-taxonomy-and-elo-pool.md) picked numbers
+before there was any data to check them against. `cmd/validate` is what checks them.
+
+| Level | Weight |
+|---|---|
+| Grand Slam final | 1.20 |
+| Grand Slam, other rounds | 1.10 |
+| Tour Finals | 1.10 |
+| Masters 1000 / WTA 1000 | 1.05 |
+| Other tour-level | 1.00 |
+| Davis Cup and other team events | 0.80 (excluded from ratings by default) |
+| Challenger | 0.80 |
+| Futures / ITF | 0.60 |
+| Qualifying | multiply by 0.90 |
+
+**What the evidence says.** Tour-level predictive accuracy is 69.9%, inside the 68-72% the
+specification asks for, and calibration is within 1.6 percentage points at every tier. On
+those two measures the weights are fine.
+
+The third measure is less comfortable. A player's rating should carry across a promotion
+from Challenger to tour without a step in it, and it does not: across 7,050 promotions,
+players won 33,120 of their first tour-level matches against 31,323 expected. Promoted
+players arrive underrated.
+
+**Raising the lower tiers is not the fix, and the numbers say so.** Moving Challenger to
+0.90 and Futures to 0.75 removes about a fifth of that surplus and makes Challenger
+calibration worse; going further to 1.00 and 0.90 removes a little more and costs a little
+more. The lever does not fit the problem.
+
+The likeliest explanation is that promotion selects for players who are improving, whose
+rating is an average over a period when they were genuinely worse. No fixed weight corrects
+for someone being better than their own record. That is a hypothesis rather than a finding,
+and it is stated here rather than quietly assumed, because the alternative is presenting a
+number as settled when the check that would settle it says otherwise.
+
+So the weights stay as ADR-0004 set them, and the reason is written down: the available
+change trades a measurable calibration cost for a partial fix to something the weights do
+not control. `make validate` reruns all of this, and `--weights` tries other numbers without
+a rebuild.
+
 ## Tiers
 
 `tier` is a competitive standard, deliberately distinct from `tournaments.level`, which
