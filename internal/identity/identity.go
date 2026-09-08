@@ -115,17 +115,52 @@ func score(a, b Player) (float64, string) {
 		}
 		return 1.00, "name and date of birth match"
 	case sameCountry(a, b) && bothYearsKnown(a, b):
-		if birthYear(a) != birthYear(b) {
+		return scoreByYear(a, b)
+	case a.Country != "" && b.Country != "" && a.Country == b.Country:
+		return 0.60, "name and country match, no date of birth to confirm it"
+	default:
+		return 0.40, "name matches, nothing else to confirm it"
+	}
+}
+
+// scoreByYear compares birth years when at least one side has no exact date.
+//
+// Like with like, and that is the whole of it. A year derived from the age on a
+// match row carries that row's rounding: the ATP quotes an age against its own
+// reference date, so Jannik Sinner, born in August 2001, derives as 2000 from
+// both of his player rows. Comparing the exact 2001 against the derived 2000
+// scored zero -- below the review floor -- and silently discarded 179 real
+// pairs rather than showing one of them to a human.
+//
+// So when both sides derived a year, those are the years to compare: they carry
+// the same error and it cancels. Only when one side has no derived year at all
+// does an exact year meet an approximate one, and then a single year of
+// disagreement is a question for a person rather than an answer.
+func scoreByYear(a, b Player) (float64, string) {
+	if a.BirthYear != nil && b.BirthYear != nil {
+		if *a.BirthYear != *b.BirthYear {
 			return 0, "same name and country, different birth year"
 		}
 		// No exact date exists on one side -- the ATP id space has no player
 		// table -- but sharing a name, a country and a birth year is about as
 		// unlikely as sharing a birthday.
 		return 0.90, "name, country and birth year match, birth year derived from age"
-	case a.Country != "" && b.Country != "" && a.Country == b.Country:
-		return 0.60, "name and country match, no date of birth to confirm it"
+	}
+
+	gap := birthYear(a) - birthYear(b)
+	if gap < 0 {
+		gap = -gap
+	}
+	switch gap {
+	case 0:
+		return 0.90, "name, country and birth year match, birth year derived from age"
+	case 1:
+		// A wrong merge is far worse than a missed one, so this does not merge
+		// itself. It does reach the review queue, which is more than the old
+		// comparison managed.
+		return 0.70, "name and country match, birth years differ by one and one of them is derived"
 	default:
-		return 0.40, "name matches, nothing else to confirm it"
+		return 0, "same name and country, different birth year"
 	}
 }
 
