@@ -28,6 +28,10 @@ linters:
 
   exclusions:
     generated: lax
+    # node_modules ships the odd vendored Go file inside an npm package, and
+    # linting someone else's dependency is noise nobody can act on.
+    paths:
+      - web/node_modules
     # sqlc output carries the standard "Code generated ... DO NOT EDIT" header,
     # so `generated: lax` above already skips it. Excluding internal/db by path
     # would also stop linting the hand-written pool that lives beside it.

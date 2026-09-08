@@ -1,0 +1,12 @@
+.meta {
+  color: var(--muted);
+  font-size: var(--t-13);
+  line-height: 1.5;
+}
+
+/* The spaces around the dot are in the text rather than in padding, so the line
+   survives being copied out of the page and reads as one string to a screen
+   reader instead of running the parts together. */
+.dot {
+  white-space: pre;
+}

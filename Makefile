@@ -6,6 +6,7 @@ BIN := bin
 GOLANGCI_VERSION := v2.13.2
 GOOSE_VERSION    := v3.28.0
 SQLC_VERSION     := v1.31.1
+TYGO_VERSION     := v0.2.21
 
 ifeq ($(OS),Windows_NT)
 RM_DIR = cmd //c "if exist $(1) rmdir /s /q $(1)"
@@ -30,8 +31,14 @@ help:
 	@grep -E '^## ' $(MAKEFILE_LIST) | sed 's/## //' | awk -F':' '{printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
 
 ## up: start Postgres and Redis, wait until healthy
+# Named explicitly: `docker compose up` also builds and runs the API and the
+# frontend, which is the whole site but a slow inner loop for Go work.
 up:
-	docker compose up -d --wait
+	docker compose up -d --wait postgres redis
+
+## site: build and run the whole stack, frontend included, on :5174
+site:
+	docker compose up -d --build --wait
 
 ## down: stop the stack, keeping data
 down:
@@ -138,6 +145,18 @@ prune:
 rate:
 	$(GO) run ./cmd/rate
 
+## web: run the frontend dev server against the local API
+web:
+	cd web && npm install && npm run dev
+
+## web-build: type-check, lint, test and build the frontend
+web-build:
+	cd web && npm install && npm run typecheck && npm run lint && npm run test && npm run build
+
+## web-types: regenerate the TypeScript types from the Go response structs
+web-types:
+	$(GO) run github.com/gzuidhof/tygo@$(TYGO_VERSION) generate
+
 ## validate: report the rating-engine validation checks
 validate:
 	$(GO) run ./cmd/validate
@@ -146,7 +165,7 @@ validate:
 clean:
 	$(call RM_DIR,$(BIN))
 
-.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc seed api ingest ingest-full ingest-force prune dataqual rate validate clean
+.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc seed api ingest ingest-full ingest-force prune dataqual rate validate site web web-build web-types clean
 
 # print-VAR: echo a make variable, so CI can read the pinned tool versions
 # from here rather than duplicating them in a workflow file.

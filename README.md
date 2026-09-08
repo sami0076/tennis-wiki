@@ -1,4 +1,4 @@
-# Tennis Wiki
+# Deucepoint
 
 [![CI](https://github.com/sami0076/tennis-wiki/actions/workflows/ci.yml/badge.svg)](https://github.com/sami0076/tennis-wiki/actions/workflows/ci.yml)
 
@@ -166,10 +166,40 @@ Tests need Docker but no setup: the integration suites start a throwaway Postgre
 package, apply the migrations, and stop it afterwards. Without Docker they skip with an
 explanation rather than failing. Set `TEST_DATABASE_URL` to use a server you already have;
 it must be named `*test*`, because some of those tests truncate tables.
-The frontend is not built yet — see the
-[Phase 1 tracking issue](https://github.com/sami0076/tennis-wiki/issues/16). The eventual
-one-command target is `docker compose up` producing a working, seeded site, with
-`make ingest-full` for the complete dataset.
+### The frontend
+
+```bash
+make web        # Vite dev server on :5173, proxying /api to the local API
+make site       # the whole stack in Docker: site on :5174, API on :8080
+make web-build  # tsc, eslint, vitest and a production build
+```
+
+The site is **Deucepoint**; the repository, the Go module and the compose project keep the
+name `tennis-wiki`, which is an identifier rather than a brand and is not worth the churn of
+renaming.
+
+React, TypeScript and Vite under `web/`, styled with CSS Modules and custom properties.
+No Tailwind, no component library, no charting library — the design rests on a small token
+set and hairline structure, and the reasoning is in
+[`docs/design/design-system.md`](docs/design/design-system.md). `/_components` renders every
+component in every state, which is the fastest way to check the system against a design.
+
+**The TypeScript types are generated from the Go response structs**, not written by hand.
+`make web-types` runs [tygo](https://github.com/gzuidhof/tygo) over `internal/httpapi` into
+`web/src/api/types.gen.ts`, and CI regenerates and diffs it on every change, so altering a
+handler's shape without updating the client fails the build rather than the browser. Same
+discipline as sqlc, one layer up.
+
+**The absence system is three components, not one.** `AbsentCell` is a missing value in a
+populated table, `PartialAggregate` is a summary over a gappy column that has to declare
+its denominator, and `EmptyState` is a whole section that explains itself and points
+somewhere with data. 83% of matches carry no serve statistics, so these render more often
+than the numbers do; collapsing them into a falsy check would throw away the distinction
+every layer below works to preserve.
+
+`docker compose up` builds and runs the whole stack, with the API same-origin behind nginx
+so the built site and the dev server behave identically. `make ingest-full` loads the
+complete dataset.
 
 ## Rating methodology
 

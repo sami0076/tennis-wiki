@@ -1,0 +1,16 @@
+.delta {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.up {
+  color: var(--win);
+}
+
+.down {
+  color: var(--loss);
+}
+
+.level {
+  color: var(--muted);
+}

@@ -1,0 +1,6 @@
+.caption {
+  margin-top: var(--s-1);
+  font-size: var(--t-11);
+  line-height: 1.5;
+  color: var(--muted);
+}
