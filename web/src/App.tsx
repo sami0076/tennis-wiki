@@ -3,6 +3,7 @@ import { Layout } from './layout/Layout'
 import { Gallery } from './routes/Gallery'
 import { Home } from './routes/Home'
 import { NotBuiltYet } from './routes/NotBuiltYet'
+import { Player } from './routes/Player'
 import { EmptyState, ButtonLink } from './components'
 
 /**
@@ -16,7 +17,7 @@ export function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/players" element={<NotBuiltYet page="player search" issue={49} />} />
-        <Route path="/players/:slug" element={<NotBuiltYet page="player page" issue={47} />} />
+        <Route path="/players/:slug" element={<Player />} />
         <Route path="/h2h/:a/:b" element={<NotBuiltYet page="head-to-head page" issue={48} />} />
         <Route path="/rankings" element={<NotBuiltYet page="rankings page" issue={45} />} />
         <Route
