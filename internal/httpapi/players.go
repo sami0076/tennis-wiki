@@ -51,6 +51,12 @@ type PlayerProfile struct {
 	// same as a career of zeroes.
 	Career *Career    `json:"career"`
 	Serve  ServeStats `json:"serve"`
+	// Ratings is null for a player nothing rated -- everyone whose only matches
+	// were team events or walkovers. A series they never played is absent from
+	// the list rather than sitting at the base rating.
+	// tstype, because a nil slice marshals to null and the generated type
+	// would otherwise promise an array that is sometimes not one.
+	Ratings []SeriesRating `json:"ratings" tstype:"SeriesRating[] | null"`
 }
 
 // Career is the win/loss record. Retirements and walkovers are counted here and
@@ -228,6 +234,15 @@ func (a *API) handlePlayer(w http.ResponseWriter, r *http.Request) {
 	if player.Hand != nil {
 		hand := string(*player.Hand)
 		profile.Hand = &hand
+	}
+
+	// Before the early return below: a player can be rated and still have no
+	// career summary only in the degenerate direction, but reading it here
+	// keeps the two independent of each other.
+	profile.Ratings, err = a.playerRatings(r, player.ID)
+	if err != nil {
+		Internal(w, r, err)
+		return
 	}
 
 	summary, err := a.Queries.GetPlayerCareerSummary(ctx, player.ID)
