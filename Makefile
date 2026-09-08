@@ -163,6 +163,8 @@ web-types:
 	$(GO) run github.com/gzuidhof/tygo@$(TYGO_VERSION) generate
 
 ## validate: report the rating-engine validation checks
+# --weights configs/weights.json tries another tier weighting without a rebuild,
+# which is the reason ADR-0004 made the weights configuration.
 validate:
 	$(GO) run ./cmd/validate
 
