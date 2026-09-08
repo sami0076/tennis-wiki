@@ -237,13 +237,70 @@ because nobody played it; a retirement is rated, since tennis was played and som
 The 2,224 players who appear in the database but not in the ratings are those whose only
 matches were one of those two kinds.
 
-**The pool mean sits at 1684, not 1500.** K decays per player, so a debutant beating a
-veteran gains more than the veteran loses and the pool's total rating is not conserved.
-Whether that inflation is acceptable, and what the tour-level mean should be alongside it,
-is exactly what the mean-reversion check in #42 is for; it is recorded here as an
-observation, not settled as a result. The names it produces are the right ones — Graf,
-Navratilova, Seles, Evert, Djokovic at the top of the all-time peaks — which says the
-replay is sane, not that the weights are calibrated.
+**The pool mean is 1482 against a base of 1500**, measured by `cmd/validate` over each
+player's final rating. An earlier note here said 1684 and was wrong: that figure was the
+mean of the `ratings` rows, which weights every player by how many weeks they played and so
+counts the strong ones hundreds of times. The pool is not inflated. Tour players sit at
+1520, above the pool, which is what a single weighted pool is supposed to look like.
+
+The names it produces are the right ones — Graf, Navratilova, Seles, Evert, Djokovic at the
+top of the all-time peaks — and the validation below says the accuracy is where the spec
+expects it.
+
+## Validating the ratings
+
+`make validate` replays the whole history without writing anything and reports on what the
+engine believed as it went. **12.7 seconds** for 1,585,442 matches, against the 96 seconds
+`make rate` takes — the difference is the three million snapshots it does not write.
+
+Measured on the full database with the ADR-0004 weights:
+
+| Tier | Predictions scored | Accuracy | Mean calibration gap |
+|---|---|---|---|
+| tour | 448,939 | **69.9%** | 1.6 |
+| challenger | 216,073 | 64.5% | 1.3 |
+| futures | 326,368 | 68.5% | 1.3 |
+| itf | 279,006 | 68.3% | 1.6 |
+
+Tour-level accuracy lands inside the 68–72% the spec asks for. A prediction is scored only
+once both players have ten matches of history: a match between two debutants is a coin toss
+the engine had no way to call, and counting it would measure the pool's shape rather than
+the model.
+
+Challenger is the hardest tier to call, which is what a tier full of players moving between
+levels should look like.
+
+### Promoted players beat their ratings, and the weights are not the whole reason
+
+The promotion-continuity check is the sensitive one. Across **7,050 promotions and 81,093
+first tour-level matches, players won 33,120 against 31,323 expected — z = +14.5**, well
+past the ±3 threshold. Promoted players arrive underrated.
+
+The obvious reading is that the lower tiers are weighted too low. Running the alternatives
+says that is only part of it:
+
+| Challenger / Futures | Promotion z | Tour accuracy | Challenger calibration | Futures calibration |
+|---|---|---|---|---|
+| **0.80 / 0.60** (ADR-0004) | +14.50 | 69.9% | 1.33 | 1.33 |
+| 0.90 / 0.75 | +12.69 | 70.0% | 1.74 | 0.40 |
+| 1.00 / 0.90 | +11.24 | 70.0% | 2.13 | 0.50 |
+
+Raising the lower tiers by a quarter removes about a fifth of the surplus and makes
+Challenger calibration measurably worse. Whatever most of that surplus is, the tier weight
+is not the lever for it.
+
+**The likeliest explanation is selection.** A player who earns promotion is one who has been
+improving, and their rating is an average over the period they were still worse than they
+now are. No static weight corrects for a player being better than their own history; it is
+a form effect rather than a weighting one. That is a hypothesis this report cannot settle,
+and it is why the weights stay where ADR-0004 put them: the change on offer trades a real
+calibration cost for a partial fix to something the weights do not control.
+
+Alternatives run without a rebuild, which is the reason the weights were made configuration:
+
+```
+validate --weights configs/weights.json
+```
 
 ## Player match history
 

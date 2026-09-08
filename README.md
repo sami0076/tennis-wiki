@@ -238,6 +238,12 @@ with a hundred leans on their clay rating. Ratings are recomputed from scratch o
 full ingest and never incrementally patched, so a bug fix is always one rerun away from
 correct.
 
+`make validate` replays the whole history and reports predictive accuracy and calibration
+per tier, mean reversion across the pool, and promotion continuity. Tour-level accuracy is
+**69.9%**, inside the 68-72% the spec asks for. The tier weights are configuration rather
+than constants, so `validate --weights` tries alternatives without a rebuild; what the
+evidence says about them is in [the methodology](docs/methodology.md).
+
 The full derivation, including the simulation chain from point to match, will live at
 `/methodology` on the live site.
 
