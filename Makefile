@@ -17,6 +17,11 @@ endif
 POSTGRES_USER ?= tennis
 POSTGRES_DB   ?= tennis
 
+# The go command walks into web/node_modules, which ships the odd vendored Go
+# file inside an npm package, and it has no flag for skipping a directory.
+# Evaluated inside the recipes that need it rather than on every make run.
+GO_PACKAGES = $$($(GO) list ./... | grep -v '/web/node_modules/')
+
 MIGRATIONS := ./migrations
 # Matches the published compose port; 5432 is usually already taken.
 DATABASE_URL ?= postgres://tennis:tennis@localhost:5433/tennis?sslmode=disable
@@ -77,17 +82,17 @@ migrate-test:
 # they need Docker but no setup. Set TEST_DATABASE_URL to use a server you
 # already have instead; the database must be named *test*.
 test:
-	$(GO) test ./...
+	$(GO) test $(GO_PACKAGES)
 
 ## test-race: run the test suite with the race detector (used by CI)
 # The race detector is unsupported on windows/arm64, so this is a separate
 # target rather than the default. CI runs on linux/amd64 and always uses it.
 test-race:
-	$(GO) test -race ./...
+	$(GO) test -race $(GO_PACKAGES)
 
 ## fmt: format and tidy
 fmt:
-	$(GO) fmt ./...
+	$(GO) fmt $(GO_PACKAGES)
 	$(GO) mod tidy
 
 ## lint: run golangci-lint
