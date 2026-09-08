@@ -10,6 +10,126 @@ import (
 	"time"
 )
 
+const listHeadToHeadMeetings = `-- name: ListHeadToHeadMeetings :many
+SELECT m.id,
+       m.played_on,
+       t.name  AS tournament,
+       t.tier,
+       t.level,
+       t.season,
+       m.surface,
+       m.round,
+       m.is_qualifying,
+       m.incomplete,
+       m.score,
+       m.winner_id,
+       a.aces AS a_aces, a.double_faults AS a_double_faults, a.serve_points AS a_serve_points,
+       a.first_in AS a_first_in, a.first_won AS a_first_won, a.second_won AS a_second_won,
+       a.bp_saved AS a_bp_saved, a.bp_faced AS a_bp_faced,
+       b.aces AS b_aces, b.double_faults AS b_double_faults, b.serve_points AS b_serve_points,
+       b.first_in AS b_first_in, b.first_won AS b_first_won, b.second_won AS b_second_won,
+       b.bp_saved AS b_bp_saved, b.bp_faced AS b_bp_faced
+  FROM matches m
+  JOIN tournaments t   ON t.id = m.tournament_id
+  JOIN match_players a ON a.match_id = m.id AND a.player_id = $1
+  JOIN match_players b ON b.match_id = m.id AND b.player_id = $2
+ WHERE (m.winner_id = $1 AND m.loser_id = $2)
+    OR (m.winner_id = $2 AND m.loser_id = $1)
+ ORDER BY m.played_on, m.id
+`
+
+type ListHeadToHeadMeetingsParams struct {
+	PlayerA int64
+	PlayerB int64
+}
+
+type ListHeadToHeadMeetingsRow struct {
+	ID            int64
+	PlayedOn      time.Time
+	Tournament    string
+	Tier          Tier
+	Level         string
+	Season        int16
+	Surface       *Surface
+	Round         string
+	IsQualifying  bool
+	Incomplete    bool
+	Score         *string
+	WinnerID      int64
+	AAces         *int16
+	ADoubleFaults *int16
+	AServePoints  *int16
+	AFirstIn      *int16
+	AFirstWon     *int16
+	ASecondWon    *int16
+	ABpSaved      *int16
+	ABpFaced      *int16
+	BAces         *int16
+	BDoubleFaults *int16
+	BServePoints  *int16
+	BFirstIn      *int16
+	BFirstWon     *int16
+	BSecondWon    *int16
+	BBpSaved      *int16
+	BBpFaced      *int16
+}
+
+// Every match the two have played, oldest first, with both serve lines.
+//
+// One query rather than an aggregate per split: even the longest rivalry in the
+// database is a few dozen rows, and counting them in Go keeps the record, the
+// surface split and the tier split from being three chances to disagree.
+//
+// Ordered oldest to newest because that is how a rivalry reads.
+func (q *Queries) ListHeadToHeadMeetings(ctx context.Context, arg ListHeadToHeadMeetingsParams) ([]ListHeadToHeadMeetingsRow, error) {
+	rows, err := q.db.Query(ctx, listHeadToHeadMeetings, arg.PlayerA, arg.PlayerB)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListHeadToHeadMeetingsRow{}
+	for rows.Next() {
+		var i ListHeadToHeadMeetingsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.PlayedOn,
+			&i.Tournament,
+			&i.Tier,
+			&i.Level,
+			&i.Season,
+			&i.Surface,
+			&i.Round,
+			&i.IsQualifying,
+			&i.Incomplete,
+			&i.Score,
+			&i.WinnerID,
+			&i.AAces,
+			&i.ADoubleFaults,
+			&i.AServePoints,
+			&i.AFirstIn,
+			&i.AFirstWon,
+			&i.ASecondWon,
+			&i.ABpSaved,
+			&i.ABpFaced,
+			&i.BAces,
+			&i.BDoubleFaults,
+			&i.BServePoints,
+			&i.BFirstIn,
+			&i.BFirstWon,
+			&i.BSecondWon,
+			&i.BBpSaved,
+			&i.BBpFaced,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPlayerMatches = `-- name: ListPlayerMatches :many
 SELECT m.id,
        m.played_on,
