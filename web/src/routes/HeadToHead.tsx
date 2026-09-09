@@ -6,7 +6,9 @@ import {
   type HeadToHeadPlayer,
   type HeadToHeadRecord,
   type Meeting,
+  type Pair,
   type PlayerProfile,
+  type PlayerSearchResult,
   type RatingSeries,
   type ServeRates,
 } from '../api/client'
@@ -45,12 +47,23 @@ import styles from './HeadToHead.module.css'
 export function HeadToHead() {
   const { a, b } = useParams()
 
+  // Fetched here rather than in Rivalry so the pickers can show who is being
+  // compared. Resolving null when a slug is missing keeps this a hook that runs
+  // every render, which is what the rules of hooks require and what a
+  // conditional fetch would break.
+  const h2h = useResource<Comparison | null>(
+    (signal) =>
+      a === undefined || b === undefined ? Promise.resolve(null) : getHeadToHead(a, b, signal),
+    [a, b],
+  )
+  const players = h2h.state === 'ready' && h2h.data !== null ? h2h.data.players : undefined
+
   return (
     <>
       <h1 className="sr-only">Head to head</h1>
-      <Pickers a={a} b={b} />
+      <Pickers a={a} b={b} players={players} />
       {a !== undefined && b !== undefined ? (
-        <Rivalry a={a} b={b} />
+        <Rivalry a={a} b={b} h2h={h2h} />
       ) : (
         <EmptyState
           heading="Pick two players"
@@ -62,52 +75,77 @@ export function HeadToHead() {
   )
 }
 
+type Side = 'a' | 'b'
+
 /**
- * Two comboboxes, one per side. Choosing on either side rebuilds the URL, which
- * is what makes swapping a player a navigation rather than hidden state.
+ * Two comboboxes, one per side.
+ *
+ * A comparison needs both players, and the URL cannot hold half of one, so the
+ * first pick is held here until the second arrives. Throwing it away was the
+ * original bug: choosing on an empty page cleared the box and remembered
+ * nothing, so no pair could ever be built from /h2h.
+ *
+ * What each box shows is the player actually being compared, taken from the
+ * loaded comparison, and the pending pick only while there is no comparison
+ * yet. Typing takes over from either.
  */
-function Pickers({ a, b }: { a?: string; b?: string }) {
+function Pickers({
+  a,
+  b,
+  players,
+}: {
+  a?: string
+  b?: string
+  players?: Pair<HeadToHeadPlayer>
+}) {
   const navigate = useNavigate()
-  const [queryA, setQueryA] = useState('')
-  const [queryB, setQueryB] = useState('')
+  const [picked, setPicked] = useState<Partial<Record<Side, PlayerSearchResult>>>({})
+  const [typed, setTyped] = useState<Partial<Record<Side, string>>>({})
   const [clash, setClash] = useState(false)
 
-  function choose(side: 'a' | 'b', slug: string) {
-    const left = side === 'a' ? slug : a
-    const right = side === 'b' ? slug : b
-    if (left === right) {
+  // The URL is the comparison; a pending pick is only a comparison waiting for
+  // its other half.
+  function slugFor(side: Side): string | undefined {
+    return (side === 'a' ? a : b) ?? picked[side]?.slug
+  }
+
+  function nameFor(side: Side): string {
+    if (players !== undefined) return side === 'a' ? players[0].name : players[1].name
+    return picked[side]?.name ?? ''
+  }
+
+  function choose(side: Side, player: PlayerSearchResult) {
+    const other: Side = side === 'a' ? 'b' : 'a'
+    if (player.slug === slugFor(other)) {
       // The API answers 400 for this, correctly. Saying so here is faster and
       // does not cost a request.
       setClash(true)
       return
     }
     setClash(false)
-    if (left === undefined || right === undefined) return
-    navigate(`/h2h/${left}/${right}`)
+    setPicked((current) => ({ ...current, [side]: player }))
+    // Drop what was typed so the box shows the name that was chosen.
+    setTyped((current) => ({ ...current, [side]: undefined }))
+
+    const otherSlug = slugFor(other)
+    if (otherSlug === undefined) return
+    navigate(
+      side === 'a' ? `/h2h/${player.slug}/${otherSlug}` : `/h2h/${otherSlug}/${player.slug}`,
+    )
   }
 
   return (
     <div className={styles.pickers}>
-      <PlayerSearch
-        label="First player"
-        placeholder={a ?? 'Search by name'}
-        value={queryA}
-        onChange={setQueryA}
-        onSelect={(player) => {
-          setQueryA('')
-          choose('a', player.slug)
-        }}
-      />
-      <PlayerSearch
-        label="Second player"
-        placeholder={b ?? 'Search by name'}
-        value={queryB}
-        onChange={setQueryB}
-        onSelect={(player) => {
-          setQueryB('')
-          choose('b', player.slug)
-        }}
-      />
+      {(['a', 'b'] as const).map((side) => (
+        <PlayerSearch
+          key={side}
+          label={side === 'a' ? 'First player' : 'Second player'}
+          placeholder="Search by name"
+          value={typed[side] ?? nameFor(side)}
+          onChange={(value) => setTyped((current) => ({ ...current, [side]: value }))}
+          onSelect={(player) => choose(side, player)}
+        />
+      ))}
       {clash ? (
         <p className={styles.error}>
           Pick two different players. A comparison with themselves would be 0&#8211;0 for both
@@ -118,9 +156,16 @@ function Pickers({ a, b }: { a?: string; b?: string }) {
   )
 }
 
-function Rivalry({ a, b }: { a: string; b: string }) {
+function Rivalry({
+  a,
+  b,
+  h2h,
+}: {
+  a: string
+  b: string
+  h2h: Resource<Comparison | null>
+}) {
   const [surface, setSurface] = useUrlParam('surface')
-  const h2h = useResource((signal) => getHeadToHead(a, b, signal), [a, b])
   const profileA = useResource((signal) => getPlayer(a, signal), [a])
   const profileB = useResource((signal) => getPlayer(b, signal), [b])
   const series = surface ?? 'overall'
@@ -132,8 +177,6 @@ function Rivalry({ a, b }: { a: string; b: string }) {
     (signal) => getPlayerRatingSeries(b, { surface: series }, signal),
     [b, series],
   )
-
-  if (h2h.state === 'loading') return <Skeleton lines={10} />
 
   if (h2h.state === 'error') {
     const notFound = h2h.error instanceof ApiError && h2h.error.status === 404
@@ -149,6 +192,10 @@ function Rivalry({ a, b }: { a: string; b: string }) {
       />
     )
   }
+
+  // Null is the resource standing in for "no comparison asked for", which this
+  // component is only rendered with a moment before the slugs arrive.
+  if (h2h.state !== 'ready' || h2h.data === null) return <Skeleton lines={10} />
 
   const comparison = h2h.data
   const [playerA, playerB] = comparison.players

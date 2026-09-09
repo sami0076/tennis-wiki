@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -127,15 +128,26 @@ const profile = {
 
 const emptySeries = { surface: 'overall', from: '', to: '', points: [] }
 
+/** What the search endpoint answers a picker with. */
+const searchResults = {
+  data: [
+    { slug: 'bjorn-borg', name: 'Bjorn Borg', tour: 'atp', country: 'SWE', matches: 764, best_tier: 'tour', score: 1 },
+    { slug: 'john-mcenroe', name: 'John McEnroe', tour: 'atp', country: 'USA', matches: 1102, best_tier: 'tour', score: 0.9 },
+  ],
+  next_cursor: null,
+}
+
 /** Answers each endpoint the page asks for, and nothing else. */
 function stub(comparison: Comparison) {
   vi.stubGlobal('fetch', (input: string) => {
     const path = new URL(String(input), 'http://localhost').pathname
     const body = path.startsWith('/api/v1/h2h/')
       ? comparison
-      : path.endsWith('/ratings')
-        ? emptySeries
-        : profile
+      : path === '/api/v1/players'
+        ? searchResults
+        : path.endsWith('/ratings')
+          ? emptySeries
+          : profile
     return Promise.resolve(
       new Response(JSON.stringify(body), {
         status: 200,
@@ -230,6 +242,42 @@ describe('HeadToHead', () => {
     expect(screen.getByText(/No Futures or ITF match has ever recorded/)).toBeInTheDocument()
     // The record is still there. Only the statistics are missing.
     expect(screen.getByText('1–2')).toBeInTheDocument()
+  })
+
+  // The bug this test exists for: choosing on an empty page cleared the box and
+  // remembered nothing, so no pair could ever be built from /h2h.
+  it('remembers the first pick until the second one arrives', async () => {
+    stub(rivalry)
+    const user = userEvent.setup()
+    renderAt('/h2h')
+
+    const first = await screen.findByRole('combobox', { name: 'First player' })
+    await user.type(first, 'borg')
+    await user.click(await screen.findByText('Bjorn Borg'))
+
+    // Still on the picker, with the choice visible rather than thrown away.
+    expect(first).toHaveValue('Bjorn Borg')
+    expect(screen.getByText('Pick two players')).toBeInTheDocument()
+
+    const second = screen.getByRole('combobox', { name: 'Second player' })
+    await user.type(second, 'mcenroe')
+    await user.click(await screen.findByText('John McEnroe'))
+
+    // Both known, so the comparison is a page now.
+    expect(await screen.findByText('1–2')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Bjorn Borg' })).toBeInTheDocument()
+  })
+
+  // Once a comparison exists, the boxes name the players it is actually of --
+  // not the last thing typed into them.
+  it('shows who is being compared', async () => {
+    stub(rivalry)
+    renderAt('/h2h/bjorn-borg/john-mcenroe')
+
+    await waitFor(() => {
+      expect(screen.getByRole('combobox', { name: 'First player' })).toHaveValue('Bjorn Borg')
+    })
+    expect(screen.getByRole('combobox', { name: 'Second player' })).toHaveValue('John McEnroe')
   })
 
   it('asks for two players before it compares anything', async () => {
