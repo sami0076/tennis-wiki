@@ -1,6 +1,7 @@
 # Architecture
 
-> Stub. Filled in as Phase 1 lands — see the [Phase 1 tracking issue](https://github.com/sami0076/tennis-wiki/issues/16).
+> Partial. The shape below is current through Phase 2; the deployment topology arrives with
+> Phase 4, and the simulation chain with [Phase 3](https://github.com/sami0076/tennis-wiki/issues/85).
 
 ## Shape of the system
 
@@ -24,11 +25,16 @@ a read against indexed tables.
 | Path | Contents |
 |---|---|
 | `cmd/` | One directory per binary. Thin — argument parsing and wiring only |
+| `internal/cache` | Redis read cache, cleared by the ingest |
 | `internal/db` | pgx pool setup and sqlc-generated queries |
 | `internal/ingest` | Source registry, CSV parsing, upserts |
 | `internal/rating` | Elo engine |
 | `internal/simulate` | Closed-form match, Monte Carlo draw |
 | `internal/score` | Score-string parser |
+| `internal/identity` | Player reconciliation across the source id spaces |
+| `internal/validate` | Rating accuracy, calibration and continuity checks |
+| `internal/dataqual` | Data-quality checks over the loaded database |
+| `internal/testdb` | Throwaway Postgres and Redis containers for the tests |
 | `internal/httpapi` | Handlers and middleware |
 | `migrations/` | goose SQL |
 | `testdata/` | Fixtures. Tests never touch the network |
