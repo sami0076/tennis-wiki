@@ -9,6 +9,74 @@
 export type Pair<T> = [T, T]
 
 //////////
+// source: clutch.go
+
+/**
+ * Clutch is the three under-pressure figures and what they are measured
+ * against.
+ * Each metric is null where the player had no opportunities of that kind, which
+ * is not the same as failing at them: a player who never faced a break point
+ * has not saved 0% of them, and a player whose matches recorded no serve line
+ * has no figure at all rather than a bad one.
+ */
+export interface Clutch {
+  baseline: ClutchPopulation;
+  break_points_saved: ClutchMetric | null;
+  tiebreaks_won: ClutchMetric | null;
+  deciding_sets_won: ClutchMetric | null;
+  /**
+   * Availability explains an absent break-points figure in the same
+   * vocabulary the profile and the head-to-head use.
+   */
+  availability: string;
+}
+/**
+ * ClutchPopulation is what "vs tour average" means here, in the response rather
+ * than in a page's caption, because a delta against an unnamed average is a
+ * number pretending to be a fact.
+ */
+export interface ClutchPopulation {
+  /**
+   * Tiers and the decade range are this player's own, because the baseline is
+   * weighted by where their opportunities fell. A Futures player is not
+   * measured against a tour average.
+   */
+  tiers: string[] | null;
+  from_decade: number /* int16 */;
+  to_decade: number /* int16 */;
+  /**
+   * Appearances is how many player-sides across the database the baseline is
+   * drawn from -- two per match, the same unit the player's own figures use.
+   */
+  appearances: number /* int64 */;
+  /**
+   * Matches and ScoredMatches are the player's own denominator. A score that
+   * could not be read carries no tiebreak, and the difference is worth
+   * stating rather than burying.
+   */
+  matches: number /* int64 */;
+  scored_matches: number /* int64 */;
+}
+/**
+ * ClutchMetric is one figure, its denominator, and the tour's figure over the
+ * same ground.
+ */
+export interface ClutchMetric {
+  won: number /* int64 */;
+  played: number /* int64 */;
+  percentage: number /* float64 */;
+  /**
+   * Baseline is null where no cell of the baseline had opportunities of this
+   * kind -- a comparison against nothing, which is worse than no comparison.
+   */
+  baseline: number /* float64 */ | null;
+  /**
+   * Delta is percentage points above the baseline, positive being better.
+   */
+  delta: number /* float64 */ | null;
+}
+
+//////////
 // source: coverage.go
 
 /**

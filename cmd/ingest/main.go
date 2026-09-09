@@ -44,6 +44,9 @@ const (
 	stageMatches   = "matches"
 	stageReference = "reference"
 	stageReconcile = "reconcile"
+	// The derived columns on their own. A full ingest ends with them anyway;
+	// this is for a schema change that adds one to data already loaded.
+	stageRefresh = "refresh"
 	// Repair, not part of a run: a full ingest overwrites what it would clear.
 	stagePrune = "prune"
 )
@@ -59,7 +62,8 @@ func main() {
 	flag.IntVar(&cfg.batchSize, "batch", ingest.DefaultBatchSize, "rows per transaction")
 	flag.StringVar(&cfg.stage, "stage", stageAll,
 		"what to run: all, matches, reference (player tables and rankings), reconcile, "+
-			"or prune (clear stat lines the parser now rejects)")
+			"refresh (derived columns only), or prune (clear stat lines the parser "+
+			"now rejects)")
 	flag.StringVar(&cfg.overrides, "overrides", "configs/player_overrides.json",
 		"identity decisions made by hand")
 	flag.BoolVar(&cfg.dryRun, "dry-run", false,
@@ -117,9 +121,10 @@ func run(ctx context.Context, cfg config) error {
 	defer pool.Close()
 
 	switch cfg.stage {
-	case stageAll, stageMatches, stageReference, stageReconcile, stagePrune:
+	case stageAll, stageMatches, stageReference, stageReconcile, stageRefresh, stagePrune:
 	default:
-		return fmt.Errorf("unknown stage %q: want all, matches, reference, reconcile or prune",
+		return fmt.Errorf(
+			"unknown stage %q: want all, matches, reference, reconcile, refresh or prune",
 			cfg.stage)
 	}
 
@@ -149,12 +154,21 @@ func run(ctx context.Context, cfg config) error {
 	}
 
 	// Search ranks off this view, so it is stale the moment matches change.
-	if cfg.stage == stageAll || cfg.stage == stageMatches || cfg.stage == stageReference {
+	if cfg.stage == stageAll || cfg.stage == stageMatches || cfg.stage == stageReference ||
+		cfg.stage == stageRefresh {
 		started := time.Now()
 		if err := store.RefreshProminence(ctx); err != nil {
 			return err
 		}
 		slog.Info("refreshed search ranking", "took", time.Since(started).Round(time.Millisecond))
+
+		started = time.Now()
+		derived, err := store.RefreshClutch(ctx, cfg.force)
+		if err != nil {
+			return err
+		}
+		slog.Info("refreshed clutch baselines", "matches_derived", derived,
+			"took", time.Since(started).Round(time.Millisecond))
 	}
 
 	counts, err := store.Counts(ctx)

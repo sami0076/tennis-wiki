@@ -395,6 +395,60 @@ untestable by any test that rolls back.
 They are stale between ingest runs, by design. A player's tier and match count move slowly,
 and search ranking is the only thing that reads them.
 
+## Clutch statistics and their baseline
+
+Three figures — break points saved, tiebreaks won, deciding sets won — measured against
+what the tour did over the same levels and the same decades.
+
+Neither half can be a per-request query. Tiebreaks and deciding sets live in the score
+string and nowhere else, so reading them means running the Go parser over 1.6 million
+strings; the baseline is an aggregate over every appearance in the database. Both are
+derived once, in the same family as the prominence columns above.
+
+### Deriving the match columns
+
+| | Matches | Wall time |
+|---|---|---|
+| First run, whole database | 1,567,729 derived | 67s |
+| Every run after it | 0 derived | 4.1s |
+
+The 4.1s is the baseline rebuild, which runs every time: one pass over 3.2 million
+appearances joined to matches and tournaments, into 37 rows. The derivation itself finds
+nothing to do, because the ingest writes the columns as it writes each match and the
+backfill only exists for data loaded before the columns did.
+
+Paged by id rather than by "still NULL". A score the parser cannot read stays NULL, so
+selecting on the condition it fails to clear would be an infinite loop over exactly those
+rows. `--stage refresh --force` re-derives everything, which is what a change to the
+derivation itself needs — and one was needed: the first version required the tiebreak
+points to be written down, and the files often did not write them. Bjorn Borg came out
+with 35 tiebreaks in 764 matches. Reading the games instead — a set cannot be won by one
+game any other way — gives 177.
+
+### Reading it back
+
+For Djokovic, 1,434 matches across 4 tiers and 3 decades:
+
+| | Cold | Warm |
+|---|---|---|
+| Player query, planning included | 45ms | 20ms |
+| `/players/:slug/clutch` end to end | 73ms | 42ms |
+
+The endpoint runs three queries: the clutch aggregate, and the career summary and tier
+splits that explain an absent break-points figure in the same words the profile uses. The
+join to `clutch_baselines` is a sequential scan over 37 rows and costs nothing measurable.
+
+### What the baseline actually says
+
+Break points saved varies by era, which is why the cell has a decade in its key: ATP tour
+level ran 59.3% in the 1990s and 60.8% in the 2020s.
+
+Tiebreaks won and deciding sets won come out at **exactly 50.0%** in every cell, and that
+is not a bug. Every tiebreak has a winner and a loser and both are in the same match, so a
+population counting both sides wins exactly half of its own. The figures are stored rather
+than assumed, so the page states a measured number and anything that breaks the symmetry
+shows up instead of hiding — a test asserts it on every run.
+
 ## Not measured
 
 **Full rating recompute wall time**, which #20 also asks for. The rating engine does not

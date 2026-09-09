@@ -49,8 +49,30 @@ type Set struct {
 	SuperTiebreak bool
 }
 
-// HasTiebreak reports whether the set was decided by a tiebreak.
+// HasTiebreak reports whether the source wrote the tiebreak points down.
 func (s Set) HasTiebreak() bool { return s.TiebreakWinner > 0 || s.TiebreakLoser > 0 }
+
+// TiebreakSet reports whether the set was decided by a tiebreak, points written
+// down or not.
+//
+// A set cannot be won by a single game any other way: without a tiebreak it
+// goes to two clear games. So a one-game margin at 7 or above is a tiebreak --
+// 7-6, and also the 9-8 and 13-12 the longer formats produce. Requiring the
+// points instead would undercount every tiebreak in the decades the files did
+// not record them, and Bjorn Borg would come out with 35 in 764 matches.
+func (s Set) TiebreakSet() bool {
+	if s.SuperTiebreak {
+		return false
+	}
+	if s.HasTiebreak() {
+		return true
+	}
+	high, low := s.GamesWinner, s.GamesLoser
+	if low > high {
+		high, low = low, high
+	}
+	return high >= 7 && high-low == 1
+}
 
 func (s Set) String() string {
 	if s.SuperTiebreak {
@@ -90,6 +112,45 @@ func (s Score) SetsWon() (winner, loser int) {
 		}
 	}
 	return winner, loser
+}
+
+// Tiebreaks counts set tiebreaks won by the match winner and by the loser.
+//
+// Which side won one is read from the games, not from the tiebreak points: the
+// parser names the tiebreak's own winner, so "6-7(5)" carries a 7-5 tiebreak
+// that the match winner lost. Reading the games is also what lets a set whose
+// points were never written down still count -- see TiebreakSet.
+//
+// A match tiebreak played in place of a final set is not counted here. It
+// decides a match rather than a set, and WentToDecider already counts it;
+// counting both would put the same moment in two figures.
+func (s Score) Tiebreaks() (winner, loser int) {
+	for _, set := range s.Sets {
+		if !set.TiebreakSet() {
+			continue
+		}
+		switch {
+		case set.GamesWinner > set.GamesLoser:
+			winner++
+		case set.GamesLoser > set.GamesWinner:
+			loser++
+		}
+	}
+	return winner, loser
+}
+
+// WentToDecider reports whether a finished match reached its deciding set --
+// the third of a best of three, the fifth of a best of five. A match tiebreak
+// standing in for that set counts: it is the deciding set, played short.
+//
+// Only a finished match. Somebody advanced from a third-set retirement, but
+// nobody won that set, and every rate in this project leaves incomplete
+// matches out.
+func (s Score) WentToDecider(bestOf int) bool {
+	if s.Outcome != Complete || (bestOf != 3 && bestOf != 5) {
+		return false
+	}
+	return len(s.Sets) == bestOf
 }
 
 func (s Score) String() string {

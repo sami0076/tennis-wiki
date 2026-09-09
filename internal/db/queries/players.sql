@@ -161,3 +161,72 @@ SELECT ranking_date, rank, points
    AND (sqlc.narg(from_date)::date IS NULL OR ranking_date >= sqlc.narg(from_date)::date)
    AND (sqlc.narg(to_date)::date IS NULL OR ranking_date <= sqlc.narg(to_date)::date)
  ORDER BY ranking_date;
+
+-- name: GetPlayerClutch :one
+-- Under pressure, measured against the tour over the same levels and years.
+--
+-- The baseline is weighted by where this player's own opportunities actually
+-- fell. A career that spans Futures in the 1990s and tour level in the 2020s is
+-- compared with what the tour did across that same spread, rather than against
+-- one era it only half belongs to -- which is the judgement the issue said had
+-- to be made and stated.
+--
+-- Both halves are read from columns the ingest derived. Neither the score
+-- parsing nor a 1.6 million match aggregate belongs in a request.
+WITH played AS (
+    SELECT t.tour,
+           t.tier,
+           ((t.season / 10) * 10)::smallint                   AS decade,
+           count(*)                                           AS appearances,
+           count(*) FILTER (WHERE m.deciding_set IS NOT NULL) AS scored,
+           coalesce(sum(mp.bp_saved), 0)                      AS bp_saved,
+           coalesce(sum(mp.bp_faced), 0)                      AS bp_faced,
+           coalesce(sum(CASE WHEN mp.won THEN m.tiebreaks_winner
+                                         ELSE m.tiebreaks_loser END), 0) AS tiebreaks_won,
+           coalesce(sum(m.tiebreaks_winner + m.tiebreaks_loser), 0)      AS tiebreaks_played,
+           count(*) FILTER (WHERE m.deciding_set AND mp.won)  AS deciding_sets_won,
+           count(*) FILTER (WHERE m.deciding_set)             AS deciding_sets_played
+      FROM match_players mp
+      JOIN matches m     ON m.id = mp.match_id
+      JOIN tournaments t ON t.id = m.tournament_id
+     WHERE mp.player_id = @player_id
+       AND NOT m.is_team_event
+     GROUP BY 1, 2, 3
+)
+SELECT
+    coalesce(sum(p.appearances), 0)::bigint          AS appearances,
+    coalesce(sum(p.scored), 0)::bigint               AS scored,
+    coalesce(sum(p.bp_saved), 0)::bigint             AS bp_saved,
+    coalesce(sum(p.bp_faced), 0)::bigint             AS bp_faced,
+    coalesce(sum(p.tiebreaks_won), 0)::bigint        AS tiebreaks_won,
+    coalesce(sum(p.tiebreaks_played), 0)::bigint     AS tiebreaks_played,
+    coalesce(sum(p.deciding_sets_won), 0)::bigint    AS deciding_sets_won,
+    coalesce(sum(p.deciding_sets_played), 0)::bigint AS deciding_sets_played,
+    -- Each baseline is the player's own opportunities in a cell against what
+    -- the tour did in that cell. A cell where either side had no opportunities
+    -- of that kind leaves both the numerator and the denominator, so it cannot
+    -- drag the average toward a rate nobody recorded.
+    -- Weight of zero is how "no baseline" arrives: a rate over no opportunities
+    -- would be a comparison against nothing, and 0.0 would look like one
+    -- against something.
+    coalesce(sum(p.bp_faced * b.bp_saved::float8 / b.bp_faced)
+        FILTER (WHERE b.bp_faced > 0 AND p.bp_faced > 0), 0)::float8      AS baseline_bp_weighted,
+    coalesce(sum(p.bp_faced)
+        FILTER (WHERE b.bp_faced > 0 AND p.bp_faced > 0), 0)::bigint      AS baseline_bp_weight,
+    coalesce(sum(p.tiebreaks_played * b.tiebreaks_won::float8 / b.tiebreaks_played)
+        FILTER (WHERE b.tiebreaks_played > 0 AND p.tiebreaks_played > 0), 0)::float8 AS baseline_tiebreaks_weighted,
+    coalesce(sum(p.tiebreaks_played)
+        FILTER (WHERE b.tiebreaks_played > 0 AND p.tiebreaks_played > 0), 0)::bigint AS baseline_tiebreaks_weight,
+    coalesce(sum(p.deciding_sets_played * b.deciding_sets_won::float8 / b.deciding_sets_played)
+        FILTER (WHERE b.deciding_sets_played > 0 AND p.deciding_sets_played > 0), 0)::float8 AS baseline_deciding_weighted,
+    coalesce(sum(p.deciding_sets_played)
+        FILTER (WHERE b.deciding_sets_played > 0 AND p.deciding_sets_played > 0), 0)::bigint AS baseline_deciding_weight,
+    -- What the comparison is against, so the response can state it rather than
+    -- leaving a reader to assume it.
+    coalesce(min(p.decade), 0)::smallint              AS from_decade,
+    coalesce(max(p.decade), 0)::smallint              AS to_decade,
+    coalesce(sum(b.appearances), 0)::bigint          AS baseline_appearances,
+    array_remove(array_agg(DISTINCT p.tier::text), NULL)::text[] AS tiers
+  FROM played p
+  LEFT JOIN clutch_baselines b
+         ON b.tour = p.tour AND b.tier = p.tier AND b.decade = p.decade;

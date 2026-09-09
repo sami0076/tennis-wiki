@@ -3,17 +3,20 @@ import { Link, useParams } from 'react-router-dom'
 import {
   ApiError,
   type Career,
+  type Clutch,
+  type ClutchMetric,
   type PlayerMatch,
   type PlayerProfile,
 } from '../api/client'
 import {
   getCoverage,
   getPlayer,
+  getPlayerClutch,
   getPlayerMatches,
   getPlayerRankings,
   getPlayerRatingSeries,
 } from '../api/endpoints'
-import { useResource } from '../api/useResource'
+import { useResource, type Resource } from '../api/useResource'
 import {
   AbsentCell,
   ButtonLink,
@@ -21,6 +24,7 @@ import {
   EmptyState,
   Meta,
   PartialAggregate,
+  RankDelta,
   Skeleton,
   Sparkline,
   StatRow,
@@ -33,6 +37,7 @@ import {
 } from '../components'
 import { absenceReason, hasStatistics } from '../lib/absence'
 import { ageOn, careerSpan, formatHand, formatPercent, formatScore } from '../lib/format'
+import { tierLabel } from '../lib/tier'
 import { useUrlParam } from '../lib/useUrlParam'
 import styles from './Player.module.css'
 
@@ -61,6 +66,7 @@ export function Player() {
   const coverage = useResource((signal) => getCoverage(signal), [])
   const trajectory = useResource((signal) => getPlayerRatingSeries(slug, {}, signal), [slug])
   const rankings = useResource((signal) => getPlayerRankings(slug, signal), [slug])
+  const clutch = useResource((signal) => getPlayerClutch(slug, signal), [slug])
   const matches = useResource(
     (signal) =>
       getPlayerMatches(slug, { surface, limit: 25, cursor: cursors.at(-1) ?? null }, signal),
@@ -134,6 +140,7 @@ export function Player() {
       ) : (
         <div className={styles.columns}>
           <div className={styles.left}>
+            <ClutchSection clutch={clutch} />
             <CareerSection career={player.career} />
             <RankingSection rankings={rankings} />
           </div>
@@ -182,6 +189,103 @@ function IdentityHeader({ player, active }: { player: PlayerProfile; active: boo
       />
     </div>
   )
+}
+
+/**
+ * The panel the design has and the page shipped without.
+ *
+ * "+4" against an unnamed average is a number pretending to be a fact, so the
+ * population is in the response and the caption states it: this player's own
+ * levels and decades, weighted by where their matches actually fell.
+ */
+function ClutchSection({ clutch }: { clutch: Resource<Clutch> }) {
+  if (clutch.state === 'loading') {
+    return (
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Under pressure, vs tour average</h2>
+        <Skeleton lines={3} />
+      </section>
+    )
+  }
+  if (clutch.state === 'error') return null
+
+  const data = clutch.data
+  const nothing =
+    data.break_points_saved === null &&
+    data.tiebreaks_won === null &&
+    data.deciding_sets_won === null
+
+  if (nothing) {
+    return (
+      <section className={styles.section}>
+        <EmptyState
+          heading="Nothing to measure under pressure"
+          reason={
+            <>
+              None of their matches carried a break point, a tiebreak or a deciding set that
+              this database can read. {absenceReason(data.availability)}
+            </>
+          }
+        />
+      </section>
+    )
+  }
+
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>Under pressure, vs tour average</h2>
+      <ClutchRow label="Break points saved" metric={data.break_points_saved} />
+      <ClutchRow label="Tiebreaks won" metric={data.tiebreaks_won} />
+      <ClutchRow label="Deciding sets won" metric={data.deciding_sets_won} />
+      <p className={styles.caption}>
+        Against every {(data.baseline.tiers ?? []).map(tierName).join(' and ')} match from the{' '}
+        {decade(data.baseline.from_decade)} to the {decade(data.baseline.to_decade)}, weighted
+        by where this player&apos;s own matches fell.{' '}
+        {data.break_points_saved === null
+          ? null
+          : `Break points saved covers the ${data.break_points_saved.played} break points their matches recorded. `}
+        Tiebreaks and deciding sets cover the {data.baseline.scored_matches} of{' '}
+        {data.baseline.matches} matches with a readable, completed score.
+      </p>
+      <p className={styles.caption}>
+        Every tiebreak is won by somebody, so those two averages sit at 50% by construction
+        and the figure above is the margin over a coin toss. Break points saved is a real
+        aggregate and is not 50%.
+      </p>
+    </section>
+  )
+}
+
+function ClutchRow({ label, metric }: { label: string; metric: ClutchMetric | null }) {
+  if (metric === null) {
+    return (
+      <StatRow label={label}>
+        <AbsentCell label={label} />
+      </StatRow>
+    )
+  }
+  return (
+    <StatRow label={label}>
+      {formatPercent(metric.percentage, 0)}
+      {metric.delta === null ? null : (
+        <>
+          {' '}
+          <RankDelta
+            delta={Math.round(metric.delta)}
+            label="percentage points against the same levels and years"
+          />
+        </>
+      )}
+    </StatRow>
+  )
+}
+
+function decade(year: number): string {
+  return `${year}s`
+}
+
+function tierName(tier: string): string {
+  return (tierLabel(tier) ?? tier).toLowerCase()
 }
 
 function CareerSection({ career }: { career: Career }) {

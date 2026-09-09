@@ -13,17 +13,32 @@ import (
 type classified struct {
 	incomplete bool
 	sets       []score.Set
+	// The clutch columns, nil where the score could not be read or the match
+	// did not finish. Never zero for those: no tiebreaks and no readable score
+	// are different facts, and the second one must not average as the first.
+	tiebreaksWinner, tiebreaksLoser *int16
+	decidingSet                     *bool
 }
 
 // classifyScore parses the score, tolerating anything the parser cannot read.
 // An unreadable score is a data-quality fact for cmd/dataqual to report, not a
 // reason to fail the row.
-func classifyScore(raw string) classified {
+func classifyScore(raw string, bestOf int) classified {
 	s, err := score.Parse(raw)
 	if err != nil {
 		return classified{incomplete: true}
 	}
-	return classified{incomplete: s.Incomplete(), sets: s.Sets}
+
+	out := classified{incomplete: s.Incomplete(), sets: s.Sets}
+	if out.incomplete {
+		return out
+	}
+
+	winner, loser := s.Tiebreaks()
+	decider := s.WentToDecider(bestOf)
+	w, l := int16(winner), int16(loser)
+	out.tiebreaksWinner, out.tiebreaksLoser, out.decidingSet = &w, &l, &decider
+	return out
 }
 
 // teamEventLevels are the source's codes for Davis Cup and Billie Jean King

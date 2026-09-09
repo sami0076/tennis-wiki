@@ -147,6 +147,7 @@ GET /api/v1/players/:slug                 profile and career summary
 GET /api/v1/players/:slug/matches         match history, filterable and cursor-paged
 GET /api/v1/players/:slug/ratings         Elo trajectory, per surface
 GET /api/v1/players/:slug/rankings        published ATP/WTA ranking over time
+GET /api/v1/players/:slug/clutch          break points, tiebreaks, deciding sets
 GET /api/v1/h2h/:slug/:opponent           head-to-head, either way round
 GET /api/v1/rankings?type=elo|official    leaderboards, as of the last week that exists
 GET /api/v1/rankings/trajectory           the leaders' rating lines, for a chart
@@ -165,6 +166,17 @@ A ranking is always **as of the last week that exists**, never today, and the re
 which week it used. Asking for a date outside coverage returns an empty page with that date
 stated rather than a 404. An Elo leaderboard also drops players whose last rating is over a
 year old — without that it is a list of the retired.
+
+**Under pressure is measured against a stated population.** `/clutch` reports break points
+saved, tiebreaks won and deciding sets won, each against what the tour did at the same
+levels in the same decades, weighted by where that player's own opportunities actually
+fell -- so a Futures career is not measured against a tour average, and a career spanning
+1995 and 2025 is not measured against either one alone. The population is in the response,
+because a "+4" against an unnamed average is a number pretending to be a fact. Tiebreaks
+and deciding sets are derived from the parsed score and the baseline is a table the ingest
+rebuilds, since neither belongs in a request. Two of the three averages come out at exactly
+50%, and [`docs/performance.md`](docs/performance.md) explains why that is arithmetic
+rather than a finding.
 
 The profile carries current and peak Elo for every series the player has one in — a surface
 they never played is absent rather than sitting at the base rating, and a player nothing
