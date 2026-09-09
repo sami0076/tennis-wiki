@@ -277,7 +277,10 @@ million rows instead of two billion. For display and simulation they are blended
 $$\text{blended} = w \cdot \text{surface elo} + (1 - w) \cdot \text{overall elo}, \qquad w = \min\left(0.75, \frac{\text{surface matches}}{40}\right)$$
 
 so a player with five clay matches leans on their overall rating while a clay specialist
-with a hundred leans on their clay rating. Ratings are recomputed from scratch on every
+with a hundred leans on their clay rating. `rating.Blend` implements it and reports the
+weight it used alongside the figure, because 1900 from a hundred clay matches and 1900 from
+three are the same number and different claims. A surface never played is absent rather
+than blended at 1500. Ratings are recomputed from scratch on every
 full ingest and never incrementally patched, so a bug fix is always one rerun away from
 correct.
 
