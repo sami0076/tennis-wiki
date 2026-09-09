@@ -193,7 +193,7 @@ rather than discovered.
 | | |
 |---|---|
 | matches rated | 1,585,442 |
-| players rated | 75,128 |
+| players rated | 75,021 |
 | **wall time** | **1m 36s** |
 | snapshots written | 3,065,844 |
 | active weeks | 5,114 |
@@ -237,7 +237,7 @@ because nobody played it; a retirement is rated, since tennis was played and som
 The 2,224 players who appear in the database but not in the ratings are those whose only
 matches were one of those two kinds.
 
-**The pool mean is 1482 against a base of 1500**, measured by `cmd/validate` over each
+**The pool mean is 1481 against a base of 1500**, measured by `cmd/validate` over each
 player's final rating. An earlier note here said 1684 and was wrong: that figure was the
 mean of the `ratings` rows, which weights every player by how many weeks they played and so
 counts the strong ones hundreds of times. The pool is not inflated. Tour players sit at
@@ -257,7 +257,7 @@ Measured on the full database with the ADR-0004 weights:
 
 | Tier | Predictions scored | Accuracy | Mean calibration gap |
 |---|---|---|---|
-| tour | 448,939 | **69.9%** | 1.6 |
+| tour | 449,144 | **69.9%** | 1.6 |
 | challenger | 216,073 | 64.5% | 1.3 |
 | futures | 326,368 | 68.5% | 1.3 |
 | itf | 279,006 | 68.3% | 1.6 |
@@ -301,6 +301,18 @@ Alternatives run without a rebuild, which is the reason the weights were made co
 ```
 validate --weights configs/weights.json
 ```
+
+### A merge invalidates every rating
+
+Identity reconciliation merging two rows moves matches between players, so the stored
+ratings describe a database that no longer exists. `make rate` has to follow a reconcile
+that merged anything. Fixing the 179 split ATP identities changed Sinner's overall rating
+from 2678 over 44 matches to 2752 over 498, which is the difference between a fragment and
+a career.
+
+The validation figures barely move: 69.9% tour accuracy either way, and the pool mean shifts
+by a point. A hundred and forty-nine careers out of seventy-five thousand players is not
+visible in an aggregate, which is exactly why the aggregate could not have caught it.
 
 ## Player match history
 

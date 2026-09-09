@@ -192,3 +192,67 @@ func TestReconcileDropsMatchesBelowTheReviewFloor(t *testing.T) {
 		t.Errorf("got %+v, want nothing: too weak to be worth reviewing", got)
 	}
 }
+
+// The real numbers from the 179 pairs this was silently discarding. Sinner was
+// born in August 2001 and both of his rows derive 2000 from a match age; the
+// old comparison put the exact 2001 against the derived 2000, scored zero, and
+// dropped the pair below the review floor.
+func TestExactAndDerivedYearsAreNotComparedDirectly(t *testing.T) {
+	derived := 2000
+	sackmann := Player{
+		SourceID: "206173", FullName: "Jannik Sinner", Country: "ITA",
+		BirthDate: date(t, "2001-08-16"), BirthYear: &derived,
+	}
+	atp := Player{
+		SourceID: "S0AG", FullName: "Jannik Sinner", Country: "ITA",
+		BirthYear: &derived,
+	}
+
+	got, reason := score(sackmann, atp)
+	if got < AutoLink {
+		t.Errorf("score = %.2f (%s), want an automatic merge", got, reason)
+	}
+}
+
+// The rounding cancels only when both sides carry it. Two players whose derived
+// years genuinely differ are still two people.
+func TestDerivedYearsThatDisagreeAreNotMerged(t *testing.T) {
+	a, b := 1998, 2001
+	got, _ := score(
+		Player{SourceID: "100001", FullName: "Same Name", Country: "USA", BirthYear: &a},
+		Player{SourceID: "S0AA", FullName: "Same Name", Country: "USA", BirthYear: &b},
+	)
+	if got != 0 {
+		t.Errorf("score = %.2f, want nothing: the two derived years disagree", got)
+	}
+}
+
+// One side with no derived year at all is the only case where an exact year
+// meets an approximate one. A single year of disagreement is then a question
+// for a person, not an answer either way.
+func TestAnExactYearAgainstAnApproximateOneGoesToReview(t *testing.T) {
+	derived := 2000
+	exact := Player{
+		SourceID: "100001", FullName: "Some Player", Country: "USA",
+		BirthDate: date(t, "2001-08-16"),
+	}
+	approximate := Player{
+		SourceID: "S0AA", FullName: "Some Player", Country: "USA", BirthYear: &derived,
+	}
+
+	got, reason := score(exact, approximate)
+	if got >= AutoLink {
+		t.Errorf("score = %.2f (%s), want review rather than an automatic merge", got, reason)
+	}
+	if got < ReviewFloor {
+		t.Errorf("score = %.2f (%s), want it to reach a human at all", got, reason)
+	}
+
+	// Three years apart is not rounding.
+	far := 1998
+	if got, _ := score(exact, Player{
+		SourceID: "S0AB", FullName: "Some Player", Country: "USA", BirthYear: &far,
+	}); got != 0 {
+		t.Errorf("score = %.2f, want nothing three years apart", got)
+	}
+}

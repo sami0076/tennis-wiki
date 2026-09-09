@@ -148,6 +148,37 @@ var integrityChecks = []Check{
 // 6.2 handling rules, reported so the handling is visible rather than assumed.
 var anomalyChecks = []Check{
 	{
+		Name:     "split_cross_space_namesakes",
+		Severity: Warning,
+		Why: "Players sharing a name and a tour across the two ATP id spaces that " +
+			"identity reconciliation has not merged. Each one is a career cut in half: " +
+			"two thin pages, two sets of totals, and a rating computed over part of a " +
+			"career. 179 of them went unnoticed once because the scorer discarded them " +
+			"below the review floor rather than queueing them.",
+		Query: `
+			WITH alphanumeric AS (
+			    SELECT id, full_name, tour FROM players WHERE source_id !~ '^[0-9]+$'
+			),
+			sackmann AS (
+			    SELECT id, full_name, tour FROM players WHERE source_id ~ '^[0-9]+$'
+			)
+			SELECT count(*)
+			  FROM alphanumeric a
+			  JOIN sackmann s ON s.full_name = a.full_name AND s.tour = a.tour`,
+		Sample: `
+			WITH alphanumeric AS (
+			    SELECT id, slug, full_name, tour FROM players WHERE source_id !~ '^[0-9]+$'
+			),
+			sackmann AS (
+			    SELECT id, slug, full_name, tour FROM players WHERE source_id ~ '^[0-9]+$'
+			)
+			SELECT a.slug || ' and ' || s.slug
+			  FROM alphanumeric a
+			  JOIN sackmann s ON s.full_name = a.full_name AND s.tour = a.tour
+			 ORDER BY a.slug
+			 LIMIT 5`,
+	},
+	{
 		Name:     "matches_without_surface",
 		Severity: Info,
 		Why:      "Surface was empty or None in the source and is stored NULL rather than guessed.",
