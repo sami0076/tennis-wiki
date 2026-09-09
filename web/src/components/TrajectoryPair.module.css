@@ -1,0 +1,57 @@
+.figure {
+  margin: var(--s-4) 0;
+}
+
+.svg {
+  width: 100%;
+  height: 120px;
+  display: block;
+}
+
+.baseline {
+  stroke: var(--chalk);
+  stroke-width: 1;
+}
+
+.lineA {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+/* Player B is --ink-3, the same grey every comparison gives the second player.
+   Hue is spent on surface and cannot be borrowed here. */
+.lineB {
+  fill: none;
+  stroke: var(--ink-3);
+  stroke-width: 1.5;
+}
+
+.caption {
+  margin-top: var(--s-2);
+  font-size: var(--t-11);
+  line-height: 1.55;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.keyA,
+.keyB {
+  display: inline-block;
+  width: 12px;
+  height: 2px;
+  margin-right: var(--s-1);
+  vertical-align: middle;
+}
+
+.keyA {
+  background: var(--ink);
+}
+
+.keyB {
+  background: var(--ink-3);
+}
+
+.gap {
+  padding: 0 var(--s-2);
+}

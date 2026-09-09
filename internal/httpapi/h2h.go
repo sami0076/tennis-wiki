@@ -17,13 +17,16 @@ import (
 // /h2h/a/b and /h2h/b/a are the same comparison read from opposite ends rather
 // than two pages that could disagree.
 type HeadToHead struct {
-	Players [2]HeadToHeadPlayer `json:"players"`
+	// tstype Pair, because a Go array of two marshals to a plain JSON array and
+	// the generated type would otherwise promise only "some players" -- losing
+	// the one guarantee this shape is built on.
+	Players [2]HeadToHeadPlayer `json:"players" tstype:"Pair<HeadToHeadPlayer>"`
 	Record  HeadToHeadRecord    `json:"record"`
 	// Surfaces and Tiers exist because a 3-1 record that is really 3-1 at
 	// Futures is a different claim from 3-1 at tour level.
 	Surfaces []HeadToHeadSplit `json:"surfaces"`
 	Tiers    []HeadToHeadSplit `json:"tiers"`
-	Serve    [2]ServeStats     `json:"serve"`
+	Serve    [2]ServeStats     `json:"serve" tstype:"Pair<ServeStats>"`
 	Meetings []Meeting         `json:"meetings"`
 }
 
@@ -38,7 +41,7 @@ type HeadToHeadPlayer struct {
 // HeadToHeadRecord is the score between them.
 type HeadToHeadRecord struct {
 	Matches int    `json:"matches"`
-	Wins    [2]int `json:"wins"`
+	Wins    [2]int `json:"wins" tstype:"Pair<number>"`
 	// Incomplete counts retirements and walkovers. They belong in the record --
 	// somebody advanced -- and are excluded from every rate.
 	Incomplete int `json:"incomplete"`
@@ -48,7 +51,7 @@ type HeadToHeadRecord struct {
 type HeadToHeadSplit struct {
 	Name    string `json:"name"`
 	Matches int    `json:"matches"`
-	Wins    [2]int `json:"wins"`
+	Wins    [2]int `json:"wins" tstype:"Pair<number>"`
 }
 
 // Meeting is one match between the two, from neither side.

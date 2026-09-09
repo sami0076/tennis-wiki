@@ -11,6 +11,9 @@ packages:
       - "players.go"
       - "matches.go"
       - "ratings.go"
+      - "rankings.go"
+      - "trajectory.go"
+      - "h2h.go"
       - "coverage.go"
       - "problem.go"
       - "cursor.go"
@@ -27,3 +30,6 @@ packages:
       //
       // Regenerate with `make web-types`. CI fails if this file is out of date
       // with the Go structs it came from.
+
+      /** A Go [2]T. Everything the head-to-head pairs is in the order the URL asked for. */
+      export type Pair<T> = [T, T]

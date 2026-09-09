@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom'
 import { Layout } from './layout/Layout'
 import { Gallery } from './routes/Gallery'
+import { HeadToHead } from './routes/HeadToHead'
 import { Home } from './routes/Home'
 import { NotBuiltYet } from './routes/NotBuiltYet'
 import { Player } from './routes/Player'
@@ -8,9 +9,8 @@ import { Players } from './routes/Players'
 import { EmptyState, ButtonLink } from './components'
 
 /**
- * The route table. Head-to-head and rankings are registered now and filled by
- * #48 and #45 -- registering them here is what lets those issues be a page each
- * rather than a page plus a router change.
+ * The route table. /h2h is the picker and /h2h/:a/:b the comparison, which is
+ * the same page: the URL is the state, so a comparison is a link.
  */
 export function App() {
   return (
@@ -19,7 +19,8 @@ export function App() {
         <Route path="/" element={<Home />} />
         <Route path="/players" element={<Players />} />
         <Route path="/players/:slug" element={<Player />} />
-        <Route path="/h2h/:a/:b" element={<NotBuiltYet page="head-to-head page" issue={48} />} />
+        <Route path="/h2h" element={<HeadToHead />} />
+        <Route path="/h2h/:a/:b" element={<HeadToHead />} />
         <Route path="/rankings" element={<NotBuiltYet page="rankings page" issue={45} />} />
         <Route
           path="/simulator"

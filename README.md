@@ -199,6 +199,13 @@ set and hairline structure, and the reasoning is in
 component in every state, which is the fastest way to check the system against a design, and
 `/players/:slug` is the first real page.
 
+`/h2h/:a/:b` is the comparison and `/h2h` the picker, which is the same page: the URL is the
+state, so a comparison is a link somebody can send, and asking the other way round is the same
+rivalry read from the other end. The surface toggle filters the record, the rivalry strip and
+the meeting list from the meetings themselves; it cannot filter the serve figures, because the
+endpoint aggregates a rivalry once, and the caption says so rather than letting them look
+filtered. Two players who never met is a full page, not an error.
+
 Search is in the header on every page: a combobox rather than a div that looks like one, so
 arrow keys and a screen reader reach the same results. It debounces and cancels superseded
 requests, and every row carries tour, country, career match count and best tier, because at
