@@ -400,3 +400,77 @@ func TestNoPanicOnArbitraryInput(t *testing.T) {
 		}()
 	}
 }
+
+// Real scorelines, including the two shapes that make this awkward: a tiebreak
+// the match winner lost, and a match tiebreak standing in for a final set.
+func TestTiebreaks(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		in            string
+		winner, loser int
+	}{
+		{"6-4 6-2", 0, 0},
+		{"6-4 7-6(5) 3-6 6-2", 1, 0},
+		// The old files often wrote no tiebreak points. A set cannot be won by
+		// one game any other way, so these are tiebreaks all the same.
+		{"7-6 6-7 6-4", 1, 1},
+		{"6-4 13-12", 1, 0},
+		{"8-6 6-4", 0, 0},
+		// The match winner lost this one: the 7-5 tiebreak is the other side's.
+		{"6-7(5) 6-3 6-4", 0, 1},
+		{"7-6(4) 6-7(9) 7-6(8-6)", 2, 1},
+		// A match tiebreak decides a match, not a set, and is left to
+		// WentToDecider rather than counted twice.
+		{"6-4 4-6 [10-7]", 0, 0},
+		{"6-3 7-6(2) RET", 1, 0},
+		{"W/O", 0, 0},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			parsed, err := Parse(c.in)
+			if err != nil {
+				t.Fatalf("Parse(%q): %v", c.in, err)
+			}
+			winner, loser := parsed.Tiebreaks()
+			if winner != c.winner || loser != c.loser {
+				t.Errorf("Tiebreaks(%q) = %d, %d; want %d, %d", c.in, winner, loser, c.winner, c.loser)
+			}
+		})
+	}
+}
+
+func TestWentToDecider(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		in     string
+		bestOf int
+		want   bool
+	}{
+		{"6-4 6-2", 3, false},
+		{"6-4 4-6 6-2", 3, true},
+		{"1-6 7-5 6-3 6-7(4) 8-6", 5, true},
+		{"6-4 6-2 6-3", 5, false},
+		// Three sets of a best of five is not that match's deciding set.
+		{"6-4 4-6 6-2", 5, false},
+		// A match tiebreak is the deciding set, played short.
+		{"6-4 4-6 [10-7]", 3, true},
+		// Somebody advanced, but nobody won a third set.
+		{"6-4 4-6 2-1 RET", 3, false},
+		{"W/O", 3, false},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			parsed, err := Parse(c.in)
+			if err != nil {
+				t.Fatalf("Parse(%q): %v", c.in, err)
+			}
+			if got := parsed.WentToDecider(c.bestOf); got != c.want {
+				t.Errorf("WentToDecider(%q, %d) = %v; want %v", c.in, c.bestOf, got, c.want)
+			}
+		})
+	}
+}
