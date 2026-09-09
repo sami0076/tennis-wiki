@@ -47,10 +47,15 @@ services:
       # The frontend is served from the same origin through nginx, so the only
       # cross-origin caller is the Vite dev server.
       CORS_ORIGINS: http://localhost:5173
+      REDIS_URL: redis://redis:6379/0
     ports:
       - "${API_PORT:-8080}:8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      # The API starts without Redis and serves everything more slowly, so this
+      # is about a tidy startup rather than a requirement.
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8080/api/v1/health"]

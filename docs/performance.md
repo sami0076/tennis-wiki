@@ -449,6 +449,67 @@ population counting both sides wins exactly half of its own. The figures are sto
 than assumed, so the page states a measured number and anything that breaks the symmetry
 shows up instead of hiding — a test asserts it on every run.
 
+## The read cache
+
+Redis 7 has been in the compose stack since #2 and nothing used it. This data barely
+changes -- it moves when an ingest runs, which is deliberate and infrequent -- so it is
+unusually cacheable, and `ETag` revalidation has been in the API since #11 for the same
+reason. The cache extends that idea to the server side.
+
+Measured on the full database, with Postgres already warm, so the comparison is the cache
+against a fair fight rather than against a cold buffer pool. Best of five each way.
+
+| Endpoint | Uncached | Cached |
+|---|---|---|
+| `/coverage` | 220ms | 3.5ms |
+| `/players/novak-djokovic` | 25ms | 2.9ms |
+| `/players/novak-djokovic/clutch` | 29ms | 3.5ms |
+| `/players/novak-djokovic/matches?limit=25` | 63ms | 3.2ms |
+| `/h2h/bjorn-borg/john-mcenroe` | 9.5ms | 2.7ms |
+| `/rankings?type=elo&tour=atp&limit=50` | 77ms | 3.1ms |
+| `/rankings/trajectory?tour=atp&players=8` | 71ms | 2.9ms |
+
+Every cached response lands in about 3ms regardless of what it cost to produce, which is
+the shape you would expect: the work is a Redis round trip and a copy, and the endpoint it
+came from stops mattering. The two that gain most are the two that read the most rows.
+
+**Against a cold Postgres the gap is much wider** -- the same run with the buffer pool cold
+measured 842ms for the Elo leaderboard and 450ms for a match page. That is the number a
+first visitor after a restart would see, and the one the cache removes for everyone after
+them.
+
+**`/h2h` gains the least**, at 9.5ms uncached. One indexed query over a few dozen rows was
+already fast, and caching it is worth about 7ms. It is cached anyway because it costs
+nothing to include and the endpoint is one of the two the site is for.
+
+### Invalidation is an event, not a timer
+
+An ingest clears the cache when it finishes, which is the only moment the answers change.
+Keys carry a 24-hour TTL, and that is a backstop rather than a freshness policy: it bounds
+how long a failed flush can matter and stops keys nobody asks for accumulating. A flush is
+a `SCAN` over the `deucepoint:v1:` prefix and an `UNLINK`, not `FLUSHDB`, because the Redis
+may not be ours alone.
+
+### A cache that is down costs time and nothing else
+
+Every operation has a 50ms timeout and no retries, and every failure is a miss. Redis
+being unreachable means the handler does the work it would have done anyway, and the
+readiness probe still reports the process healthy -- a cache is not a dependency, and a
+probe that failed on one would take a working process out of rotation in exchange for a
+slower one. An integration test points the API at a dead port and asserts exactly that.
+
+### The hit rate is reported, not assumed
+
+`GET /api/v1/health` carries the counters:
+
+```json
+"cache": { "enabled": true, "hits": 91, "misses": 51, "errors": 0,
+           "hit_rate": 0.64, "reachable": true }
+```
+
+and every response says which it was in `X-Cache: hit|miss`, so a single request can be
+checked without reading an aggregate.
+
 ## Not measured
 
 **Full rating recompute wall time**, which #20 also asks for. The rating engine does not

@@ -58,9 +58,9 @@ func runPostgres(ctx context.Context) (*container, error) {
 	if err != nil {
 		return nil, err
 	}
-	id = strings.TrimSpace(id)
+	id = trimID(id)
 
-	port, err := hostPort(ctx, id)
+	port, err := hostPort(ctx, id, "5432/tcp")
 	if err != nil {
 		return nil, fmt.Errorf("%w (container %s)", err, id)
 	}
@@ -110,9 +110,12 @@ func (c *container) waitReady(ctx context.Context) error {
 	return fmt.Errorf("database not ready within %s: %w", startupTimeout, lastErr)
 }
 
-// hostPort reports which host port Docker mapped 5432 to.
-func hostPort(ctx context.Context, id string) (string, error) {
-	out, err := docker(ctx, "port", id, "5432/tcp")
+// trimID strips the newline docker prints after a container id.
+func trimID(raw string) string { return strings.TrimSpace(raw) }
+
+// hostPort reports which host port Docker mapped a container port to.
+func hostPort(ctx context.Context, id, containerPort string) (string, error) {
+	out, err := docker(ctx, "port", id, containerPort)
 	if err != nil {
 		return "", err
 	}
