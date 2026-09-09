@@ -1,5 +1,6 @@
 import { request } from './client'
 import type {
+  Clutch,
   CoverageResponse,
   HeadToHead,
   Page,
@@ -54,6 +55,15 @@ export function getPlayerRatingSeries(
     { ...options },
     signal,
   )
+}
+
+/**
+ * The three under-pressure figures and the baseline they are measured against.
+ * Its own request rather than a block on the profile: the profile is one player
+ * and this is one player against every match at their level.
+ */
+export function getPlayerClutch(slug: string, signal?: AbortSignal): Promise<Clutch> {
+  return request<Clutch>(`/players/${encodeURIComponent(slug)}/clutch`, {}, signal)
 }
 
 export function getPlayerRankings(slug: string, signal?: AbortSignal): Promise<RankingHistory> {

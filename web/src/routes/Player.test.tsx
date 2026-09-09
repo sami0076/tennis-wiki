@@ -133,6 +133,25 @@ function show(slug = 'itg-player') {
   )
 }
 
+/** The three under-pressure figures, with a baseline to measure them against. */
+function clutch(overrides: Record<string, unknown> = {}) {
+  return {
+    baseline: {
+      tiers: ['tour', 'challenger'],
+      from_decade: 2000,
+      to_decade: 2020,
+      appearances: 612560,
+      matches: 1434,
+      scored_matches: 1371,
+    },
+    break_points_saved: { won: 4417, played: 6746, percentage: 65.5, baseline: 60.2, delta: 5.3 },
+    tiebreaks_won: { won: 340, played: 519, percentage: 65.5, baseline: 50, delta: 15.5 },
+    deciding_sets_won: { won: 235, played: 326, percentage: 72.1, baseline: 50, delta: 22.1 },
+    availability: AvailabilityRecorded,
+    ...overrides,
+  }
+}
+
 const emptySeries = { surface: 'overall', from: '', to: '', points: [] }
 const emptyRankings = { from: '', to: '', best: null, points: [] }
 
@@ -142,6 +161,7 @@ describe('the player page', () => {
   it('renders a tour player with statistics completely', async () => {
     routes({
       '/coverage': coverage,
+      '/clutch': clutch(),
       '/ratings': emptySeries,
       '/rankings': { from: '2019-01-07', to: '2025-11-03', best: { date: '2023-09-11', rank: 1, points: 9000 }, points: [{ date: '2023-09-11', rank: 1, points: 9000 }] },
       '/matches': { data: [match()], next_cursor: '' },
@@ -164,6 +184,7 @@ describe('the player page', () => {
   it('explains a Futures career rather than showing zeroes', async () => {
     routes({
       '/coverage': coverage,
+      '/clutch': clutch(),
       '/ratings': emptySeries,
       '/rankings': emptyRankings,
       '/matches': { data: [match({ serve: { availability: AvailabilityNeverForTier, aces: null, double_faults: null, serve_points: null, first_in: null, first_won: null, second_won: null, serve_games: null, break_points_saved: null, break_points_faced: null } })], next_cursor: '' },
@@ -182,6 +203,7 @@ describe('the player page', () => {
   it('explains a pre-1991 career by its era', async () => {
     routes({
       '/coverage': coverage,
+      '/clutch': clutch(),
       '/ratings': emptySeries,
       '/rankings': emptyRankings,
       '/matches': { data: [], next_cursor: '' },
@@ -202,6 +224,7 @@ describe('the player page', () => {
   it('renders a player with no matches at all without crashing', async () => {
     routes({
       '/coverage': coverage,
+      '/clutch': clutch(),
       '/ratings': emptySeries,
       '/rankings': emptyRankings,
       '/matches': { data: [], next_cursor: '' },
@@ -229,11 +252,13 @@ describe('the player page', () => {
           : { data: [second], next_cursor: '' }
         : url.includes('/coverage')
           ? coverage
-          : url.includes('/ratings')
-            ? emptySeries
-            : url.includes('/rankings')
-              ? emptyRankings
-              : profile()
+          : url.includes('/clutch')
+            ? clutch()
+            : url.includes('/ratings')
+              ? emptySeries
+              : url.includes('/rankings')
+                ? emptyRankings
+                : profile()
       return Promise.resolve(
         new Response(JSON.stringify(body), {
           status: 200,
@@ -252,11 +277,74 @@ describe('the player page', () => {
 
   // An address that does not exist gets an explanation, not a blank screen.
   it('says so when there is no such player', async () => {
-    routes({ '/coverage': coverage }, ['/players/'])
+    routes({ '/coverage': coverage, '/clutch': clutch() }, ['/players/'])
     show('itg-nobody')
 
     expect(await screen.findByText(/No player has that address/)).toBeInTheDocument()
     expect(screen.getByText(/itg-nobody/)).toBeInTheDocument()
+  })
+
+  it('shows the clutch figures and names what they are measured against', async () => {
+    routes({
+      '/coverage': coverage,
+      '/clutch': clutch(),
+      '/ratings': emptySeries,
+      '/rankings': emptyRankings,
+      '/matches': { data: [], next_cursor: '' },
+      '/players/itg-player': profile(),
+    })
+    show()
+
+    expect(await screen.findByText('Under pressure, vs tour average')).toBeInTheDocument()
+    expect(screen.getByText('Deciding sets won')).toBeInTheDocument()
+    expect(screen.getByText('72%')).toBeInTheDocument()
+    expect(screen.getByLabelText(/\+22 percentage points/)).toBeInTheDocument()
+
+    // "+22" against an unnamed average is a number pretending to be a fact, so
+    // the population belongs on the page.
+    const caption = screen.getByText(/weighted by where this player/)
+    expect(caption).toHaveTextContent('2000s to the 2020s')
+    expect(caption).toHaveTextContent('tour level and challenger')
+    expect(caption).toHaveTextContent('1371 of 1434 matches')
+  })
+
+  // Half of all tiebreaks are won by somebody. The page says so rather than
+  // letting a reader take 50% for a measured coincidence.
+  it('explains why two of the three averages are exactly half', async () => {
+    routes({
+      '/coverage': coverage,
+      '/clutch': clutch(),
+      '/ratings': emptySeries,
+      '/rankings': emptyRankings,
+      '/matches': { data: [], next_cursor: '' },
+      '/players/itg-player': profile(),
+    })
+    show()
+
+    expect(await screen.findByText(/sit at 50% by construction/)).toBeInTheDocument()
+  })
+
+  it('leaves a figure absent rather than comparing it against nothing', async () => {
+    routes({
+      '/coverage': coverage,
+      '/clutch': clutch({
+        break_points_saved: null,
+        tiebreaks_won: { won: 3, played: 8, percentage: 37.5, baseline: null, delta: null },
+        deciding_sets_won: { won: 5, played: 9, percentage: 55.6, baseline: null, delta: null },
+        availability: AvailabilityNeverForTier,
+      }),
+      '/ratings': emptySeries,
+      '/rankings': emptyRankings,
+      '/matches': { data: [], next_cursor: '' },
+      '/players/itg-player': profile(),
+    })
+    show()
+
+    await screen.findByText('Under pressure, vs tour average')
+    expect(screen.getByLabelText('Break points saved: not recorded')).toBeInTheDocument()
+    // A figure with no baseline is still a figure, and gets no delta.
+    expect(screen.getByText('38%')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/percentage points/)).not.toBeInTheDocument()
   })
 
   it('shows a skeleton rather than a blank screen while loading', () => {
