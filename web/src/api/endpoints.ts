@@ -1,6 +1,7 @@
 import { request } from './client'
 import type {
   CoverageResponse,
+  HeadToHead,
   Page,
   PlayerMatch,
   PlayerProfile,
@@ -10,8 +11,8 @@ import type {
 } from './types.gen'
 
 /**
- * The endpoints the API actually serves today. Ratings and head-to-head arrive
- * with #45 and #44; there is deliberately nothing here that pretends to.
+ * The endpoints the API actually serves today. There is deliberately nothing
+ * here that pretends to serve one it does not.
  */
 
 export function getCoverage(signal?: AbortSignal): Promise<CoverageResponse> {
@@ -57,6 +58,19 @@ export function getPlayerRatingSeries(
 
 export function getPlayerRankings(slug: string, signal?: AbortSignal): Promise<RankingHistory> {
   return request<RankingHistory>(`/players/${encodeURIComponent(slug)}/rankings`, {}, signal)
+}
+
+/**
+ * The comparison, in the order the URL asks for. /h2h/a/b and /h2h/b/a are the
+ * same rivalry read from opposite ends, so the caller decides which player is
+ * on the left and nothing downstream has to.
+ */
+export function getHeadToHead(a: string, b: string, signal?: AbortSignal): Promise<HeadToHead> {
+  return request<HeadToHead>(
+    `/h2h/${encodeURIComponent(a)}/${encodeURIComponent(b)}`,
+    {},
+    signal,
+  )
 }
 
 export function searchPlayers(
