@@ -509,6 +509,53 @@ func (q *Queries) ListPlayerRatingSeries(ctx context.Context, arg ListPlayerRati
 	return items, nil
 }
 
+const listServeBaselines = `-- name: ListServeBaselines :many
+SELECT tier::text AS tier, surface::text AS surface, decade, serve_points, serve_won
+  FROM serve_baselines
+ WHERE tour = $1::tour
+ ORDER BY tier, surface, decade
+`
+
+type ListServeBaselinesRow struct {
+	Tier        string
+	Surface     string
+	Decade      int16
+	ServePoints int64
+	ServeWon    int64
+}
+
+// Every serve-baseline cell for one tour, for the anchor lookup in
+// internal/simulate.
+//
+// The whole tour rather than one cell, because the lookup widens when a cell is
+// thin and a widening query would be four round trips or one query nobody can
+// read. There are at most a few hundred rows per tour.
+func (q *Queries) ListServeBaselines(ctx context.Context, tour Tour) ([]ListServeBaselinesRow, error) {
+	rows, err := q.db.Query(ctx, listServeBaselines, tour)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListServeBaselinesRow{}
+	for rows.Next() {
+		var i ListServeBaselinesRow
+		if err := rows.Scan(
+			&i.Tier,
+			&i.Surface,
+			&i.Decade,
+			&i.ServePoints,
+			&i.ServeWon,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const searchPlayers = `-- name: SearchPlayers :many
 WITH scored AS (
     SELECT p.id, p.slug, p.tour, p.full_name, p.country,

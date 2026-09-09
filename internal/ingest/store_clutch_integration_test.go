@@ -142,3 +142,73 @@ func TestRefreshClutchIsIdempotent(t *testing.T) {
 		t.Error("forcing derived nothing, so a change to the derivation could not be applied")
 	}
 }
+
+// The serve baseline anchors ADR-0007's inversion, so the totals it stores have
+// to be the ones the anchor lookup expects: serve points and points won, per
+// tour, tier, surface and decade.
+func TestServeBaselinesAreBuiltFromRecordedLinesOnly(t *testing.T) {
+	store, ctx := testStore(t)
+	rows := fixtureRows(t, "atp_matches_2024.csv", atpTour)
+
+	if _, err := store.WriteBatch(ctx, atpTour, rows); err != nil {
+		t.Fatalf("write matches: %v", err)
+	}
+	if err := store.RefreshServeBaselines(ctx); err != nil {
+		t.Fatalf("refresh serve baselines: %v", err)
+	}
+
+	var cells, points, won int64
+	if err := store.pool.QueryRow(ctx, `
+		SELECT count(*), coalesce(sum(serve_points), 0), coalesce(sum(serve_won), 0)
+		  FROM serve_baselines`).Scan(&cells, &points, &won); err != nil {
+		t.Fatalf("read serve baselines: %v", err)
+	}
+
+	if cells == 0 || points == 0 {
+		t.Fatalf("baselines are empty: %d cells over %d points", cells, points)
+	}
+	// A rate outside this range would mean the numerator and denominator are
+	// not what the column names say.
+	if rate := float64(won) / float64(points); rate < 0.4 || rate > 0.8 {
+		t.Errorf("serve points won = %.3f, which is not a tennis number", rate)
+	}
+
+	// Every point counted must come from a match_players row that actually had
+	// one. Nulls counted as zero would drag the anchor down invisibly.
+	var recorded int64
+	if err := store.pool.QueryRow(ctx, `
+		SELECT coalesce(sum(mp.serve_points), 0)
+		  FROM match_players mp
+		  JOIN matches m ON m.id = mp.match_id
+		 WHERE mp.serve_points IS NOT NULL AND m.surface IS NOT NULL
+		   AND NOT m.is_team_event`).Scan(&recorded); err != nil {
+		t.Fatalf("count recorded points: %v", err)
+	}
+	if points != recorded {
+		t.Errorf("baselines hold %d points, the recorded lines hold %d", points, recorded)
+	}
+}
+
+// Running it twice leaves the same table, which is what makes it safe at the
+// end of every ingest.
+func TestServeBaselinesRebuildCleanly(t *testing.T) {
+	store, ctx := testStore(t)
+	rows := fixtureRows(t, "atp_matches_2024.csv", atpTour)
+
+	if _, err := store.WriteBatch(ctx, atpTour, rows); err != nil {
+		t.Fatalf("write matches: %v", err)
+	}
+	var first, second int64
+	for _, into := range []*int64{&first, &second} {
+		if err := store.RefreshServeBaselines(ctx); err != nil {
+			t.Fatalf("refresh serve baselines: %v", err)
+		}
+		if err := store.pool.QueryRow(ctx,
+			`SELECT count(*) FROM serve_baselines`).Scan(into); err != nil {
+			t.Fatalf("count cells: %v", err)
+		}
+	}
+	if first != second || first == 0 {
+		t.Errorf("rebuild changed the table: %d cells then %d", first, second)
+	}
+}

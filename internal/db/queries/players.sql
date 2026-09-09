@@ -230,3 +230,15 @@ SELECT
   FROM played p
   LEFT JOIN clutch_baselines b
          ON b.tour = p.tour AND b.tier = p.tier AND b.decade = p.decade;
+
+-- name: ListServeBaselines :many
+-- Every serve-baseline cell for one tour, for the anchor lookup in
+-- internal/simulate.
+--
+-- The whole tour rather than one cell, because the lookup widens when a cell is
+-- thin and a widening query would be four round trips or one query nobody can
+-- read. There are at most a few hundred rows per tour.
+SELECT tier::text AS tier, surface::text AS surface, decade, serve_points, serve_won
+  FROM serve_baselines
+ WHERE tour = @tour::tour
+ ORDER BY tier, surface, decade;
