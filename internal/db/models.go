@@ -230,6 +230,21 @@ func (ns NullTour) Value() (driver.Value, error) {
 	return string(ns.Tour), nil
 }
 
+// What "vs tour average" is measured against. Rebuilt by the ingest refresh step; stale between runs.
+type ClutchBaseline struct {
+	Tour               Tour
+	Tier               Tier
+	Decade             int16
+	Appearances        int64
+	BpSaved            int64
+	BpFaced            int64
+	TiebreaksWon       int64
+	TiebreaksPlayed    int64
+	DecidingSetsWon    int64
+	DecidingSetsPlayed int64
+	RefreshedAt        pgtype.Timestamptz
+}
+
 type IdentityReview struct {
 	Source     string
 	SourceID   string
@@ -277,6 +292,12 @@ type Match struct {
 	Indoor           *bool
 	Source           string
 	LoserID          int64
+	// Set tiebreaks won by the match winner, excluding a match tiebreak played in place of a final set. NULL where the score could not be read or the match did not finish: no tiebreaks and no readable score are different facts.
+	TiebreaksWinner *int16
+	// Set tiebreaks won by the match loser. NULL on the same terms as tiebreaks_winner.
+	TiebreaksLoser *int16
+	// True when a finished match reached its deciding set. NULL when it did not finish: somebody advanced from a third-set retirement, but nobody won that set, and every rate here leaves incomplete matches out.
+	DecidingSet *bool
 }
 
 type MatchPlayer struct {
