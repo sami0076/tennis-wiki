@@ -16,6 +16,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/sami0076/tennis-wiki/internal/cache"
 	"github.com/sami0076/tennis-wiki/internal/db"
 	"github.com/sami0076/tennis-wiki/internal/identity"
 	"github.com/sami0076/tennis-wiki/internal/ingest"
@@ -169,6 +170,8 @@ func run(ctx context.Context, cfg config) error {
 		}
 		slog.Info("refreshed clutch baselines", "matches_derived", derived,
 			"took", time.Since(started).Round(time.Millisecond))
+
+		flushReadCache(ctx)
 	}
 
 	counts, err := store.Counts(ctx)
@@ -180,6 +183,39 @@ func run(ctx context.Context, cfg config) error {
 		"matches", counts["matches"], "match_players", counts["match_players"],
 		"rankings", counts["rankings"])
 	return nil
+}
+
+// flushReadCache clears the API's cache, which is the whole invalidation
+// strategy: the data only moves when this runs, so this is the only moment the
+// cached answers stop being right.
+//
+// Never fatal. A cache that cannot be cleared serves stale answers until its
+// TTL expires, which is worth a loud warning and not worth failing an ingest
+// that has already written everything correctly.
+func flushReadCache(ctx context.Context) {
+	redis, err := cache.FromEnv(slog.Default())
+	if err != nil {
+		slog.Warn("read cache not cleared: bad configuration", "error", err)
+		return
+	}
+	defer func() {
+		if cerr := redis.Close(); cerr != nil {
+			slog.Warn("closing the read cache failed", "error", cerr)
+		}
+	}()
+
+	if !redis.Enabled() {
+		return
+	}
+	started := time.Now()
+	removed, err := redis.Flush(ctx)
+	if err != nil {
+		slog.Warn("read cache not cleared; it will serve stale answers until its TTL",
+			"error", err, "ttl", redis.TTLFor())
+		return
+	}
+	slog.Info("cleared the read cache", "keys", removed,
+		"took", time.Since(started).Round(time.Millisecond))
 }
 
 func runPrune(ctx context.Context, cfg config, store *ingest.Store) error {
