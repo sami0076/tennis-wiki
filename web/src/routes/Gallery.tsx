@@ -12,6 +12,7 @@ import {
   ButtonLink,
   EmptyState,
   Meta,
+  OddsBar,
   PartialAggregate,
   PlayerSearch,
   PlayerSummary,
@@ -25,6 +26,7 @@ import {
   SurfaceToggle,
   TourFilter,
   WinLossMark,
+  WinSplit,
   type Column,
 } from '../components'
 import styles from './Gallery.module.css'
@@ -200,6 +202,21 @@ export function Gallery() {
         <SplitBar label="Career meetings" left={11} right={7} max={11} />
         <SplitBar label="Serve points won" left={72} right={68} max={100} format={(v) => `${v}%`} />
         <SplitBar label="Return points won" left={43} right={45} max={100} format={(v) => `${v}%`} />
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>WinSplit and OddsBar</h2>
+        <p className={styles.note}>
+          The two marks the simulator adds. The players stay monochrome; the odds bars take
+          the event&apos;s surface colour, and each carries the interval it earned rather
+          than reporting a sampled figure as though it were exact.
+        </p>
+        <WinSplit nameA="Carlos Alcaraz" nameB="Jannik Sinner" share={0.622} />
+        <div className={styles.note}>Title odds, 128 draw, 10,000 runs:</div>
+        <OddsBar name="Novak Djokovic" probability={0.401} interval={0.01} max={0.401} surface="grass" />
+        <OddsBar name="Roger Federer" probability={0.277} interval={0.009} max={0.401} surface="grass" />
+        <OddsBar name="Rafael Nadal" probability={0.075} interval={0.005} max={0.401} surface="grass" />
+        <OddsBar name="The field" probability={0.247} max={0.401} surface={null} />
       </section>
 
       <section className={styles.block}>

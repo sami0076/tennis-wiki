@@ -268,9 +268,11 @@ function Rivalry({
       )}
 
       <div className={styles.simulate}>
-        <Button disabled>Simulate this matchup</Button>
+        <ButtonLink to={`/simulator?a=${playerA.slug}&b=${playerB.slug}`}>
+          Simulate this matchup
+        </ButtonLink>
         <p className={styles.caption}>
-          The simulator is Phase 3. Everything it needs from this pair is already on this page.
+          Every rung from a service point up to the match, derived from both ratings.
         </p>
       </div>
     </>

@@ -1,0 +1,49 @@
+.row {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) 0;
+  border-bottom: var(--hairline);
+  font-size: var(--t-13);
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track {
+  position: relative;
+  height: 10px;
+}
+
+.fill {
+  position: absolute;
+  top: 2px;
+  height: 6px;
+  left: 0;
+}
+
+/* The interval, drawn where it belongs: around the end of the bar. A sampled
+   probability without one is a point estimate pretending to be exact. */
+.whisker {
+  position: absolute;
+  top: 0;
+  height: 10px;
+  background: var(--ink-4);
+  opacity: 0.9;
+}
+
+.figure {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.interval {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: var(--t-11);
+}

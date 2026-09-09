@@ -1,0 +1,33 @@
+.split {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.nameA,
+.nameB {
+  font-size: var(--t-20);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.nameB {
+  color: var(--ink-3);
+  text-align: right;
+}
+
+.share {
+  font-size: var(--t-24);
+}
+
+.track {
+  display: flex;
+  height: 10px;
+  margin-top: var(--s-2);
+  background: var(--ink-3);
+}
+
+.fill {
+  background: var(--ink);
+}

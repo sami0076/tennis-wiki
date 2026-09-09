@@ -2,7 +2,9 @@ import { request } from './client'
 import type {
   Clutch,
   CoverageResponse,
+  DrawSimulation,
   HeadToHead,
+  MatchSimulation,
   Page,
   PlayerMatch,
   PlayerProfile,
@@ -81,6 +83,28 @@ export function getHeadToHead(a: string, b: string, signal?: AbortSignal): Promi
     {},
     signal,
   )
+}
+
+/** Every rung between a point and a match, for one hypothetical pair. */
+export function simulateMatch(
+  a: string,
+  b: string,
+  options: { surface?: string | null; best_of?: number | null } = {},
+  signal?: AbortSignal,
+): Promise<MatchSimulation> {
+  return request<MatchSimulation>('/simulate/match', { a, b, ...options }, signal)
+}
+
+/**
+ * A draw that was played, replayed. There is no upcoming tournament in the
+ * database and there will not be one, so the event is always a historical one
+ * and the answer can be read against what actually happened.
+ */
+export function simulateDraw(
+  event: { tour: string; season: number; event: string; runs?: number | null },
+  signal?: AbortSignal,
+): Promise<DrawSimulation> {
+  return request<DrawSimulation>('/simulate/draw', { ...event }, signal)
 }
 
 export function searchPlayers(
