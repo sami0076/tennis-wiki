@@ -42,7 +42,11 @@ What the gap means in practice:
   WTA, and the site should not pretend otherwise.
 - **Ratings for active players stop short of the present.** A "current top eight" is
   current as of the coverage date, not as of today.
-- **The simulator's inputs end where the serve statistics do.**
+- **The simulator's inputs do not end where the serve statistics do**, but its anchor does.
+  Point-win probabilities are derived from ratings rather than from per-player serve rates
+  ([ADR-0007](decisions/0007-elo-derived-point-probability.md)), so any rated player can be
+  simulated; the tour-and-surface average that anchors the derivation is still measured from
+  the 3% of matches that recorded serve statistics.
 
 ## Where statistics do not exist
 
