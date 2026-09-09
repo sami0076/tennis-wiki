@@ -148,6 +148,8 @@ GET /api/v1/players/:slug/matches         match history, filterable and cursor-p
 GET /api/v1/players/:slug/ratings         Elo trajectory, per surface
 GET /api/v1/players/:slug/rankings        published ATP/WTA ranking over time
 GET /api/v1/h2h/:slug/:opponent           head-to-head, either way round
+GET /api/v1/rankings?type=elo|official    leaderboards, as of the last week that exists
+GET /api/v1/rankings/trajectory           the leaders' rating lines, for a chart
 ```
 
 ```bash
@@ -158,6 +160,11 @@ curl 'localhost:8080/api/v1/players/novak-djokovic/matches?surface=clay&season=2
 
 The history takes `surface`, `tier`, `season` and `opponent`, and they compose. Each row
 carries that player's serve line for the match, or the reason there is none.
+
+A ranking is always **as of the last week that exists**, never today, and the response says
+which week it used. Asking for a date outside coverage returns an empty page with that date
+stated rather than a 404. An Elo leaderboard also drops players whose last rating is over a
+year old — without that it is a list of the retired.
 
 The profile carries current and peak Elo for every series the player has one in — a surface
 they never played is absent rather than sitting at the base rating, and a player nothing
