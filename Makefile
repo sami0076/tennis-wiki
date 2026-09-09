@@ -29,6 +29,11 @@ DATABASE_URL ?= postgres://tennis:tennis@localhost:5433/tennis?sslmode=disable
 # environment and every target below would otherwise need it passed by hand.
 export DATABASE_URL
 
+# Matches the published compose port. Unset it to run the API with no cache,
+# which is a supported configuration and the one every test runs in.
+REDIS_URL ?= redis://localhost:6380/0
+export REDIS_URL
+
 .DEFAULT_GOAL := help
 
 ## help: list available targets

@@ -182,6 +182,16 @@ The profile carries current and peak Elo for every series the player has one in 
 they never played is absent rather than sitting at the base rating, and a player nothing
 rated has a null block rather than five 1500s.
 
+**Redis caches the read path, and an ingest clears it.** Nothing expires on a timer: the
+data only moves when an ingest runs, so that is when the cache is cleared, and the 24-hour
+TTL on a key is a backstop rather than a freshness policy. A cached response lands in about
+3ms whatever it cost to produce — the Elo leaderboard goes from 77ms to 3ms against a warm
+Postgres, and from 842ms against a cold one. Redis being down costs time and nothing else:
+every failure is a miss, the handler does the work anyway, and readiness still reports
+healthy. `X-Cache` says `hit` or `miss` on every response and `/health` carries the running
+hit rate, so the value is measured rather than assumed. Leave `REDIS_URL` unset and the API
+runs with no cache at all, which is what every test does.
+
 Statistics that were never recorded are reported as absent with a reason, never as zero —
 see [Coverage](#coverage). Errors are RFC 7807 `problem+json`, and list responses are
 cursor-paginated.
