@@ -15,7 +15,7 @@ SELECT id, name, season, tour::text AS tour, tier::text AS tier,
        -- The source leaves surface blank for some events. "unknown" is the same
        -- stand-in the career and head-to-head splits use, so one absent surface
        -- does not have two spellings across the API.
-       coalesce(surface::text, 'unknown') AS surface,
+       coalesce(surface::text, 'unknown')::text AS surface,
        level, draw_size, start_date
   FROM tournaments
  WHERE tour = $1::tour AND season = $2::smallint AND lower(name) = lower($3::text)
@@ -35,7 +35,7 @@ type FindTournamentRow struct {
 	Season    int16
 	Tour      string
 	Tier      string
-	Surface   interface{}
+	Surface   string
 	Level     string
 	DrawSize  *int16
 	StartDate time.Time
@@ -56,6 +56,50 @@ func (q *Queries) FindTournament(ctx context.Context, arg FindTournamentParams) 
 		&i.Level,
 		&i.DrawSize,
 		&i.StartDate,
+	)
+	return i, err
+}
+
+const getSimulationPlayer = `-- name: GetSimulationPlayer :one
+SELECT p.id, p.slug, p.full_name, p.tour::text AS tour, p.country,
+       coalesce(p.best_tier::text, 'tour')::text AS best_tier,
+       -- The season decides which decade of the serve baseline anchors the
+       -- inversion. Zero is not a season, so it is an unambiguous stand-in for
+       -- a player with no matches at all -- who has no rating either, and is
+       -- therefore not simulatable for a different reason.
+       coalesce((SELECT max(t.season)
+                   FROM match_players mp
+                   JOIN matches m     ON m.id = mp.match_id
+                   JOIN tournaments t ON t.id = m.tournament_id
+                  WHERE mp.player_id = p.id), 0)::smallint AS last_season
+  FROM players p
+ WHERE p.slug = $1
+`
+
+type GetSimulationPlayerRow struct {
+	ID         int64
+	Slug       string
+	FullName   string
+	Tour       string
+	Country    *string
+	BestTier   string
+	LastSeason int16
+}
+
+// Just enough of a player to simulate them: who they are, the level they
+// compete at, and when they last played -- which together choose the serve
+// baseline cell the inversion anchors on.
+func (q *Queries) GetSimulationPlayer(ctx context.Context, slug string) (GetSimulationPlayerRow, error) {
+	row := q.db.QueryRow(ctx, getSimulationPlayer, slug)
+	var i GetSimulationPlayerRow
+	err := row.Scan(
+		&i.ID,
+		&i.Slug,
+		&i.FullName,
+		&i.Tour,
+		&i.Country,
+		&i.BestTier,
+		&i.LastSeason,
 	)
 	return i, err
 }
@@ -125,7 +169,7 @@ func (q *Queries) ListDrawMatches(ctx context.Context, tournamentID int64) ([]Li
 
 const listSimulatableEvents = `-- name: ListSimulatableEvents :many
 SELECT t.id, t.name, t.season, t.tour::text AS tour, t.tier::text AS tier,
-       coalesce(t.surface::text, 'unknown') AS surface,
+       coalesce(t.surface::text, 'unknown')::text AS surface,
        t.start_date, count(*)::bigint AS matches
   FROM tournaments t
   JOIN matches m ON m.tournament_id = t.id
@@ -150,7 +194,7 @@ type ListSimulatableEventsRow struct {
 	Season    int16
 	Tour      string
 	Tier      string
-	Surface   interface{}
+	Surface   string
 	StartDate time.Time
 	Matches   int64
 }

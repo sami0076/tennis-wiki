@@ -5,7 +5,7 @@ SELECT id, name, season, tour::text AS tour, tier::text AS tier,
        -- The source leaves surface blank for some events. "unknown" is the same
        -- stand-in the career and head-to-head splits use, so one absent surface
        -- does not have two spellings across the API.
-       coalesce(surface::text, 'unknown') AS surface,
+       coalesce(surface::text, 'unknown')::text AS surface,
        level, draw_size, start_date
   FROM tournaments
  WHERE tour = @tour::tour AND season = @season::smallint AND lower(name) = lower(@name::text)
@@ -38,7 +38,7 @@ SELECT m.round,
 -- wrong number of matches and are excluded here rather than failing one at a
 -- time in the reconstruction.
 SELECT t.id, t.name, t.season, t.tour::text AS tour, t.tier::text AS tier,
-       coalesce(t.surface::text, 'unknown') AS surface,
+       coalesce(t.surface::text, 'unknown')::text AS surface,
        t.start_date, count(*)::bigint AS matches
   FROM tournaments t
   JOIN matches m ON m.tournament_id = t.id
@@ -49,3 +49,21 @@ SELECT t.id, t.name, t.season, t.tour::text AS tour, t.tier::text AS tier,
 HAVING count(*) IN (7, 15, 31, 63, 127)
  ORDER BY t.season DESC, count(*) DESC, t.name
  LIMIT @row_limit;
+
+-- name: GetSimulationPlayer :one
+-- Just enough of a player to simulate them: who they are, the level they
+-- compete at, and when they last played -- which together choose the serve
+-- baseline cell the inversion anchors on.
+SELECT p.id, p.slug, p.full_name, p.tour::text AS tour, p.country,
+       coalesce(p.best_tier::text, 'tour')::text AS best_tier,
+       -- The season decides which decade of the serve baseline anchors the
+       -- inversion. Zero is not a season, so it is an unambiguous stand-in for
+       -- a player with no matches at all -- who has no rating either, and is
+       -- therefore not simulatable for a different reason.
+       coalesce((SELECT max(t.season)
+                   FROM match_players mp
+                   JOIN matches m     ON m.id = mp.match_id
+                   JOIN tournaments t ON t.id = m.tournament_id
+                  WHERE mp.player_id = p.id), 0)::smallint AS last_season
+  FROM players p
+ WHERE p.slug = @slug;

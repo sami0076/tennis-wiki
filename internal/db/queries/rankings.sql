@@ -85,7 +85,12 @@ SELECT o.player_id, p.slug, p.full_name, p.tour, p.country, p.birth_date,
 -- name: CurrentEloAsOf :many
 -- The rating each of a page of players held at a date. Sparse table, so it is
 -- their last row at or before it.
-SELECT DISTINCT ON (r.player_id) r.player_id, r.elo::float8 AS elo
+--
+-- matches_played comes along because the simulator blends a surface rating with
+-- the overall one by how much of that surface a player has actually played, and
+-- a blend without the weight is an average of two numbers that mean different
+-- things.
+SELECT DISTINCT ON (r.player_id) r.player_id, r.elo::float8 AS elo, r.matches_played
   FROM ratings r
  WHERE r.surface = @surface::rating_surface
    AND r.as_of <= @on_date::date

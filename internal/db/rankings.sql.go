@@ -11,7 +11,7 @@ import (
 )
 
 const currentEloAsOf = `-- name: CurrentEloAsOf :many
-SELECT DISTINCT ON (r.player_id) r.player_id, r.elo::float8 AS elo
+SELECT DISTINCT ON (r.player_id) r.player_id, r.elo::float8 AS elo, r.matches_played
   FROM ratings r
  WHERE r.surface = $1::rating_surface
    AND r.as_of <= $2::date
@@ -26,12 +26,18 @@ type CurrentEloAsOfParams struct {
 }
 
 type CurrentEloAsOfRow struct {
-	PlayerID int64
-	Elo      float64
+	PlayerID      int64
+	Elo           float64
+	MatchesPlayed int32
 }
 
 // The rating each of a page of players held at a date. Sparse table, so it is
 // their last row at or before it.
+//
+// matches_played comes along because the simulator blends a surface rating with
+// the overall one by how much of that surface a player has actually played, and
+// a blend without the weight is an average of two numbers that mean different
+// things.
 func (q *Queries) CurrentEloAsOf(ctx context.Context, arg CurrentEloAsOfParams) ([]CurrentEloAsOfRow, error) {
 	rows, err := q.db.Query(ctx, currentEloAsOf, arg.Surface, arg.OnDate, arg.PlayerIds)
 	if err != nil {
@@ -41,7 +47,7 @@ func (q *Queries) CurrentEloAsOf(ctx context.Context, arg CurrentEloAsOfParams) 
 	items := []CurrentEloAsOfRow{}
 	for rows.Next() {
 		var i CurrentEloAsOfRow
-		if err := rows.Scan(&i.PlayerID, &i.Elo); err != nil {
+		if err := rows.Scan(&i.PlayerID, &i.Elo, &i.MatchesPlayed); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
