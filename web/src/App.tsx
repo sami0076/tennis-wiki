@@ -4,19 +4,20 @@ import { Gallery } from './routes/Gallery'
 import { Home } from './routes/Home'
 import { NotBuiltYet } from './routes/NotBuiltYet'
 import { Player } from './routes/Player'
+import { Players } from './routes/Players'
 import { EmptyState, ButtonLink } from './components'
 
 /**
- * The route table. Player, head-to-head and rankings are registered now and
- * filled by #47, #48 and #45 -- registering them here is what lets those issues
- * be a page each rather than a page plus a router change.
+ * The route table. Head-to-head and rankings are registered now and filled by
+ * #48 and #45 -- registering them here is what lets those issues be a page each
+ * rather than a page plus a router change.
  */
 export function App() {
   return (
     <Layout>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/players" element={<NotBuiltYet page="player search" issue={49} />} />
+        <Route path="/players" element={<Players />} />
         <Route path="/players/:slug" element={<Player />} />
         <Route path="/h2h/:a/:b" element={<NotBuiltYet page="head-to-head page" issue={48} />} />
         <Route path="/rankings" element={<NotBuiltYet page="rankings page" issue={45} />} />
