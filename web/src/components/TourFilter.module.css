@@ -1,0 +1,26 @@
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4);
+  padding: var(--s-2) 0;
+}
+
+.option {
+  padding: 0 0 4px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-size: var(--t-13);
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.option:hover {
+  color: var(--ink);
+}
+
+.active {
+  border-bottom-color: var(--ink);
+  color: var(--ink);
+}

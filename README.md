@@ -199,6 +199,12 @@ set and hairline structure, and the reasoning is in
 component in every state, which is the fastest way to check the system against a design, and
 `/players/:slug` is the first real page.
 
+Search is in the header on every page: a combobox rather than a div that looks like one, so
+arrow keys and a screen reader reach the same results. It debounces and cancels superseded
+requests, and every row carries tour, country, career match count and best tier, because at
+115,000 players a name is not an identifier. `/players?q=` is the same search as a full list,
+and the query and tour filter live in the URL so a search can be sent to somebody.
+
 **The TypeScript types are generated from the Go response structs**, not written by hand.
 `make web-types` runs [tygo](https://github.com/gzuidhof/tygo) over `internal/httpapi` into
 `web/src/api/types.gen.ts`, and CI regenerates and diffs it on every change, so altering a

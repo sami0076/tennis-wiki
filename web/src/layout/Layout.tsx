@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react'
-import { NavLink, Link } from 'react-router-dom'
+import { useState, type ReactNode } from 'react'
+import { NavLink, Link, useNavigate } from 'react-router-dom'
+import { PlayerSearch } from '../components'
 import styles from './Layout.module.css'
 
 interface LayoutProps {
@@ -40,6 +41,9 @@ export function Layout({ children }: LayoutProps) {
               </NavLink>
             ))}
           </div>
+          <div className={styles.search}>
+            <HeaderSearch />
+          </div>
         </nav>
       </header>
 
@@ -49,5 +53,38 @@ export function Layout({ children }: LayoutProps) {
         <p>Data: Jeff Sackmann&apos;s tennis_atp and tennis_wta, CC BY-NC-SA 4.0</p>
       </footer>
     </div>
+  )
+}
+
+/**
+ * The search is in the chrome rather than on a page because it is how anyone
+ * reaches a player, and needing to go back to a search page first would make
+ * every other page a dead end.
+ *
+ * Choosing a result goes straight to that player. Pressing Enter without
+ * choosing goes to the full result list instead, which is the right answer when
+ * the eight rows on offer were not enough to settle a namesake.
+ */
+function HeaderSearch() {
+  const navigate = useNavigate()
+  const [query, setQuery] = useState('')
+
+  return (
+    <PlayerSearch
+      label="Search players"
+      hideLabel
+      placeholder="Search 115,000 players"
+      value={query}
+      onChange={setQuery}
+      onSelect={(player) => {
+        setQuery('')
+        navigate(`/players/${player.slug}`)
+      }}
+      onSubmit={(value) => {
+        if (value === '') return
+        setQuery('')
+        navigate(`/players?q=${encodeURIComponent(value)}`)
+      }}
+    />
   )
 }

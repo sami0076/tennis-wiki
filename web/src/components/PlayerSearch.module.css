@@ -1,0 +1,65 @@
+.wrap {
+  position: relative;
+}
+
+.label {
+  display: block;
+  margin-bottom: var(--s-1);
+  font-size: var(--t-12);
+  color: var(--muted);
+}
+
+.input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--chalk);
+  border-radius: 4px;
+  background: var(--paper);
+  font: inherit;
+  font-size: var(--t-14);
+  color: var(--ink);
+}
+
+.input:hover {
+  border-color: var(--ink-3);
+}
+
+/* The list is the one place the design allows something to sit above the page,
+   and it still earns its edge with a hairline rather than a shadow. */
+.panel {
+  position: absolute;
+  z-index: 10;
+  top: 100%;
+  right: 0;
+  left: 0;
+  max-height: 320px;
+  margin-top: var(--s-1);
+  overflow-y: auto;
+  border: var(--hairline);
+  background: var(--paper);
+}
+
+.hidden {
+  display: none;
+}
+
+.option {
+  padding: var(--s-2) var(--s-3);
+  border-bottom: var(--hairline);
+  cursor: pointer;
+}
+
+.option:last-child {
+  border-bottom: 0;
+}
+
+.on {
+  background: var(--chalk);
+}
+
+.message {
+  padding: var(--s-3);
+  font-size: var(--t-12);
+  line-height: 1.5;
+  color: var(--muted);
+}

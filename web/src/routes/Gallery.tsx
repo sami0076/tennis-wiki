@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   AvailabilityNeverForTier,
   AvailabilityNeverInEra,
@@ -12,6 +13,8 @@ import {
   EmptyState,
   Meta,
   PartialAggregate,
+  PlayerSearch,
+  PlayerSummary,
   RankDelta,
   RivalryStrip,
   Skeleton,
@@ -20,6 +23,7 @@ import {
   StatTable,
   SurfaceDot,
   SurfaceToggle,
+  TourFilter,
   WinLossMark,
   type Column,
 } from '../components'
@@ -84,6 +88,8 @@ const rivalry = [
  */
 export function Gallery() {
   const [surface, setSurface] = useUrlParam('surface')
+  const [tour, setTour] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
 
   return (
     <>
@@ -156,6 +162,37 @@ export function Gallery() {
           the URL: reload the page and it survives. Currently {surface ?? 'all surfaces'}.
         </p>
         <SurfaceToggle value={surface} onChange={setSurface} />
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>PlayerSearch and TourFilter</h2>
+        <p className={styles.note}>
+          Live against the API this page is served from. Arrows move, Enter picks, Escape
+          backs out, and below two characters it does not ask at all.
+        </p>
+        <TourFilter value={tour} onChange={setTour} />
+        <PlayerSearch
+          label="Search players"
+          placeholder="Try a surname"
+          value={query}
+          onChange={setQuery}
+          tour={tour}
+          onSelect={(player) => setQuery(player.name)}
+        />
+        <div className={styles.note}>
+          One result row on its own, which is what the search page lists:
+        </div>
+        <PlayerSummary
+          player={{
+            slug: 'bjorn-borg',
+            name: 'Bjorn Borg',
+            tour: 'atp',
+            country: 'Sweden',
+            matches: 807,
+            best_tier: 'tour',
+            score: 1,
+          }}
+        />
       </section>
 
       <section className={styles.block}>

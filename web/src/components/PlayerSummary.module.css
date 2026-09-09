@@ -1,0 +1,11 @@
+.name {
+  display: block;
+  font-size: var(--t-14);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.meta {
+  font-size: var(--t-12);
+  font-variant-numeric: tabular-nums;
+}

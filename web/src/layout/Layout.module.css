@@ -6,8 +6,9 @@
 
 .nav {
   display: flex;
-  align-items: baseline;
-  gap: var(--s-4);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3) var(--s-4);
   padding: var(--s-4) 0;
   border-bottom: var(--hairline);
 }
@@ -41,6 +42,12 @@
   border-bottom-color: var(--ink);
 }
 
+/* Mobile-first: the search takes the row under the brand and the links. It moves
+   up between them once there is width for it. */
+.search {
+  flex: 1 0 100%;
+}
+
 .main {
   padding: var(--s-5) 0 var(--s-7);
 }
@@ -61,5 +68,20 @@
 @media (min-width: 880px) {
   .shell {
     padding: 0 var(--s-5);
+  }
+
+  .brand {
+    order: 1;
+  }
+
+  .search {
+    order: 2;
+    flex: 0 1 300px;
+    margin-left: auto;
+  }
+
+  .links {
+    order: 3;
+    margin-left: var(--s-5);
   }
 }
