@@ -47,6 +47,7 @@ var (
 func Run(m *testing.M) {
 	code := m.Run()
 	Stop()
+	StopRedis()
 	os.Exit(code)
 }
 
