@@ -236,13 +236,48 @@ func (r Report) WriteText(w io.Writer) error {
 		"  expected %.1f wins, actual %d, z=%+.2f (systematic beyond %.0f)\n\n",
 		p.Promotions, p.Matches, p.Expected, p.Actual, p.Z, p.Threshold)
 
+	if sim := r.Simulation; sim != nil {
+		fmt.Fprintf(&b, "SIMULATION, %s, %d matches sampled, took %s\n",
+			sim.Tour, sim.Sampled, sim.Took)
+
+		if len(sim.DecidingSets) > 0 {
+			dec := newTable(&b)
+			dec.row("\tdeciding set\tmatches\texpected\tobserved\tgap\n")
+			for _, bucket := range sim.DecidingSets {
+				dec.row("\t%.0f-%.0f%%\t%d\t%.1f%%\t%.1f%%\t%+.1f\n",
+					bucket.From*100, bucket.To*100, bucket.Matches,
+					bucket.Expected*100, bucket.Observed*100,
+					(bucket.Observed-bucket.Expected)*100)
+			}
+			if err := dec.flush(); err != nil {
+				return err
+			}
+		}
+
+		if d := sim.Draws; d.Events > 0 {
+			fmt.Fprintf(&b, "  draws  %d scored, Brier %.4f against %.4f for an even field\n"+
+				"         champion given %.1f%% on average, favourite %.1f%% of the time\n",
+				d.Events, d.Brier, d.BrierUniform, d.MeanChampionOdds*100, d.TopPick*100)
+		}
+		fmt.Fprintln(&b)
+	}
+
 	fmt.Fprintln(&b, "FINDINGS")
-	for _, f := range r.Findings {
+	for _, f := range r.findings() {
 		fmt.Fprintf(&b, "  [%s] %s\n    %s\n", f.Severity, f.Name, wrap(f.Detail, 74, "    "))
 	}
 
 	_, err := io.WriteString(w, b.String())
 	return err
+}
+
+// findings is every conclusion the run reached, the simulator's included, so a
+// reader has one list rather than two.
+func (r Report) findings() []Finding {
+	if r.Simulation == nil {
+		return r.Findings
+	}
+	return append(append([]Finding{}, r.Findings...), r.Simulation.Findings...)
 }
 
 // wrap breaks a detail line so a terminal does not have to.

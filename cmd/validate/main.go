@@ -39,6 +39,10 @@ func main() {
 		systematicZ = flag.Float64("systematic-z", validate.DefaultSystematicZ,
 			"standard deviations at which a promotion gap is called systematic")
 		teamEvents = flag.Bool("team-events", false, "include team events, as cmd/rate would")
+		simTour    = flag.String("simulation-tour", "atp", "tour to validate the simulator against")
+		simMatches = flag.Int("simulation-matches", 0, "matches sampled for the deciding-set check")
+		simEvents  = flag.Int("simulation-events", 0, "draws sampled for the draw check")
+		skipSim    = flag.Bool("no-simulation", false, "skip the simulator checks")
 	)
 	flag.Parse()
 
@@ -55,7 +59,14 @@ func main() {
 		SystematicZ:       *systematicZ,
 	}
 
-	code, err := run(ctx, *dsn, *weightPath, *asJSON, cfg)
+	simCfg := validate.SimulationConfig{
+		Tour: *simTour, Matches: *simMatches, Events: *simEvents,
+	}
+	if *skipSim {
+		simCfg.Tour = ""
+	}
+
+	code, err := run(ctx, *dsn, *weightPath, *asJSON, cfg, simCfg, !*skipSim)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			slog.Info("validate: cancelled")
@@ -67,7 +78,10 @@ func main() {
 	os.Exit(code)
 }
 
-func run(ctx context.Context, dsn, weightPath string, asJSON bool, cfg validate.Config) (int, error) {
+func run(
+	ctx context.Context, dsn, weightPath string, asJSON bool,
+	cfg validate.Config, simCfg validate.SimulationConfig, withSimulation bool,
+) (int, error) {
 	if dsn == "" {
 		return 0, errors.New("no database URL: set DATABASE_URL or pass -database-url")
 	}
@@ -91,6 +105,15 @@ func run(ctx context.Context, dsn, weightPath string, asJSON bool, cfg validate.
 	report, err := validate.Run(ctx, pool, cfg)
 	if err != nil {
 		return 0, err
+	}
+
+	if withSimulation {
+		slog.InfoContext(ctx, "validate: checking what the simulation chain adds")
+		sim, serr := validate.RunSimulation(ctx, pool, simCfg)
+		if serr != nil {
+			return 0, serr
+		}
+		report.Simulation = &sim
 	}
 
 	if asJSON {

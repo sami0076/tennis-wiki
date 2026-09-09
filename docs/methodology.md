@@ -137,6 +137,70 @@ change trades a measurable calibration cost for a partial fix to something the w
 not control. `make validate` reruns all of this, and `--weights` tries other numbers without
 a rebuild.
 
+## What the simulator can be checked for, and what it cannot
+
+The point-win probabilities are derived by solving for the pair whose match probability
+equals what the rating already predicts ([ADR-0007](decisions/0007-elo-derived-point-probability.md)).
+So the chain's match-level answer **is** the rating's, by construction, and checking it
+against results would be checking the rating engine — which the accuracy and calibration
+sections above already do. Reporting the agreement as a finding would be reporting an
+identity.
+
+What the chain adds is everything below match level, and that is what `make validate`
+measures.
+
+### The chain expects too many deciding sets
+
+Over 30,000 recent ATP matches, rated as of the day each was played:
+
+| Predicted chance of a deciding set | Matches | Expected | Observed | Gap |
+|---|---|---|---|---|
+| 0-20% | 317 | 15.4% | 11.4% | −4.1 |
+| 20-40% | 5,981 | 33.7% | 26.6% | −7.2 |
+| 40-60% | 23,702 | 47.3% | 36.4% | −11.0 |
+| **All** | **30,000** | **44.3%** | **34.1%** | **−10.1** |
+
+The model expects nearly half of matches to go the distance and about a third do. The gap
+widens exactly where the model is least certain, which points at the assumption that
+produces it: **sets are treated as independent**, and they are not.
+
+Independence is what makes 2-1 and 3-2 the most likely scorelines between close players.
+Real sets are positively correlated — whoever wins the first is more likely to win the
+second, because the things a single set probability averages over do not resample between
+sets — so real matches finish in straight sets more often than independence allows. The
+direction of the error is the direction that assumption predicts, and its size says the
+correlation is not small.
+
+This is stated rather than corrected because correcting it properly means a model of
+between-set correlation, which is a larger piece of work than the one that found the
+problem. What it does mean today: the chain's set and match rungs are sound as an ordering
+and its deciding-set implication is not a number to quote.
+
+There are no rows above 60% because there cannot be. The chance of a deciding set peaks at
+50% for a best of three and 37.5% for a best of five, both at evenly matched players, so
+the top buckets are empty by arithmetic rather than for want of data.
+
+### The draw simulation beats knowing nothing, and not by as much as it looks
+
+Over 296 reconstructed ATP draws, each replayed 2,000 times with the ratings as of the week
+it began:
+
+| | |
+|---|---|
+| Brier score | **0.8550** |
+| Brier for a model that knows only the field size | 0.9696 |
+| Average probability given to the eventual champion | 14.4% |
+| How often its favourite actually won | 27.4% |
+
+Better than uninformed, which is the least a rating-driven simulation should manage. The
+absolute numbers are modest because most of these draws are 32 and 64-player events where
+the favourite genuinely wins about a quarter of the time — a tennis draw is not a
+predictable object, and a model claiming otherwise would be the suspicious one.
+
+This check exists at all because the draw simulator replays events that were **played**. A
+forward-looking one could never be scored, which is the argument for the decision as much as
+the data coverage was.
+
 ## Tiers
 
 `tier` is a competitive standard, deliberately distinct from `tournaments.level`, which
