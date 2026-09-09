@@ -5,6 +5,9 @@
 // Regenerate with `make web-types`. CI fails if this file is out of date
 // with the Go structs it came from.
 
+/** A Go [2]T. Everything the head-to-head pairs is in the order the URL asked for. */
+export type Pair<T> = [T, T]
+
 //////////
 // source: coverage.go
 
@@ -46,6 +49,82 @@ export interface CoverageEntry {
 export interface Page<T extends any> {
   data: T[];
   next_cursor: string | null;
+}
+
+//////////
+// source: h2h.go
+
+/**
+ * HeadToHead is one comparison between two players.
+ * Everything paired is a two-element array in the order the URL asked for, so
+ * /h2h/a/b and /h2h/b/a are the same comparison read from opposite ends rather
+ * than two pages that could disagree.
+ */
+export interface HeadToHead {
+  /**
+   * tstype Pair, because a Go array of two marshals to a plain JSON array and
+   * the generated type would otherwise promise only "some players" -- losing
+   * the one guarantee this shape is built on.
+   */
+  players: Pair<HeadToHeadPlayer>;
+  record: HeadToHeadRecord;
+  /**
+   * Surfaces and Tiers exist because a 3-1 record that is really 3-1 at
+   * Futures is a different claim from 3-1 at tour level.
+   */
+  surfaces: HeadToHeadSplit[];
+  tiers: HeadToHeadSplit[];
+  serve: Pair<ServeStats>;
+  meetings: Meeting[];
+}
+/**
+ * HeadToHeadPlayer is enough of a player to head a column.
+ */
+export interface HeadToHeadPlayer {
+  slug: string;
+  name: string;
+  tour: string;
+  country: string | null;
+}
+/**
+ * HeadToHeadRecord is the score between them.
+ */
+export interface HeadToHeadRecord {
+  matches: number /* int */;
+  wins: Pair<number>;
+  /**
+   * Incomplete counts retirements and walkovers. They belong in the record --
+   * somebody advanced -- and are excluded from every rate.
+   */
+  incomplete: number /* int */;
+}
+/**
+ * HeadToHeadSplit is the record inside one surface or one tier.
+ */
+export interface HeadToHeadSplit {
+  name: string;
+  matches: number /* int */;
+  wins: Pair<number>;
+}
+/**
+ * Meeting is one match between the two, from neither side.
+ */
+export interface Meeting {
+  date: string;
+  tournament: string;
+  tier: string;
+  level: string;
+  season: number /* int16 */;
+  round: string;
+  qualifying: boolean;
+  surface: string | null;
+  /**
+   * WinnerIndex is 0 or 1, indexing Players. An index rather than a slug so
+   * a caller cannot mix up which end of the comparison it is reading.
+   */
+  winner_index: number /* int */;
+  score: string | null;
+  incomplete: boolean;
 }
 
 //////////
@@ -285,6 +364,71 @@ export const TypeUnavailable = "/problems/unavailable";
 export const TypeMethodInvalid = "/problems/method-not-allowed";
 
 //////////
+// source: rankings.go
+
+/**
+ * RankingElo is this project's own rating.
+ */
+export const RankingElo = "elo";
+/**
+ * RankingOfficial is the list the tour publishes.
+ */
+export const RankingOfficial = "official";
+/**
+ * RankingRow is one player in a ranking.
+ */
+export interface RankingRow {
+  /**
+   * Position is where they stand in this list, which is not their official
+   * rank and is not the same thing under the two types.
+   */
+  position: number /* int */;
+  slug: string;
+  name: string;
+  tour: string;
+  country: string | null;
+  /**
+   * Elo and OfficialRank are both here under both types, because the
+   * comparison between them is the point of the page.
+   */
+  elo: number /* float64 */ | null;
+  peak_elo: number /* float64 */ | null;
+  official_rank: number /* int32 */ | null;
+  points: number /* int32 */ | null;
+  matches: number /* int32 */ | null;
+  /**
+   * Age at the effective date, null where no birth date was recorded.
+   */
+  age: number /* int */ | null;
+  /**
+   * Delta is how many places above or below their official rank the model
+   * puts them. Null under the official type, where this list's position is
+   * the official rank and the comparison would be with itself.
+   */
+  delta: number /* int */ | null;
+}
+/**
+ * RankingPage is a page of a ranking, and the date it is a ranking as of.
+ */
+export interface RankingPage {
+  type: string;
+  surface: string | null;
+  tour: string | null;
+  /**
+   * AsOf is the week actually used. Always the latest that exists at or
+   * before what was asked for, never today.
+   */
+  as_of: string;
+  /**
+   * Requested is echoed only when it differed from AsOf, so a caller can see
+   * that their date was moved and by how much.
+   */
+  requested: string | null;
+  data: RankingRow[];
+  next_cursor: string | null;
+}
+
+//////////
 // source: ratings.go
 
 /**
@@ -345,4 +489,32 @@ export interface RankingHistory {
   to: string;
   best: RankingPoint | null;
   points: RankingPoint[];
+}
+
+//////////
+// source: trajectory.go
+
+/**
+ * TrajectoryLine is one player's series.
+ */
+export interface TrajectoryLine {
+  slug: string;
+  name: string;
+  /**
+   * Position is where the player stands at the end of the window, which is
+   * what decides whether a line is labelled or drawn as part of the field.
+   */
+  position: number /* int */;
+  points: RatingPoint[];
+}
+/**
+ * Trajectories is a multi-series chart's worth of data: one line per player
+ * rather than one row per player, which is what a leaderboard is.
+ */
+export interface Trajectories {
+  surface: string;
+  tour: string | null;
+  from: string;
+  to: string;
+  lines: TrajectoryLine[];
 }
