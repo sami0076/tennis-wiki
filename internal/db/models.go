@@ -362,6 +362,18 @@ type Rating struct {
 	MatchesPlayed int32
 }
 
+// Serve-point totals by tour, tier, surface and decade. Rebuilt by the ingest refresh step; stale between runs. Matches with no recorded surface are excluded rather than bucketed as a fifth one.
+type ServeBaseline struct {
+	Tour        Tour
+	Tier        Tier
+	Surface     Surface
+	Decade      int16
+	Appearances int64
+	ServePoints int64
+	ServeWon    int64
+	RefreshedAt pgtype.Timestamptz
+}
+
 type Tournament struct {
 	ID        int64
 	SourceID  string

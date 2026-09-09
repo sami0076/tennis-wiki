@@ -449,6 +449,48 @@ population counting both sides wins exactly half of its own. The figures are sto
 than assumed, so the page states a measured number and anything that breaks the symmetry
 shows up instead of hiding — a test asserts it on every run.
 
+## The serve baseline
+
+The anchor ADR-0007's inversion pins its second degree of freedom on: serve-point totals by
+tour, tier, surface and decade, rebuilt by the ingest alongside the clutch baselines.
+
+**2.3s** over 3.2 million appearances, producing **41 cells** holding 39.3 million service
+points, pooling to **60.9%** — the same figure a direct aggregate over the whole database
+gives, which is the check that the table is counting what its column names say.
+
+Only 41 cells of the 448 the key space allows, because serve statistics start in 1991 and
+no Futures match has ever carried one. The sparsity is the reason the lookup widens rather
+than reading a single row.
+
+### The widening does not trigger on this data
+
+The thinnest cell is WTA Challenger carpet in the 2010s, at 6,211 service points — six times
+the threshold below which the lookup would prefer a wider population. So on the full
+database every anchor is drawn from its exact tier, surface and decade.
+
+That is worth stating rather than leaving implied: the fallback is code that the current
+data never reaches, and it exists for a filtered ingest, a seed fixture, or an era that
+turns out thinner than this one. Its behaviour is covered by tests rather than by the
+production path, which is a weaker guarantee and should be read as one.
+
+### What the cells say
+
+| Tour, tier | Serve points won |
+|---|---|
+| ATP tour | 62.6% |
+| ATP Challenger | 61.2% |
+| WTA tour | 55.9% |
+| WTA Challenger | 54.8% |
+
+| ATP tour, by surface | 1990s | 2000s | 2010s | 2020s |
+|---|---|---|---|---|
+| Grass | 63.4% | 65.0% | 65.6% | 65.4% |
+| Hard | 62.0% | 63.2% | 63.3% | 63.8% |
+| Clay | 59.4% | 60.5% | 61.4% | 61.3% |
+
+The 6.7 points between the tours is why the anchor is a table and not a constant, and the
+upward drift within each surface is why a decade is part of its key.
+
 ## The read cache
 
 Redis 7 has been in the compose stack since #2 and nothing used it. This data barely
