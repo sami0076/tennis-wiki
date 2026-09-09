@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/sami0076/tennis-wiki/internal/cache"
 	"github.com/sami0076/tennis-wiki/internal/db"
 )
 
@@ -15,6 +16,10 @@ type API struct {
 	Queries *db.Queries
 	Log     *slog.Logger
 	Config  Config
+	// Cache is optional. A nil one is a disabled one, which is the same thing
+	// as a Redis that is down -- and both have to be, or the outage path is
+	// code nothing ever runs.
+	Cache *cache.Cache
 }
 
 // New builds the API. Cross-cutting behaviour lives in middleware so it is
@@ -50,6 +55,9 @@ func (a *API) Router() http.Handler {
 		v1.Group(func(public chi.Router) {
 			public.Use(NewRateLimiter(a.Config.RateLimitPerMin).Middleware(a.Config.TrustProxy))
 			public.Use(ETag)
+			// Inside ETag, so a cached body is still revalidated and a repeat
+			// request can be answered with an empty 304 rather than the bytes.
+			public.Use(Cached(a.Cache))
 			a.routes(public)
 		})
 	})
