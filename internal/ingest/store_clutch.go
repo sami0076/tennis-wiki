@@ -2,7 +2,10 @@ package ingest
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
+	"github.com/jackc/pgx/v5"
 
 	"github.com/sami0076/tennis-wiki/internal/score"
 )
@@ -130,12 +133,16 @@ func (s *Store) deriveClutchColumns(ctx context.Context, force bool) (int64, err
 // unit a player's own figures are counted in, and a baseline in a different
 // unit is not a baseline. Team events are out, the same exclusion the rating
 // engine makes: a Davis Cup rubber is not the same competition.
-func (s *Store) rebuildClutchBaselines(ctx context.Context) error {
+func (s *Store) rebuildClutchBaselines(ctx context.Context) (err error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("begin baselines: %w", err)
 	}
-	defer func() { _ = tx.Rollback(ctx) }()
+	defer func() {
+		if rbErr := tx.Rollback(ctx); rbErr != nil && !errors.Is(rbErr, pgx.ErrTxClosed) {
+			err = errors.Join(err, rbErr)
+		}
+	}()
 
 	// Replaced wholesale rather than upserted: a cell that loses its last match
 	// has to disappear, and there are about a hundred rows in the table.
