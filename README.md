@@ -6,14 +6,15 @@ Deep per-player statistics, head-to-head comparison, and first-principles match 
 simulation for **both the ATP and WTA tours** — built from raw match data, with the
 working shown.
 
-> **Status: Phase 1 (data foundation) in progress.** Nothing below the Roadmap is live
-> yet. This README is written to the target shape so it fills in as phases land; sections
-> marked _(pending)_ are placeholders, not claims. See [Roadmap](#roadmap) for what
-> actually exists today.
+> **Status: Phases 1 and 2 are done; Phase 3 (simulation) is next.** Ingestion, the schema,
+> the read-only API, the Elo engine, player pages, head-to-head, rankings and search all
+> run locally today — nothing is deployed yet, which is Phase 4. This README is written to
+> the target shape so it fills in as phases land; sections marked _(pending)_ are
+> placeholders, not claims. See [Roadmap](#roadmap) for what exists.
 
 <!-- SCREENSHOT: head-to-head page. Required by the build spec §13.2 — first thing after
-     the title once Phase 2 ships. -->
-_Screenshot of the head-to-head page — pending Phase 2._
+     the title. The page shipped with Phase 2; the screenshot has not been taken yet. -->
+_Screenshot of the head-to-head page — the page exists, the screenshot is still to come._
 
 **Live URL:** _pending Phase 4._
 
@@ -337,10 +338,17 @@ that split.
 
 | Phase | Scope | Status |
 |---|---|---|
-| 1 | Ingestion, schema, read-only API | In progress |
-| 2 | Elo engine, player pages, H2H, rankings, search | Not started |
-| 3 | Match simulator (closed form), draw simulator (Monte Carlo) | Not started |
-| 4 | Match Charting Project, clutch metrics, methodology page, k3s, image builds | Not started |
+| 1 | Ingestion, schema, read-only API | Done |
+| 2 | Elo engine, player pages, H2H, rankings, search, clutch, caching | Done |
+| 3 | Match simulator (closed form), draw simulator (Monte Carlo) | Next |
+| 4 | Match Charting Project, methodology page, k3s, image builds, deployment | Not started |
+
+Clutch metrics were pulled forward into Phase 2 and shipped there. Phase 3's shape was
+checked against the data before it was planned, and two things moved: the point-win
+probability cannot come from serve statistics alone — only 3,362 of 125,719 players have
+ten or more matches carrying them, against 75,021 who are rated — and there is no upcoming
+draw to simulate, so the draw simulator replays draws that were already played and scores
+itself against what actually happened. Both are written up in the tracking issue.
 
 ## Documentation
 
