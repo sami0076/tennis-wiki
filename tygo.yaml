@@ -14,6 +14,7 @@ packages:
       - "rankings.go"
       - "trajectory.go"
       - "h2h.go"
+      - "clutch.go"
       - "coverage.go"
       - "problem.go"
       - "cursor.go"
