@@ -65,6 +65,16 @@
   max-width: 68ch;
 }
 
+.footerLink {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--chalk);
+}
+
+.footerLink:hover {
+  border-bottom-color: var(--ink);
+}
+
 @media (min-width: 880px) {
   .shell {
     padding: 0 var(--s-5);

@@ -250,7 +250,11 @@ function ClutchSection({ clutch }: { clutch: Resource<Clutch> }) {
       <p className={styles.caption}>
         Every tiebreak is won by somebody, so those two averages sit at 50% by construction
         and the figure above is the margin over a coin toss. Break points saved is a real
-        aggregate and is not 50%.
+        aggregate and is not 50%.{' '}
+        <Link className={styles.inline} to="/methodology#where-statistics-do-not-exist">
+          What is missing, and why
+        </Link>
+        .
       </p>
     </section>
   )

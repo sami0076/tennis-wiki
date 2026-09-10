@@ -173,11 +173,17 @@ web-types:
 validate:
 	$(GO) run ./cmd/validate
 
+## validation-json: refresh docs/validation.json, the run the methodology page quotes
+# Bigger samples than the defaults, because these figures are published: 30,000
+# matches and 300 draws is the run the methodology document was written against.
+validation-json:
+	$(GO) run ./cmd/validate -json -simulation-matches 30000 -simulation-events 300 > docs/validation.json
+
 ## clean: remove build artefacts
 clean:
 	$(call RM_DIR,$(BIN))
 
-.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc seed api ingest ingest-full ingest-force prune dataqual rate validate site web web-build web-types clean
+.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc seed api ingest ingest-full ingest-force prune dataqual rate validate validation-json site web web-build web-types clean
 
 # print-VAR: echo a make variable, so CI can read the pinned tool versions
 # from here rather than duplicating them in a workflow file.

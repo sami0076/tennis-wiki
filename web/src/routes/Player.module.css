@@ -70,3 +70,15 @@
     padding-top: 0;
   }
 }
+
+/* A caption that points at the paragraph explaining it. Underlined like every
+   other link, and no louder than the caption it sits in. */
+.inline {
+  color: inherit;
+  border-bottom: 1px solid var(--chalk);
+  text-decoration: none;
+}
+
+.inline:hover {
+  border-bottom-color: var(--ink);
+}

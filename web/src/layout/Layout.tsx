@@ -52,6 +52,11 @@ export function Layout({ children }: LayoutProps) {
       <main className={styles.main}>{children}</main>
 
       <footer className={styles.footer}>
+        <p>
+          <Link className={styles.footerLink} to="/methodology">
+            How these numbers are produced
+          </Link>
+        </p>
         <p>Data: Jeff Sackmann&apos;s tennis_atp and tennis_wta, CC BY-NC-SA 4.0</p>
       </footer>
     </div>
