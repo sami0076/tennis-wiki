@@ -279,7 +279,14 @@ function Inputs({ sim }: { sim: MatchSimulation }) {
       {inputs.anchor === null ? 'no measured average' : formatPercent(inputs.anchor * 100)} of
       service points won across {inputs.tier} level
       {inputs.anchor_scope === 'tier_surface_decade' ? ` in the ${inputs.decade}s` : ''}, over{' '}
-      {inputs.anchor_points} recorded points.
+      {inputs.anchor_points} recorded points.{' '}
+      <Link
+        className={styles.inline}
+        to="/methodology#what-the-simulator-can-be-checked-for-and-what-it-cannot"
+      >
+        What this chain can be checked for, and what it gets wrong
+      </Link>
+      .
     </p>
   )
 }
