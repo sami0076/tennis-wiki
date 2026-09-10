@@ -2,8 +2,10 @@
 
 How the numbers on this site are produced, and — as much as anything — where they stop.
 
-> Sections on the rating engine and the simulator arrive with Phases 2 and 3. What follows
-> is coverage, which is settled.
+> Everything below is current: coverage, the rating engine, the tier weights and what the
+> validation checks say about all three. The figures come from the run committed in
+> [`validation.json`](validation.json), and the page that renders this document fails to
+> build if the two disagree.
 
 ## What the data is
 
@@ -94,6 +96,40 @@ zeroes.
   move two ratings on no evidence. A retirement is rated: it was played, and it has a
   winner.
 
+## How a rating is computed
+
+Every rating here is computed from scratch, in chronological order, over every match in the
+database. Nothing is imported from a published list and no rating is ever patched in place,
+so a bug fix is one full rerun away from correct.
+
+The engine is Elo with a decaying K-factor, so a player's first matches move their rating
+far more than their five-hundredth:
+
+$$K(n) = \frac{250}{(n + 5)^{0.4}}$$
+
+where $n$ is how many matches that player had completed **before** this one, in that series.
+A debutant gets K = 131.33 and a player at 500 matches gets K = 20.73. The specification's
+gloss of "about 25" is reached at roughly 311 matches rather than 500, and
+[ADR-0004](decisions/0004-tier-taxonomy-and-elo-pool.md) records the correction. K is then
+multiplied by the match-importance weight in the table below.
+
+**Matches are replayed in draw order, not date order.** Nearly every tournament in the
+source carries a single date for all of its matches, so ordering by date alone would rate a
+final before the semi-final that produced its finalist.
+
+**Five series are kept per player** — overall, hard, clay, grass and carpet. A series is
+snapshotted only in the weeks it moved, which is what keeps the table at 3 million rows
+instead of 1.9 billion. For display and for simulation, the surface series and the overall
+one are blended:
+
+$$\text{blended} = w \cdot \text{surface} + (1 - w) \cdot \text{overall}, \qquad w = \min\left(0.75, \frac{\text{surface matches}}{40}\right)$$
+
+so a player with five clay matches leans on their overall rating and a clay specialist with
+a hundred leans on their clay one. The weight is reported next to the figure wherever the
+figure appears, because 1900 from a hundred clay matches and 1900 from three are the same
+number and different claims. A surface somebody never played is absent rather than blended
+at the base rating.
+
 ## The tier weights, and the evidence for them
 
 A result at Futures level counts for less than a Grand Slam final. How much less is a
@@ -117,8 +153,8 @@ specification asks for, and calibration is within 1.6 percentage points at every
 those two measures the weights are fine.
 
 The third measure is less comfortable. A player's rating should carry across a promotion
-from Challenger to tour without a step in it, and it does not: across 7,050 promotions,
-players won 33,120 of their first tour-level matches against 31,323 expected. Promoted
+from Challenger to tour without a step in it, and it does not: across 7,054 promotions,
+players won 33,152 of their first tour-level matches against 31,342 expected. Promoted
 players arrive underrated.
 
 **Raising the lower tiers is not the fix, and the numbers say so.** Moving Challenger to
