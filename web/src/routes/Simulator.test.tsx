@@ -1,8 +1,19 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { DrawSimulation, MatchSimulation } from '../api/client'
+import type { DrawSimulation, MatchSimulation, PlayerSearchResult } from '../api/client'
 import { Simulator } from './Simulator'
+
+const alcaraz: PlayerSearchResult = {
+  slug: 'carlos-alcaraz',
+  name: 'Carlos Alcaraz',
+  tour: 'atp',
+  country: 'ESP',
+  matches: 400,
+  best_tier: 'tour',
+  score: 0.9,
+}
 
 const chain: MatchSimulation = {
   players: [
@@ -65,7 +76,9 @@ const draw: DrawSimulation = {
 function stub(match: MatchSimulation | null, drawSim: DrawSimulation = draw) {
   vi.stubGlobal('fetch', (input: string) => {
     const path = new URL(String(input), 'http://localhost').pathname
-    const body = path.endsWith('/simulate/draw') ? drawSim : match
+    let body: unknown = match
+    if (path.endsWith('/simulate/draw')) body = drawSim
+    if (path.endsWith('/players')) body = { data: [alcaraz], next_cursor: null }
     return Promise.resolve(
       new Response(JSON.stringify(body), {
         status: 200,
@@ -140,6 +153,20 @@ describe('Simulator', () => {
     expect(await screen.findByText('This pair cannot be simulated')).toBeInTheDocument()
     expect(screen.getByText(/Jannik Sinner has no rating/)).toBeInTheDocument()
     expect(screen.queryByText('How the edge compounds')).not.toBeInTheDocument()
+  })
+
+  // One player picked is half a simulation, and the box has to keep the name
+  // in the meantime: the response names neither side until both are chosen.
+  it('keeps showing a player picked before the other one is', async () => {
+    stub(null)
+    const user = userEvent.setup()
+    renderAt('/simulator')
+
+    const box = screen.getByRole('combobox', { name: 'First player' })
+    await user.type(box, 'alcaraz')
+    await user.click(await screen.findByText('Carlos Alcaraz'))
+
+    expect(box).toHaveValue('Carlos Alcaraz')
   })
 
   it('asks for two players before simulating anything', async () => {
