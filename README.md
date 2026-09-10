@@ -306,10 +306,18 @@ full ingest and never incrementally patched, so a bug fix is always one rerun aw
 correct.
 
 `make validate` replays the whole history and reports predictive accuracy and calibration
-per tier, mean reversion across the pool, and promotion continuity. Tour-level accuracy is
+per tier, mean reversion across the pool, promotion continuity, and what the simulation
+chain adds on top of the ratings. Tour-level accuracy is
 **69.9%**, inside the 68-72% the spec asks for. The tier weights are configuration rather
 than constants, so `validate --weights` tries alternatives without a rebuild; what the
 evidence says about them is in [the methodology](docs/methodology.md).
+
+The simulator is checked for what it can be checked for. Its match-level answer is the
+rating's by construction, so the interesting question is what the chain claims underneath:
+it expects 44.3% of matches to reach a deciding set and 34.1% do, which is the independent-
+sets assumption showing through, and it is written up rather than quietly corrected. Draw
+simulations of 296 real events score 0.855 on Brier against 0.970 for knowing only the field
+size. Both are in [the methodology](docs/methodology.md).
 
 The full derivation, including the simulation chain from point to match, will live at
 `/methodology` on the live site.

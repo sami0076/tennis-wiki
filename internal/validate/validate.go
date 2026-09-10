@@ -144,8 +144,12 @@ type Report struct {
 	Calibration []TierCalibration   `json:"calibration"`
 	Reversion   MeanReversion       `json:"mean_reversion"`
 	Promotion   PromotionContinuity `json:"promotion_continuity"`
-	Findings    []Finding           `json:"findings"`
-	Took        string              `json:"took"`
+	// Simulation is null when the run skipped it. It is a separate section
+	// because it measures a different thing: not whether the ratings are right,
+	// but what the chain built on top of them adds.
+	Simulation *SimulationReport `json:"simulation,omitempty"`
+	Findings   []Finding         `json:"findings"`
+	Took       string            `json:"took"`
 }
 
 // Severity says how a finding should be read. The vocabulary matches
@@ -173,7 +177,7 @@ type Finding struct {
 // Failed reports whether the run should exit non-zero. Only an unmeasurable
 // run does: a weighting that looks wrong is a result, not an error.
 func (r Report) Failed() bool {
-	for _, f := range r.Findings {
+	for _, f := range r.findings() {
 		if f.Severity == Failure {
 			return true
 		}

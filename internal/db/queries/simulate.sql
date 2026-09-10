@@ -67,3 +67,31 @@ SELECT p.id, p.slug, p.full_name, p.tour::text AS tour, p.country,
                   WHERE mp.player_id = p.id), 0)::smallint AS last_season
   FROM players p
  WHERE p.slug = @slug;
+
+-- name: SampleRatedMatches :many
+-- Recent completed matches with both players' ratings as they stood at the
+-- time, for validating what the simulation chain predicts about them.
+--
+-- As of the match, never after it. Rating a match with a figure that already
+-- knows how it went is the one mistake this whole check exists to avoid.
+SELECT m.best_of, m.deciding_set, m.tiebreaks_winner, m.tiebreaks_loser,
+       t.tier::text AS tier, m.surface::text AS surface, t.season,
+       w.elo::float8 AS winner_elo, l.elo::float8 AS loser_elo
+  FROM matches m
+  JOIN tournaments t ON t.id = m.tournament_id
+  JOIN LATERAL (
+        SELECT r.elo FROM ratings r
+         WHERE r.player_id = m.winner_id AND r.surface = 'overall' AND r.as_of <= m.played_on
+         ORDER BY r.as_of DESC LIMIT 1
+       ) w ON true
+  JOIN LATERAL (
+        SELECT r.elo FROM ratings r
+         WHERE r.player_id = m.loser_id AND r.surface = 'overall' AND r.as_of <= m.played_on
+         ORDER BY r.as_of DESC LIMIT 1
+       ) l ON true
+ WHERE m.deciding_set IS NOT NULL
+   AND NOT m.is_team_event
+   AND m.surface IS NOT NULL
+   AND t.tour = @tour::tour
+ ORDER BY m.played_on DESC, m.id
+ LIMIT @row_limit;

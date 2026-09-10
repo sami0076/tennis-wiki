@@ -231,3 +231,79 @@ func (q *Queries) ListSimulatableEvents(ctx context.Context, arg ListSimulatable
 	}
 	return items, nil
 }
+
+const sampleRatedMatches = `-- name: SampleRatedMatches :many
+SELECT m.best_of, m.deciding_set, m.tiebreaks_winner, m.tiebreaks_loser,
+       t.tier::text AS tier, m.surface::text AS surface, t.season,
+       w.elo::float8 AS winner_elo, l.elo::float8 AS loser_elo
+  FROM matches m
+  JOIN tournaments t ON t.id = m.tournament_id
+  JOIN LATERAL (
+        SELECT r.elo FROM ratings r
+         WHERE r.player_id = m.winner_id AND r.surface = 'overall' AND r.as_of <= m.played_on
+         ORDER BY r.as_of DESC LIMIT 1
+       ) w ON true
+  JOIN LATERAL (
+        SELECT r.elo FROM ratings r
+         WHERE r.player_id = m.loser_id AND r.surface = 'overall' AND r.as_of <= m.played_on
+         ORDER BY r.as_of DESC LIMIT 1
+       ) l ON true
+ WHERE m.deciding_set IS NOT NULL
+   AND NOT m.is_team_event
+   AND m.surface IS NOT NULL
+   AND t.tour = $1::tour
+ ORDER BY m.played_on DESC, m.id
+ LIMIT $2
+`
+
+type SampleRatedMatchesParams struct {
+	Tour     Tour
+	RowLimit int32
+}
+
+type SampleRatedMatchesRow struct {
+	BestOf          int16
+	DecidingSet     *bool
+	TiebreaksWinner *int16
+	TiebreaksLoser  *int16
+	Tier            string
+	Surface         string
+	Season          int16
+	WinnerElo       float64
+	LoserElo        float64
+}
+
+// Recent completed matches with both players' ratings as they stood at the
+// time, for validating what the simulation chain predicts about them.
+//
+// As of the match, never after it. Rating a match with a figure that already
+// knows how it went is the one mistake this whole check exists to avoid.
+func (q *Queries) SampleRatedMatches(ctx context.Context, arg SampleRatedMatchesParams) ([]SampleRatedMatchesRow, error) {
+	rows, err := q.db.Query(ctx, sampleRatedMatches, arg.Tour, arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SampleRatedMatchesRow{}
+	for rows.Next() {
+		var i SampleRatedMatchesRow
+		if err := rows.Scan(
+			&i.BestOf,
+			&i.DecidingSet,
+			&i.TiebreaksWinner,
+			&i.TiebreaksLoser,
+			&i.Tier,
+			&i.Surface,
+			&i.Season,
+			&i.WinnerElo,
+			&i.LoserElo,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
