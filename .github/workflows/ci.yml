@@ -160,3 +160,31 @@ jobs:
 
       - name: web/src/api/types.gen.ts is up to date with the Go structs
         run: git diff --exit-code -- web/src/api/types.gen.ts
+
+  # Same discipline, one document along: the methodology page is generated from
+  # docs/methodology.md and the committed validation run, and editing either
+  # without regenerating would leave the site quoting numbers the repository no
+  # longer holds. Not gated on web/ for the same reason as the job above -- the
+  # edit that makes this stale is a change to docs/.
+  methodology:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+
+      # Fails on its own if the prose and docs/validation.json disagree, before
+      # it writes anything.
+      - name: regenerate the methodology page
+        run: npm run methodology
+
+      - name: web/src/generated/methodology.ts is up to date with the document
+        run: git diff --exit-code -- src/generated/methodology.ts
