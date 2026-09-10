@@ -10,7 +10,9 @@ import type {
   PlayerProfile,
   PlayerSearchResult,
   RankingHistory,
+  RankingPage,
   RatingSeries,
+  Trajectories,
 } from './types.gen'
 
 /**
@@ -83,6 +85,44 @@ export function getHeadToHead(a: string, b: string, signal?: AbortSignal): Promi
     {},
     signal,
   )
+}
+
+export interface RankingFilters {
+  type?: string | null
+  tour?: string | null
+  surface?: string | null
+  date?: string | null
+  limit?: number
+  cursor?: string | null
+}
+
+/**
+ * A leaderboard, as of the last week that exists rather than as of today. The
+ * response names the week it used, which is why nothing here defaults the date:
+ * a caller that guessed one would be guessing at coverage.
+ */
+export function getRankings(
+  filters: RankingFilters = {},
+  signal?: AbortSignal,
+): Promise<RankingPage> {
+  return request<RankingPage>('/rankings', { ...filters }, signal)
+}
+
+/**
+ * The leaders' rating lines over a window. A separate endpoint from the
+ * leaderboard because it answers with lines rather than rows, and squeezing
+ * both through one shape would make each of them worse.
+ */
+export function getTrajectories(
+  options: {
+    surface?: string | null
+    tour?: string | null
+    players?: number | null
+    months?: number | null
+  } = {},
+  signal?: AbortSignal,
+): Promise<Trajectories> {
+  return request<Trajectories>('/rankings/trajectory', { ...options }, signal)
 }
 
 /** Every rung between a point and a match, for one hypothetical pair. */
