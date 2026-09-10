@@ -491,6 +491,30 @@ production path, which is a weaker guarantee and should be read as one.
 The 6.7 points between the tours is why the anchor is a table and not a constant, and the
 upward drift within each surface is why a decade is part of its key.
 
+## The draw simulator
+
+A bracket does not collapse the way a match does, so it is sampled rather than solved, and
+the run count is a trade between precision and time. Measured on a 128 draw, reporting the
+leader's title odds and the 95% half-width on them:
+
+| Runs | Wall time | Leader | Interval |
+|---|---|---|---|
+| 1,000 | 2.8ms | 0.079 | ±0.017 |
+| 2,500 | 3.0ms | 0.083 | ±0.011 |
+| **10,000** | **14.7ms** | **0.084** | **±0.0054** |
+| 40,000 | 26.7ms | 0.081 | ±0.0027 |
+| 160,000 | 79.0ms | 0.081 | ±0.0013 |
+
+The interval narrows as 1/sqrt(n), so each further decimal place costs a hundred times the
+runs. Ten thousand is the default because it puts the half-width around half a point, which
+is the precision `simulator.png` shows — and going to 160,000 buys a third decimal that no
+reader of a tennis page has any use for, at five times the wall time.
+
+The wall time is not linear in the runs because the fixed cost dominates at the low end:
+before any run happens, every one of a 128 draw's 8,128 possible pairings is solved once and
+remembered. At ten thousand runs the whole simulation is **4.9ms** warm, which makes it a
+cheap endpoint rather than the expensive one it was expected to be.
+
 ## The read cache
 
 Redis 7 has been in the compose stack since #2 and nothing used it. This data barely
