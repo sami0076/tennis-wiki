@@ -152,6 +152,8 @@ GET /api/v1/players/:slug/clutch          break points, tiebreaks, deciding sets
 GET /api/v1/h2h/:slug/:opponent           head-to-head, either way round
 GET /api/v1/rankings?type=elo|official    leaderboards, as of the last week that exists
 GET /api/v1/rankings/trajectory           the leaders' rating lines, for a chart
+GET /api/v1/simulate/match?a=&b=          point to match, every rung of the chain
+GET /api/v1/simulate/draw?tour=&season=   a played draw, replayed ten thousand times
 ```
 
 ```bash
@@ -167,6 +169,19 @@ A ranking is always **as of the last week that exists**, never today, and the re
 which week it used. Asking for a date outside coverage returns an empty page with that date
 stated rather than a 404. An Elo leaderboard also drops players whose last rating is over a
 year old — without that it is a list of the retired.
+
+**The simulators show their working.** `/simulate/match` returns every rung between a point
+and a match, because the amplification is the claim: a two-point edge on serve becomes a
+twelve-point edge on the match. Point probabilities are derived from the ratings rather than
+from per-player serve statistics — which reach 3% of the players here — and anchored on the
+measured tour-and-surface average, so the response names its own inputs
+([ADR-0007](docs/decisions/0007-elo-derived-point-probability.md)). A pair the model cannot
+serve is an answer with a reason, not a coin flip.
+
+`/simulate/draw` replays a draw that was actually played, with the ratings as of the week it
+began, ten thousand times, and reports a confidence interval on every figure. There is no
+upcoming draw to simulate and there will not be one, so the simulator does the thing the data
+supports and can be scored against: Wimbledon 2019 gives Djokovic 40.1% ±1.0, and he won it.
 
 **Under pressure is measured against a stated population.** `/clutch` reports break points
 saved, tiebreaks won and deciding sets won, each against what the tour did at the same

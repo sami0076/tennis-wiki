@@ -560,6 +560,150 @@ export interface RankingHistory {
 }
 
 //////////
+// source: simulate.go
+
+/**
+ * SimulationDerived means the point probabilities came from the ratings,
+ * which is the only path ADR-0007 provides.
+ */
+export const SimulationDerived = "elo_derived";
+/**
+ * SimulationUnrated means one of the two has no rating to derive from.
+ */
+export const SimulationUnrated = "unrated";
+/**
+ * SimulationNoAnchor means no serve statistics exist anywhere in that tour,
+ * so there is nothing to pin the inversion's second degree of freedom on.
+ */
+export const SimulationNoAnchor = "no_anchor";
+/**
+ * SimulatedPlayer is one side of a simulation, and what was known about them.
+ */
+export interface SimulatedPlayer {
+  slug: string;
+  name: string;
+  tour: string;
+  country: string | null;
+  /**
+   * Elo is the blended rating actually used, null where they have none.
+   */
+  elo: number /* float64 */ | null;
+  /**
+   * SurfaceWeight is how much of Elo came from the surface series rather than
+   * the overall one, so a clay rating built on five matches is visibly that.
+   */
+  surface_weight: number /* float64 */;
+  surface_matches: number /* int32 */;
+}
+/**
+ * SimulationChain is every rung between a point and a match.
+ */
+export interface SimulationChain {
+  point: Pair<number>;
+  hold: Pair<number>;
+  set: Pair<number>;
+  match: Pair<number>;
+}
+/**
+ * SimulationInputs is where the numbers came from.
+ * ADR-0007 requires this: a simulation that will not say whether its point
+ * probability was observed or derived, and against what population, is the same
+ * failure as a "+4" against an unnamed average.
+ */
+export interface SimulationInputs {
+  source: string;
+  /**
+   * Anchor is the serve-point-win rate the inversion pinned the pair to, and
+   * Scope how far the lookup had to widen to find it.
+   */
+  anchor: number /* float64 */ | null;
+  anchor_scope: string;
+  anchor_points: number /* int64 */;
+  surface: string;
+  tier: string;
+  decade: number /* int */;
+  /**
+   * Expected is what the ratings predicted and Achieved what the chain
+   * produced. They differ only where no plausible pair of serve
+   * probabilities could reach the target, which is worth seeing rather than
+   * smoothing over.
+   */
+  expected: number /* float64 */ | null;
+  achieved: number /* float64 */ | null;
+}
+/**
+ * MatchSimulation is the response for one hypothetical match.
+ */
+export interface MatchSimulation {
+  players: Pair<SimulatedPlayer>;
+  best_of: number /* int */;
+  surface: string;
+  /**
+   * Chain is null when the pair cannot be simulated, and Availability says
+   * which of the two reasons applies.
+   */
+  chain: SimulationChain | null;
+  inputs: SimulationInputs;
+  availability: string;
+}
+/**
+ * DrawOdds is one entrant's chances.
+ */
+export interface DrawOdds {
+  slug: string;
+  name: string;
+  seed: number /* int */ | null;
+  /**
+   * Title and its 95% half-width. The interval travels with the figure
+   * because a sampled probability without one is pretending to be exact.
+   */
+  title: number /* float64 */;
+  title_interval: number /* float64 */;
+  /**
+   * Reached is the probability of winning each round, indexed as Rounds is.
+   */
+  reached: number /* float64 */[];
+  /**
+   * Rating is the blended figure the simulation used, as of the week the
+   * event started rather than as of today.
+   */
+  rating: number /* float64 */ | null;
+}
+/**
+ * DrawSimulation is a whole event, played many times.
+ */
+export interface DrawSimulation {
+  event: SimulatedEvent;
+  rounds: string[];
+  odds: DrawOdds[];
+  runs: number /* int */;
+  seed: number /* uint64 */;
+  inputs: SimulationInputs;
+  entered: number /* int */;
+  /**
+   * Champion is who actually won it, so a simulation can be read against what
+   * happened rather than only admired.
+   */
+  champion: string | null;
+}
+/**
+ * SimulatedEvent names the draw that was replayed.
+ */
+export interface SimulatedEvent {
+  name: string;
+  season: number /* int */;
+  tour: string;
+  tier: string;
+  surface: string;
+  /**
+   * RatingsAsOf is the week the event began. A draw simulation is always as
+   * of then: using today's ratings would be reading the answer off the back
+   * of the book.
+   */
+  ratings_as_of: string;
+}
+
+//////////
 // source: trajectory.go
 
 /**
