@@ -1,0 +1,169 @@
+.layout {
+  padding: var(--s-5) 0 var(--s-7);
+}
+
+.contents {
+  padding-bottom: var(--s-4);
+  margin-bottom: var(--s-4);
+  border-bottom: var(--hairline);
+}
+
+.contentsTitle {
+  font-size: var(--t-11);
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: var(--s-2);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--t-13);
+  line-height: 1.5;
+}
+
+.nested {
+  padding-left: var(--s-3);
+  color: var(--muted);
+}
+
+.link,
+.article a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--chalk);
+}
+
+.link:hover,
+.article a:hover {
+  border-bottom-color: var(--ink);
+}
+
+.provenance {
+  padding-bottom: var(--s-4);
+}
+
+.note {
+  margin-top: var(--s-2);
+  max-width: 68ch;
+  font-size: var(--t-11);
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.article {
+  max-width: 68ch;
+}
+
+.article h1 {
+  font-size: var(--t-24);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: var(--s-3);
+}
+
+.article h2 {
+  font-size: var(--t-20);
+  font-weight: 700;
+  line-height: 1.2;
+  margin: var(--s-6) 0 var(--s-3);
+  padding-top: var(--s-4);
+  border-top: var(--hairline);
+}
+
+.article h3 {
+  font-size: var(--t-16);
+  font-weight: 600;
+  margin: var(--s-5) 0 var(--s-2);
+}
+
+.article p,
+.article li {
+  font-size: var(--t-14);
+  line-height: 1.55;
+  margin-bottom: var(--s-3);
+}
+
+.article ul {
+  padding-left: var(--s-4);
+}
+
+/* The standfirst under the title, and the one note about where the figures
+   come from. Quiet, like every other caption on the site. */
+.article blockquote {
+  margin: var(--s-4) 0;
+  padding-left: var(--s-3);
+  border-left: 2px solid var(--chalk);
+  color: var(--muted);
+}
+
+.article blockquote p {
+  font-size: var(--t-13);
+  margin-bottom: var(--s-2);
+}
+
+.article code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+}
+
+/* Tables are the same object StatTable draws: hairline rows, tabular numerals,
+   and a scroll of their own rather than a page that scrolls sideways. */
+.article table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--s-4) 0;
+  font-size: var(--t-13);
+  font-variant-numeric: tabular-nums;
+}
+
+.article th {
+  padding: var(--s-2);
+  border-bottom: var(--hairline);
+  font-size: var(--t-11);
+  font-weight: 600;
+  color: var(--muted);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.article td {
+  padding: var(--s-2);
+  border-bottom: var(--hairline);
+  line-height: 1.2;
+  vertical-align: top;
+}
+
+.article math {
+  font-size: var(--t-16);
+}
+
+/* Display maths is its own block, and wide formulas scroll rather than pushing
+   the page sideways at 360px. */
+.article :global(.katex-display) {
+  display: block;
+  overflow-x: auto;
+  margin: var(--s-4) 0;
+}
+
+@media (min-width: 880px) {
+  .layout {
+    display: grid;
+    grid-template-columns: 16rem minmax(0, 1fr);
+    gap: var(--s-6);
+    align-items: start;
+  }
+
+  .contents {
+    position: sticky;
+    top: var(--s-4);
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: 0;
+    border-right: var(--hairline);
+    padding-right: var(--s-4);
+  }
+}
