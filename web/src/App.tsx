@@ -6,6 +6,7 @@ import { Home } from './routes/Home'
 import { NotBuiltYet } from './routes/NotBuiltYet'
 import { Player } from './routes/Player'
 import { Players } from './routes/Players'
+import { Simulator } from './routes/Simulator'
 import { EmptyState, ButtonLink } from './components'
 
 /**
@@ -22,15 +23,7 @@ export function App() {
         <Route path="/h2h" element={<HeadToHead />} />
         <Route path="/h2h/:a/:b" element={<HeadToHead />} />
         <Route path="/rankings" element={<NotBuiltYet page="rankings page" issue={45} />} />
-        <Route
-          path="/simulator"
-          element={
-            <NotBuiltYet
-              page="simulator"
-              note="Nothing is built behind it yet: simulation is Phase 3, and internal/simulate is still a package comment."
-            />
-          }
-        />
+        <Route path="/simulator" element={<Simulator />} />
         <Route path="/_components" element={<Gallery />} />
         <Route
           path="*"

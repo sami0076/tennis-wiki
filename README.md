@@ -237,6 +237,11 @@ set and hairline structure, and the reasoning is in
 component in every state, which is the fastest way to check the system against a design, and
 `/players/:slug` is the first real page.
 
+`/simulator` is the third: two pickers, the chain from a service point up to the match, and
+a draw played ten thousand times with an interval on every figure. The caption carries the
+matchup's own numbers rather than the design's, and says where the inputs came from. The
+head-to-head page's "Simulate this matchup" button leads here with both players.
+
 `/h2h/:a/:b` is the comparison and `/h2h` the picker, which is the same page: the URL is the
 state, so a comparison is a link somebody can send, and asking the other way round is the same
 rivalry read from the other end. The surface toggle filters the record, the rivalry strip and
