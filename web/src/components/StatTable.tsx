@@ -18,6 +18,12 @@ export interface Column<Row> {
   /** Optional custom cell. Only reached when `value` is not null. */
   render?: (row: Row) => ReactNode
   sortable?: boolean
+  /**
+   * Shown only at the wide breakpoint. The mockup's rankings table gains peak
+   * Elo and age there; at 360px they are the columns that would push the rank
+   * off the screen.
+   */
+  wide?: boolean
 }
 
 interface StatTableProps<Row> {
@@ -89,7 +95,7 @@ export function StatTable<Row>({
           <tr>
             {columns.map((column) => {
               const active = sort?.key === column.key
-              const className = column.align === 'right' ? `${styles.th} ${styles.right}` : styles.th
+              const className = cellClass(column, styles.th)
               return (
                 <th
                   key={column.key}
@@ -119,8 +125,7 @@ export function StatTable<Row>({
             <tr key={rowKey(row)} className={styles.row}>
               {columns.map((column) => {
                 const value = column.value(row)
-                const className =
-                  column.align === 'right' ? `${styles.td} ${styles.right}` : styles.td
+                const className = cellClass(column, styles.td)
                 return (
                   <td key={column.key} className={className}>
                     {value === null ? (
@@ -140,7 +145,7 @@ export function StatTable<Row>({
               {aggregate.map((cell, index) => {
                 const column = columns[index]
                 const className =
-                  column?.align === 'right' ? `${styles.td} ${styles.right}` : styles.td
+                  column === undefined ? styles.td : cellClass(column, styles.td)
                 return (
                   <td key={column?.key ?? index} className={className}>
                     {cell}
@@ -153,4 +158,11 @@ export function StatTable<Row>({
       </table>
     </div>
   )
+}
+
+/** Alignment and breakpoint are both column properties, so both live here. */
+function cellClass<Row>(column: Column<Row>, base: string | undefined) {
+  return [base, column.align === 'right' ? styles.right : null, column.wide ? styles.wide : null]
+    .filter((name) => name !== null && name !== undefined)
+    .join(' ')
 }

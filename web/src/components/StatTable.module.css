@@ -67,10 +67,21 @@
   font-weight: 600;
 }
 
+/* Columns the 360px layout has no room for. Not rendered rather than scrolled
+   past: the wrapper already scrolls, and a column that is only reachable by
+   dragging is one most readers will never know is there. */
+.wide {
+  display: none;
+}
+
 @media (min-width: 880px) {
   .th {
     position: sticky;
     top: 0;
     z-index: 1;
+  }
+
+  .wide {
+    display: table-cell;
   }
 }
