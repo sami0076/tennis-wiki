@@ -116,32 +116,38 @@ function Pickers({
 }) {
   const [queryA, setQueryA] = useState('')
   const [queryB, setQueryB] = useState('')
+  const [pickedA, setPickedA] = useState<PlayerSearchResult>()
+  const [pickedB, setPickedB] = useState<PlayerSearchResult>()
   const named = match.state === 'ready' && match.data !== null ? match.data.players : undefined
 
-  // The box shows who is being simulated once that is known, and what was
-  // typed until then.
-  const value = (side: 0 | 1, typed: string) =>
-    typed !== '' ? typed : (named?.[side].name ?? '')
+  // The box shows what is being typed, then who was picked, then who is being
+  // simulated. The pick is what carries the first player through the wait for
+  // the second: a simulation names neither side until both are chosen, so
+  // falling straight back to it would empty the box somebody just filled.
+  const value = (side: 0 | 1, typed: string, picked?: PlayerSearchResult) =>
+    typed !== '' ? typed : (named?.[side].name ?? picked?.name ?? '')
 
   return (
     <div className={styles.pickers}>
       <PlayerSearch
         label="First player"
         placeholder="Search by name"
-        value={value(0, queryA)}
+        value={value(0, queryA, pickedA)}
         onChange={setQueryA}
         onSelect={(p: PlayerSearchResult) => {
           setQueryA('')
+          setPickedA(p)
           onA(p.slug)
         }}
       />
       <PlayerSearch
         label="Second player"
         placeholder="Search by name"
-        value={value(1, queryB)}
+        value={value(1, queryB, pickedB)}
         onChange={setQueryB}
         onSelect={(p: PlayerSearchResult) => {
           setQueryB('')
+          setPickedB(p)
           onB(p.slug)
         }}
       />
