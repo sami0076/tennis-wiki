@@ -3,9 +3,9 @@ import { Layout } from './layout/Layout'
 import { Gallery } from './routes/Gallery'
 import { HeadToHead } from './routes/HeadToHead'
 import { Home } from './routes/Home'
-import { NotBuiltYet } from './routes/NotBuiltYet'
 import { Player } from './routes/Player'
 import { Players } from './routes/Players'
+import { Rankings } from './routes/Rankings'
 import { Simulator } from './routes/Simulator'
 import { EmptyState, ButtonLink } from './components'
 
@@ -22,7 +22,7 @@ export function App() {
         <Route path="/players/:slug" element={<Player />} />
         <Route path="/h2h" element={<HeadToHead />} />
         <Route path="/h2h/:a/:b" element={<HeadToHead />} />
-        <Route path="/rankings" element={<NotBuiltYet page="rankings page" issue={45} />} />
+        <Route path="/rankings" element={<Rankings />} />
         <Route path="/simulator" element={<Simulator />} />
         <Route path="/_components" element={<Gallery />} />
         <Route

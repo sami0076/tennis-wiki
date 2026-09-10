@@ -1,0 +1,105 @@
+.figure {
+  margin: var(--s-4) 0;
+}
+
+.svg {
+  width: 100%;
+  height: 140px;
+  display: block;
+}
+
+.baseline {
+  stroke: var(--chalk);
+  stroke-width: 1;
+}
+
+.named,
+.field {
+  fill: none;
+}
+
+.named {
+  stroke-width: 1.5;
+}
+
+/* The field is one weight lighter and one step down the ramp: present, and
+   plainly not what the chart is about. */
+.field {
+  stroke: var(--ink-4);
+  stroke-width: 1;
+}
+
+.first {
+  stroke: var(--ink);
+}
+
+.second {
+  stroke: var(--ink-2);
+}
+
+.third {
+  stroke: var(--ink-3);
+}
+
+/* The site's entire ambient motion budget, spent here. pathLength="1" makes the
+   dash arithmetic independent of how long each line actually is. */
+@media (prefers-reduced-motion: no-preference) {
+  .animate .named,
+  .animate .field {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: draw 900ms ease-out forwards;
+  }
+
+  .animate .field {
+    animation-duration: 700ms;
+  }
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.caption {
+  margin-top: var(--s-2);
+  font-size: var(--t-11);
+  line-height: 1.55;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.key {
+  margin-right: var(--s-3);
+  white-space: nowrap;
+}
+
+.swatch {
+  display: inline-block;
+  width: 12px;
+  height: 2px;
+  margin-right: var(--s-1);
+  vertical-align: middle;
+}
+
+.swatch.first {
+  background: var(--ink);
+}
+
+.swatch.second {
+  background: var(--ink-2);
+}
+
+.swatch.third {
+  background: var(--ink-3);
+}
+
+.fieldSwatch {
+  background: var(--ink-4);
+}
+
+.range {
+  display: block;
+  margin-top: var(--s-1);
+}

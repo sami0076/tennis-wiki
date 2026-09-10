@@ -25,6 +25,7 @@ import {
   SurfaceDot,
   SurfaceToggle,
   TourFilter,
+  TrajectoryChart,
   WinLossMark,
   WinSplit,
   type Column,
@@ -73,6 +74,17 @@ const trajectory = [
   { date: '2020-01-01', elo: 2240 },
   { date: '2020-07-01', elo: 2205 },
 ]
+
+// Five lines off the one above, far enough apart to tell the ramp's four steps
+// from each other at 360px.
+const leaders = ['Leader', 'Second', 'Third', 'Fourth', 'Fifth'].map((name, index) => ({
+  name,
+  position: index + 1,
+  points: trajectory.map((point, week) => ({
+    date: point.date,
+    elo: point.elo - index * 60 + week * index * 4,
+  })),
+}))
 
 const rivalry = [
   { wonByA: true, surface: 'grass', description: 'Wimbledon 1980 final' },
@@ -231,6 +243,16 @@ export function Gallery() {
           for the ratings endpoints.
         </p>
         <Sparkline points={trajectory} label="Elo rating over three seasons" />
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>TrajectoryChart</h2>
+        <p className={styles.note}>
+          The multi-series version: one shared pair of axes, the top three down the ink
+          ramp, everyone else as the field. Crossing lines mean a lead changing hands,
+          which is only true because the range is shared. Still no charting library.
+        </p>
+        <TrajectoryChart lines={leaders} />
       </section>
 
       <section className={styles.block}>

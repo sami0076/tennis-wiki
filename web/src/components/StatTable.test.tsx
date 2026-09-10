@@ -48,6 +48,25 @@ describe('StatTable', () => {
     expect(bodyOrder()).toEqual(['Older', 'Recent', 'Unrecorded'])
   })
 
+  // The column is in the markup either way, so it stays sortable and reaches a
+  // screen reader; only the 360px layout drops it, and that is a CSS decision.
+  it('marks a wide-only column rather than omitting it', () => {
+    const wide: ReadonlyArray<Column<Row>> = [
+      ...columns,
+      { key: 'peak', header: 'Peak', align: 'right', wide: true, value: (row) => row.aces },
+    ]
+    const { container } = render(
+      <StatTable caption="Aces" columns={wide} rows={rows} rowKey={(r) => r.name} />,
+    )
+
+    const headers = [...container.querySelectorAll('th')]
+    expect(headers.map((th) => th.textContent)).toEqual(['Match', 'Aces', 'Peak'])
+    expect(headers[2]?.className).toContain('wide')
+    expect(headers[0]?.className).not.toContain('wide')
+    // Every row hides the same column, or the header and its cells drift apart.
+    expect(container.querySelectorAll('td[class*="wide"]')).toHaveLength(rows.length)
+  })
+
   it('reports the sorted column to assistive technology', async () => {
     const user = userEvent.setup()
     render(<StatTable caption="Aces" columns={columns} rows={rows} rowKey={(r) => r.name} />)

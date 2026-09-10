@@ -1,0 +1,99 @@
+.title {
+  font-size: var(--t-24);
+  font-weight: 700;
+  line-height: 1.2;
+  padding: var(--s-5) 0 var(--s-3);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-4);
+  padding-bottom: var(--s-3);
+}
+
+.types {
+  display: flex;
+  gap: var(--s-3);
+}
+
+/* The same text filter the surface toggle is, minus the surface colour: the
+   type is not a surface and may not borrow its hue. */
+.type {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: var(--s-1) 0;
+  background: none;
+  font: inherit;
+  font-size: var(--t-13);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.active {
+  color: var(--ink);
+  font-weight: 600;
+  border-bottom-color: var(--ink);
+}
+
+.dateLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-13);
+  color: var(--muted);
+}
+
+.date {
+  border: 1px solid var(--ink);
+  border-radius: 4px;
+  padding: var(--s-1) var(--s-2);
+  font: inherit;
+  font-size: var(--t-13);
+  font-variant-numeric: tabular-nums;
+  background: none;
+  color: var(--ink);
+}
+
+.chart {
+  padding: var(--s-4) 0;
+  border-bottom: var(--hairline);
+}
+
+.player {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--chalk);
+}
+
+.player:hover {
+  border-bottom-color: var(--ink);
+}
+
+.country {
+  margin-left: var(--s-2);
+  font-size: var(--t-11);
+  color: var(--muted);
+}
+
+.caption {
+  margin: var(--s-2) 0;
+  max-width: 62ch;
+  font-size: var(--t-11);
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  padding: var(--s-4) 0 var(--s-6);
+}
+
+.error {
+  font-size: var(--t-13);
+  color: var(--loss);
+  max-width: 56ch;
+}
