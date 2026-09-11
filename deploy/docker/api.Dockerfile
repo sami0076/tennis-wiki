@@ -1,6 +1,10 @@
 # Multi-stage so the shipped image is the binary and its certificates, nothing
 # else: no toolchain, no source, no module cache.
-FROM golang:1.23-alpine AS build
+#
+# The compiler runs on the builder's own architecture and cross-compiles for
+# the target. A Go build has no reason to run under emulation, and on an Arm
+# machine building the amd64 image CI publishes, that is the whole difference.
+FROM --platform=$BUILDPLATFORM golang:1.23-alpine AS build
 
 WORKDIR /src
 
@@ -9,7 +13,9 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/api ./cmd/api
+ARG TARGETARCH
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH \
+    go build -trimpath -ldflags="-s -w" -o /out/api ./cmd/api
 
 FROM alpine:3.21
 

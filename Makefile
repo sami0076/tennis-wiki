@@ -54,12 +54,14 @@ site:
 IMAGE_PREFIX ?= ghcr.io/sami0076/tennis-wiki
 
 ## images: build the three published images locally and print their sizes
-# CI builds these same three from these same files. This is the target the
-# sizes in docs/performance.md are measured with.
+# CI builds these same three from these same files, and this is the target the
+# sizes in docs/performance.md are measured with -- so it pins the platform CI
+# publishes rather than taking the host's. On an Arm laptop the two differ.
+IMAGE_BUILD = docker build --platform linux/amd64 --provenance=false
 images:
-	docker build -f deploy/docker/api.Dockerfile -t $(IMAGE_PREFIX)/api:local .
-	docker build -f deploy/docker/tools.Dockerfile --build-arg GOOSE_VERSION=$(GOOSE_VERSION) -t $(IMAGE_PREFIX)/tools:local .
-	docker build -f web/Dockerfile -t $(IMAGE_PREFIX)/web:local ./web
+	$(IMAGE_BUILD) -f deploy/docker/api.Dockerfile -t $(IMAGE_PREFIX)/api:local .
+	$(IMAGE_BUILD) -f deploy/docker/tools.Dockerfile --build-arg GOOSE_VERSION=$(GOOSE_VERSION) -t $(IMAGE_PREFIX)/tools:local .
+	$(IMAGE_BUILD) -f web/Dockerfile -t $(IMAGE_PREFIX)/web:local ./web
 	@docker image ls $(IMAGE_PREFIX)/* --format '{{.Repository}}  {{.Size}}'
 
 ## down: stop the stack, keeping data

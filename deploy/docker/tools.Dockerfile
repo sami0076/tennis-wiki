@@ -5,7 +5,10 @@
 # share almost all of their compiled code, and five images would be five copies
 # of the same layers in the registry for no isolation anyone benefits from. A
 # Job picks a binary by command, not by image.
-FROM golang:1.23-alpine AS build
+#
+# The compiler runs on the builder's own architecture and cross-compiles for
+# the target, as in api.Dockerfile.
+FROM --platform=$BUILDPLATFORM golang:1.23-alpine AS build
 
 WORKDIR /src
 
@@ -24,15 +27,22 @@ RUN go mod download
 # The build tags drop the drivers goose ships for databases this project does
 # not have. Unstripped and with all of them, the one binary was 57 MB, more
 # than the four of ours put together.
+#
+# The find is not decoration: `go install` refuses GOBIN when it is cross-
+# compiling, and drops the binary in GOPATH/bin/<os>_<arch> instead of
+# GOPATH/bin -- so where it lands depends on which machine is building.
 ARG GOOSE_VERSION
+ARG TARGETARCH
 RUN : "${GOOSE_VERSION:?run make images, or pass --build-arg GOOSE_VERSION}" \
-    && CGO_ENABLED=0 GOOS=linux GOTOOLCHAIN=auto \
+    && CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH GOTOOLCHAIN=auto \
        go install -trimpath -ldflags="-s -w" \
        -tags='no_clickhouse no_libsql no_mssql no_mysql no_sqlite3 no_vertica no_ydb' \
-       github.com/pressly/goose/v3/cmd/goose@${GOOSE_VERSION}
+       github.com/pressly/goose/v3/cmd/goose@${GOOSE_VERSION} \
+    && install -D "$(find /go/bin -type f -name goose)" /out/goose
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/ \
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH \
+    go build -trimpath -ldflags="-s -w" -o /out/ \
     ./cmd/ingest ./cmd/rate ./cmd/dataqual ./cmd/validate
 
 FROM alpine:3.21
@@ -41,7 +51,6 @@ FROM alpine:3.21
 # Postgres over TLS in any deployment that is not the compose file.
 RUN apk add --no-cache ca-certificates && adduser -D -u 10001 tools
 
-COPY --from=build /go/bin/goose /usr/local/bin/goose
 COPY --from=build /out/ /usr/local/bin/
 
 # cmd/ingest resolves configs/sources.json and configs/player_overrides.json
