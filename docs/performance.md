@@ -576,6 +576,41 @@ slower one. An integration test points the API at a dead port and asserts exactl
 and every response says which it was in `X-Cache: hit|miss`, so a single request can be
 checked without reading an aggregate.
 
+## Container images
+
+CI publishes three images to GHCR on the pushes to `main` that touch them, and
+`make images` builds the same three locally. Both build for `linux/amd64` only, which is
+what the host is
+([ADR-0008](decisions/0008-published-images-and-target-architecture.md)).
+
+| image | what it holds | compressed |
+|---|---|---|
+| `api` | `cmd/api` and its certificates, on alpine | **7.8 MB** |
+| `tools` | goose and the four pipeline commands, with `migrations/` and `configs/` | **21.9 MB** |
+| `web` | the built SPA behind nginx | **21.1 MB** |
+
+Compressed, because that is what a pull transfers, and it is the figure the publishing job
+prints beside each digest. Uncompressed, the binaries inside them are `api` 10.7 MB,
+`ingest` 10.9, `validate` 8.9, `rate` 8.8, `dataqual` 8.8, and goose 12.0.
+
+**The frontend's own build output is 296 KB.** The `web` image is otherwise nginx, so
+there is nothing to optimise in it; the way it gets smaller is to stop shipping a web
+server at all, which is what putting the SPA on a CDN rather than in the cluster does.
+
+### Two of these were much worse before they were measured
+
+**goose was 57 MB** — larger than all four of our binaries together. `go install` does not
+strip by default, and goose carries drivers for ClickHouse, MSSQL, MySQL, SQLite, Vertica
+and YDB. With `-ldflags="-s -w"` and the `no_*` tags for the databases this project does
+not have, it is **12 MB**.
+
+**The build context was 181 MB**, 130 MB of it `web/node_modules` and 39 MB compiled
+binaries under `bin/`. `COPY . .` sent all of it before the first layer ran, and a frontend
+rebuild invalidated the API image's cache for no reason. A `.dockerignore` takes it to
+**1.3 MB**. The frontend's own context had the sharper version of the same bug: its
+`COPY . .` runs after `npm ci`, so the host's `node_modules` landed on top of the one the
+image had just installed — a different platform's binaries, silently.
+
 ## Not measured
 
 **Full rating recompute wall time**, which #20 also asks for. The rating engine does not
