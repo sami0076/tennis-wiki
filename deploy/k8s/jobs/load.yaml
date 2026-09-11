@@ -1,0 +1,120 @@
+# The first load of an empty cluster, and the way to refresh it afterwards.
+# Applied by hand, never on a schedule: ADR-0006's whole point is that the
+# sources have stopped moving, so there is nothing for a CronJob to catch.
+#
+#   kubectl -n deucepoint delete job load --ignore-not-found
+#   kubectl -n deucepoint apply -f deploy/k8s/jobs/load.yaml
+#   kubectl -n deucepoint logs -f job/load -c ingest
+#
+# Expect roughly 40 minutes for the match stage and 23 for the reference stage
+# on the full dataset, then 1m 36s for the ratings -- the figures in
+# docs/performance.md. Run it after jobs/migrate.yaml, not before.
+#
+# KNOWN GAP, worth reading before a refresh on a live site: cmd/ingest flushes
+# the read cache when it finishes, and cmd/rate does not. So a rerun leaves
+# the ratings changed and the cached /rankings answers up to 24 hours stale
+# (the TTL is the only thing that clears them). On an empty cluster there is
+# nothing cached and it does not arise.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: load
+  namespace: deucepoint
+  labels:
+    app.kubernetes.io/name: load
+    app.kubernetes.io/part-of: deucepoint
+spec:
+  # The ingest records each file only once every row of it has committed, so a
+  # retry resumes at the file it died on rather than at the beginning. That is
+  # what makes retrying an hour-long job reasonable at all.
+  backoffLimit: 2
+  # Four hours against a measured hour or so. A Job still running after that is
+  # stuck, not slow.
+  activeDeadlineSeconds: 14400
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: load
+        app.kubernetes.io/part-of: deucepoint
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      # An init container, so the ratings cannot start against a half-loaded
+      # database: Kubernetes runs it to completion first or the pod does not
+      # proceed.
+      initContainers:
+        - name: ingest
+          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:2a6e96e6a03c57f0b658fc5a1d0126615309e447144f9c0c1daed0eea2b64625
+          # docs/performance.md: the default of one reader per CPU with
+          # 2,000-row batches was enough to get the process killed for memory
+          # pressure on a machine with other things running, and two readers
+          # with 500-row batches was not noticeably slower -- the bottleneck is
+          # the network. Postgres is on this same node.
+          command: ["ingest", "--workers", "2", "--batch", "500"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: DATABASE_URL
+            # So the finished ingest clears the read cache. Without this the
+            # ingest still works and the site serves yesterday's answers until
+            # the 24-hour TTL expires them.
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: api
+                  key: REDIS_URL
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              # Bounded, unlike the serving path: this is batch work that runs
+              # for an hour next to a Postgres that the site is depending on.
+              cpu: "2"
+              memory: 1Gi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      containers:
+        - name: rate
+          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:2a6e96e6a03c57f0b658fc5a1d0126615309e447144f9c0c1daed0eea2b64625
+          command: ["rate"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: DATABASE_URL
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 1Gi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        # The root filesystem is read-only, so anything wanting a scratch file
+        # gets this and loses it with the pod.
+        - name: tmp
+          emptyDir: {}

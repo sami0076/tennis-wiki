@@ -1,0 +1,161 @@
+# One Postgres, in the cluster, on the node's own disk.
+# ADR-0009 records why that is the answer here rather than a managed database.
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: deucepoint
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/part-of: deucepoint
+spec:
+  # Headless: there is one instance and nothing to load-balance, so the name
+  # should resolve to the pod rather than to a virtual IP in front of it.
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: deucepoint
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/part-of: deucepoint
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: postgres
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: postgres
+        app.kubernetes.io/part-of: deucepoint
+    spec:
+      # Postgres wants a clean shutdown, and Kubernetes sends SIGTERM, which
+      # Postgres reads as "smart shutdown": wait for every client to disconnect.
+      # That can outlast the grace period and end in SIGKILL on a live data
+      # directory. The preStop hook asks for a fast shutdown instead, which
+      # rolls back open transactions and checkpoints properly.
+      terminationGracePeriodSeconds: 120
+      # Deliberately no runAsNonRoot here. The official entrypoint starts as
+      # root to fix ownership of the data directory and then drops to postgres
+      # itself; forcing a non-root start breaks it on a fresh volume.
+      containers:
+        - name: postgres
+          image: postgres:16.10-alpine
+          ports:
+            - name: postgres
+              containerPort: 5432
+          envFrom:
+            - configMapRef:
+                name: postgres
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: POSTGRES_PASSWORD
+            # The volume mounts at /var/lib/postgresql/data, and initdb refuses
+            # a directory that is not empty -- local-path leaves a lost+found
+            # on some filesystems. A subdirectory sidesteps it.
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          args:
+            - postgres
+            # Sized for a 4 vCPU / 8 GB CX33 with roughly 2.5 GB of data, and
+            # deliberately not the compose numbers -- those carry a comment
+            # saying they are not production settings.
+            #
+            # shared_buffers at 1 GB against a 3 GiB limit leaves the rest for
+            # the page cache, which is what makes the whole database resident:
+            # docs/performance.md measures the Elo leaderboard at 77ms warm
+            # against 842ms with a cold buffer pool.
+            - -c
+            - shared_buffers=1GB
+            # What the planner is told to assume is cached. Not an allocation.
+            - -c
+            - effective_cache_size=2GB
+            # The figure every timing in docs/performance.md was measured with.
+            # Lowering it would make those numbers stop describing this server.
+            - -c
+            - work_mem=32MB
+            - -c
+            - maintenance_work_mem=256MB
+            # The API pool is 16 connections (internal/db/pool.go) and the
+            # ingest Job takes a handful more. 40 is headroom, not a target:
+            # every one of them can claim work_mem for a sort.
+            - -c
+            - max_connections=40
+            # NVMe. The default of 4.0 describes a spinning disk and pushes the
+            # planner towards sequential scans it does not need here.
+            - -c
+            - random_page_cost=1.1
+            # The compose stack turns this off to make a 1.6M-row ingest
+            # bearable. Off means a crash can lose committed transactions,
+            # which is a fine trade for a laptop and not for the live site.
+            - -c
+            - synchronous_commit=on
+          lifecycle:
+            preStop:
+              exec:
+                command: ["pg_ctl", "-D", "/var/lib/postgresql/data/pgdata", "-m", "fast", "-w", "stop"]
+          # pg_isready, not a query: this decides whether the API may connect,
+          # and it should say yes as soon as the server accepts connections.
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "tennis", "-d", "tennis"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "tennis", "-d", "tennis"]
+            # Long, on purpose. Restarting Postgres because it was slow to
+            # answer is how a busy database becomes a down one.
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+            limits:
+              # No CPU limit. Throttling the one process that four queries are
+              # waiting on turns a 77ms response into an unpredictable one, and
+              # on a single node there is nothing else contending for the core.
+              memory: 3Gi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        # Postgres puts parallel query workers in shared memory, and a
+        # container gets 64 MB of it by default. At 1.6 million matches that
+        # was not enough: cmd/dataqual failed with "could not resize shared
+        # memory segment". The compose file sets shm_size for the same reason.
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        # k3s's built-in provisioner, which on a single node is that node's own
+        # NVMe. 2,054 MB before ratings and 449 MB after, so 20 GiB is room for
+        # the data, the WAL, and a dump taken next to it.
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 20Gi

@@ -1,0 +1,96 @@
+# A Deployment rather than a StatefulSet, and no volume at all: everything in
+# here is rebuilt from Postgres on the next request. Losing it costs the
+# latency in docs/performance.md, nothing else.
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: deucepoint
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/part-of: deucepoint
+spec:
+  selector:
+    app.kubernetes.io/name: redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: deucepoint
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/part-of: deucepoint
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  strategy:
+    # One cache, one node: bringing up a second pod before retiring the first
+    # would just double the memory for a moment to preserve a cache that is
+    # allowed to be empty.
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: redis
+        app.kubernetes.io/part-of: deucepoint
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: redis
+          image: redis:7.4-alpine
+          args:
+            - redis-server
+            # No persistence, as in the compose file.
+            - --save
+            - ""
+            - --appendonly
+            - "no"
+            # Bounded, and it evicts rather than failing writes. Keys already
+            # carry a 24-hour TTL; this is what stops a cache nobody is reading
+            # from growing into the API's memory budget.
+            - --maxmemory
+            - 256mb
+            - --maxmemory-policy
+            - allkeys-lru
+          ports:
+            - name: redis
+              containerPort: 6379
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              # Above maxmemory, because Redis accounts for the dataset and not
+              # for its own overhead, and an OOM kill here is a restart of the
+              # thing that exists to avoid work.
+              cpu: 500m
+              memory: 384Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]

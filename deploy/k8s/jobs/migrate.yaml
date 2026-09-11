@@ -1,0 +1,67 @@
+# Applied by hand, before the API rolls. Not an init container on the
+# Deployment: that couples a schema change to a rollout in both directions --
+# a long migration blocks the rollout, and rolling the Deployment back does
+# not roll the schema back.
+#
+#   kubectl -n deucepoint delete job migrate --ignore-not-found
+#   kubectl -n deucepoint apply -f deploy/k8s/jobs/migrate.yaml
+#   kubectl -n deucepoint wait --for=condition=complete job/migrate --timeout=5m
+#
+# The delete is not optional: a Job's pod template is immutable, so applying
+# over a completed one is rejected rather than re-run.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate
+  namespace: deucepoint
+  labels:
+    app.kubernetes.io/name: migrate
+    app.kubernetes.io/part-of: deucepoint
+spec:
+  backoffLimit: 3
+  # Completed Jobs clean themselves up after a day. Long enough to read the
+  # logs the morning after, short enough not to accumulate.
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: migrate
+        app.kubernetes.io/part-of: deucepoint
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: goose
+          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:2a6e96e6a03c57f0b658fc5a1d0126615309e447144f9c0c1daed0eea2b64625
+          command: ["goose", "up"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: DATABASE_URL
+            - name: GOOSE_DRIVER
+              value: postgres
+            # Kubernetes expands $(VAR) from earlier entries, so the connection
+            # string is named once and goose reads it under its own name.
+            - name: GOOSE_DBSTRING
+              value: $(DATABASE_URL)
+            # Where the tools image puts them.
+            - name: GOOSE_MIGRATION_DIR
+              value: /app/migrations
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
