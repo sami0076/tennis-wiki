@@ -1,0 +1,9 @@
+# `COPY . .` runs after `npm ci` in web/Dockerfile, so a host node_modules
+# would land on top of the one the image just installed -- built for the wrong
+# platform, in the wrong versions.
+node_modules
+dist
+coverage
+.vite
+test-results
+playwright-report

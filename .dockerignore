@@ -1,0 +1,25 @@
+# The build context for deploy/docker/*.Dockerfile is the repository root, and
+# `COPY . .` sends all of it over the wire before the first layer runs. Without
+# this, every API build shipped web/node_modules -- tens of thousands of files
+# the Go compiler never opens -- and invalidated its own cache whenever the
+# frontend was rebuilt.
+.git
+.github
+.gitignore
+.golangci.yml
+
+# The frontend has its own context (web/Dockerfile, context web/). Nothing
+# under it belongs in a Go image.
+web
+
+# Build output, local data, documents.
+bin
+dist
+data
+docs
+testdata
+*.md
+
+docker-compose.yml
+deploy/compose
+deploy/k8s
