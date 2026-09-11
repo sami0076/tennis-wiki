@@ -50,6 +50,20 @@ up:
 site:
 	docker compose up -d --build --wait
 
+# Where CI publishes. Overridable so a fork builds under its own account.
+IMAGE_PREFIX ?= ghcr.io/sami0076/tennis-wiki
+
+## images: build the three published images locally and print their sizes
+# CI builds these same three from these same files, and this is the target the
+# sizes in docs/performance.md are measured with -- so it pins the platform CI
+# publishes rather than taking the host's. On an Arm laptop the two differ.
+IMAGE_BUILD = docker build --platform linux/amd64 --provenance=false
+images:
+	$(IMAGE_BUILD) -f deploy/docker/api.Dockerfile -t $(IMAGE_PREFIX)/api:local .
+	$(IMAGE_BUILD) -f deploy/docker/tools.Dockerfile --build-arg GOOSE_VERSION=$(GOOSE_VERSION) -t $(IMAGE_PREFIX)/tools:local .
+	$(IMAGE_BUILD) -f web/Dockerfile -t $(IMAGE_PREFIX)/web:local ./web
+	@docker image ls $(IMAGE_PREFIX)/* --format '{{.Repository}}  {{.Size}}'
+
 ## down: stop the stack, keeping data
 down:
 	docker compose down
@@ -183,7 +197,7 @@ validation-json:
 clean:
 	$(call RM_DIR,$(BIN))
 
-.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc seed api ingest ingest-full ingest-force prune dataqual rate validate validation-json site web web-build web-types clean
+.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc seed api ingest ingest-full ingest-force prune dataqual rate validate validation-json site images web web-build web-types clean
 
 # print-VAR: echo a make variable, so CI can read the pinned tool versions
 # from here rather than duplicating them in a workflow file.

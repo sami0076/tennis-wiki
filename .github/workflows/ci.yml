@@ -3,6 +3,9 @@ name: CI
 on:
   push:
     branches: [main]
+    # A release tag republishes the images under a semver tag. Everything the
+    # images job waits on runs again for it, which is the point.
+    tags: ['v*']
   # No branch filter: a pull request stacked on another feature branch needs
   # checking too, and filtering on main silently gave those no checks at all.
   pull_request:
@@ -23,6 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       web: ${{ steps.filter.outputs.web }}
+      images: ${{ steps.images.outputs.matrix }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v3
@@ -32,6 +36,43 @@ jobs:
             web:
               - 'web/**'
               - '.github/workflows/**'
+            api:
+              - 'cmd/**'
+              - 'internal/**'
+              - 'go.mod'
+              - 'go.sum'
+              - 'deploy/docker/api.Dockerfile'
+              - '.dockerignore'
+              - '.github/workflows/**'
+            # The tools image carries the migrations and the source registry,
+            # so a migration or a configs/ edit changes it and nothing else.
+            tools:
+              - 'cmd/**'
+              - 'internal/**'
+              - 'migrations/**'
+              - 'configs/**'
+              - 'go.mod'
+              - 'go.sum'
+              - 'deploy/docker/tools.Dockerfile'
+              - '.dockerignore'
+              - '.github/workflows/**'
+
+      # Which images the push actually needs, as the matrix for the job below.
+      # A tag builds all three regardless of the diff: a release names a
+      # commit, not a change.
+      - id: images
+        run: |
+          if ${{ startsWith(github.ref, 'refs/tags/') }}; then
+            names='api tools web'
+          else
+            names=''
+            if [ '${{ steps.filter.outputs.api }}' = 'true' ]; then names="$names api"; fi
+            if [ '${{ steps.filter.outputs.tools }}' = 'true' ]; then names="$names tools"; fi
+            if [ '${{ steps.filter.outputs.web }}' = 'true' ]; then names="$names web"; fi
+          fi
+          matrix=$(jq -cn --arg names "$names" '$names | split(" ") | map(select(length > 0))')
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "images to build: $matrix"
 
   lint:
     runs-on: ubuntu-latest
@@ -188,3 +229,93 @@ jobs:
 
       - name: web/src/generated/methodology.ts is up to date with the document
         run: git diff --exit-code -- src/generated/methodology.ts
+
+  # Publishing, on main and on tags only. A pull request has no business
+  # writing to the registry, and there is nothing to pull an image with until
+  # the change has landed.
+  #
+  # linux/amd64 and nothing else, per ADR-0008: the host is a Hetzner CX33,
+  # which is Intel, so a second architecture would be build time spent on an
+  # image nobody pulls.
+  images:
+    needs: [changes, lint, tidy, test, migrations, web, web-types, methodology]
+    # The web job is conditional, and an ordinary `needs` on a skipped job
+    # would skip this one too. So: run unless something actually failed.
+    if: >-
+      !cancelled()
+      && !contains(needs.*.result, 'failure')
+      && github.event_name == 'push'
+      && needs.changes.outputs.images != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.changes.outputs.images) }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # From the Makefile, the same way the lint job reads its golangci pin.
+      - id: version
+        run: echo "goose=$(make -s print-GOOSE_VERSION)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # No `latest`. A manifest that names it cannot say what is running and
+      # cannot be rolled back; the short SHA is immutable and the semver tag
+      # only appears on a release.
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ matrix.image }}
+          tags: |
+            type=sha,format=short,prefix=
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - uses: docker/build-push-action@v6
+        id: build
+        with:
+          # The frontend builds from web/; the two Go images need the
+          # repository root, which .dockerignore keeps to a few megabytes.
+          context: ${{ matrix.image == 'web' && 'web' || '.' }}
+          file: ${{ matrix.image == 'web' && 'web/Dockerfile' || format('deploy/docker/{0}.Dockerfile', matrix.image) }}
+          build-args: ${{ matrix.image == 'tools' && format('GOOSE_VERSION={0}', steps.version.outputs.goose) || '' }}
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Off so the digest below names the image itself rather than an
+          # index wrapping it and an attestation. The manifests in #100 pin
+          # by that digest.
+          provenance: false
+          # Keyed per image, so the API build does not evict the frontend's
+          # node_modules layer and start every run with a cold go mod download.
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+      # The digest is what a manifest pins to, and the size is the number
+      # docs/performance.md records. Both belong somewhere a run can be read.
+      - name: digest and size
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          REF: ghcr.io/${{ github.repository }}/${{ matrix.image }}@${{ steps.build.outputs.digest }}
+        run: |
+          bytes=$(docker buildx imagetools inspect "$REF" --raw | jq '[.layers[].size] | add')
+          {
+            echo "### ${{ matrix.image }}"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| digest | $DIGEST |"
+            echo "| compressed | $(( bytes / 1000000 )) MB |"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
