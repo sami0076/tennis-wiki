@@ -54,6 +54,10 @@ spec:
           # Pinned by digest, from the images job in ci.yml. A tag can be
           # repointed; this cannot, so what is running is answerable from the
           # manifest alone. deploy/k8s/README.md says how to move it.
+          #
+          # STALE ON PURPOSE, and it must be bumped before the first apply:
+          # this is the last image built before /api/v1/live existed, and the
+          # liveness probe below asks for it. deploy/k8s/README.md says why.
           image: ghcr.io/sami0076/tennis-wiki/api@sha256:4e321b5103fb72bf14fba684a925a28a61958e15abe08a30c714c5018d0f68f3
           ports:
             - name: http

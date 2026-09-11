@@ -54,6 +54,18 @@ The load takes about an hour: roughly 40 minutes for the match stage, 23 for the
 reference stage, then 1m 36s for the ratings. Every figure here is from
 [`docs/performance.md`](../../docs/performance.md).
 
+## The pinned digests lag the repository by one commit
+
+This is inherent to pinning in-tree: the image for a commit does not exist until
+CI has built that commit, so a manifest can only name an image built from an
+earlier one. Right now it matters more than usual.
+
+**Bump the API digest before the first apply.** The liveness probe asks for
+`/api/v1/live`, which was added in the same change as these manifests, so the
+digest in `base/40-api.yaml` is one commit too old to answer it. An API applied
+against that digest passes readiness and is then killed by liveness about a
+hundred seconds later, repeatedly. #101 bumps it as its first step.
+
 ## Rolling out a new image
 
 Images are pinned by digest, not by tag, so the manifest alone answers what is

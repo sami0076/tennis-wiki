@@ -44,7 +44,7 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 999
-        runAsGroup: 999
+        runAsGroup: 1000
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -89,8 +89,17 @@ spec:
               # thing that exists to avoid work.
               cpu: 500m
               memory: 384Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities:
               drop: ["ALL"]
+      volumes:
+        # Redis's working directory, writable because the root
+        # filesystem is not. Nothing is written to it while saving is
+        # off, and it goes with the pod either way.
+        - name: data
+          emptyDir: {}

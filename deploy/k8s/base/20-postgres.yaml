@@ -111,13 +111,17 @@ spec:
           # and it should say yes as soon as the server accepts connections.
           readinessProbe:
             exec:
-              command: ["pg_isready", "-U", "tennis", "-d", "tennis"]
+              # Through a shell so the user and database come from the
+              # ConfigMap rather than being spelled again here.
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
           livenessProbe:
             exec:
-              command: ["pg_isready", "-U", "tennis", "-d", "tennis"]
+              # Through a shell so the user and database come from the
+              # ConfigMap rather than being spelled again here.
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
             # Long, on purpose. Restarting Postgres because it was slow to
             # answer is how a busy database becomes a down one.
             initialDelaySeconds: 60
