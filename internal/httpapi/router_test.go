@@ -93,6 +93,25 @@ func TestHealth(t *testing.T) {
 	})
 }
 
+// Liveness must not depend on the database, or a Postgres hiccup becomes a
+// restart of every pod that was serving perfectly well without it.
+func TestLivenessIgnoresTheDatabase(t *testing.T) {
+	rec := httptest.NewRecorder()
+	testAPI(t, errors.New("the database is gone")).
+		ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/v1/live", nil))
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	var got LiveResponse
+	if err := json.NewDecoder(rec.Body).Decode(&got); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if got.Status != "ok" {
+		t.Errorf("status = %q, want ok", got.Status)
+	}
+}
+
 // Every error path is a problem document, including the two chi answers by
 // default in plain text.
 func TestErrorsAreAlwaysProblemDocuments(t *testing.T) {

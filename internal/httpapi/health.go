@@ -43,3 +43,17 @@ func (a *API) handleHealth(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 }
+
+// LiveResponse says only that the process is running and serving.
+type LiveResponse struct {
+	Status string `json:"status"`
+}
+
+// handleLive deliberately touches nothing. Liveness answers "should this
+// process be killed", and the only honest answer from a stateless API is that
+// it is up: a Postgres hiccup wired to liveness restarts every pod in the
+// deployment at the moment the database can least afford the reconnections.
+// Readiness is where a dependency belongs, and handleHealth is that.
+func (a *API) handleLive(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, r, http.StatusOK, LiveResponse{Status: "ok"})
+}

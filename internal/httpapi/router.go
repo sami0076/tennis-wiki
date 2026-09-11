@@ -51,6 +51,7 @@ func (a *API) Router() http.Handler {
 		// Probes are exempt from rate limiting and revalidation: a liveness
 		// check that gets a 429 or a 304 reports the wrong thing.
 		v1.Get("/health", a.handleHealth)
+		v1.Get("/live", a.handleLive)
 
 		v1.Group(func(public chi.Router) {
 			public.Use(NewRateLimiter(a.Config.RateLimitPerMin).Middleware(a.Config.TrustProxy))
