@@ -7,6 +7,7 @@ GOLANGCI_VERSION := v2.13.2
 GOOSE_VERSION    := v3.28.0
 SQLC_VERSION     := v1.31.1
 TYGO_VERSION     := v0.2.21
+KUBECONFORM_VERSION := v0.7.0
 
 ifeq ($(OS),Windows_NT)
 RM_DIR = cmd //c "if exist $(1) rmdir /s /q $(1)"
@@ -63,6 +64,18 @@ images:
 	$(IMAGE_BUILD) -f deploy/docker/tools.Dockerfile --build-arg GOOSE_VERSION=$(GOOSE_VERSION) -t $(IMAGE_PREFIX)/tools:local .
 	$(IMAGE_BUILD) -f web/Dockerfile -t $(IMAGE_PREFIX)/web:local ./web
 	@docker image ls $(IMAGE_PREFIX)/* --format '{{.Repository}}  {{.Size}}'
+
+## k8s-validate: check deploy/k8s against the Kubernetes schemas
+# In a container, so this needs no local install, and pinned so CI and a
+# developer machine disagree about nothing. The CRD catalogue covers the two
+# kinds cert-manager and Traefik add; without it those are skipped silently
+# rather than checked.
+CRD_SCHEMAS = https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json
+k8s-validate:
+	docker run --rm -v "$(CURDIR)":/repo -w /repo \
+	  ghcr.io/yannh/kubeconform:$(KUBECONFORM_VERSION) \
+	  -strict -summary -schema-location default -schema-location '$(CRD_SCHEMAS)' \
+	  deploy/k8s/
 
 ## down: stop the stack, keeping data
 down:
@@ -197,7 +210,7 @@ validation-json:
 clean:
 	$(call RM_DIR,$(BIN))
 
-.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc seed api ingest ingest-full ingest-force prune dataqual rate validate validation-json site images web web-build web-types clean
+.PHONY: help up down reset psql testdb migrate-test build test test-race fmt lint migrate-up migrate-down migrate-reset sqlc seed api ingest ingest-full ingest-force prune dataqual rate validate validation-json site images k8s-validate web web-build web-types clean
 
 # print-VAR: echo a make variable, so CI can read the pinned tool versions
 # from here rather than duplicating them in a workflow file.

@@ -1,0 +1,42 @@
+# Everything that is not a credential. The connection string is not here --
+# it carries the Postgres password, so it lives in the Secret alongside it.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api
+  namespace: deucepoint
+  labels:
+    app.kubernetes.io/part-of: deucepoint
+data:
+  API_ADDR: ":8080"
+
+  # The SPA is served from a CDN, not from this cluster, so the browser origin
+  # and the API origin are genuinely different and CORS is load-bearing rather
+  # than ceremony. The API refuses "*" on purpose.
+  #
+  # deucepoint.example is a placeholder: RFC 2606 reserves .example so this
+  # cannot accidentally resolve to somebody's host. #101 picks the real name,
+  # and it has to change here and in 50-ingress.yaml together.
+  API_CORS_ORIGINS: "https://deucepoint.example"
+
+  # In-cluster, so no credentials and no TLS. Redis holds only what Postgres
+  # can rebuild.
+  REDIS_URL: "redis://redis:6379/0"
+
+  # 60/min is the default in internal/httpapi/config.go. Behind Traefik the
+  # client address the limiter sees is the proxy's unless it is told to read
+  # X-Forwarded-For, and Traefik does set it.
+  API_RATE_LIMIT: "60"
+  API_TRUST_PROXY: "true"
+---
+# Postgres reads these too, so the user and database name are named once.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres
+  namespace: deucepoint
+  labels:
+    app.kubernetes.io/part-of: deucepoint
+data:
+  POSTGRES_USER: "tennis"
+  POSTGRES_DB: "tennis"
