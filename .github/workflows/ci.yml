@@ -27,6 +27,7 @@ jobs:
     outputs:
       web: ${{ steps.filter.outputs.web }}
       images: ${{ steps.images.outputs.matrix }}
+      k8s: ${{ steps.filter.outputs.k8s }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v3
@@ -55,6 +56,10 @@ jobs:
               - 'go.sum'
               - 'deploy/docker/tools.Dockerfile'
               - '.dockerignore'
+              - '.github/workflows/**'
+            k8s:
+              - 'deploy/k8s/**'
+              - 'Makefile'
               - '.github/workflows/**'
 
       # Which images the push actually needs, as the matrix for the job below.
@@ -319,3 +324,17 @@ jobs:
             echo "| compressed | $(( bytes / 1000000 )) MB |"
             echo ""
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # The manifests are applied by hand, so nothing else would find a typo in one
+  # until a kubectl failed at the least convenient moment. Schema validation is
+  # not a deploy rehearsal, but it catches the whole class of mistakes that
+  # comes from editing YAML by hand.
+  manifests:
+    needs: changes
+    if: needs.changes.outputs.k8s == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Pinned in the Makefile, like every other tool version here.
+      - run: make k8s-validate
