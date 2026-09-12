@@ -1,41 +1,44 @@
-/* The token set from docs/design/design-system.md. Nothing here is decorative:
-   hue means surface, the ink ramp doubles as the player-pair palette, and
-   --win / --loss are for W/L marks and rank deltas only. */
+/* The draw sheet: bond paper, one ink, one pencil, and colour only where a
+   value is surface-scoped. Nothing here is decorative. */
 :root {
   /* ground */
-  --paper: #f7f7f5;
-  --chalk: #e2e2dd;
-  --chalk-hard: #14161a;
+  --bond: #f4f3ee;
+  --highlight: #ecebe4;
 
-  /* ink ramp - also the player-pair palette */
-  --ink: #14161a;
-  --ink-2: #5a5d61;
-  --ink-3: #9a9da1;
-  --ink-4: #c9cac6;
-  --muted: #6e7175;
+  /* ink and pencil. Pencil is the second player in every comparison and the
+     voice of every caption; pencil-mid is the third line of a chart;
+     pencil-light is the ruling. */
+  --ink: #17181a;
+  --pencil: #66655f;
+  --pencil-mid: #9e9c95;
+  --pencil-light: #cfcdc5;
 
-  /* surface semantics - never decorative */
-  --clay: #c4622d;
+  /* surface semantics. Dark enough to be text on bond at 4.5:1. */
+  --clay: #a84f1f;
   --hard: #2e6fa8;
   --grass: #4a7a3f;
   --indoor: #6b5b95;
   --carpet: #6b5b95;
-  --clay-wash: #fcf6f1;
 
-  /* outcomes */
+  /* outcomes: W/L marks and rank deltas only */
   --win: #4a7a3f;
   --loss: #b0483a;
 
-  /* type scale, 1.25. Do not invent sizes between steps. */
+  /* rules. Row rules are pencil; section and total rules are ink. */
+  --rule: 1px solid var(--pencil-light);
+  --rule-ink: 1px solid var(--ink);
+
+  /* type. One family for everything typed on the sheet. */
+  --font: 'Martian Mono Variable', 'Martian Mono', ui-monospace, 'SF Mono', Menlo, Consolas,
+    monospace;
   --t-11: 11px;
   --t-12: 12px;
   --t-13: 13px;
   --t-14: 14px;
   --t-16: 16px;
   --t-20: 20px;
-  --t-24: 24px;
-
-  --font: Archivo, "Helvetica Neue", Arial, sans-serif;
+  --t-28: 28px;
+  --t-32: 32px;
 
   /* spacing */
   --s-1: 4px;
@@ -45,9 +48,21 @@
   --s-5: 24px;
   --s-6: 32px;
   --s-7: 48px;
+  --s-8: 64px;
 
-  /* The one breakpoint. Below it the design is the primary one. */
+  /* The one breakpoint. Below it the sheet is one column. */
   --wide: 880px;
 
-  --hairline: 1px solid var(--chalk);
+  /* Names the old system used, kept as aliases while each component moves
+     over. Remove when nothing reads them. */
+  --paper: var(--bond);
+  --chalk: var(--pencil-light);
+  --chalk-hard: var(--ink);
+  --ink-2: var(--pencil);
+  --ink-3: var(--pencil-mid);
+  --ink-4: var(--pencil-light);
+  --muted: var(--pencil);
+  --clay-wash: var(--highlight);
+  --t-24: var(--t-28);
+  --hairline: var(--rule);
 }

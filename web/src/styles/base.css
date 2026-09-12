@@ -1,4 +1,5 @@
-/* Structure is hairlines on paper. No cards, no shadows, no gradients. */
+/* The sheet is typed on bond. Structure is ruled lines; there are no cards,
+   no shadows, no radii. */
 *,
 *::before,
 *::after {
@@ -7,16 +8,25 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  color-scheme: light;
+  scrollbar-color: var(--pencil-mid) var(--bond);
 }
 
 body {
   margin: 0;
-  background: var(--paper);
+  background: var(--bond);
   color: var(--ink);
   font-family: var(--font);
   font-size: var(--t-14);
   line-height: 1.55;
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
+  caret-color: var(--ink);
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--bond);
 }
 
 h1,
@@ -29,23 +39,31 @@ ol {
   margin: 0;
 }
 
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
 ul,
 ol {
   padding: 0;
   list-style: none;
 }
 
+/* A link is underlined by a rule, the way a typed sheet underlines. */
 a {
   color: inherit;
   text-decoration: none;
-  border-bottom: 1px solid var(--chalk);
+  border-bottom: var(--rule);
+  transition: border-color 120ms ease-out;
 }
 
 a:hover {
   border-bottom-color: var(--ink);
 }
 
-/* Focus must be visible, and on paper an outline reads better than a ring. */
+/* Focus is drawn, on bond, as a box the same weight as every other rule. */
 :focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 2px;
@@ -56,15 +74,29 @@ button {
   color: inherit;
 }
 
-/* The most load-bearing rule in the project: every element carrying data lines
-   its digits up, so a column of numbers can be read as a column. */
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+::placeholder {
+  color: var(--pencil);
+  opacity: 1;
+}
+
+/* Every element carrying data lines its digits up, so a column of numbers can
+   be read as a column. In a mono face the type does most of this; the property
+   keeps it true for any fallback. */
 table,
 [data-numeric],
 .numeric {
   font-variant-numeric: tabular-nums;
 }
 
-/* One ambient motion budget, and it is off for anyone who asked. */
+/* The sheet's one motion is the rules drawing in. Anyone who asked for less
+   gets the finished sheet. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
