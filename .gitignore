@@ -64,3 +64,9 @@ desktop.ini
 coverage.out
 coverage.html
 /golangci-lint-report.xml
+
+# impeccable: review captures and comps are evidence, not source
+.impeccable/review/
+.impeccable/mocks/
+.impeccable/questions/
+.impeccable/hook.cache.json
