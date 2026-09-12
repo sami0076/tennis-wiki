@@ -10,11 +10,13 @@ import {
   RankDelta,
   Skeleton,
   StatTable,
+  SurfaceDot,
   SurfaceToggle,
   TourFilter,
   TrajectoryChart,
   type Column,
 } from '../components'
+import { surfaceVar } from '../lib/surface'
 import { useUrlParam } from '../lib/useUrlParam'
 import styles from './Rankings.module.css'
 
@@ -322,10 +324,26 @@ const points: Column<RankingRow> = {
   value: (row) => row.points,
 }
 
+// The surface they are best on, in its hue: the one coloured cell in the
+// table, because it is the one surface-scoped value. Steps aside on a phone.
+const bestSurface: Column<RankingRow> = {
+  key: 'best',
+  header: 'Best surface',
+  wide: true,
+  value: (row) => row.best_surface_elo,
+  render: (row) =>
+    row.best_surface === null || row.best_surface_elo === null ? null : (
+      <span className={styles.best} style={{ color: surfaceVar(row.best_surface) }}>
+        <SurfaceDot surface={row.best_surface} /> {Math.round(row.best_surface_elo)}
+      </span>
+    ),
+}
+
 const eloColumns: ReadonlyArray<Column<RankingRow>> = [
   position,
   player,
   rating,
+  bestSurface,
   peak,
   published,
   delta,

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { RankingRow } from '../api/client'
 import { spread } from '../lib/spread'
+import { surfaceLabel, surfaceVar } from '../lib/surface'
 import { RankDelta } from './RankDelta'
 import type { SparkPoint } from './Sparkline'
 import styles from './SeedingSheet.module.css'
@@ -195,6 +196,11 @@ export function SeedingSheet({ lines, seeds, animate = false, width = 640 }: See
             </Link>
             <span className={styles.country}>({r.seed.country})</span>
             <span className={styles.leader} aria-hidden="true" />
+            {r.seed.best_surface !== null && r.seed.best_surface_elo !== null ? (
+              <span className={styles.best} style={{ color: surfaceVar(r.seed.best_surface) }}>
+                {surfaceLabel(r.seed.best_surface).toLowerCase()} {Math.round(r.seed.best_surface_elo)}
+              </span>
+            ) : null}
             <span className={styles.elo}>{Math.round(r.seed.elo ?? 0)}</span>
             <span className={styles.delta}>
               {r.seed.delta === null ? null : <RankDelta delta={r.seed.delta} label="on rank" />}
