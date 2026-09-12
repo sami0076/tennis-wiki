@@ -22,14 +22,9 @@ import {
 import { formatPercent } from '../lib/format'
 import { surfaceLabel } from '../lib/surface'
 import { useUrlParam } from '../lib/useUrlParam'
+import { FEATURED_DRAW } from '../lib/featuredDraw'
 import styles from './Simulator.module.css'
 
-/**
- * The default draw. There is no upcoming tournament in this database and never
- * will be, so the panel opens on a played one -- and on one whose answer a
- * reader can check, which is the whole advantage of simulating the past.
- */
-const defaultDraw = { tour: 'atp', season: 2019, event: 'Wimbledon' }
 
 const SURFACES = ['hard', 'clay', 'grass', 'carpet']
 
@@ -56,7 +51,7 @@ export function Simulator() {
         : simulateMatch(a, b, { surface: chosen, best_of: sets }, signal),
     [a, b, chosen, sets],
   )
-  const draw = useResource((signal) => simulateDraw(defaultDraw, signal), [])
+  const draw = useResource((signal) => simulateDraw(FEATURED_DRAW, signal), [])
 
   return (
     <>

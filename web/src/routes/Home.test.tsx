@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { CoverageResponse, RankingPage, Trajectories } from '../api/client'
+import type { CoverageResponse, DrawSimulation, RankingPage, Trajectories } from '../api/client'
 import { Home } from './Home'
 
 const coverage: CoverageResponse = {
@@ -95,12 +95,58 @@ const rankings: RankingPage = {
   next_cursor: null,
 }
 
+const draw: DrawSimulation = {
+  event: {
+    name: 'Wimbledon',
+    season: 2019,
+    tour: 'atp',
+    tier: 'tour',
+    surface: 'grass',
+    ratings_as_of: '2019-07-01',
+  },
+  rounds: ['R128', 'R64', 'R32', 'R16', 'QF', 'SF', 'F'],
+  odds: [
+    {
+      slug: 'novak-djokovic',
+      name: 'Novak Djokovic',
+      seed: 1,
+      title: 0.401,
+      title_interval: 0.01,
+      reached: [0.942, 0.917, 0.83, 0.708, 0.64, 0.562, 0.401],
+      rating: 2385.9,
+    },
+    {
+      slug: 'roger-federer',
+      name: 'Roger Federer',
+      seed: 2,
+      title: 0.277,
+      title_interval: 0.009,
+      reached: [0.938, 0.895, 0.821, 0.68, 0.577, 0.457, 0.277],
+      rating: 2337.3,
+    },
+  ],
+  runs: 10000,
+  seed: 1,
+  inputs: {
+    source: 'elo',
+    anchor: 0.63,
+    anchor_scope: 'tour',
+    anchor_points: 100000,
+    surface: 'grass',
+    tier: 'tour',
+    decade: 2010,
+  } as DrawSimulation['inputs'],
+  entered: 128,
+  champion: 'novak-djokovic',
+}
+
 function stub(lines: Trajectories = trajectories) {
   vi.stubGlobal('fetch', (input: string) => {
     const path = new URL(String(input), 'http://localhost').pathname
     let body: unknown = coverage
     if (path.endsWith('/trajectory')) body = lines
     else if (path.endsWith('/rankings')) body = rankings
+    else if (path.endsWith('/simulate/draw')) body = draw
     return Promise.resolve(
       new Response(JSON.stringify(body), {
         status: 200,
@@ -157,16 +203,27 @@ describe('Home', () => {
     stub()
     renderHome()
 
-    expect(await screen.findByRole('link', { name: 'Novak Djokovic' })).toHaveAttribute(
-      'href',
-      '/players/novak-djokovic',
-    )
+    // Djokovic is on the sheet twice, as a seed and as the 2019 champion, and
+    // both lead to the same page.
+    for (const link of await screen.findAllByRole('link', { name: 'Novak Djokovic' })) {
+      expect(link).toHaveAttribute('href', '/players/novak-djokovic')
+    }
     expect(screen.getByRole('link', { name: 'See the full rankings' })).toHaveAttribute(
       'href',
       '/rankings',
     )
     // Elo is as of a week that happened, and the page says which.
-    expect(screen.getByText(/as of 2026-01-12/)).toBeInTheDocument()
+    expect(screen.getAllByText(/as of 2026-01-12/).length).toBeGreaterThan(0)
+  })
+
+  // The replayed draw is read against what happened: the champion is marked.
+  it('replays a played draw and marks who actually won it', async () => {
+    stub()
+    renderHome()
+
+    expect(await screen.findByText(/Wimbledon 2019, replayed/)).toBeInTheDocument()
+    expect(screen.getByText('won')).toBeInTheDocument()
+    expect(screen.getByText('40.1')).toBeInTheDocument()
   })
 
   // One point is not a line. The rest of the page still has to work.
