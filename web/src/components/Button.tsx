@@ -5,8 +5,8 @@ import styles from './Button.module.css'
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement>
 
 /**
- * Button is a 1px outline on paper. The label says what happens -- "Simulate
- * this matchup", never "Go", and never with an arrow appended.
+ * Button is a typed label boxed in one rule. The label says what happens --
+ * "Simulate this matchup", never "Go", and never with an arrow appended.
  */
 export function Button({ className, type = 'button', ...rest }: ButtonProps) {
   return <button type={type} className={[styles.button, className].filter(Boolean).join(' ')} {...rest} />

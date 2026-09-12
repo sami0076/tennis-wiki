@@ -1,34 +1,44 @@
+/* A typed button: the label boxed in one rule. Pressing it is the box filling. */
 .button {
   display: inline-block;
   padding: 8px 14px;
-  border: 1px solid var(--ink);
-  border-radius: 4px;
+  border: var(--rule-ink);
+  border-radius: 0;
   background: transparent;
   color: var(--ink);
   font-size: var(--t-13);
-  font-weight: 600;
-  line-height: 1.2;
+  font-weight: 500;
+  line-height: 1.3;
   cursor: pointer;
+  transition:
+    background-color 120ms ease-out,
+    color 120ms ease-out,
+    transform 80ms ease-out;
 }
 
 .button:hover {
   background: var(--ink);
-  color: var(--paper);
+  color: var(--bond);
+}
+
+.button:active {
+  transform: translateY(1px);
 }
 
 .button:disabled {
-  border-color: var(--ink-3);
-  color: var(--ink-3);
+  border-color: var(--pencil-mid);
+  color: var(--pencil-mid);
   cursor: default;
 }
 
 .button:disabled:hover {
   background: transparent;
-  color: var(--ink-3);
+  color: var(--pencil-mid);
+  transform: none;
 }
 
 /* A link that acts as a button keeps the border it was given, not the one
    every anchor gets. */
 a.button {
-  border-bottom: 1px solid var(--ink);
+  border-bottom: var(--rule-ink);
 }

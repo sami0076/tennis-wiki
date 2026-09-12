@@ -2,30 +2,46 @@
   position: relative;
 }
 
+/* The typed field: a prompt, the entry, one rule under both. */
+.field {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  border-bottom: var(--rule-ink);
+  transition: box-shadow 120ms ease-out;
+}
+
+.field:focus-within {
+  box-shadow: 0 1px 0 var(--ink);
+}
+
 .label {
-  display: block;
-  margin-bottom: var(--s-1);
-  font-size: var(--t-12);
-  color: var(--muted);
+  flex: 0 0 auto;
+  font-size: var(--t-14);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.label::after {
+  content: ':';
 }
 
 .input {
-  width: 100%;
-  padding: 6px 10px;
-  border: 1px solid var(--chalk);
-  border-radius: 4px;
-  background: var(--paper);
-  font: inherit;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 5px 0;
+  border: 0;
+  background: transparent;
   font-size: var(--t-14);
   color: var(--ink);
 }
 
-.input:hover {
-  border-color: var(--ink-3);
+.input:focus-visible {
+  outline: 0;
 }
 
-/* The list is the one place the design allows something to sit above the page,
-   and it still earns its edge with a hairline rather than a shadow. */
+/* The list is the one thing that sits above the sheet, and it is boxed in ink
+   like everything else that is selected. */
 .panel {
   position: absolute;
   z-index: 10;
@@ -35,8 +51,8 @@
   max-height: 320px;
   margin-top: var(--s-1);
   overflow-y: auto;
-  border: var(--hairline);
-  background: var(--paper);
+  border: var(--rule-ink);
+  background: var(--bond);
 }
 
 .hidden {
@@ -45,7 +61,7 @@
 
 .option {
   padding: var(--s-2) var(--s-3);
-  border-bottom: var(--hairline);
+  border-bottom: var(--rule);
   cursor: pointer;
 }
 
@@ -54,12 +70,12 @@
 }
 
 .on {
-  background: var(--chalk);
+  background: var(--highlight);
 }
 
 .message {
   padding: var(--s-3);
   font-size: var(--t-12);
   line-height: 1.5;
-  color: var(--muted);
+  color: var(--pencil);
 }

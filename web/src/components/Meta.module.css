@@ -1,12 +1,11 @@
 .meta {
-  color: var(--muted);
+  color: var(--pencil);
   font-size: var(--t-13);
   line-height: 1.5;
 }
 
-/* The spaces around the dot are in the text rather than in padding, so the line
-   survives being copied out of the page and reads as one string to a screen
-   reader instead of running the parts together. */
-.dot {
+/* The gap is real characters rather than padding, so the line reads as one
+   string to a screen reader and copies out as one. */
+.gap {
   white-space: pre;
 }
