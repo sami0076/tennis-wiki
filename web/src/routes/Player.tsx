@@ -507,6 +507,8 @@ const matchColumns: ReadonlyArray<Column<PlayerMatch>> = [
     header: 'Aces',
     align: 'right',
     value: (row) => row.serve.aces,
+    // The column a phone has no room for; the score is the one it needs.
+    wide: true,
   },
 ]
 

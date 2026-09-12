@@ -18,7 +18,8 @@
   line-height: 1.55;
   color: var(--pencil);
   padding-top: var(--s-2);
-  max-width: 72ch;
+  /* A table wider than the phone scrolls; its caption must not. */
+  max-width: min(72ch, calc(100vw - 2 * var(--s-4)));
 }
 
 .th {
@@ -44,7 +45,6 @@
 
 .right {
   text-align: right;
-  white-space: nowrap;
 }
 
 .sort {
@@ -80,11 +80,14 @@
   fill: none;
 }
 
+/* A typed cell never wraps: a score split over three lines is not a score.
+   On a phone the wrapper scrolls instead. */
 .td {
   padding: 9px var(--s-2);
   border-bottom: var(--rule);
   line-height: 1.3;
   vertical-align: top;
+  white-space: nowrap;
 }
 
 .row:last-child .td {
