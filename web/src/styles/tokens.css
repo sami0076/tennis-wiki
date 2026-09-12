@@ -2,15 +2,15 @@
    value is surface-scoped. Nothing here is decorative. */
 :root {
   /* ground */
-  --bond: #f4f3ee;
-  --highlight: #ecebe4;
+  --bond: #f6f6f2;
+  --highlight: #ecece6;
 
   /* ink and pencil. Pencil is the second player in every comparison and the
      voice of every caption; pencil-mid is the third line of a chart;
      pencil-light is the ruling. */
   --ink: #17181a;
   --pencil: #66655f;
-  --pencil-mid: #9e9c95;
+  --pencil-mid: #8a8881;
   --pencil-light: #cfcdc5;
 
   /* surface semantics. Dark enough to be text on bond at 4.5:1. */
