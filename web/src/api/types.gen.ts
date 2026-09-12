@@ -474,6 +474,14 @@ export interface RankingRow {
    * the official rank and the comparison would be with itself.
    */
   delta: number /* int */ | null;
+  /**
+   * BestSurface is the surface series they are currently highest on, and
+   * BestSurfaceElo the raw rating there: the figure the player page's strip
+   * shows, not the blend the simulator uses. Both null for a player with no
+   * surface rated inside the active window, never 1500.
+   */
+  best_surface: string | null;
+  best_surface_elo: number /* float64 */ | null;
 }
 /**
  * RankingPage is a page of a ranking, and the date it is a ranking as of.

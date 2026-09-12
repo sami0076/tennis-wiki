@@ -91,6 +91,45 @@ func TestEloRankingsCarryTheDeltaAgainstTheOfficialList(t *testing.T) {
 	}
 }
 
+// The best surface is the raw series the player page shows, not the blend, and
+// only a surface rated inside the leaderboard's window counts: a carpet rating
+// from a decade ago is not anyone's best today.
+func TestRankingsCarryTheBestSurface(t *testing.T) {
+	f := newAPIFixture(t)
+	f.rankedField(t)
+	byslug := map[string]int64{}
+	for _, slug := range []string{"itg-rank-one", "itg-rank-two", "itg-rank-three"} {
+		byslug[slug] = f.playerID(slug)
+	}
+	// One: clay above hard, both current.
+	f.rating(byslug["itg-rank-one"], "2025-12-29", "hard", 2150, 30)
+	f.rating(byslug["itg-rank-one"], "2025-06-02", "clay", 2260, 20)
+	// Two: a stale grass rating that would win, and a current hard one.
+	f.rating(byslug["itg-rank-two"], "2019-07-01", "grass", 2400, 10)
+	f.rating(byslug["itg-rank-two"], "2025-11-03", "hard", 2080, 25)
+	// Three: nothing on any surface.
+
+	for _, kind := range []string{"elo", "official"} {
+		page := decodeRankingPage(t, f.get("/api/v1/rankings?type="+kind))
+		rows := map[string]RankingRow{}
+		for _, row := range page.Data {
+			rows[row.Slug] = row
+		}
+		one := rows["itg-rank-one"]
+		if one.BestSurface == nil || *one.BestSurface != "clay" || one.BestSurfaceElo == nil || *one.BestSurfaceElo != 2260 {
+			t.Errorf("%s: one = %v %v, want clay 2260", kind, one.BestSurface, one.BestSurfaceElo)
+		}
+		two := rows["itg-rank-two"]
+		if two.BestSurface == nil || *two.BestSurface != "hard" || two.BestSurfaceElo == nil || *two.BestSurfaceElo != 2080 {
+			t.Errorf("%s: two = %v %v, want hard 2080 with the stale grass rating ignored", kind, two.BestSurface, two.BestSurfaceElo)
+		}
+		three := rows["itg-rank-three"]
+		if three.BestSurface != nil || three.BestSurfaceElo != nil {
+			t.Errorf("%s: three = %v %v, want null rather than a surface invented", kind, three.BestSurface, three.BestSurfaceElo)
+		}
+	}
+}
+
 func TestOfficialRankingsReadTheTourList(t *testing.T) {
 	f := newAPIFixture(t)
 	f.rankedField(t)
