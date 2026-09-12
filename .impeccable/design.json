@@ -1,0 +1,502 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-12T17:56:03.360Z",
+  "title": "Design System: Deucepoint",
+  "source": {
+    "artifact": "web/src",
+    "tokens": "web/src/styles/tokens.css",
+    "base": "web/src/styles/base.css",
+    "reasoning": "docs/decisions/0010-the-draw-sheet.md",
+    "gallery": "web/src/routes/Gallery.tsx"
+  },
+  "extensions": {
+    "colorMeta": {
+      "bond": {
+        "role": "neutral",
+        "displayName": "Bond",
+        "canonical": "#f6f6f2",
+        "oklch": "oklch(97.2% 0.005 106.5)",
+        "tonalRamp": [
+          "oklch(15% 0.005 106.5)",
+          "oklch(26% 0.005 106.5)",
+          "oklch(38% 0.005 106.5)",
+          "oklch(49% 0.005 106.5)",
+          "oklch(60% 0.005 106.5)",
+          "oklch(72% 0.005 106.5)",
+          "oklch(83% 0.005 106.5)",
+          "oklch(95% 0.005 106.5)"
+        ]
+      },
+      "highlight": {
+        "role": "neutral",
+        "displayName": "Highlight",
+        "canonical": "#ecece6",
+        "oklch": "oklch(94.1% 0.008 106.6)",
+        "tonalRamp": [
+          "oklch(15% 0.008 106.6)",
+          "oklch(26% 0.008 106.6)",
+          "oklch(38% 0.008 106.6)",
+          "oklch(49% 0.008 106.6)",
+          "oklch(60% 0.008 106.6)",
+          "oklch(72% 0.008 106.6)",
+          "oklch(83% 0.008 106.6)",
+          "oklch(95% 0.008 106.6)"
+        ]
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Ink",
+        "canonical": "#17181a",
+        "oklch": "oklch(20.9% 0.004 264.5)",
+        "tonalRamp": [
+          "oklch(15% 0.004 264.5)",
+          "oklch(26% 0.004 264.5)",
+          "oklch(38% 0.004 264.5)",
+          "oklch(49% 0.004 264.5)",
+          "oklch(60% 0.004 264.5)",
+          "oklch(72% 0.004 264.5)",
+          "oklch(83% 0.004 264.5)",
+          "oklch(95% 0.004 264.5)"
+        ]
+      },
+      "pencil": {
+        "role": "neutral",
+        "displayName": "Pencil",
+        "canonical": "#66655f",
+        "oklch": "oklch(50.6% 0.009 99)",
+        "tonalRamp": [
+          "oklch(15% 0.009 99)",
+          "oklch(26% 0.009 99)",
+          "oklch(38% 0.009 99)",
+          "oklch(49% 0.009 99)",
+          "oklch(60% 0.009 99)",
+          "oklch(72% 0.009 99)",
+          "oklch(83% 0.009 99)",
+          "oklch(95% 0.009 99)"
+        ]
+      },
+      "pencil-mid": {
+        "role": "neutral",
+        "displayName": "Pencil-mid",
+        "canonical": "#8a8881",
+        "oklch": "oklch(62.6% 0.011 93.6)",
+        "tonalRamp": [
+          "oklch(15% 0.011 93.6)",
+          "oklch(26% 0.011 93.6)",
+          "oklch(38% 0.011 93.6)",
+          "oklch(49% 0.011 93.6)",
+          "oklch(60% 0.011 93.6)",
+          "oklch(72% 0.011 93.6)",
+          "oklch(83% 0.011 93.6)",
+          "oklch(95% 0.011 93.6)"
+        ]
+      },
+      "pencil-light": {
+        "role": "neutral",
+        "displayName": "Pencil-light",
+        "canonical": "#cfcdc5",
+        "oklch": "oklch(84.8% 0.011 95.2)",
+        "tonalRamp": [
+          "oklch(15% 0.011 95.2)",
+          "oklch(26% 0.011 95.2)",
+          "oklch(38% 0.011 95.2)",
+          "oklch(49% 0.011 95.2)",
+          "oklch(60% 0.011 95.2)",
+          "oklch(72% 0.011 95.2)",
+          "oklch(83% 0.011 95.2)",
+          "oklch(95% 0.011 95.2)"
+        ]
+      },
+      "clay": {
+        "role": "secondary",
+        "displayName": "Clay",
+        "canonical": "#a84f1f",
+        "oklch": "oklch(53.2% 0.131 45.6)",
+        "tonalRamp": [
+          "oklch(15% 0.131 45.6)",
+          "oklch(26% 0.131 45.6)",
+          "oklch(38% 0.131 45.6)",
+          "oklch(49% 0.131 45.6)",
+          "oklch(60% 0.131 45.6)",
+          "oklch(72% 0.131 45.6)",
+          "oklch(83% 0.131 45.6)",
+          "oklch(95% 0.131 45.6)"
+        ]
+      },
+      "hard": {
+        "role": "secondary",
+        "displayName": "Hard",
+        "canonical": "#2e6fa8",
+        "oklch": "oklch(52.7% 0.112 248.2)",
+        "tonalRamp": [
+          "oklch(15% 0.112 248.2)",
+          "oklch(26% 0.112 248.2)",
+          "oklch(38% 0.112 248.2)",
+          "oklch(49% 0.112 248.2)",
+          "oklch(60% 0.112 248.2)",
+          "oklch(72% 0.112 248.2)",
+          "oklch(83% 0.112 248.2)",
+          "oklch(95% 0.112 248.2)"
+        ]
+      },
+      "grass": {
+        "role": "secondary",
+        "displayName": "Grass",
+        "canonical": "#4a7a3f",
+        "oklch": "oklch(53% 0.102 139.9)",
+        "tonalRamp": [
+          "oklch(15% 0.102 139.9)",
+          "oklch(26% 0.102 139.9)",
+          "oklch(38% 0.102 139.9)",
+          "oklch(49% 0.102 139.9)",
+          "oklch(60% 0.102 139.9)",
+          "oklch(72% 0.102 139.9)",
+          "oklch(83% 0.102 139.9)",
+          "oklch(95% 0.102 139.9)"
+        ]
+      },
+      "indoor": {
+        "role": "secondary",
+        "displayName": "Indoor",
+        "canonical": "#6b5b95",
+        "oklch": "oklch(51.1% 0.091 295.7)",
+        "tonalRamp": [
+          "oklch(15% 0.091 295.7)",
+          "oklch(26% 0.091 295.7)",
+          "oklch(38% 0.091 295.7)",
+          "oklch(49% 0.091 295.7)",
+          "oklch(60% 0.091 295.7)",
+          "oklch(72% 0.091 295.7)",
+          "oklch(83% 0.091 295.7)",
+          "oklch(95% 0.091 295.7)"
+        ]
+      },
+      "win": {
+        "role": "tertiary",
+        "displayName": "Win",
+        "canonical": "#4a7a3f",
+        "oklch": "oklch(53% 0.102 139.9)",
+        "tonalRamp": [
+          "oklch(15% 0.102 139.9)",
+          "oklch(26% 0.102 139.9)",
+          "oklch(38% 0.102 139.9)",
+          "oklch(49% 0.102 139.9)",
+          "oklch(60% 0.102 139.9)",
+          "oklch(72% 0.102 139.9)",
+          "oklch(83% 0.102 139.9)",
+          "oklch(95% 0.102 139.9)"
+        ]
+      },
+      "loss": {
+        "role": "tertiary",
+        "displayName": "Loss",
+        "canonical": "#b0483a",
+        "oklch": "oklch(53.7% 0.139 30)",
+        "tonalRamp": [
+          "oklch(15% 0.139 30)",
+          "oklch(26% 0.139 30)",
+          "oklch(38% 0.139 30)",
+          "oklch(49% 0.139 30)",
+          "oklch(60% 0.139 30)",
+          "oklch(72% 0.139 30)",
+          "oklch(83% 0.139 30)",
+          "oklch(95% 0.139 30)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The page title on every route; 28px on a phone, 32px from 880px."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "The brand, the methodology h2 above an ink rule, the head-to-head name pair."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "A section heading; the methodology h3."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Base text, the standfirst, the methodology prose on 72ch, the search field."
+      },
+      "data": {
+        "displayName": "Data",
+        "purpose": "Table cells, seed rows, buttons, filter cells, meta lines. Never wraps."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Every caption under a table or chart, table heads, the footer. Pencil, max 72ch."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "A surface Elo in its cell, a win-share percentage."
+      },
+      "small": {
+        "displayName": "Small",
+        "purpose": "Axis figures, the ± interval, a match count, an event line, a score mark."
+      }
+    },
+    "fontSource": {
+      "package": "@fontsource-variable/martian-mono",
+      "file": "wdth.css",
+      "importedIn": "web/src/main.tsx",
+      "axes": [
+        "wght",
+        "wdth"
+      ]
+    },
+    "rules": [
+      {
+        "name": "rule",
+        "value": "1px solid var(--pencil-light)",
+        "purpose": "Between rows; chart ruling and baselines."
+      },
+      {
+        "name": "rule-ink",
+        "value": "1px solid var(--ink)",
+        "purpose": "Section head, table head, above a total, closing a sheet, boxing a selected cell."
+      },
+      {
+        "name": "focus",
+        "value": "2px solid var(--ink), offset 2px",
+        "purpose": "Every focus-visible outline."
+      },
+      {
+        "name": "leader",
+        "value": "1px dotted var(--pencil-mid)",
+        "purpose": "Between a name and its figure on the seeding sheet."
+      }
+    ],
+    "shadows": [],
+    "elevation": "Flat. No shadows, no tonal layering. The two box-shadow declarations (0 1px 0 var(--ink) on a focused field) thicken a rule to 2px and are not shadows.",
+    "motion": [
+      {
+        "name": "ease-out-120",
+        "value": "120ms ease-out",
+        "purpose": "Colour, border and background changes on hover: links, tabs, buttons, filter cells, seed rows."
+      },
+      {
+        "name": "ease-out-160",
+        "value": "160ms ease-out",
+        "purpose": "Chart stroke changes when a seed row is hovered; row opacity."
+      },
+      {
+        "name": "press",
+        "value": "transform 80ms ease-out",
+        "purpose": "The 1px downward press of a button."
+      },
+      {
+        "name": "draw",
+        "value": "900ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Chart lines drawing in via stroke-dashoffset with pathLength=1; the field draws in 700ms."
+      },
+      {
+        "name": "lead-fade",
+        "value": "300ms ease-out 700ms",
+        "purpose": "The dotted leads of the seeding sheet fading in after the lines land."
+      },
+      {
+        "name": "reach",
+        "value": "420ms cubic-bezier(0.16, 1, 0.3, 1) 700ms",
+        "purpose": "The seeding gutter unclipping left to right so the steps reach their rows."
+      },
+      {
+        "name": "rule-in",
+        "value": "480ms cubic-bezier(0.16, 1, 0.3, 1), delay calc(120ms + var(--i) * 45ms)",
+        "purpose": "Each seed row sliding 6px in and fading, staggered by index."
+      },
+      {
+        "name": "settle",
+        "value": "1400ms",
+        "purpose": "SeedingSheet drops its animate class after this; what remains is the finished sheet."
+      },
+      {
+        "name": "skeleton-pulse",
+        "value": "1.6s ease-in-out infinite, opacity 1 to 0.45",
+        "purpose": "A line not yet typed."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation-duration 0.01ms; transition-duration 0.01ms",
+        "purpose": "base.css collapses everything under prefers-reduced-motion: reduce; every animation is also declared only under no-preference."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide",
+        "value": "880px",
+        "purpose": "The one breakpoint. Below it the sheet is one column."
+      },
+      {
+        "name": "floor",
+        "value": "360px",
+        "purpose": "Every component is proven at this width."
+      }
+    ],
+    "layout": {
+      "shellMaxWidth": "1248px",
+      "shellPadding": {
+        "phone": "16px",
+        "wide": "24px"
+      },
+      "grids": {
+        "home": "minmax(0, 7fr) minmax(360px, 5fr)",
+        "seedingSheet": "minmax(0, 7fr) 40px minmax(360px, 5fr)",
+        "player": "minmax(0, 5fr) minmax(0, 7fr), gap 48px",
+        "methodology": "18rem minmax(0, 1fr), gap 48px"
+      },
+      "measures": {
+        "prose": "72ch",
+        "standfirst": "62ch",
+        "emptyReason": "60ch",
+        "error": "56ch"
+      },
+      "seedRowHeight": "40px"
+    }
+  },
+  "components": [
+    {
+      "name": "Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "A typed label boxed in one ink rule; hover fills it. Says what happens.",
+      "html": "<button class=\"ds-btn\">Simulate this matchup</button>",
+      "css": ".ds-btn{display:inline-block;padding:8px 14px;border:1px solid var(--ink,#17181a);border-radius:0;background:transparent;color:var(--ink,#17181a);font-family:'Martian Mono Variable', 'Martian Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:13px;font-weight:500;line-height:1.3;cursor:pointer;transition:background-color 120ms ease-out,color 120ms ease-out,transform 80ms ease-out}.ds-btn:hover{background:var(--ink,#17181a);color:var(--bond,#f6f6f2)}.ds-btn:active{transform:translateY(1px)}.ds-btn:focus-visible{outline:2px solid var(--ink,#17181a);outline-offset:2px}.ds-btn:disabled{border-color:var(--pencil-mid,#8a8881);color:var(--pencil-mid,#8a8881);cursor:default}.ds-btn:disabled:hover{background:transparent;color:var(--pencil-mid,#8a8881);transform:none}"
+    },
+    {
+      "name": "Player field",
+      "kind": "input",
+      "refersTo": "field-search",
+      "description": "The typed field: a prompt, the entry, one ink rule under both; the rule thickens on focus.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Player</span><input class=\"ds-field-input\" placeholder=\"Search 115,000 players\"></label>",
+      "css": ".ds-field{display:flex;align-items:baseline;gap:8px;border-bottom:1px solid var(--ink,#17181a);font-family:'Martian Mono Variable', 'Martian Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;transition:box-shadow 120ms ease-out}.ds-field:focus-within{box-shadow:0 1px 0 var(--ink,#17181a)}.ds-field-label{flex:0 0 auto;font-size:14px;font-weight:500;color:var(--ink,#17181a)}.ds-field-label::after{content:':'}.ds-field-input{flex:1 1 auto;min-width:0;padding:5px 0;border:0;background:transparent;font:inherit;font-size:14px;color:var(--ink,#17181a)}.ds-field-input:focus-visible{outline:0}.ds-field-input::placeholder{color:var(--pencil,#66655f);opacity:1}"
+    },
+    {
+      "name": "Sheet head",
+      "kind": "nav",
+      "refersTo": "nav-tab",
+      "description": "Brand, typed tabs with the active one set in brackets like a seed, closed by an ink rule.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-brand\" href=\"#\">Deucepoint</a><div class=\"ds-tabs\"><a class=\"ds-tab\" href=\"#\"><span class=\"ds-br\"></span>Players<span class=\"ds-br\"></span></a><a class=\"ds-tab ds-tab-active\" href=\"#\"><span class=\"ds-br\"></span>Rankings<span class=\"ds-br\"></span></a><a class=\"ds-tab\" href=\"#\"><span class=\"ds-br\"></span>Simulator<span class=\"ds-br\"></span></a></div></nav>",
+      "css": ".ds-nav{display:flex;align-items:center;gap:32px;padding:16px 0;border-bottom:1px solid var(--ink,#17181a);font-family:'Martian Mono Variable', 'Martian Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace}.ds-brand{font-size:20px;font-weight:600;letter-spacing:-0.01em;color:var(--ink,#17181a);text-decoration:none}.ds-tabs{display:flex;gap:16px;font-size:13px;font-weight:500;white-space:nowrap}.ds-tab{color:var(--pencil,#66655f);text-decoration:none;transition:color 120ms ease-out}.ds-tab:hover{color:var(--ink,#17181a)}.ds-br::before{content:'\\00a0'}.ds-tab-active{color:var(--ink,#17181a);font-weight:600}.ds-tab-active .ds-br:first-child::before{content:'['}.ds-tab-active .ds-br:last-child::before{content:']'}.ds-tab:focus-visible{outline:2px solid var(--ink,#17181a);outline-offset:2px}"
+    },
+    {
+      "name": "Surface filter",
+      "kind": "chip",
+      "refersTo": "filter-cell",
+      "description": "Typed filter cells; the active one is boxed in one rule, in its surface hue (ink for a tour).",
+      "html": "<div class=\"ds-filter\"><button class=\"ds-cell\">All</button><button class=\"ds-cell ds-cell-active\" style=\"border-color:var(--clay,#a84f1f)\">Clay</button><button class=\"ds-cell\">Hard</button><button class=\"ds-cell\">Grass</button></div>",
+      "css": ".ds-filter{display:flex;flex-wrap:wrap;gap:8px;padding:8px 0;font-family:'Martian Mono Variable', 'Martian Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace}.ds-cell{padding:4px 10px;border:1px solid transparent;border-radius:0;background:none;font:inherit;font-size:13px;font-weight:500;color:var(--pencil,#66655f);cursor:pointer;transition:color 120ms ease-out,border-color 120ms ease-out}.ds-cell:hover{color:var(--ink,#17181a)}.ds-cell-active{color:var(--ink,#17181a);border-color:var(--ink,#17181a)}.ds-cell:focus-visible{outline:2px solid var(--ink,#17181a);outline-offset:2px}"
+    },
+    {
+      "name": "Sheet table",
+      "kind": "card",
+      "refersTo": "table-cell",
+      "description": "Head under an ink rule, rows under pencil rules, the total above an ink rule; n/r for a value nobody recorded; the caption underneath.",
+      "html": "<table class=\"ds-table\"><thead><tr><th>Surface</th><th class=\"ds-r\">W-L</th><th class=\"ds-r\">Hold %</th></tr></thead><tbody><tr><td><span class=\"ds-sq\" style=\"background:var(--clay,#a84f1f)\"></span>Clay</td><td class=\"ds-r\">41-12</td><td class=\"ds-r\">84.1</td></tr><tr><td><span class=\"ds-sq\" style=\"background:var(--grass,#4a7a3f)\"></span>Grass</td><td class=\"ds-r\">9-4</td><td class=\"ds-r ds-nr\" title=\"Not recorded\">n/r</td></tr><tr class=\"ds-total\"><td>All</td><td class=\"ds-r\">50-16</td><td class=\"ds-r\">84.1</td></tr></tbody><caption>n/r is a surface where serve statistics were never recorded, which is a different thing from a zero.</caption></table>",
+      "css": ".ds-table{width:100%;border-collapse:collapse;border-bottom:1px solid var(--ink,#17181a);font-family:'Martian Mono Variable', 'Martian Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:13px;font-variant-numeric:tabular-nums;color:var(--ink,#17181a)}.ds-table th{padding:6px 8px;border-bottom:1px solid var(--ink,#17181a);font-size:12px;font-weight:500;color:var(--pencil,#66655f);text-align:left;white-space:nowrap}.ds-table td{padding:9px 8px;border-bottom:1px solid var(--pencil-light,#cfcdc5);line-height:1.3;white-space:nowrap}.ds-table th:first-child,.ds-table td:first-child{padding-left:0}.ds-table th:last-child,.ds-table td:last-child{padding-right:0}.ds-r{text-align:right}.ds-nr{color:var(--pencil,#66655f)}.ds-total td{border-top:1px solid var(--ink,#17181a);border-bottom:0;font-weight:700}.ds-sq{display:inline-block;width:8px;height:8px;border-radius:1px;margin-right:6px;vertical-align:0}.ds-table caption{caption-side:bottom;text-align:left;padding-top:8px;font-size:12px;line-height:1.55;color:var(--pencil,#66655f);max-width:72ch}"
+    },
+    {
+      "name": "Seed row",
+      "kind": "custom",
+      "refersTo": "table-cell",
+      "description": "One row of the seeding sheet: [seed] Name (CTY), a dotted leader, the Elo and its signed delta; hover goes highlight.",
+      "html": "<ul class=\"ds-seeds\"><li class=\"ds-seed-row\"><span class=\"ds-seed\">[1]</span><a class=\"ds-seed-name\" href=\"#\">Jannik Sinner</a><span class=\"ds-cty\">(ITA)</span><span class=\"ds-leader\"></span><span class=\"ds-elo\">2752</span><span class=\"ds-delta ds-level\">0</span></li><li class=\"ds-seed-row\"><span class=\"ds-seed\">[2]</span><a class=\"ds-seed-name\" href=\"#\">Carlos Alcaraz</a><span class=\"ds-cty\">(ESP)</span><span class=\"ds-leader\"></span><span class=\"ds-elo\">2623</span><span class=\"ds-delta ds-up\">+1</span></li><li class=\"ds-seed-row\"><span class=\"ds-seed\">[4]</span><a class=\"ds-seed-name\" href=\"#\">Alexander Zverev</a><span class=\"ds-cty\">(GER)</span><span class=\"ds-leader\"></span><span class=\"ds-elo\">2438</span><span class=\"ds-delta ds-down\">-2</span></li></ul>",
+      "css": ".ds-seeds{list-style:none;margin:0;padding:0;border-top:1px solid var(--ink,#17181a);font-family:'Martian Mono Variable', 'Martian Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:13px;font-variant-numeric:tabular-nums;color:var(--ink,#17181a)}.ds-seed-row{display:flex;align-items:baseline;gap:8px;height:40px;padding:10px 0 0 8px;border-bottom:1px solid var(--pencil-light,#cfcdc5);transition:background-color 120ms ease-out}.ds-seed-row:hover{background:var(--highlight,#ecece6)}.ds-seed-row:last-child{border-bottom:1px solid var(--ink,#17181a)}.ds-seed{color:var(--pencil,#66655f);min-width:3ch}.ds-seed-name{font-weight:700;color:inherit;text-decoration:none;border-bottom:1px solid transparent;white-space:nowrap}.ds-seed-name:hover{border-bottom-color:var(--ink,#17181a)}.ds-cty{color:var(--pencil,#66655f)}.ds-leader{flex:1 1 auto;min-width:1ch;align-self:center;border-bottom:1px dotted var(--pencil-mid,#8a8881)}.ds-elo{font-weight:700;min-width:4ch;text-align:right}.ds-delta{min-width:3ch;text-align:right;padding-right:8px;font-weight:500}.ds-up{color:var(--win,#4a7a3f)}.ds-down{color:var(--loss,#b0483a)}.ds-level{color:var(--pencil,#66655f)}"
+    },
+    {
+      "name": "Split bar",
+      "kind": "custom",
+      "refersTo": "table-cell",
+      "description": "Two halves growing outward from the centre, ink for player A and pencil for player B, a 2px bond gap.",
+      "html": "<div class=\"ds-split\"><div class=\"ds-split-n\"><span class=\"ds-split-a\">68%</span><span class=\"ds-split-l\">First serve won</span><span class=\"ds-split-b\">61%</span></div><div class=\"ds-track\"><div class=\"ds-half ds-half-l\"><div class=\"ds-fill-a\" style=\"width:68%\"></div></div><div class=\"ds-gap\"></div><div class=\"ds-half\"><div class=\"ds-fill-b\" style=\"width:61%\"></div></div></div></div>",
+      "css": ".ds-split{padding:12px 0;border-bottom:1px solid var(--ink,#17181a);font-family:'Martian Mono Variable', 'Martian Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-variant-numeric:tabular-nums}.ds-split-n{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font-size:13px}.ds-split-l{color:var(--pencil,#66655f);font-size:12px;text-align:center}.ds-split-a{font-weight:700;color:var(--ink,#17181a)}.ds-split-b{font-weight:700;color:var(--pencil,#66655f)}.ds-track{display:flex;height:6px;margin-top:8px}.ds-half{display:flex;flex:1 1 50%;min-width:0}.ds-half-l{justify-content:flex-end}.ds-fill-a{background:var(--ink,#17181a)}.ds-fill-b{background:var(--pencil,#66655f)}.ds-gap{flex:0 0 2px;background:var(--bond,#f6f6f2)}"
+    },
+    {
+      "name": "Empty state",
+      "kind": "card",
+      "refersTo": "empty-state",
+      "description": "A note on the sheet, not a panel: what is absent, why, and a button to something complete.",
+      "html": "<section class=\"ds-empty\"><h3 class=\"ds-empty-h\">No serve statistics for this player</h3><p class=\"ds-empty-p\">Serve statistics were not recorded at Futures level before 2020, and every one of these 61 matches was played there.</p><div class=\"ds-empty-a\"><button class=\"ds-btn\">See the match log</button></div></section>",
+      "css": ".ds-empty{padding:16px 0 24px;border-top:1px solid var(--ink,#17181a);font-family:'Martian Mono Variable', 'Martian Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace}.ds-empty-h{margin:0 0 8px;font-size:14px;font-weight:600;color:var(--ink,#17181a)}.ds-empty-p{margin:0;max-width:60ch;font-size:13px;line-height:1.6;color:var(--pencil,#66655f)}.ds-empty-a{margin-top:16px}.ds-btn{display:inline-block;padding:8px 14px;border:1px solid var(--ink,#17181a);border-radius:0;background:transparent;color:var(--ink,#17181a);font-family:'Martian Mono Variable', 'Martian Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;font-size:13px;font-weight:500;line-height:1.3;cursor:pointer;transition:background-color 120ms ease-out,color 120ms ease-out,transform 80ms ease-out}.ds-btn:hover{background:var(--ink,#17181a);color:var(--bond,#f6f6f2)}.ds-btn:active{transform:translateY(1px)}.ds-btn:focus-visible{outline:2px solid var(--ink,#17181a);outline-offset:2px}.ds-btn:disabled{border-color:var(--pencil-mid,#8a8881);color:var(--pencil-mid,#8a8881);cursor:default}.ds-btn:disabled:hover{background:transparent;color:var(--pencil-mid,#8a8881);transform:none}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Draw Sheet",
+    "overview": "Every page is a sheet from the tournament office: the typed draw pinned in the players' lounge, with seeds in brackets `[1]`, countries in parentheses `(ESP)`, scores written in as the source writes them `6-4 3-6 6-2`, the marks a sheet uses `ret.` `w/o` `Q`, and ruled lines that step a name into the next round. One monospaced typewriter-grade family carries everything typed, headings and buttons included. Structure is ruled lines, not boxes: a pencil rule under every row, an ink rule at a section head, a table head and a total, and an L-shaped bracket stub where a line steps across to its row.\n\nThe sheet is bond, not white. Two greys and one black do all the work of hierarchy: ink for the entry, pencil for the caption and the second player, pencil-mid for the third line of a chart, pencil-light for the ruling. Hue is spent on surface and cannot be borrowed for anything else. Strip the content and what remains is a ruled sheet with bracket stubs.\n\nIt refuses the sports-stats dashboard (tiles, one accent, a big chart) and the broadsheet-hairlines-on-cream it replaced. Confirmed visual rejections: cards, shadows, radii, icon sets, gradients, a second type family, photography.",
+    "keyCharacteristics": [
+      "One monospaced family, tabular by construction, at eight fixed sizes from 11px to 32px",
+      "Bond ground, ink and three pencils; four surface hues and two outcome hues, each scoped to one meaning",
+      "Ruled lines at 1px are the entire structural vocabulary; ink for a head or total, pencil-light between rows",
+      "No cards, no shadows, no radius, no icons; selection is a box drawn in one rule",
+      "One breakpoint at 880px; below it the sheet is one column",
+      "One piece of ambient motion, the seeding sheet drawing in, retired after 1400ms and static under reduced motion"
+    ],
+    "rules": [
+      {
+        "name": "The Hue Means Surface Rule",
+        "body": "A colour other than ink, pencil, win or loss appears only on an element whose value belongs to one surface, and the surface word or square is always beside it. Never as decoration, never to tell two players apart.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink and Pencil Rule",
+        "body": "In any two-player comparison player A is ink and player B is pencil: names, chart lines, bar halves, tags. Never two hues.",
+        "section": "colors"
+      },
+      {
+        "name": "The Outcome Rule",
+        "body": "Win and loss colour appears only on a W/L mark, a rank delta and the champion mark, and always with a letter or sign, so removing colour loses nothing.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Family Rule",
+        "body": "Everything typed on the sheet is Martian Mono, including headings, buttons, and the methodology's prose. There is no display face and no second family.",
+        "section": "typography"
+      },
+      {
+        "name": "The Typed Score Rule",
+        "body": "Scores, spans and records are typed with hyphens the way the source writes them (`6-4 7-6(3)`, `1973-1983`, `335-83`). A set is one unbreakable word; a cell never wraps; a table wider than the phone scrolls inside its wrapper and its caption does not.",
+        "section": "typography"
+      },
+      {
+        "name": "The Sentence Case Rule",
+        "body": "Every heading, label, tab and button is sentence case. No uppercase labels, no letterspaced eyebrows, no kickers.",
+        "section": "typography"
+      },
+      {
+        "name": "The Ruled Structure Rule",
+        "body": "Structure is a 1px rule: pencil-light between rows, ink at a section head, above a total, under a table head, and around anything selected. Nothing is a card and nothing casts a shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do set every colour from the twelve tokens in `tokens.css`; a new hue needs a new surface, not a new element.",
+      "Do put a surface hue only on a cell whose value is that surface's, and put the surface word or 8px square beside it.",
+      "Do make player A ink and player B pencil in every comparison, and put each name at the end of its own line.",
+      "Do use `--rule` (pencil-light) between rows and `--rule-ink` at a head, above a total, at a section break, and around anything selected.",
+      "Do type `n/r` in pencil for a value nobody recorded, explain it in the caption under the table, and declare an aggregate's denominator beside it.",
+      "Do keep every caption directly under the element it explains, 12px pencil, on a 72ch measure or less.",
+      "Do keep tabular numerals on every element carrying data and never let a cell wrap; scroll the wrapper instead.",
+      "Do write buttons as what happens, in sentence case, boxed in one ink rule.",
+      "Do keep one column below 880px and prove every component at 360px.",
+      "Do gate any motion on `prefers-reduced-motion: no-preference`, and keep the seeding sheet's draw-in the only ambient motion."
+    ],
+    "donts": [
+      "Don't add a card, a panel background, a shadow, a gradient, or a radius above 1px.",
+      "Don't add an icon set or a glyph icon; the sort chevron and the colour squares are drawn, and every other mark is typed.",
+      "Don't add a second type family, a display face, or a fluid size; the ramp is the eight fixed px steps.",
+      "Don't set anything in uppercase, letterspace a label, or add an eyebrow or kicker above a heading.",
+      "Don't use hue to tell two players apart, to decorate a heading, or as a status colour outside W/L marks and rank deltas.",
+      "Don't render an absence as `0`, a blank, a dash or `N/A`, and don't hide a column because it is mostly `n/r`.",
+      "Don't put a chart's names in a legend, or a chart's key in a hue.",
+      "Don't add a second breakpoint; 880px is the one.",
+      "Don't invent photography, logos or marks; none exist."
+    ],
+    "notCanonized": [
+      "The seeding sheet rows lack the best-surface Elo in its hue; a follow-up that needs an API field, not a design rule.",
+      "--carpet duplicates --indoor; carpet is shown as indoor and the token exists so lib/surface.ts can map it.",
+      "The rankings date field and the players route field each redeclare the focused-rule treatment (box-shadow: 0 1px 0 var(--ink)) rather than sharing PlayerSearch's; same look, three declarations."
+    ]
+  }
+}
