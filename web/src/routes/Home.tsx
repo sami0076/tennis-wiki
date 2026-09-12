@@ -28,8 +28,8 @@ const columns: ReadonlyArray<Column<CoverageEntry>> = [
   { key: 'tour', header: 'Tour', value: (row) => row.tour.toUpperCase() },
   { key: 'tier', header: 'Tier', value: (row) => row.tier },
   { key: 'matches', header: 'Matches', align: 'right', value: (row) => row.matches },
-  { key: 'first', header: 'From', align: 'right', value: (row) => row.first_match },
-  { key: 'last', header: 'To', align: 'right', value: (row) => row.last_match },
+  { key: 'first', header: 'From', align: 'right', value: (row) => row.first_match, wide: true },
+  { key: 'last', header: 'To', align: 'right', value: (row) => row.last_match, wide: true },
   {
     key: 'stats',
     header: 'With serve stats',

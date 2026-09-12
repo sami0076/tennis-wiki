@@ -72,8 +72,9 @@
 }
 
 .field {
-  stroke: var(--pencil-light);
+  stroke: var(--pencil-mid);
   color: var(--pencil);
+  opacity: 0.6;
 }
 
 /* A finger on one row: its line goes to ink and the others fall back. */

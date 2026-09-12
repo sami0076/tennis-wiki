@@ -61,7 +61,8 @@
 }
 
 /* The phone is one column. At 880px the figures take the narrow column and the
-   tables the wide one, which is the only structural change. */
+   serve and splits the wide one; the match log, the widest object on the sheet,
+   runs the full width under both. */
 @media (min-width: 880px) {
   .identity {
     padding-top: var(--s-4);

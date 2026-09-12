@@ -571,6 +571,7 @@ function MeetingsSection({
       header: 'Surface',
       value: (row) => row.surface,
       render: (row) => <SurfaceDot surface={row.surface} />,
+      wide: true,
     },
     {
       key: 'score',

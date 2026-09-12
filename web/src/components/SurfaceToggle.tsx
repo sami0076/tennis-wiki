@@ -8,6 +8,8 @@ interface SurfaceToggleProps {
   onChange: (surface: string | null) => void
   /** Restrict the options, e.g. to the surfaces a player has actually played. */
   options?: ReadonlyArray<string>
+  /** Offer "all surfaces". Off where a value has to be one surface, as in the simulator. */
+  all?: boolean
 }
 
 /**
@@ -17,17 +19,19 @@ interface SurfaceToggleProps {
  *
  * Pair it with useUrlParam so the selection survives a reload and a shared link.
  */
-export function SurfaceToggle({ value, onChange, options = SURFACES }: SurfaceToggleProps) {
+export function SurfaceToggle({ value, onChange, options = SURFACES, all = true }: SurfaceToggleProps) {
   return (
     <div className={styles.row} role="group" aria-label="Filter by surface">
-      <button
-        type="button"
-        className={[styles.option, value === null ? styles.active : ''].join(' ')}
-        aria-pressed={value === null}
-        onClick={() => onChange(null)}
-      >
-        All surfaces
-      </button>
+      {all ? (
+        <button
+          type="button"
+          className={[styles.option, value === null ? styles.active : ''].join(' ')}
+          aria-pressed={value === null}
+          onClick={() => onChange(null)}
+        >
+          All surfaces
+        </button>
+      ) : null}
       {options.map((surface) => {
         const active = value === surface
         return (

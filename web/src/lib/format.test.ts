@@ -6,10 +6,9 @@ describe('formatScore', () => {
     expect(formatScore('6-4 7-6(3)')).toBe('6-4 7-6(3)')
   })
 
-  // Only digit-hyphen-digit, so a retirement note keeps its own punctuation.
-  it('leaves anything that is not a scoreline alone', () => {
-    expect(formatScore('6-4 2-1 RET')).toBe('6-4 2-1 RET')
-    expect(formatScore('W/O')).toBe('W/O')
+  it("types the sheet's marks for a retirement and a walkover", () => {
+    expect(formatScore('6-4 2-1 RET')).toBe('6-4 2-1 ret.')
+    expect(formatScore('W/O')).toBe('w/o')
   })
 
   it('passes a missing score through as missing', () => {

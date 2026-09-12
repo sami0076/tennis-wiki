@@ -291,6 +291,8 @@ const published: Column<RankingRow> = {
   key: 'official',
   header: 'Published',
   align: 'right',
+  // The delta already carries it on a phone.
+  wide: true,
   value: (row) => row.official_rank,
 }
 

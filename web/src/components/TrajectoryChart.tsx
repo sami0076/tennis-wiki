@@ -74,7 +74,7 @@ export function TrajectoryChart({
   // and names that would sit on top of each other are pushed apart.
   const tags = spread(
     leaders.map((line) => (y(line.points[line.points.length - 1]!) / height) * 100),
-    (14 / height) * 100,
+    (16 / height) * 100,
   )
 
   return (

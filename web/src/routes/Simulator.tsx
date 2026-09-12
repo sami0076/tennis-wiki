@@ -65,7 +65,7 @@ export function Simulator() {
       <Pickers a={a} b={b} onA={setA} onB={setB} match={match} />
 
       <div className={styles.controls}>
-        <SurfaceToggle value={surface} onChange={setSurface} options={SURFACES} />
+        <SurfaceToggle value={chosen} onChange={setSurface} options={SURFACES} all={false} />
         <div className={styles.format} role="group" aria-label="Match length">
           {[3, 5].map((n) => (
             <button

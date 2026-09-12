@@ -77,7 +77,7 @@ export function SeedingSheet({ lines, seeds, animate = false, width = 640 }: See
   const named = ranked.filter((r) => r.line !== null).slice(0, NAMED)
   const tags = spread(
     named.map((r) => ((r.endY ?? 0) / height) * 100),
-    (14 / height) * 100,
+    (16 / height) * 100,
   )
 
   const label = `Elo of the top ${ranked.length}, ${new Date(from).getUTCFullYear()} to ${new Date(to).getUTCFullYear()}, between ${Math.round(min)} and ${Math.round(max)}. Leading: ${named.map((r) => r.seed.name).join(', ')}.`

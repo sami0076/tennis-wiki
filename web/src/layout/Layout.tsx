@@ -15,7 +15,7 @@ const links = [
   { to: '/players', label: 'Players', short: 'Players' },
   { to: '/h2h', label: 'Head to head', short: 'H2H' },
   { to: '/rankings', label: 'Rankings', short: 'Rankings' },
-  { to: '/simulator', label: 'Simulator', short: 'Simulate' },
+  { to: '/simulator', label: 'Simulator', short: 'Simulator' },
 ]
 
 /**

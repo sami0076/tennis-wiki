@@ -1,10 +1,14 @@
 /**
  * A score is typed the way the source writes it and the way a draw sheet
- * writes it: 6-4 7-6(3). One place to change if that ever stops being true.
+ * writes it: 6-4 7-6(3). The marks are the sheet's: ret. for a retirement,
+ * w/o for a walkover, def. for a default.
  */
 export function formatScore(score: string | null): string | null {
   if (score === null) return null
   return score
+    .replace(/\bRET\b/g, 'ret.')
+    .replace(/\bW\/O\b/g, 'w/o')
+    .replace(/\bDEF\b/g, 'def.')
 }
 
 /** elo is shown whole: the hundredths in the database are not a real precision. */

@@ -119,8 +119,10 @@ export function Player() {
             label={`Overall Elo from ${trajectory.data.from} to ${trajectory.data.to}`}
           />
           <figcaption className={styles.caption}>
-            Overall Elo, {trajectory.data.from} to {trajectory.data.to}. Rated only in the weeks
-            they played.
+            Overall Elo, {trajectory.data.from} to {trajectory.data.to}, between{' '}
+            {Math.round(Math.min(...trajectory.data.points.map((p) => p.elo)))} and{' '}
+            {Math.round(Math.max(...trajectory.data.points.map((p) => p.elo)))}. Rated only in
+            the weeks they played.
           </figcaption>
         </figure>
       ) : null}
@@ -147,19 +149,22 @@ export function Player() {
           <div className={styles.right}>
             <ServeSection player={player} />
             <SplitsSection career={player.career} />
-            <MatchesSection
-              matches={matches}
-              surface={surface}
-              onSurface={(next) => {
-                setCursors([])
-                setSurface(next)
-              }}
-              onMore={(cursor) => setCursors((current) => [...current, cursor])}
-              paged={cursors.length > 0}
-              onFirst={() => setCursors([])}
-            />
           </div>
         </div>
+      )}
+
+      {player.career === null ? null : (
+        <MatchesSection
+          matches={matches}
+          surface={surface}
+          onSurface={(next) => {
+            setCursors([])
+            setSurface(next)
+          }}
+          onMore={(cursor) => setCursors((current) => [...current, cursor])}
+          paged={cursors.length > 0}
+          onFirst={() => setCursors([])}
+        />
       )}
     </>
   )
@@ -489,6 +494,7 @@ const matchColumns: ReadonlyArray<Column<PlayerMatch>> = [
     header: 'Surface',
     value: (row) => row.surface,
     render: (row) => <SurfaceDot surface={row.surface} />,
+    wide: true,
   },
   {
     key: 'score',
@@ -546,7 +552,7 @@ function MatchesSection({ matches, surface, onSurface, onMore, paged, onFirst }:
         ) : (
           <>
             <StatTable
-              caption="Most recent first. An aces column with a dash is a match nobody recorded serve statistics for."
+              caption="Most recent first. Aces reading n/r is a match nobody recorded serve statistics for; ret. is a retirement and w/o a walkover, which count in the record and sit out of every rate."
               columns={matchColumns}
               rows={matches.data.data}
               rowKey={(row) => `${row.date}-${row.tournament}-${row.opponent.slug}-${row.round}`}

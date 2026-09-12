@@ -41,7 +41,10 @@
 }
 
 .provenance {
-  padding-bottom: var(--s-4);
+  margin: var(--s-4) 0 var(--s-2);
+  padding: var(--s-3) 0;
+  border-top: var(--rule);
+  border-bottom: var(--rule);
 }
 
 .note {
@@ -177,11 +180,20 @@
 }
 
 /* Display maths is its own block, and wide formulas scroll rather than pushing
-   the page sideways at 360px. */
-.article :global(.katex-display) {
+   the page sideways at 360px. KaTeX emits MathML here, so the rule is on the
+   math element itself. */
+.article math[display='block'] {
   display: block;
+  max-width: 100%;
   overflow-x: auto;
   margin: var(--s-4) 0;
+}
+
+.article :global(.katex) {
+  display: inline-block;
+  max-width: 100%;
+  overflow-x: auto;
+  vertical-align: middle;
 }
 
 @media (min-width: 880px) {
