@@ -485,6 +485,10 @@ const matchColumns: ReadonlyArray<Column<PlayerMatch>> = [
           {row.opponent.name}
         </Link>
         <div className={styles.event}>
+          {/* The surface column steps aside on a phone; its square moves here. */}
+          <span className={styles.eventSurface}>
+            <SurfaceDot surface={row.surface} label={false} />{' '}
+          </span>
           {row.tournament} {row.round}
           {row.qualifying ? ' Q' : ''}
         </div>

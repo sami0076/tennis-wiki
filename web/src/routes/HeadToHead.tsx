@@ -571,7 +571,13 @@ function MeetingsSection({
         <>
           {row.tournament} {row.round}
           {row.qualifying ? ' Q' : ''}
-          <div className={styles.event}>{tierLabel(row.tier) ?? row.tier}</div>
+          <div className={styles.event}>
+            {/* The surface column steps aside on a phone; its square moves here. */}
+            <span className={styles.eventSurface}>
+              <SurfaceDot surface={row.surface} label={false} />{' '}
+            </span>
+            {tierLabel(row.tier) ?? row.tier}
+          </div>
         </>
       ),
     },

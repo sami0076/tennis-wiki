@@ -60,6 +60,11 @@
   line-height: 1.4;
 }
 
+/* The surface square rides the event line only while its column is hidden. */
+.eventSurface {
+  display: inline;
+}
+
 /* The phone is one column. At 880px the figures take the narrow column and the
    serve and splits the wide one; the match log, the widest object on the sheet,
    runs the full width under both. */
@@ -82,6 +87,10 @@
   .left > .section:first-child,
   .right > .section:first-child {
     padding-top: var(--s-4);
+  }
+
+  .eventSurface {
+    display: none;
   }
 }
 

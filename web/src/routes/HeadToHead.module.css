@@ -97,6 +97,11 @@
   color: var(--pencil);
 }
 
+/* The surface square rides the tier line only while its column is hidden. */
+.eventSurface {
+  display: inline;
+}
+
 /* The winner's whole name where there is room, the surname on a phone; the
    accessible name is always the whole one. */
 .full {
@@ -139,6 +144,10 @@
   }
 
   .short {
+    display: none;
+  }
+
+  .eventSurface {
     display: none;
   }
 
