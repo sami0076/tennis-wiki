@@ -40,8 +40,6 @@
   position: absolute;
   right: 0;
   width: 10ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
   transform: translateY(-50%);
   font-size: var(--t-12);
   line-height: 1.2;

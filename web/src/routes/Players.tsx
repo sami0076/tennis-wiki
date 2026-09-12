@@ -34,18 +34,20 @@ export function Players() {
       <h1 className={styles.title}>Players</h1>
 
       <div className={styles.controls}>
-        <label className={styles.label} htmlFor="player-search">
-          Search by name
-        </label>
-        <input
-          id="player-search"
-          className={styles.input}
-          type="search"
-          autoComplete="off"
-          placeholder="Surname, or any part of a name"
-          value={query ?? ''}
-          onChange={(event) => ask(() => setQuery(event.target.value))}
-        />
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="player-search">
+            Name
+          </label>
+          <input
+            id="player-search"
+            className={styles.input}
+            type="search"
+            autoComplete="off"
+            placeholder="Surname, or any part of a name"
+            value={query ?? ''}
+            onChange={(event) => ask(() => setQuery(event.target.value))}
+          />
+        </div>
         <TourFilter value={tour} onChange={(next) => ask(() => setTour(next))} />
       </div>
 

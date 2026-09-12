@@ -1,3 +1,4 @@
+import { surname } from '../lib/format'
 import type { SparkPoint } from './Sparkline'
 import styles from './TrajectoryPair.module.css'
 
@@ -109,7 +110,7 @@ export function TrajectoryPair({ a, b, width = 320, height = 120 }: TrajectoryPa
               style={{ top: `${(top / height) * 100}%` }}
               aria-hidden="true"
             >
-              {series.name}
+              {surname(series.name)}
             </span>
           )
         })}

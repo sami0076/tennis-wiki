@@ -1,6 +1,6 @@
 .intro {
   padding-bottom: var(--s-5);
-  border-bottom: var(--hairline);
+  border-bottom: var(--rule-ink);
 }
 
 .title {
@@ -10,14 +10,15 @@
 }
 
 .lede {
-  max-width: 60ch;
+  max-width: 64ch;
   font-size: var(--t-13);
-  color: var(--muted);
+  line-height: 1.6;
+  color: var(--pencil);
 }
 
 .block {
   padding: var(--s-5) 0;
-  border-bottom: var(--hairline);
+  border-bottom: var(--rule);
 }
 
 .name {
@@ -27,10 +28,11 @@
 }
 
 .note {
-  max-width: 60ch;
+  max-width: 64ch;
   margin-bottom: var(--s-3);
-  font-size: var(--t-11);
-  color: var(--muted);
+  font-size: var(--t-12);
+  line-height: 1.55;
+  color: var(--pencil);
 }
 
 .row {

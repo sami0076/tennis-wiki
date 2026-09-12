@@ -1,17 +1,17 @@
 .layout {
-  padding: var(--s-5) 0 var(--s-7);
+  padding: var(--s-4) 0 var(--s-8);
 }
 
 .contents {
   padding-bottom: var(--s-4);
-  margin-bottom: var(--s-4);
-  border-bottom: var(--hairline);
+  margin-bottom: var(--s-5);
+  border-bottom: var(--rule-ink);
 }
 
 .contentsTitle {
-  font-size: var(--t-11);
-  font-weight: 600;
-  color: var(--muted);
+  font-size: var(--t-12);
+  font-weight: 500;
+  color: var(--pencil);
   margin-bottom: var(--s-2);
 }
 
@@ -20,19 +20,19 @@
   margin: 0;
   padding: 0;
   font-size: var(--t-13);
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .nested {
   padding-left: var(--s-3);
-  color: var(--muted);
+  color: var(--pencil);
 }
 
 .link,
 .article a {
   color: inherit;
   text-decoration: none;
-  border-bottom: 1px solid var(--chalk);
+  border-bottom: var(--rule);
 }
 
 .link:hover,
@@ -46,30 +46,34 @@
 
 .note {
   margin-top: var(--s-2);
-  max-width: 68ch;
-  font-size: var(--t-11);
+  max-width: 72ch;
+  font-size: var(--t-12);
   line-height: 1.55;
-  color: var(--muted);
+  color: var(--pencil);
 }
 
+/* The one long read on the site. The sheet's mono at reading size and a wide
+   measure, because a methodology is a typed document too. */
 .article {
-  max-width: 68ch;
+  max-width: 72ch;
 }
 
 .article h1 {
-  font-size: var(--t-24);
+  font-size: var(--t-28);
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
   margin-bottom: var(--s-3);
 }
 
 .article h2 {
   font-size: var(--t-20);
-  font-weight: 700;
-  line-height: 1.2;
-  margin: var(--s-6) 0 var(--s-3);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin: var(--s-7) 0 var(--s-3);
   padding-top: var(--s-4);
-  border-top: var(--hairline);
+  border-top: var(--rule-ink);
 }
 
 .article h3 {
@@ -81,12 +85,18 @@
 .article p,
 .article li {
   font-size: var(--t-14);
-  line-height: 1.55;
+  line-height: 1.65;
   margin-bottom: var(--s-3);
 }
 
 .article ul {
   padding-left: var(--s-4);
+  list-style: disc;
+}
+
+.article ol {
+  padding-left: var(--s-4);
+  list-style: decimal;
 }
 
 /* The standfirst under the title, and the one note about where the figures
@@ -94,8 +104,8 @@
 .article blockquote {
   margin: var(--s-4) 0;
   padding-left: var(--s-3);
-  border-left: 2px solid var(--chalk);
-  color: var(--muted);
+  border-left: var(--rule-ink);
+  color: var(--pencil);
 }
 
 .article blockquote p {
@@ -104,11 +114,27 @@
 }
 
 .article code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.9em;
+  font-family: inherit;
+  font-size: 0.95em;
+  padding: 0 0.2em;
+  background: var(--highlight);
 }
 
-/* Tables are the same object StatTable draws: hairline rows, tabular numerals,
+.article pre {
+  overflow-x: auto;
+  padding: var(--s-3);
+  margin: var(--s-4) 0;
+  border: var(--rule);
+  font-size: var(--t-13);
+  line-height: 1.5;
+}
+
+.article pre code {
+  padding: 0;
+  background: none;
+}
+
+/* Tables are the same object StatTable draws: ruled rows, the head under ink,
    and a scroll of their own rather than a page that scrolls sideways. */
 .article table {
   display: block;
@@ -117,24 +143,33 @@
   border-collapse: collapse;
   margin: var(--s-4) 0;
   font-size: var(--t-13);
-  font-variant-numeric: tabular-nums;
+  border-bottom: var(--rule-ink);
 }
 
 .article th {
-  padding: var(--s-2);
-  border-bottom: var(--hairline);
-  font-size: var(--t-11);
-  font-weight: 600;
-  color: var(--muted);
+  padding: 6px var(--s-2);
+  border-bottom: var(--rule-ink);
+  font-size: var(--t-12);
+  font-weight: 500;
+  color: var(--pencil);
   text-align: left;
   white-space: nowrap;
 }
 
 .article td {
-  padding: var(--s-2);
-  border-bottom: var(--hairline);
-  line-height: 1.2;
+  padding: 8px var(--s-2);
+  border-bottom: var(--rule);
+  line-height: 1.4;
   vertical-align: top;
+}
+
+.article tr:last-child td {
+  border-bottom: 0;
+}
+
+.article th:first-child,
+.article td:first-child {
+  padding-left: 0;
 }
 
 .article math {
@@ -152,9 +187,10 @@
 @media (min-width: 880px) {
   .layout {
     display: grid;
-    grid-template-columns: 16rem minmax(0, 1fr);
-    gap: var(--s-6);
+    grid-template-columns: 18rem minmax(0, 1fr);
+    gap: var(--s-7);
     align-items: start;
+    padding-top: var(--s-5);
   }
 
   .contents {
@@ -163,7 +199,11 @@
     padding-bottom: 0;
     margin-bottom: 0;
     border-bottom: 0;
-    border-right: var(--hairline);
+    border-right: var(--rule);
     padding-right: var(--s-4);
+  }
+
+  .article h1 {
+    font-size: var(--t-32);
   }
 }

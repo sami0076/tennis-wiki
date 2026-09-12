@@ -221,7 +221,7 @@ function Rivalry({
         <div className={styles.tally}>
           {record.wins[0]}-{record.wins[1]}
         </div>
-        <div>
+        <div className={styles.sideB}>
           <Link className={styles.nameB} to={`/players/${playerB.slug}`}>
             {playerB.name}
           </Link>

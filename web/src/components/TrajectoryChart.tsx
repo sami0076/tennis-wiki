@@ -1,4 +1,5 @@
 import type { SparkPoint } from './Sparkline'
+import { surname } from '../lib/format'
 import { spread } from '../lib/spread'
 import styles from './TrajectoryChart.module.css'
 
@@ -130,8 +131,9 @@ export function TrajectoryChart({
             key={line.name}
             className={`${styles.tag} ${rank(index)}`}
             style={{ top: `${tags[index]}%` }}
+            aria-hidden="true"
           >
-            {line.name}
+            {surname(line.name)}
           </span>
         ))}
         <span className={styles.axis} aria-hidden="true">

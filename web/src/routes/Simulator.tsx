@@ -19,7 +19,7 @@ import {
   SurfaceToggle,
   WinSplit,
 } from '../components'
-import { formatPercent } from '../lib/format'
+import { formatPercent, surname } from '../lib/format'
 import { surfaceLabel } from '../lib/surface'
 import { useUrlParam } from '../lib/useUrlParam'
 import { FEATURED_DRAW } from '../lib/featuredDraw'
@@ -204,7 +204,7 @@ function MatchPanel({
         ]}
       />
       <WinSplit nameA={playerA.name} nameB={playerB.name} share={sim.chain.match[0]} />
-      <Chain chain={sim.chain} />
+      <Chain chain={sim.chain} nameA={playerA.name} nameB={playerB.name} />
       <Amplification chain={sim.chain} />
       <Inputs sim={sim} />
     </section>
@@ -218,16 +218,28 @@ const rungs: ReadonlyArray<{ key: keyof SimulationChain; label: string }> = [
   { key: 'match', label: 'Match' },
 ]
 
-function Chain({ chain }: { chain: SimulationChain }) {
+/**
+ * The rungs, as ruled rows with a column for each player: A in ink, B in
+ * pencil, the same pair the split above uses.
+ */
+function Chain({ chain, nameA, nameB }: { chain: SimulationChain; nameA: string; nameB: string }) {
   return (
     <div className={styles.chain}>
       <h2 className={styles.sectionTitle}>How the edge compounds</h2>
+      <div className={styles.chainHead} aria-hidden="true">
+        <span />
+        <span className={styles.chainA}>{surname(nameA)}</span>
+        <span className={styles.chainB}>{surname(nameB)}</span>
+      </div>
       {rungs.map(({ key, label }) => (
         <div key={key} className={styles.rung}>
           <span className={styles.rungLabel}>{label}</span>
-          <span className={styles.rungValue}>
+          <span className={styles.rungA}>
+            <span className="sr-only">{nameA} </span>
             {formatPercent(chain[key][0] * 100)}
-            <span className={styles.dot}> &middot; </span>
+          </span>
+          <span className={styles.rungB}>
+            <span className="sr-only">{nameB} </span>
             {formatPercent(chain[key][1] * 100)}
           </span>
         </div>
@@ -339,14 +351,13 @@ function DrawPanel({ draw }: { draw: Resource<DrawSimulation> }) {
       <p className={styles.caption}>
         This draw was played. The ratings are as of {sim.event.ratings_as_of}, the week it
         began, so the simulation knows only what was known then
-        {sim.champion === null ? null : (
+        {sim.champion === null ? '.' : (
           <>
-            {' '}
-            &mdash; and it can be marked: <Link to={`/players/${sim.champion}`}>the player
-            who actually won it</Link> is in the list above.
+            , and it can be marked: <Link to={`/players/${sim.champion}`}>the player who
+            actually won it</Link> is in the list above.
           </>
-        )}
-        . Every figure is one sample of ten thousand, so each carries the interval it earned.
+        )}{' '}
+        Every figure is one sample of ten thousand, so each carries the interval it earned.
       </p>
     </section>
   )

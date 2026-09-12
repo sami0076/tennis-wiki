@@ -1,35 +1,51 @@
 .title {
-  font-size: var(--t-24);
+  font-size: var(--t-28);
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  padding: var(--s-2) 0 var(--s-4);
 }
 
 .controls {
-  padding: var(--s-4) 0;
-  border-bottom: var(--hairline);
+  display: grid;
+  gap: var(--s-2);
+  padding-bottom: var(--s-4);
+  border-bottom: var(--rule-ink);
+}
+
+/* The typed field: prompt and entry over one rule. */
+.field {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  max-width: 480px;
+  border-bottom: var(--rule-ink);
 }
 
 .label {
-  display: block;
-  margin-bottom: var(--s-1);
-  font-size: var(--t-12);
-  color: var(--muted);
+  flex: 0 0 auto;
+  font-size: var(--t-14);
+  font-weight: 500;
+}
+
+.label::after {
+  content: ':';
 }
 
 .input {
-  width: 100%;
-  max-width: 420px;
-  padding: 6px 10px;
-  border: 1px solid var(--chalk);
-  border-radius: 4px;
-  background: var(--paper);
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 5px 0;
+  border: 0;
+  background: transparent;
   font: inherit;
   font-size: var(--t-14);
   color: var(--ink);
 }
 
-.input:hover {
-  border-color: var(--ink-3);
+.input:focus-visible {
+  outline: 0;
+  box-shadow: 0 1px 0 var(--ink);
 }
 
 .results {
@@ -38,11 +54,13 @@
 
 .row {
   display: block;
-  padding: var(--s-3) 0;
-  border-bottom: var(--hairline);
+  padding: var(--s-3) 0 var(--s-3) var(--s-2);
+  border-bottom: var(--rule);
+  transition: background-color 120ms ease-out;
 }
 
 .row:hover {
+  background: var(--highlight);
   border-bottom-color: var(--ink);
 }
 
@@ -50,18 +68,25 @@
 .error,
 .caption {
   padding: var(--s-4) 0;
-  max-width: 60ch;
+  max-width: 64ch;
   font-size: var(--t-13);
-  line-height: 1.55;
-  color: var(--muted);
+  line-height: 1.6;
+  color: var(--pencil);
 }
 
 .caption {
-  font-size: var(--t-11);
+  font-size: var(--t-12);
 }
 
 .more {
   display: flex;
   flex-wrap: wrap;
   gap: var(--s-3);
+}
+
+@media (min-width: 880px) {
+  .title {
+    font-size: var(--t-32);
+    padding-top: var(--s-4);
+  }
 }

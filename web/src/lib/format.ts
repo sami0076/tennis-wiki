@@ -26,6 +26,12 @@ export function careerSpan(firstMatch: string, lastMatch: string): string {
   return from === to ? from : `${from}-${to}`
 }
 
+/** surname is what a sheet writes where a whole name will not fit. */
+export function surname(name: string): string {
+  const parts = name.trim().split(' ')
+  return parts[parts.length - 1] ?? name
+}
+
 /** ageOn is whole years between two dates, which is how an age is quoted. */
 export function ageOn(birthDate: string, on: string): number | null {
   const born = new Date(birthDate)

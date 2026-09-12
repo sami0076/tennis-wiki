@@ -8,7 +8,7 @@ export type Surface = (typeof SURFACES)[number]
 
 /**
  * surfaceVar returns the CSS custom property for a surface. An unrecorded
- * surface is --ink-3, the same grey absence is drawn in everywhere else: it is
+ * surface is pencil, the same grey absence is drawn in everywhere else: it is
  * not a fifth surface.
  */
 export function surfaceVar(surface: string | null): string {
@@ -22,7 +22,7 @@ export function surfaceVar(surface: string | null): string {
     case 'carpet':
       return 'var(--carpet)'
     default:
-      return 'var(--ink-3)'
+      return 'var(--pencil-mid)'
   }
 }
 

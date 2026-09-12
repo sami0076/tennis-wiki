@@ -14,16 +14,21 @@ function line(name: string, position: number, weeks: number): TrajectoryLineData
 }
 
 describe('TrajectoryChart', () => {
-  it('names the leaders and counts the rest as the field', () => {
-    const lines = [1, 2, 3, 4, 5].map((n) => line(`Player ${n}`, n, 4))
+  it('names the leaders at their line ends and counts the rest as the field', () => {
+    const lines = [1, 2, 3, 4, 5].map((n) => line(`Player Number${n}`, n, 4))
     render(<TrajectoryChart lines={lines} />)
 
+    // The tag at a line's end is the surname; the whole name is in the description.
     for (const n of [1, 2, 3]) {
-      expect(screen.getByText(`Player ${n}`)).toBeInTheDocument()
+      expect(screen.getByText(`Number${n}`)).toBeInTheDocument()
     }
+    expect(screen.getByRole('img')).toHaveAttribute(
+      'aria-label',
+      expect.stringContaining('Player Number1, Player Number2, Player Number3'),
+    )
     // The field is a count, not four more names nobody can tell apart.
     expect(screen.getByText(/2 more drawn as the field/)).toBeInTheDocument()
-    expect(screen.queryByText('Player 4')).not.toBeInTheDocument()
+    expect(screen.queryByText('Number4')).not.toBeInTheDocument()
   })
 
   // A line is what the chart is; one point is a dot, and it would widen the

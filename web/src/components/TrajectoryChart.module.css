@@ -60,8 +60,6 @@
   position: absolute;
   right: 0;
   width: 11ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
   transform: translateY(-50%);
   font-size: var(--t-12);
   font-weight: 600;

@@ -188,7 +188,8 @@ function Board({ page, elo, surface, cursors, setCursors, clearDate }: BoardProp
           `as of ${data.as_of}`,
         ]}
       />
-      {data.requested !== null ? (
+      {/* omitempty on the API side: absent, not null, when no date was asked for */}
+      {data.requested ? (
         <p className={styles.caption}>
           You asked for {data.requested}. This is the nearest week at or before it that
           exists, which is what every ranking here is: as of a week that happened, never as
