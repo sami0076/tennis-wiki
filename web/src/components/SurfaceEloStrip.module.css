@@ -1,38 +1,48 @@
+/* Typed cells in a row, on the sheet. The best surface is boxed in its hue,
+   which is the one place a box carries meaning. */
 .strip {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  border-top: var(--hairline);
-  border-bottom: var(--hairline);
-  overflow-x: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
 }
 
 .cell {
-  padding: var(--s-4) var(--s-2);
-  text-align: center;
-  border-left: var(--hairline);
-  min-width: 88px;
+  flex: 1 1 128px;
+  max-width: 200px;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid transparent;
 }
 
-.cell:first-child {
-  border-left: 0;
+.best {
+  border-style: solid;
 }
 
 .label {
-  font-size: var(--t-13);
-  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-12);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.square {
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  flex: 0 0 auto;
 }
 
 .value {
-  margin-top: var(--s-1);
-  font-size: var(--t-24);
+  margin-top: 2px;
+  font-size: var(--t-28);
   font-weight: 700;
-  line-height: 1.2;
-  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
 }
 
 .matches {
-  margin-top: var(--s-1);
+  margin-top: 2px;
   font-size: var(--t-11);
-  color: var(--muted);
+  color: var(--pencil);
 }

@@ -1,24 +1,25 @@
+/* One ruled line of the sheet: the label, the figure at the right edge. */
 .row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--s-4);
-  padding: var(--s-3) 0;
-  border-bottom: var(--hairline);
+  padding: 9px 0;
+  border-bottom: var(--rule);
 }
 
-.row:last-child {
-  border-bottom: 0;
+.row:last-of-type {
+  border-bottom: var(--rule-ink);
 }
 
 .label {
-  color: var(--muted);
+  color: var(--ink);
   font-size: var(--t-14);
 }
 
 .value {
   font-weight: 700;
-  font-size: var(--t-16);
-  font-variant-numeric: tabular-nums;
+  font-size: var(--t-14);
   text-align: right;
+  white-space: nowrap;
 }

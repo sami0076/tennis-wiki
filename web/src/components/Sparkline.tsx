@@ -14,8 +14,8 @@ interface SparklineProps {
 }
 
 /**
- * Sparkline is a hand-rolled inline SVG: one --ink line, a baseline hairline,
- * no axes and no labels.
+ * Sparkline is a hand-rolled inline SVG: one ink line over the ruling of the
+ * sheet, no axes and no labels.
  *
  * Deliberately not a charting library. The multi-series trajectory chart -- top
  * eight, hover readout, sixty years of weeks -- arrives with the ratings
@@ -48,7 +48,25 @@ export function Sparkline({ points, label, width = 240, height = 40 }: Sparkline
         role="img"
         aria-label={label}
       >
-        <line className={styles.baseline} x1="0" y1={height} x2={width} y2={height} />
+        {[0.25, 0.5, 0.75].map((share) => (
+          <line
+            key={share}
+            className={styles.ruling}
+            x1="0"
+            y1={height * share}
+            x2={width}
+            y2={height * share}
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
+        <line
+          className={styles.baseline}
+          x1="0"
+          y1={height}
+          x2={width}
+          y2={height}
+          vectorEffect="non-scaling-stroke"
+        />
         <path className={styles.line} d={path} vectorEffect="non-scaling-stroke" />
       </svg>
     </figure>

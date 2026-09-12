@@ -21,6 +21,7 @@ import {
   Meta,
   PlayerSearch,
   RivalryStrip,
+  Score,
   Skeleton,
   SplitBar,
   StatTable,
@@ -31,7 +32,7 @@ import {
   type RivalryResult,
 } from '../components'
 import { absenceReason } from '../lib/absence'
-import { formatPercent, formatScore } from '../lib/format'
+import { formatPercent, surname } from '../lib/format'
 import { surfaceLabel } from '../lib/surface'
 import { tierLabel } from '../lib/tier'
 import { useUrlParam } from '../lib/useUrlParam'
@@ -148,7 +149,7 @@ function Pickers({
       ))}
       {clash ? (
         <p className={styles.error}>
-          Pick two different players. A comparison with themselves would be 0&#8211;0 for both
+          Pick two different players. A comparison with themselves would be 0-0 for both
           sides.
         </p>
       ) : null}
@@ -219,9 +220,9 @@ function Rivalry({
           <Meta parts={[playerA.tour.toUpperCase(), playerA.country]} />
         </div>
         <div className={styles.tally}>
-          {record.wins[0]}&#8211;{record.wins[1]}
+          {record.wins[0]}-{record.wins[1]}
         </div>
-        <div>
+        <div className={styles.sideB}>
           <Link className={styles.nameB} to={`/players/${playerB.slug}`}>
             {playerB.name}
           </Link>
@@ -546,23 +547,37 @@ function MeetingsSection({
     { key: 'date', header: 'Date', value: (row) => row.date },
     {
       key: 'winner',
+      wrap: true,
       header: 'Won by',
       value: (row) => (row.winner_index === 0 ? playerA.name : playerB.name),
-      render: (row) => (
-        <span className={row.winner_index === 0 ? styles.winnerA : styles.winnerB}>
-          {row.winner_index === 0 ? playerA.name : playerB.name}
-        </span>
-      ),
+      render: (row) => {
+        const winner = row.winner_index === 0 ? playerA.name : playerB.name
+        return (
+          <span className={row.winner_index === 0 ? styles.winnerA : styles.winnerB}>
+            <span className={styles.full}>{winner}</span>
+            <span className={styles.short} aria-hidden="true">
+              {surname(winner)}
+            </span>
+          </span>
+        )
+      },
     },
     {
       key: 'event',
+      wrap: true,
       header: 'Event',
       value: (row) => row.tournament,
       render: (row) => (
         <>
           {row.tournament} {row.round}
           {row.qualifying ? ' Q' : ''}
-          <div className={styles.event}>{tierLabel(row.tier) ?? row.tier}</div>
+          <div className={styles.event}>
+            {/* The surface column steps aside on a phone; its square moves here. */}
+            <span className={styles.eventSurface}>
+              <SurfaceDot surface={row.surface} label={false} />{' '}
+            </span>
+            {tierLabel(row.tier) ?? row.tier}
+          </div>
         </>
       ),
     },
@@ -571,17 +586,15 @@ function MeetingsSection({
       header: 'Surface',
       value: (row) => row.surface,
       render: (row) => <SurfaceDot surface={row.surface} />,
+      wide: true,
     },
     {
       key: 'score',
       header: 'Score',
+      wrap: true,
+      minWidth: '10ch',
       value: (row) => row.score,
-      render: (row) => (
-        <>
-          {formatScore(row.score)}
-          {row.incomplete ? <span className={styles.event}> incomplete</span> : null}
-        </>
-      ),
+      render: (row) => <Score score={row.score} incomplete={row.incomplete} />,
       sortable: false,
     },
   ]

@@ -1,12 +1,22 @@
 /**
- * The source writes scores with hyphens; the design sets them with en-dashes,
- * which is what a score is: a range between two numbers, not a hyphenation.
- * Only digit-hyphen-digit is touched, so a hyphenated name inside a retirement
- * note survives.
+ * A score is typed the way the source writes it and the way a draw sheet
+ * writes it: 6-4 7-6(3). The marks are the sheet's: ret. for a retirement,
+ * w/o for a walkover, def. for a default.
  */
 export function formatScore(score: string | null): string | null {
   if (score === null) return null
-  return score.replace(/(\d)-(\d)/g, '$1\u2013$2')
+  return score
+    .replace(/\bRET\b/g, 'ret.')
+    .replace(/\bW\/O\b/g, 'w/o')
+    .replace(/\bDEF\b/g, 'def.')
+}
+
+/**
+ * Whether a score already carries the sheet's mark for not being played out, so
+ * an incomplete match is not marked twice.
+ */
+export function scoreCarriesMark(score: string | null): boolean {
+  return score !== null && /\b(ret\.|w\/o|def\.)/.test(formatScore(score) ?? '')
 }
 
 /** elo is shown whole: the hundredths in the database are not a real precision. */
@@ -25,7 +35,13 @@ export function formatPercent(value: number, places = 1): string {
 export function careerSpan(firstMatch: string, lastMatch: string): string {
   const from = firstMatch.slice(0, 4)
   const to = lastMatch.slice(0, 4)
-  return from === to ? from : `${from}\u2013${to}`
+  return from === to ? from : `${from}-${to}`
+}
+
+/** surname is what a sheet writes where a whole name will not fit. */
+export function surname(name: string): string {
+  const parts = name.trim().split(' ')
+  return parts[parts.length - 1] ?? name
 }
 
 /** ageOn is whole years between two dates, which is how an age is quoted. */

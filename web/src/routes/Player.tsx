@@ -25,6 +25,7 @@ import {
   Meta,
   PartialAggregate,
   RankDelta,
+  Score,
   Skeleton,
   Sparkline,
   StatRow,
@@ -36,7 +37,7 @@ import {
   type Column,
 } from '../components'
 import { absenceReason, hasStatistics } from '../lib/absence'
-import { ageOn, careerSpan, formatHand, formatPercent, formatScore } from '../lib/format'
+import { ageOn, careerSpan, formatHand, formatPercent } from '../lib/format'
 import { tierLabel } from '../lib/tier'
 import { useUrlParam } from '../lib/useUrlParam'
 import styles from './Player.module.css'
@@ -119,8 +120,10 @@ export function Player() {
             label={`Overall Elo from ${trajectory.data.from} to ${trajectory.data.to}`}
           />
           <figcaption className={styles.caption}>
-            Overall Elo, {trajectory.data.from} to {trajectory.data.to}. Rated only in the weeks
-            they played.
+            Overall Elo, {trajectory.data.from} to {trajectory.data.to}, between{' '}
+            {Math.round(Math.min(...trajectory.data.points.map((p) => p.elo)))} and{' '}
+            {Math.round(Math.max(...trajectory.data.points.map((p) => p.elo)))}. Rated only in
+            the weeks they played.
           </figcaption>
         </figure>
       ) : null}
@@ -147,19 +150,22 @@ export function Player() {
           <div className={styles.right}>
             <ServeSection player={player} />
             <SplitsSection career={player.career} />
-            <MatchesSection
-              matches={matches}
-              surface={surface}
-              onSurface={(next) => {
-                setCursors([])
-                setSurface(next)
-              }}
-              onMore={(cursor) => setCursors((current) => [...current, cursor])}
-              paged={cursors.length > 0}
-              onFirst={() => setCursors([])}
-            />
           </div>
         </div>
+      )}
+
+      {player.career === null ? null : (
+        <MatchesSection
+          matches={matches}
+          surface={surface}
+          onSurface={(next) => {
+            setCursors([])
+            setSurface(next)
+          }}
+          onMore={(cursor) => setCursors((current) => [...current, cursor])}
+          paged={cursors.length > 0}
+          onFirst={() => setCursors([])}
+        />
       )}
     </>
   )
@@ -297,7 +303,7 @@ function CareerSection({ career }: { career: Career }) {
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>Career</h2>
       <StatRow label="Record">
-        {career.wins}&#8211;{career.losses}
+        {career.wins}-{career.losses}
       </StatRow>
       <StatRow label="Win percentage">{formatPercent(career.win_percentage)}</StatRow>
       <StatRow label="Titles">{career.titles}</StatRow>
@@ -442,11 +448,11 @@ function SplitsSection({ career }: { career: Career }) {
       <StatTable
         caption="Matches with serve statistics, per tier. This is what makes never recorded at this level a checkable claim."
         columns={[
-          { key: 'tier', header: 'Tier', value: (row) => row.tier },
+          { key: 'tier', header: 'Tier', wrap: true, value: (row) => row.tier },
           { key: 'matches', header: 'Matches', align: 'right', value: (row) => Number(row.matches) },
           {
             key: 'stats',
-            header: 'With serve stats',
+            header: 'Serve stats',
             align: 'right',
             // A tier that never recorded them has no figure, not a zero.
             value: (row) => (Number(row.matches_with_stats) === 0 ? null : Number(row.matches_with_stats)),
@@ -470,6 +476,7 @@ const matchColumns: ReadonlyArray<Column<PlayerMatch>> = [
   },
   {
     key: 'opponent',
+    wrap: true,
     header: 'Opponent',
     value: (row) => row.opponent.name,
     render: (row) => (
@@ -478,6 +485,10 @@ const matchColumns: ReadonlyArray<Column<PlayerMatch>> = [
           {row.opponent.name}
         </Link>
         <div className={styles.event}>
+          {/* The surface column steps aside on a phone; its square moves here. */}
+          <span className={styles.eventSurface}>
+            <SurfaceDot surface={row.surface} label={false} />{' '}
+          </span>
           {row.tournament} {row.round}
           {row.qualifying ? ' Q' : ''}
         </div>
@@ -489,17 +500,17 @@ const matchColumns: ReadonlyArray<Column<PlayerMatch>> = [
     header: 'Surface',
     value: (row) => row.surface,
     render: (row) => <SurfaceDot surface={row.surface} />,
+    wide: true,
   },
   {
     key: 'score',
     header: 'Score',
+    // A long score may take two lines, but a set never breaks: there are no
+    // spaces inside one.
+    wrap: true,
+    minWidth: '10ch',
     value: (row) => row.score,
-    render: (row) => (
-      <>
-        {formatScore(row.score)}
-        {row.incomplete ? <span className={styles.event}> incomplete</span> : null}
-      </>
-    ),
+    render: (row) => <Score score={row.score} incomplete={row.incomplete} />,
     sortable: false,
   },
   {
@@ -507,6 +518,8 @@ const matchColumns: ReadonlyArray<Column<PlayerMatch>> = [
     header: 'Aces',
     align: 'right',
     value: (row) => row.serve.aces,
+    // The column a phone has no room for; the score is the one it needs.
+    wide: true,
   },
 ]
 
@@ -544,7 +557,7 @@ function MatchesSection({ matches, surface, onSurface, onMore, paged, onFirst }:
         ) : (
           <>
             <StatTable
-              caption="Most recent first. An aces column with a dash is a match nobody recorded serve statistics for."
+              caption="Most recent first. Aces reading n/r is a match nobody recorded serve statistics for; ret. is a retirement and w/o a walkover, which count in the record and sit out of every rate."
               columns={matchColumns}
               rows={matches.data.data}
               rowKey={(row) => `${row.date}-${row.tournament}-${row.opponent.slug}-${row.round}`}

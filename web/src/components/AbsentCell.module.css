@@ -1,4 +1,4 @@
-.dash {
-  color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
+.mark {
+  color: var(--pencil);
+  white-space: nowrap;
 }

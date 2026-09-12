@@ -1,78 +1,105 @@
 .shell {
-  max-width: 1120px;
+  max-width: 1248px;
   margin: 0 auto;
   padding: 0 var(--s-4);
 }
 
+/* The sheet head. On a phone the search takes the row under the brand and the
+   tabs; with room it sits between them. */
 .nav {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s-3) var(--s-4);
   padding: var(--s-4) 0;
-  border-bottom: var(--hairline);
+  border-bottom: var(--rule-ink);
 }
 
 .brand {
-  font-size: var(--t-16);
-  font-weight: 700;
+  font-size: var(--t-20);
+  font-weight: 600;
+  letter-spacing: -0.01em;
   border-bottom: 0;
 }
 
 .links {
   display: flex;
-  gap: var(--s-4);
-  margin-left: auto;
-  font-size: var(--t-13);
+  flex: 1 0 100%;
+  gap: var(--s-2);
+  font-size: var(--t-12);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
+/* The phone gets the short labels; the accessible name stays the long one,
+   which is the one that is not hidden from assistive technology. */
+.long {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.short {
+  display: inline;
 }
 
 .link {
-  border-bottom: 2px solid transparent;
-  color: var(--muted);
-  font-weight: 600;
+  border-bottom: 0;
+  color: var(--pencil);
+  white-space: nowrap;
+  transition: color 120ms ease-out;
 }
 
 .link:hover {
   color: var(--ink);
-  border-bottom-color: transparent;
+}
+
+/* The active tab is set in brackets, like a seed. The inactive tabs keep a
+   space where the bracket would be, so nothing moves when the page changes. */
+.bracket::before {
+  content: '\00a0';
 }
 
 .active {
   color: var(--ink);
-  border-bottom-color: var(--ink);
+  font-weight: 600;
 }
 
-/* Mobile-first: the search takes the row under the brand and the links. It moves
-   up between them once there is width for it. */
+.active .bracket:first-child::before {
+  content: '[';
+}
+
+.active .bracket:last-child::before {
+  content: ']';
+}
+
 .search {
   flex: 1 0 100%;
 }
 
 .main {
-  padding: var(--s-5) 0 var(--s-7);
+  padding: var(--s-5) 0 var(--s-8);
 }
 
 .footer {
-  padding: var(--s-5) 0;
-  border-top: var(--hairline);
-  font-size: var(--t-11);
+  padding: var(--s-5) 0 var(--s-6);
+  border-top: var(--rule-ink);
+  font-size: var(--t-12);
   line-height: 1.55;
-  color: var(--muted);
+  color: var(--pencil);
 }
 
 .footer p {
   margin-bottom: var(--s-2);
-  max-width: 68ch;
+  max-width: 72ch;
 }
 
 .footerLink {
   color: var(--ink);
-  text-decoration: none;
-  border-bottom: 1px solid var(--chalk);
-}
-
-.footerLink:hover {
-  border-bottom-color: var(--ink);
 }
 
 @media (min-width: 880px) {
@@ -80,18 +107,37 @@
     padding: 0 var(--s-5);
   }
 
+  .nav {
+    gap: var(--s-6);
+  }
+
   .brand {
     order: 1;
   }
 
-  .search {
+  .links {
     order: 2;
-    flex: 0 1 300px;
-    margin-left: auto;
+    flex: 0 1 auto;
+    gap: var(--s-4);
+    font-size: var(--t-13);
+    overflow: visible;
   }
 
-  .links {
+  .long {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
+
+  .short {
+    display: none;
+  }
+
+  .search {
     order: 3;
-    margin-left: var(--s-5);
+    flex: 0 1 320px;
+    margin-left: auto;
   }
 }

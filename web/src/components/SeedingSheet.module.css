@@ -1,0 +1,323 @@
+/* Phone first: the form lines, then the seeds under them. */
+.sheet {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'plot'
+    'axis'
+    'seeds';
+  column-gap: 0;
+}
+
+.plot {
+  grid-area: plot;
+  position: relative;
+  padding-left: 4.5ch;
+  padding-right: 4ch;
+}
+
+.chart {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.ruling {
+  stroke: var(--pencil-light);
+  stroke-width: 1;
+}
+
+.line {
+  fill: none;
+  stroke-width: 1;
+  stroke-linejoin: round;
+  transition: stroke 160ms ease-out;
+}
+
+/* Where a line stopped before the window did, a dotted lead carries it to the
+   edge so the step still finds its row. */
+.lead {
+  stroke-width: 1;
+  stroke-dasharray: 1 3;
+}
+
+/* The ink ramp in ranking order, and the field after it. Hue is spent on
+   surface and cannot be borrowed. */
+.first {
+  stroke: var(--ink);
+  color: var(--ink);
+}
+
+.first .line {
+  stroke-width: 1.5;
+}
+
+.second {
+  stroke: var(--pencil);
+  color: var(--pencil);
+}
+
+.second .line {
+  stroke-width: 1.5;
+}
+
+.third {
+  stroke: var(--pencil-mid);
+  color: var(--pencil);
+}
+
+.third .line {
+  stroke-width: 1.25;
+}
+
+.field {
+  stroke: var(--pencil-mid);
+  color: var(--pencil);
+  opacity: 0.6;
+}
+
+/* A finger on one row: its line goes to ink and the others fall back. */
+.lit,
+.lit .line {
+  stroke: var(--ink);
+}
+
+.lit .line {
+  stroke-width: 1.5;
+}
+
+.dim {
+  stroke: var(--pencil-light);
+}
+
+.tag {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+  font-size: var(--t-12);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.axis {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: var(--t-11);
+  line-height: 1;
+  color: var(--pencil);
+}
+
+.axis span:first-child {
+  transform: translateY(-50%);
+}
+
+.axis span:last-child {
+  transform: translateY(50%);
+}
+
+.from,
+.to {
+  grid-area: axis;
+  padding-top: var(--s-1);
+  font-size: var(--t-11);
+  line-height: 1.3;
+  color: var(--pencil);
+}
+
+.from {
+  justify-self: start;
+  padding-left: 4.5ch;
+}
+
+.to {
+  justify-self: end;
+  padding-right: 4ch;
+}
+
+.steps {
+  display: none;
+}
+
+.seeds {
+  grid-area: seeds;
+  margin-top: var(--s-4);
+  list-style: none;
+  padding: 0;
+  border-top: var(--rule-ink);
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  height: 40px;
+  padding: 10px 0 0 var(--s-2);
+  border-bottom: var(--rule);
+  font-size: var(--t-13);
+  transition:
+    background-color 120ms ease-out,
+    opacity 160ms ease-out;
+}
+
+.row:hover {
+  background: var(--highlight);
+}
+
+.row:last-child {
+  border-bottom: var(--rule-ink);
+}
+
+.rowDim {
+  opacity: 0.55;
+}
+
+.seed {
+  color: var(--pencil);
+  min-width: 3ch;
+}
+
+.name {
+  font-weight: 700;
+  border-bottom: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.name:hover {
+  border-bottom: var(--rule-ink);
+}
+
+.country {
+  color: var(--pencil);
+}
+
+/* The typed leader between a name and its figure. */
+.leader {
+  flex: 1 1 auto;
+  min-width: 1ch;
+  align-self: center;
+  border-bottom: 1px dotted var(--pencil-mid);
+}
+
+.elo {
+  font-weight: 700;
+  min-width: 4ch;
+  text-align: right;
+}
+
+.delta {
+  min-width: 3ch;
+  text-align: right;
+  padding-right: var(--s-2);
+}
+
+@media (min-width: 880px) {
+  .sheet {
+    grid-template-columns: minmax(0, 7fr) 40px minmax(360px, 5fr);
+    grid-template-areas:
+      'plot steps seeds'
+      'axis . .';
+  }
+
+  .plot {
+    padding-right: 0;
+  }
+
+  .tag {
+    display: none;
+  }
+
+  .to {
+    padding-right: 0;
+  }
+
+  .steps {
+    display: block;
+    grid-area: steps;
+    width: 40px;
+    overflow: visible;
+  }
+
+  .step {
+    fill: none;
+    stroke-width: 1;
+  }
+
+  .seeds {
+    margin-top: 0;
+    border-top: 0;
+  }
+
+  .row:first-child {
+    border-top: 0;
+  }
+}
+
+/* The sheet's one motion: the lines draw in, then the steps reach across,
+   then the rules of the list. Off for anyone who asked for less. */
+@media (prefers-reduced-motion: no-preference) {
+  .animate .line,
+  .animate .lead {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: draw 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate .lead {
+    /* dasharray on a dotted lead would eat the dots, so it fades instead */
+    stroke-dasharray: 1 3;
+    stroke-dashoffset: 0;
+    opacity: 0;
+    animation: fade 300ms ease-out 700ms forwards;
+  }
+
+  /* The steps reach across after the lines have landed: the gutter unclips
+     left to right, which is a clip on the box rather than a dash on the path,
+     and so survives any relayout. */
+  .animate .steps {
+    clip-path: inset(0 100% 0 0);
+    animation: reach 420ms cubic-bezier(0.16, 1, 0.3, 1) 700ms forwards;
+  }
+
+  .animate .row {
+    animation: rule 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(120ms + var(--i) * 45ms);
+  }
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fade {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes reach {
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes rule {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

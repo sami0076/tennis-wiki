@@ -15,8 +15,8 @@ interface SplitBarProps {
 }
 
 /**
- * SplitBar is a centre-out paired bar: player A to the left in --ink, player B
- * to the right in --ink-3, each growing outward from the middle.
+ * SplitBar is a centre-out paired bar: player A to the left in ink, player B
+ * to the right in pencil, each growing outward from the middle.
  *
  * Centre-out rather than a stacked bar split by share. 43% against 45% is two
  * short bars nearly the same length; as a share of the pair it would be a bar

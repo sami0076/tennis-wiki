@@ -4,6 +4,12 @@ import styles from './Methodology.module.css'
 
 const repo = 'https://github.com/sami0076/tennis-wiki/blob/main'
 
+// The document splits at its first section heading: what is above it is the
+// title and the standfirst.
+const cut = html.indexOf('<h2')
+const head = cut === -1 ? html : html.slice(0, cut)
+const body = cut === -1 ? '' : html.slice(cut)
+
 /**
  * The methodology, rendered from the document in the repository rather than
  * written a second time here.
@@ -35,6 +41,9 @@ export function Methodology() {
       </nav>
 
       <div>
+        {/* The title and its standfirst come first; the run's own figures sit
+            under them, before the first section. */}
+        <article className={styles.article} dangerouslySetInnerHTML={{ __html: head }} />
         <div className={styles.provenance}>
           <Meta
             parts={[
@@ -54,7 +63,7 @@ export function Methodology() {
 
         {/* The document is written in this repository and rendered at build
             time. Nothing here comes from a request. */}
-        <article className={styles.article} dangerouslySetInnerHTML={{ __html: html }} />
+        <article className={styles.article} dangerouslySetInnerHTML={{ __html: body }} />
       </div>
     </div>
   )

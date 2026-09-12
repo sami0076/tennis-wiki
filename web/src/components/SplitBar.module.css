@@ -1,19 +1,24 @@
 .split {
   padding: var(--s-3) 0;
-  border-bottom: var(--hairline);
+  border-bottom: var(--rule);
+}
+
+.split:last-of-type {
+  border-bottom: var(--rule-ink);
 }
 
 .numbers {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  gap: var(--s-3);
   font-size: var(--t-13);
-  font-variant-numeric: tabular-nums;
 }
 
 .label {
-  color: var(--muted);
+  color: var(--pencil);
   font-size: var(--t-12);
+  text-align: center;
 }
 
 .left {
@@ -23,7 +28,7 @@
 
 .right {
   font-weight: 700;
-  color: var(--ink-3);
+  color: var(--pencil);
 }
 
 .track {
@@ -49,10 +54,10 @@
 }
 
 .fillRight {
-  background: var(--ink-3);
+  background: var(--pencil);
 }
 
 .gap {
-  flex: 0 0 1px;
-  background: var(--paper);
+  flex: 0 0 2px;
+  background: var(--bond);
 }

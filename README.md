@@ -231,11 +231,12 @@ name `tennis-wiki`, which is an identifier rather than a brand and is not worth 
 renaming.
 
 React, TypeScript and Vite under `web/`, styled with CSS Modules and custom properties.
-No Tailwind, no component library, no charting library — the design rests on a small token
-set and hairline structure, and the reasoning is in
-[`docs/design/design-system.md`](docs/design/design-system.md). `/_components` renders every
-component in every state, which is the fastest way to check the system against a design, and
-`/players/:slug` is the first real page.
+No Tailwind, no component library, no charting library, no icon set. Every page is set as a
+sheet from the tournament office: one monospaced face, ruled lines, seeds in brackets, scores
+typed as the source writes them, and colour only where a value is surface-scoped. The design
+record is [`DESIGN.md`](DESIGN.md), the reasoning is
+[ADR-0010](docs/decisions/0010-the-draw-sheet.md), and `/_components` renders every
+component in every state, which is the fastest way to check the system against a page.
 
 `/simulator` is the third: two pickers, the chain from a service point up to the match, and
 a draw played ten thousand times with an interval on every figure. The caption carries the

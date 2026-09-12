@@ -8,15 +8,16 @@ interface AbsentCellProps {
 /**
  * AbsentCell is one missing value in a table that otherwise has numbers.
  *
- * An em-dash, never a zero, never a blank, never "N/A". A zero is a claim that
- * the player did the thing zero times; this says nobody wrote it down. The
- * column stays in the table because hiding it would misrepresent the dataset.
+ * Typed n/r, the way a sheet marks a figure nobody wrote down: never a zero,
+ * never a blank. A zero is a claim that the player did the thing zero times;
+ * this says it was not recorded. The column stays in the table because hiding
+ * it would misrepresent the dataset.
  */
 export function AbsentCell({ label }: AbsentCellProps) {
   const description = label ? `${label}: not recorded` : 'Not recorded'
   return (
-    <span className={styles.dash} title="Not recorded" aria-label={description}>
-      {'—'}
+    <span className={styles.mark} title="Not recorded" aria-label={description}>
+      n/r
     </span>
   )
 }

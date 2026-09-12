@@ -12,15 +12,16 @@ interface LayoutProps {
 // no way in is worse than a fourth tab. Simulator is Phase 3 and leads to a
 // placeholder, because leaving it out would make every later page edit the nav.
 const links = [
-  { to: '/players', label: 'Players' },
-  { to: '/h2h', label: 'Head to head' },
-  { to: '/rankings', label: 'Rankings' },
-  { to: '/simulator', label: 'Simulator' },
+  { to: '/players', label: 'Players', short: 'Players' },
+  { to: '/h2h', label: 'Head to head', short: 'H2H' },
+  { to: '/rankings', label: 'Rankings', short: 'Rankings' },
+  { to: '/simulator', label: 'Simulator', short: 'Simulator' },
 ]
 
 /**
- * Layout is the whole site chrome: a hairline under the nav, content on paper,
- * and the attribution the data licence requires in the footer of every page.
+ * Layout is the whole site chrome: the sheet head, typed, with the active tab
+ * set in brackets the way a seed is; the content; and the attribution the data
+ * licence requires in the foot of every page.
  */
 export function Layout({ children }: LayoutProps) {
   return (
@@ -39,7 +40,12 @@ export function Layout({ children }: LayoutProps) {
                   isActive ? `${styles.link} ${styles.active}` : styles.link
                 }
               >
-                {link.label}
+                <span className={styles.bracket} aria-hidden="true" />
+                <span className={styles.long}>{link.label}</span>
+                <span className={styles.short} aria-hidden="true">
+                  {link.short}
+                </span>
+                <span className={styles.bracket} aria-hidden="true" />
               </NavLink>
             ))}
           </div>
@@ -78,8 +84,7 @@ function HeaderSearch() {
 
   return (
     <PlayerSearch
-      label="Search players"
-      hideLabel
+      label="Player"
       placeholder="Search 115,000 players"
       value={query}
       onChange={setQuery}

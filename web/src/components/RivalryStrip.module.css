@@ -8,14 +8,15 @@
 .square {
   width: 13px;
   height: 13px;
-  border-radius: 2px;
+  border-radius: 1px;
   border: 1px solid;
   box-sizing: border-box;
 }
 
 .caption {
   margin-top: var(--s-1);
-  font-size: var(--t-11);
-  line-height: 1.5;
-  color: var(--muted);
+  max-width: 72ch;
+  font-size: var(--t-12);
+  line-height: 1.55;
+  color: var(--pencil);
 }

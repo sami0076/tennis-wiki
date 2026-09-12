@@ -1,6 +1,5 @@
 .delta {
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .up {
@@ -12,5 +11,5 @@
 }
 
 .level {
-  color: var(--muted);
+  color: var(--pencil);
 }

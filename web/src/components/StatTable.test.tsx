@@ -28,7 +28,7 @@ function bodyOrder(): string[] {
 }
 
 describe('StatTable', () => {
-  it('renders an absent value as a dash rather than a zero', () => {
+  it('renders an absent value as n/r rather than a zero', () => {
     render(<StatTable caption="Aces" columns={columns} rows={rows} rowKey={(r) => r.name} />)
     expect(screen.getByLabelText('Aces: not recorded')).toBeInTheDocument()
   })

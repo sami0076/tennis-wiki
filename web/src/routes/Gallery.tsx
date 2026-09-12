@@ -111,7 +111,7 @@ export function Gallery() {
         <h1 className={styles.title}>Components</h1>
         <p className={styles.lede}>
           Every component in the inventory, in every state. Not a page anyone visits: a
-          place to check the tokens, the hairlines and the absence system against the
+          place to check the tokens, the ruling and the absence system against the
           design before a page depends on them.
         </p>
       </section>
@@ -160,8 +160,8 @@ export function Gallery() {
       <section className={styles.block}>
         <h2 className={styles.name}>Meta</h2>
         <p className={styles.note}>
-          The one place a middle dot is allowed. Absent parts drop out rather than leaving a
-          separator with nothing after it.
+          Typed fields two spaces apart. Absent parts drop out rather than leaving a gap
+          with nothing after it.
         </p>
         <Meta parts={['Spain', 'right-handed', 23, 'turned pro 2018']} />
         <Meta parts={['Sweden', 'right-handed', '1973-1983']} />
@@ -172,8 +172,8 @@ export function Gallery() {
       <section className={styles.block}>
         <h2 className={styles.name}>SurfaceToggle</h2>
         <p className={styles.note}>
-          The active filter is underlined in its own surface colour, and the selection is in
-          the URL: reload the page and it survives. Currently {surface ?? 'all surfaces'}.
+          The active filter is boxed in its own surface colour, and the selection is in the
+          URL: reload the page and it survives. Currently {surface ?? 'all surfaces'}.
         </p>
         <SurfaceToggle value={surface} onChange={setSurface} />
       </section>

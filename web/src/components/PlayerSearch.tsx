@@ -20,7 +20,8 @@ interface PlayerSearchProps {
 }
 
 /**
- * PlayerSearch is the combobox behind every way into a player page.
+ * PlayerSearch is the combobox behind every way into a player page: the typed
+ * field on the sheet, a prompt and an entry over one rule.
  *
  * A real combobox rather than a div that looks like one: the input owns the
  * ARIA state, the options are options, and the highlighted one is named by
@@ -119,28 +120,30 @@ export function PlayerSearch({
         if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false)
       }}
     >
-      <label className={hideLabel ? 'sr-only' : styles.label} htmlFor={id}>
-        {label}
-      </label>
-      <input
-        id={id}
-        className={styles.input}
-        type="text"
-        role="combobox"
-        aria-expanded={showPanel}
-        aria-controls={listId}
-        aria-autocomplete="list"
-        aria-activedescendant={highlighted >= 0 ? `${id}-option-${highlighted}` : undefined}
-        autoComplete="off"
-        placeholder={placeholder}
-        value={value}
-        onChange={(event) => {
-          onChange(event.target.value)
-          setOpen(true)
-        }}
-        onFocus={() => setOpen(true)}
-        onKeyDown={onKeyDown}
-      />
+      <div className={styles.field}>
+        <label className={hideLabel ? 'sr-only' : styles.label} htmlFor={id}>
+          {label}
+        </label>
+        <input
+          id={id}
+          className={styles.input}
+          type="text"
+          role="combobox"
+          aria-expanded={showPanel}
+          aria-controls={listId}
+          aria-autocomplete="list"
+          aria-activedescendant={highlighted >= 0 ? `${id}-option-${highlighted}` : undefined}
+          autoComplete="off"
+          placeholder={placeholder}
+          value={value}
+          onChange={(event) => {
+            onChange(event.target.value)
+            setOpen(true)
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={onKeyDown}
+        />
+      </div>
 
       <div className={showPanel ? styles.panel : styles.hidden}>
         <ul ref={listRef} id={listId} role="listbox" aria-label={label} className={styles.list}>
