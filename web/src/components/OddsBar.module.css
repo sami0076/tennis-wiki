@@ -1,11 +1,15 @@
 .row {
   display: grid;
-  grid-template-columns: 1fr 2fr auto;
+  grid-template-columns: minmax(0, 1fr) 2fr auto;
   align-items: center;
   gap: var(--s-3);
-  padding: var(--s-2) 0;
-  border-bottom: var(--hairline);
+  padding: 7px 0;
+  border-bottom: var(--rule);
   font-size: var(--t-13);
+}
+
+.row:last-of-type {
+  border-bottom: var(--rule-ink);
 }
 
 .name {
@@ -32,18 +36,17 @@
   position: absolute;
   top: 0;
   height: 10px;
-  background: var(--ink-4);
-  opacity: 0.9;
+  background: var(--pencil-light);
 }
 
 .figure {
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
+  text-align: right;
 }
 
 .interval {
-  color: var(--muted);
+  color: var(--pencil);
   font-weight: 400;
   font-size: var(--t-11);
 }

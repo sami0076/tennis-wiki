@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { ageOn, careerSpan, formatHand, formatScore } from './format'
 
 describe('formatScore', () => {
-  it('sets scores with en-dashes', () => {
-    expect(formatScore('6-4 7-6(3)')).toBe('6\u20134 7\u20136(3)')
+  it('types scores as the sheet does, with hyphens', () => {
+    expect(formatScore('6-4 7-6(3)')).toBe('6-4 7-6(3)')
   })
 
   // Only digit-hyphen-digit, so a retirement note keeps its own punctuation.
   it('leaves anything that is not a scoreline alone', () => {
-    expect(formatScore('6-4 2-1 RET')).toBe('6\u20134 2\u20131 RET')
+    expect(formatScore('6-4 2-1 RET')).toBe('6-4 2-1 RET')
     expect(formatScore('W/O')).toBe('W/O')
   })
 
@@ -19,7 +19,7 @@ describe('formatScore', () => {
 
 describe('careerSpan', () => {
   it('reads as a span', () => {
-    expect(careerSpan('1973-06-01', '1983-04-02')).toBe('1973\u20131983')
+    expect(careerSpan('1973-06-01', '1983-04-02')).toBe('1973-1983')
   })
 
   it('collapses a career inside one season', () => {

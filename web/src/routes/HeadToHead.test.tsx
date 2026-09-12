@@ -179,7 +179,7 @@ describe('HeadToHead', () => {
 
     expect(await screen.findByRole('link', { name: 'Bjorn Borg' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'John McEnroe' })).toBeInTheDocument()
-    expect(screen.getByText('1–2')).toBeInTheDocument()
+    expect(screen.getByText('1-2')).toBeInTheDocument()
     expect(screen.getByText('Wimbledon F')).toBeInTheDocument()
     expect(screen.getByText('Break points saved')).toBeInTheDocument()
   })
@@ -190,7 +190,7 @@ describe('HeadToHead', () => {
     stub(rivalry)
     renderAt('/h2h/bjorn-borg/john-mcenroe?surface=grass')
 
-    expect(await screen.findByText('1–0')).toBeInTheDocument()
+    expect(await screen.findByText('1-0')).toBeInTheDocument()
     expect(screen.getByText('Wimbledon F')).toBeInTheDocument()
     expect(screen.queryByText('US Open F')).not.toBeInTheDocument()
   })
@@ -201,7 +201,7 @@ describe('HeadToHead', () => {
     stub(mirrored(rivalry))
     renderAt('/h2h/john-mcenroe/bjorn-borg')
 
-    expect(await screen.findByText('2–1')).toBeInTheDocument()
+    expect(await screen.findByText('2-1')).toBeInTheDocument()
     const rows = screen.getAllByRole('row')
     const wimbledon = rows.find((row) => row.textContent?.includes('Wimbledon'))
     expect(wimbledon).toHaveTextContent('Bjorn Borg')
@@ -222,7 +222,7 @@ describe('HeadToHead', () => {
     renderAt('/h2h/bjorn-borg/john-mcenroe')
 
     expect(await screen.findByText('These two have never met')).toBeInTheDocument()
-    expect(screen.getByText('0–0')).toBeInTheDocument()
+    expect(screen.getByText('0-0')).toBeInTheDocument()
     // Still a comparison: the ratings section is a real answer for two players
     // who never played each other.
     expect(screen.getByText('Overall Elo')).toBeInTheDocument()
@@ -241,7 +241,7 @@ describe('HeadToHead', () => {
     expect(await screen.findByText('No serve statistics for these meetings')).toBeInTheDocument()
     expect(screen.getByText(/No Futures or ITF match has ever recorded/)).toBeInTheDocument()
     // The record is still there. Only the statistics are missing.
-    expect(screen.getByText('1–2')).toBeInTheDocument()
+    expect(screen.getByText('1-2')).toBeInTheDocument()
   })
 
   // The bug this test exists for: choosing on an empty page cleared the box and
@@ -264,7 +264,7 @@ describe('HeadToHead', () => {
     await user.click(await screen.findByText('John McEnroe'))
 
     // Both known, so the comparison is a page now.
-    expect(await screen.findByText('1–2')).toBeInTheDocument()
+    expect(await screen.findByText('1-2')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Bjorn Borg' })).toBeInTheDocument()
   })
 

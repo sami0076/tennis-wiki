@@ -173,11 +173,11 @@ describe('the player page', () => {
     // Still playing, so the strip leads with the current rating rather than the peak.
     expect(screen.getByText('2168')).toBeInTheDocument()
     expect(screen.queryByText(/, peak/)).not.toBeInTheDocument()
-    expect(screen.getByText('300–100')).toBeInTheDocument()
+    expect(screen.getByText('300-100')).toBeInTheDocument()
     expect(screen.getByText('4')).toBeInTheDocument()
     expect(screen.getByText('63.2%')).toBeInTheDocument()
-    // The score is set with an en-dash, not the hyphen the source stores.
-    expect(await screen.findByText(/6–4 7–6\(3\)/)).toBeInTheDocument()
+    // The score is typed as the source stores it.
+    expect(await screen.findByText(/6-4 7-6\(3\)/)).toBeInTheDocument()
   })
 
   // The majority case at 125,868 players, and the one normally done badly.
@@ -196,7 +196,7 @@ describe('the player page', () => {
 
     expect(await screen.findByText(/No Futures or ITF match has ever recorded/)).toBeInTheDocument()
     expect(screen.queryByText('0.0%')).not.toBeInTheDocument()
-    // The absent statistic is a dash in the match row, not a blank and not a nought.
+    // The absent statistic is n/r in the match row, not a blank and not a nought.
     expect(await screen.findByLabelText('Aces: not recorded')).toBeInTheDocument()
   })
 
@@ -216,7 +216,7 @@ describe('the player page', () => {
 
     expect(await screen.findByText(/not kept before 1991/i)).toBeInTheDocument()
     // A finished career is described by its span and led by its peak.
-    expect(await screen.findByText(/1973–1983/)).toBeInTheDocument()
+    expect(await screen.findByText(/1973-1983/)).toBeInTheDocument()
     expect(screen.getAllByText(/, peak/).length).toBeGreaterThan(0)
     expect(screen.getByText('2202')).toBeInTheDocument()
   })

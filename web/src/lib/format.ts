@@ -1,12 +1,10 @@
 /**
- * The source writes scores with hyphens; the design sets them with en-dashes,
- * which is what a score is: a range between two numbers, not a hyphenation.
- * Only digit-hyphen-digit is touched, so a hyphenated name inside a retirement
- * note survives.
+ * A score is typed the way the source writes it and the way a draw sheet
+ * writes it: 6-4 7-6(3). One place to change if that ever stops being true.
  */
 export function formatScore(score: string | null): string | null {
   if (score === null) return null
-  return score.replace(/(\d)-(\d)/g, '$1\u2013$2')
+  return score
 }
 
 /** elo is shown whole: the hundredths in the database are not a real precision. */
@@ -25,7 +23,7 @@ export function formatPercent(value: number, places = 1): string {
 export function careerSpan(firstMatch: string, lastMatch: string): string {
   const from = firstMatch.slice(0, 4)
   const to = lastMatch.slice(0, 4)
-  return from === to ? from : `${from}\u2013${to}`
+  return from === to ? from : `${from}-${to}`
 }
 
 /** ageOn is whole years between two dates, which is how an age is quoted. */

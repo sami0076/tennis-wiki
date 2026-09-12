@@ -17,7 +17,9 @@
   stroke-linecap: round;
 }
 
-.baseline {
-  stroke: var(--chalk);
+/* The ruling of the sheet under the line. */
+.baseline,
+.ruling {
+  stroke: var(--pencil-light);
   stroke-width: 1;
 }

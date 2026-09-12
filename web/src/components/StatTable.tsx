@@ -40,7 +40,8 @@ interface StatTableProps<Row> {
 type Direction = 'asc' | 'desc'
 
 /**
- * StatTable is hairline rows and tabular numerals, with sortable headers.
+ * StatTable is a sheet table: ruled rows, the head and the total under and
+ * over ink rules, sortable headers.
  *
  * The one rule that is not cosmetic: an absent value sorts last whichever way
  * the column is sorted. Treating it as zero would collect every unrecorded
@@ -110,7 +111,13 @@ export function StatTable<Row>({
                       {column.header}
                       {active ? (
                         <span className={styles.marker} aria-hidden="true">
-                          {sort.direction === 'asc' ? ' ↑' : ' ↓'}
+                          <svg viewBox="0 0 8 8">
+                            {sort.direction === 'asc' ? (
+                              <path d="M1 5.5 4 2.5l3 3" />
+                            ) : (
+                              <path d="M1 2.5 4 5.5l3-3" />
+                            )}
+                          </svg>
                         </span>
                       ) : null}
                     </button>

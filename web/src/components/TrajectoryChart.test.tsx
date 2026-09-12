@@ -22,7 +22,7 @@ describe('TrajectoryChart', () => {
       expect(screen.getByText(`Player ${n}`)).toBeInTheDocument()
     }
     // The field is a count, not four more names nobody can tell apart.
-    expect(screen.getByText('2 more')).toBeInTheDocument()
+    expect(screen.getByText(/2 more drawn as the field/)).toBeInTheDocument()
     expect(screen.queryByText('Player 4')).not.toBeInTheDocument()
   })
 

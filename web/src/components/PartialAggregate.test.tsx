@@ -12,22 +12,22 @@ describe('PartialAggregate', () => {
     expect(screen.getByText(/41 of 68 matches/)).toBeInTheDocument()
   })
 
-  // A reader meets the dash and the average at the same moment, so one caption
+  // A reader meets the mark and the average at the same moment, so one caption
   // explains both.
-  it('explains the dash while there is one to explain', () => {
+  it('explains the mark while there is one to explain', () => {
     const { rerender } = render(
       <PartialAggregate recorded={41} total={68}>
         <p>12.4 aces</p>
       </PartialAggregate>,
     )
-    expect(screen.getByText(/\u2014 means/)).toBeInTheDocument()
+    expect(screen.getByText(/n\/r means/)).toBeInTheDocument()
 
     rerender(
       <PartialAggregate recorded={68} total={68}>
         <p>12.4 aces</p>
       </PartialAggregate>,
     )
-    expect(screen.queryByText(/\u2014 means/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/n\/r means/)).not.toBeInTheDocument()
   })
 
   it('says so plainly when nothing is missing', () => {

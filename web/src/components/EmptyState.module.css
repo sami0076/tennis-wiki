@@ -1,21 +1,23 @@
+/* A section with nothing to show reads as a note on the sheet: what is
+   absent, why, and where the sheet does have it. */
 .empty {
-  padding: var(--s-5) 0;
-  border-top: var(--hairline);
+  padding: var(--s-4) 0 var(--s-5);
+  border-top: var(--rule-ink);
 }
 
 .heading {
   margin: 0 0 var(--s-2);
   font-size: var(--t-14);
   font-weight: 600;
-  color: var(--muted);
+  color: var(--ink);
 }
 
 .reason {
   margin: 0;
-  max-width: 52ch;
+  max-width: 60ch;
   font-size: var(--t-13);
-  line-height: 1.55;
-  color: var(--muted);
+  line-height: 1.6;
+  color: var(--pencil);
 }
 
 .action {

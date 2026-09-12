@@ -13,10 +13,9 @@ interface SurfaceEloStripProps {
 }
 
 /**
- * SurfaceEloStrip is the row of surface ratings a player page opens with.
- *
- * The best surface is washed in its own tint, which is the one place a
- * background carries meaning. Everything else here is hairlines on paper.
+ * SurfaceEloStrip is the row of surface ratings a player page opens with: one
+ * typed cell per series, the surface name beside its square, the figure set
+ * in the surface colour, and the best surface boxed in its own hue.
  *
  * Only surfaces the player actually has a rating in appear: an unplayed surface
  * is absent from the API and stays absent here rather than becoming a 1500 the
@@ -36,19 +35,19 @@ export function SurfaceEloStrip({ series, mode }: SurfaceEloStripProps) {
     <div className={styles.strip}>
       {series.map((s) => {
         const isBest = best !== null && s.surface === best.surface
-        const colour = s.surface === 'overall' ? 'var(--ink)' : surfaceVar(s.surface)
+        const overall = s.surface === 'overall'
+        const colour = overall ? 'var(--ink)' : surfaceVar(s.surface)
         return (
           <div
             key={s.surface}
-            className={styles.cell}
-            style={
-              isBest
-                ? { background: `color-mix(in srgb, ${colour} 7%, var(--paper))` }
-                : undefined
-            }
+            className={isBest ? `${styles.cell} ${styles.best}` : styles.cell}
+            style={isBest ? { borderColor: colour } : undefined}
           >
-            <div className={styles.label} style={{ color: colour }}>
-              {s.surface === 'overall' ? 'Overall' : surfaceLabel(s.surface)}
+            <div className={styles.label} style={{ color: overall ? 'var(--pencil)' : colour }}>
+              {overall ? null : (
+                <span className={styles.square} style={{ background: colour }} aria-hidden="true" />
+              )}
+              {overall ? 'Overall' : surfaceLabel(s.surface)}
               {mode === 'peak' ? ', peak' : null}
             </div>
             <div className={styles.value} style={{ color: colour }}>

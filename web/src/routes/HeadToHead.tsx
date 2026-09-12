@@ -148,7 +148,7 @@ function Pickers({
       ))}
       {clash ? (
         <p className={styles.error}>
-          Pick two different players. A comparison with themselves would be 0&#8211;0 for both
+          Pick two different players. A comparison with themselves would be 0-0 for both
           sides.
         </p>
       ) : null}
@@ -219,7 +219,7 @@ function Rivalry({
           <Meta parts={[playerA.tour.toUpperCase(), playerA.country]} />
         </div>
         <div className={styles.tally}>
-          {record.wins[0]}&#8211;{record.wins[1]}
+          {record.wins[0]}-{record.wins[1]}
         </div>
         <div>
           <Link className={styles.nameB} to={`/players/${playerB.slug}`}>

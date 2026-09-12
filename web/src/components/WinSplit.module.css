@@ -7,27 +7,31 @@
 
 .nameA,
 .nameB {
-  font-size: var(--t-20);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+  font-size: var(--t-16);
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .nameB {
-  color: var(--ink-3);
+  color: var(--pencil);
   text-align: right;
 }
 
 .share {
-  font-size: var(--t-24);
+  font-size: var(--t-28);
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
+/* One bar divided between the two, ink against pencil. */
 .track {
   display: flex;
   height: 10px;
   margin-top: var(--s-2);
-  background: var(--ink-3);
+  background: var(--pencil);
 }
 
 .fill {
   background: var(--ink);
+  border-right: 2px solid var(--bond);
 }

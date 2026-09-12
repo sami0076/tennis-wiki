@@ -1,11 +1,11 @@
+/* A line of the sheet not yet typed: the rule is there, the entry is not. */
 .block {
-  background: var(--chalk);
-  border-radius: 2px;
+  background: var(--pencil-light);
 }
 
 .line {
-  height: 13px;
-  margin-bottom: var(--s-2);
+  height: 12px;
+  margin-bottom: 10px;
 }
 
 @media (prefers-reduced-motion: no-preference) {

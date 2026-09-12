@@ -11,9 +11,9 @@ interface SurfaceToggleProps {
 }
 
 /**
- * SurfaceToggle is a row of text filters. The active one gets a 2px underline
- * in its own surface colour -- the one place a filter is allowed to be coloured,
- * because the filter *is* the surface.
+ * SurfaceToggle is a row of typed filter cells. The active one is boxed in its
+ * own surface colour and set in it -- the one place a filter is allowed to be
+ * coloured, because the filter *is* the surface.
  *
  * Pair it with useUrlParam so the selection survives a reload and a shared link.
  */
@@ -23,7 +23,6 @@ export function SurfaceToggle({ value, onChange, options = SURFACES }: SurfaceTo
       <button
         type="button"
         className={[styles.option, value === null ? styles.active : ''].join(' ')}
-        style={value === null ? { borderBottomColor: 'var(--ink)' } : undefined}
         aria-pressed={value === null}
         onClick={() => onChange(null)}
       >
@@ -36,7 +35,7 @@ export function SurfaceToggle({ value, onChange, options = SURFACES }: SurfaceTo
             key={surface}
             type="button"
             className={[styles.option, active ? styles.active : ''].join(' ')}
-            style={active ? { borderBottomColor: surfaceVar(surface) } : undefined}
+            style={active ? { color: surfaceVar(surface), borderColor: surfaceVar(surface) } : undefined}
             aria-pressed={active}
             onClick={() => onChange(surface)}
           >

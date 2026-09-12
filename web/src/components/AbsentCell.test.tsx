@@ -3,10 +3,10 @@ import { describe, expect, it } from 'vitest'
 import { AbsentCell } from './AbsentCell'
 
 describe('AbsentCell', () => {
-  it('renders an em-dash, never a zero and never a blank', () => {
+  it('renders n/r, never a zero and never a blank', () => {
     render(<AbsentCell label="Aces" />)
     const cell = screen.getByLabelText('Aces: not recorded')
-    expect(cell).toHaveTextContent('\u2014')
+    expect(cell).toHaveTextContent('n/r')
     expect(cell).not.toHaveTextContent('0')
     expect(cell.textContent?.trim()).not.toBe('')
   })

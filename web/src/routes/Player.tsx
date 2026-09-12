@@ -297,7 +297,7 @@ function CareerSection({ career }: { career: Career }) {
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>Career</h2>
       <StatRow label="Record">
-        {career.wins}&#8211;{career.losses}
+        {career.wins}-{career.losses}
       </StatRow>
       <StatRow label="Win percentage">{formatPercent(career.win_percentage)}</StatRow>
       <StatRow label="Titles">{career.titles}</StatRow>
