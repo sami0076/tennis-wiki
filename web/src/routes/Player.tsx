@@ -25,6 +25,7 @@ import {
   Meta,
   PartialAggregate,
   RankDelta,
+  Score,
   Skeleton,
   Sparkline,
   StatRow,
@@ -36,7 +37,7 @@ import {
   type Column,
 } from '../components'
 import { absenceReason, hasStatistics } from '../lib/absence'
-import { ageOn, careerSpan, formatHand, formatPercent, formatScore } from '../lib/format'
+import { ageOn, careerSpan, formatHand, formatPercent } from '../lib/format'
 import { tierLabel } from '../lib/tier'
 import { useUrlParam } from '../lib/useUrlParam'
 import styles from './Player.module.css'
@@ -447,11 +448,11 @@ function SplitsSection({ career }: { career: Career }) {
       <StatTable
         caption="Matches with serve statistics, per tier. This is what makes never recorded at this level a checkable claim."
         columns={[
-          { key: 'tier', header: 'Tier', value: (row) => row.tier },
+          { key: 'tier', header: 'Tier', wrap: true, value: (row) => row.tier },
           { key: 'matches', header: 'Matches', align: 'right', value: (row) => Number(row.matches) },
           {
             key: 'stats',
-            header: 'With serve stats',
+            header: 'Serve stats',
             align: 'right',
             // A tier that never recorded them has no figure, not a zero.
             value: (row) => (Number(row.matches_with_stats) === 0 ? null : Number(row.matches_with_stats)),
@@ -475,6 +476,7 @@ const matchColumns: ReadonlyArray<Column<PlayerMatch>> = [
   },
   {
     key: 'opponent',
+    wrap: true,
     header: 'Opponent',
     value: (row) => row.opponent.name,
     render: (row) => (
@@ -499,13 +501,12 @@ const matchColumns: ReadonlyArray<Column<PlayerMatch>> = [
   {
     key: 'score',
     header: 'Score',
+    // A long score may take two lines, but a set never breaks: there are no
+    // spaces inside one.
+    wrap: true,
+    minWidth: '10ch',
     value: (row) => row.score,
-    render: (row) => (
-      <>
-        {formatScore(row.score)}
-        {row.incomplete ? <span className={styles.event}> incomplete</span> : null}
-      </>
-    ),
+    render: (row) => <Score score={row.score} incomplete={row.incomplete} />,
     sortable: false,
   },
   {

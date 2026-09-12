@@ -94,6 +94,10 @@
   border-bottom: 0;
 }
 
+.wrap {
+  white-space: normal;
+}
+
 /* A ledger total: the ink rule above is what makes it read as a total. */
 .aggregate .td {
   border-top: var(--rule-ink);
@@ -106,6 +110,15 @@
    dragging is one most readers will never know is there. */
 .wide {
   display: none;
+}
+
+/* A phone's cells sit closer, so a date, a name and a score fit in 390px. */
+@media (max-width: 879px) {
+  .th,
+  .td {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
 }
 
 @media (min-width: 880px) {

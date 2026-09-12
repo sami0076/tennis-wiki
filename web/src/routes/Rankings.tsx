@@ -250,6 +250,7 @@ const position: Column<RankingRow> = {
 
 const player: Column<RankingRow> = {
   key: 'player',
+  wrap: true,
   header: 'Player',
   value: (row) => row.name,
   render: (row) => (

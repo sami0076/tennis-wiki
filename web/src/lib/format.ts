@@ -11,6 +11,14 @@ export function formatScore(score: string | null): string | null {
     .replace(/\bDEF\b/g, 'def.')
 }
 
+/**
+ * Whether a score already carries the sheet's mark for not being played out, so
+ * an incomplete match is not marked twice.
+ */
+export function scoreCarriesMark(score: string | null): boolean {
+  return score !== null && /\b(ret\.|w\/o|def\.)/.test(formatScore(score) ?? '')
+}
+
 /** elo is shown whole: the hundredths in the database are not a real precision. */
 export function formatElo(elo: number): string {
   return String(Math.round(elo))

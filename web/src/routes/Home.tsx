@@ -26,20 +26,20 @@ const SEEDS = 8
 
 const columns: ReadonlyArray<Column<CoverageEntry>> = [
   { key: 'tour', header: 'Tour', value: (row) => row.tour.toUpperCase() },
-  { key: 'tier', header: 'Tier', value: (row) => row.tier },
+  { key: 'tier', header: 'Tier', wrap: true, value: (row) => row.tier },
   { key: 'matches', header: 'Matches', align: 'right', value: (row) => row.matches },
   { key: 'first', header: 'From', align: 'right', value: (row) => row.first_match, wide: true },
   { key: 'last', header: 'To', align: 'right', value: (row) => row.last_match, wide: true },
   {
     key: 'stats',
-    header: 'With serve stats',
+    header: 'Serve stats',
     align: 'right',
     // Zero matches with statistics is a real, recorded zero for a tier that
     // never had them -- the percentage is what is genuinely absent.
     value: (row) => (row.matches_with_stats === 0 ? null : row.stats_percentage),
     render: (row) =>
       row.matches_with_stats === 0 ? (
-        <AbsentCell label="With serve stats" />
+        <AbsentCell label="Serve stats" />
       ) : (
         `${row.stats_percentage.toFixed(1)}%`
       ),
@@ -223,6 +223,7 @@ function Replay({ draw }: { draw: Resource<DrawSimulation> }) {
     },
     {
       key: 'name',
+      wrap: true,
       header: 'Player',
       value: (row) => row.name,
       render: (row) => (
@@ -240,7 +241,7 @@ function Replay({ draw }: { draw: Resource<DrawSimulation> }) {
         value: (row) => row.reached[index] ?? null,
         render: (row) => `${((row.reached[index] ?? 0) * 100).toFixed(1)}`,
         sortable: false,
-        wide: index < rounds.length - 4,
+        wide: index < rounds.length - 2,
       }),
     ),
     {

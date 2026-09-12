@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { RankingRow } from '../api/client'
 import { spread } from '../lib/spread'
@@ -25,6 +25,8 @@ interface SeedingSheetProps {
 
 const ROW = 40
 const NAMED = 3
+/** The lines draw for 900ms, the steps reach across from 700ms for 420ms. */
+const SETTLE_MS = 1400
 
 /**
  * SeedingSheet is the first thing on the sheet: the leaders' form lines on the
@@ -37,6 +39,16 @@ const NAMED = 3
  */
 export function SeedingSheet({ lines, seeds, animate = false, width = 640 }: SeedingSheetProps) {
   const [lit, setLit] = useState<string | null>(null)
+  // Once the sheet has drawn in, the animation class comes off: what is left is
+  // the finished sheet, with no filled-forward animation for a resize or a
+  // capture to trip over.
+  const [settled, setSettled] = useState(false)
+  useEffect(() => {
+    if (!animate) return
+    const timer = setTimeout(() => setSettled(true), SETTLE_MS)
+    return () => clearTimeout(timer)
+  }, [animate])
+  const drawing = animate && !settled
   const height = seeds.length * ROW
 
   const drawable = lines.filter((line) => line.points.length > 1)
@@ -88,7 +100,7 @@ export function SeedingSheet({ lines, seeds, animate = false, width = 640 }: See
   }
 
   return (
-    <div className={animate ? `${styles.sheet} ${styles.animate}` : styles.sheet}>
+    <div className={drawing ? `${styles.sheet} ${styles.animate}` : styles.sheet}>
       <div className={styles.plot} style={{ height }}>
         <svg
           className={styles.chart}
@@ -161,7 +173,6 @@ export function SeedingSheet({ lines, seeds, animate = false, width = 640 }: See
               key={r.seed.slug}
               className={`${styles.step} ${tone(r.seed.slug, r.index)}`}
               d={`M0 ${r.endY.toFixed(2)} H16 V${r.rowY} H40`}
-              pathLength="1"
               vectorEffect="non-scaling-stroke"
             />
           ),

@@ -19,11 +19,19 @@ export interface Column<Row> {
   render?: (row: Row) => ReactNode
   sortable?: boolean
   /**
-   * Shown only at the wide breakpoint. The mockup's rankings table gains peak
-   * Elo and age there; at 360px they are the columns that would push the rank
-   * off the screen.
+   * Shown only at the wide breakpoint. The rankings table gains peak Elo and
+   * age there; at 360px they are the columns that would push the rank off the
+   * screen.
    */
   wide?: boolean
+  /**
+   * Text that may wrap. A typed cell never wraps by default because a score or
+   * a date split over two lines is not a score or a date; a name or an event
+   * is prose and may.
+   */
+  wrap?: boolean
+  /** A floor on the column's width, so a wrapping column keeps whole sets on a line. */
+  minWidth?: string
 }
 
 interface StatTableProps<Row> {
@@ -102,6 +110,7 @@ export function StatTable<Row>({
                   key={column.key}
                   scope="col"
                   className={className}
+                  style={column.minWidth ? { minWidth: column.minWidth } : undefined}
                   aria-sort={active ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
                   {column.sortable === false ? (
@@ -134,7 +143,11 @@ export function StatTable<Row>({
                 const value = column.value(row)
                 const className = cellClass(column, styles.td)
                 return (
-                  <td key={column.key} className={className}>
+                  <td
+                    key={column.key}
+                    className={className}
+                    style={column.minWidth ? { minWidth: column.minWidth } : undefined}
+                  >
                     {value === null ? (
                       <AbsentCell label={column.header} />
                     ) : column.render ? (
@@ -169,7 +182,12 @@ export function StatTable<Row>({
 
 /** Alignment and breakpoint are both column properties, so both live here. */
 function cellClass<Row>(column: Column<Row>, base: string | undefined) {
-  return [base, column.align === 'right' ? styles.right : null, column.wide ? styles.wide : null]
+  return [
+    base,
+    column.align === 'right' ? styles.right : null,
+    column.wide ? styles.wide : null,
+    column.wrap ? styles.wrap : null,
+  ]
     .filter((name) => name !== null && name !== undefined)
     .join(' ')
 }

@@ -1,0 +1,13 @@
+.score {
+  white-space: normal;
+}
+
+/* A set is one word to the line breaker, whatever its hyphen says. */
+.set {
+  white-space: nowrap;
+}
+
+.mark {
+  font-size: var(--t-11);
+  color: var(--pencil);
+}

@@ -97,6 +97,21 @@
   color: var(--pencil);
 }
 
+/* The winner's whole name where there is room, the surname on a phone; the
+   accessible name is always the whole one. */
+.full {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.short {
+  display: inline;
+}
+
 .simulate {
   padding: var(--s-5) 0;
   border-top: var(--rule-ink);
@@ -113,6 +128,18 @@
   .pickers {
     grid-template-columns: 1fr 1fr;
     gap: var(--s-7);
+  }
+
+  .full {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
+
+  .short {
+    display: none;
   }
 
   .nameA,

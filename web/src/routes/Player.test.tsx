@@ -176,8 +176,9 @@ describe('the player page', () => {
     expect(screen.getByText('300-100')).toBeInTheDocument()
     expect(screen.getByText('4')).toBeInTheDocument()
     expect(screen.getByText('63.2%')).toBeInTheDocument()
-    // The score is typed as the source stores it.
-    expect(await screen.findByText(/6-4 7-6\(3\)/)).toBeInTheDocument()
+    // The score is typed as the source stores it, set by set.
+    expect(await screen.findByText('7-6(3)')).toBeInTheDocument()
+    expect(screen.getByText('6-4')).toBeInTheDocument()
   })
 
   // The majority case at 125,868 players, and the one normally done badly.

@@ -279,11 +279,12 @@
     animation: fade 300ms ease-out 700ms forwards;
   }
 
-  .animate .step {
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
-    animation: draw 420ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    animation-delay: 700ms;
+  /* The steps reach across after the lines have landed: the gutter unclips
+     left to right, which is a clip on the box rather than a dash on the path,
+     and so survives any relayout. */
+  .animate .steps {
+    clip-path: inset(0 100% 0 0);
+    animation: reach 420ms cubic-bezier(0.16, 1, 0.3, 1) 700ms forwards;
   }
 
   .animate .row {
@@ -301,6 +302,12 @@
 @keyframes fade {
   to {
     opacity: 1;
+  }
+}
+
+@keyframes reach {
+  to {
+    clip-path: inset(0 0 0 0);
   }
 }
 

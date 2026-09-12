@@ -185,7 +185,7 @@ describe('Home', () => {
     renderHome()
 
     await screen.findByText('447000')
-    expect(screen.getByLabelText('With serve stats: not recorded')).toBeInTheDocument()
+    expect(screen.getByLabelText('Serve stats: not recorded')).toBeInTheDocument()
     expect(screen.queryByText('0.0%')).not.toBeInTheDocument()
   })
 
