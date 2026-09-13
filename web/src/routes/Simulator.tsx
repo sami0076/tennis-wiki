@@ -14,6 +14,7 @@ import {
   EmptyState,
   Meta,
   OddsBar,
+  Playback,
   PlayerSearch,
   Scorelines,
   Skeleton,
@@ -225,6 +226,15 @@ function MatchPanel({
       />
       <Amplification chain={sim.chain} />
       <Inputs sim={sim} />
+      <section className={styles.section}>
+        <Playback
+          key={`${playerA.slug}/${playerB.slug}/${sim.surface}/${sim.best_of}`}
+          chain={sim.chain}
+          bestOf={sim.best_of}
+          players={sim.players}
+          surface={sim.surface}
+        />
+      </section>
     </section>
   )
 }

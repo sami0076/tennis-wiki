@@ -198,6 +198,19 @@ describe('Simulator', () => {
     expect(box).toHaveValue('sin')
   })
 
+  it('offers one simulated match under the chain, and plays it out when asked', async () => {
+    stub(chain)
+    const user = userEvent.setup()
+    renderAt('/simulator?a=carlos-alcaraz&b=jannik-sinner')
+
+    const watch = await screen.findByRole('button', { name: 'Watch a simulated match' })
+    expect(screen.getByText('How it ends')).toBeInTheDocument()
+    // Reduced motion in these tests, so the whole match lands at once.
+    await user.click(watch)
+    expect(screen.getAllByText(/^Game, set, match: (Alcaraz|Sinner) wins 3-[012]$/).length).toBeGreaterThan(0)
+    expect(screen.getByText('Points won')).toBeInTheDocument()
+  })
+
   it('asks for two players before simulating anything', async () => {
     stub(null)
     renderAt('/simulator')

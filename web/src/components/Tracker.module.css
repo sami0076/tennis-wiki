@@ -1,0 +1,36 @@
+.tracker {
+  padding-top: var(--s-2);
+}
+
+/* The two counts sit on the same ruled line the SplitBar's numbers do. */
+.line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: 9px 0;
+  border-bottom: var(--rule);
+  font-size: var(--t-13);
+}
+
+.line:last-child {
+  border-bottom: var(--rule-ink);
+}
+
+.a {
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.b {
+  font-weight: 700;
+  color: var(--pencil);
+  white-space: nowrap;
+}
+
+.label {
+  color: var(--pencil);
+  font-size: var(--t-12);
+  text-align: center;
+}

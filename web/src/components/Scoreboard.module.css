@@ -1,0 +1,145 @@
+/* The board sits on the bond between two ink rules: no panel. */
+.board {
+  width: 100%;
+  border-collapse: collapse;
+  border-top: var(--rule-ink);
+  border-bottom: var(--rule-ink);
+}
+
+.corner {
+  padding: 2px 0;
+}
+
+.setHead,
+.setHeadCurrent {
+  width: 6ch;
+  padding: 3px 0;
+  text-align: center;
+  font-size: var(--t-11);
+  font-weight: 500;
+  color: var(--pencil);
+  border: 1px solid transparent;
+  border-bottom: 0;
+}
+
+/* The set in progress is boxed in the surface's hue: the sheet's active cell. */
+.setHeadCurrent {
+  border-color: currentColor;
+}
+
+.row {
+  transition: background-color 120ms ease-out;
+}
+
+.nameLeads,
+.nameTrails {
+  padding: 7px 0;
+  text-align: left;
+  font-size: var(--t-14);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 0;
+}
+
+.nameLeads {
+  color: var(--ink);
+}
+
+.nameTrails {
+  color: var(--pencil);
+}
+
+/* The serve square: an 8px square in the surface hue before the server. */
+.serve,
+.serveGap {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 1px;
+  vertical-align: 1px;
+}
+
+.setWon,
+.setLost,
+.currentCell {
+  width: 6ch;
+  padding: 7px 0;
+  text-align: center;
+  font-size: var(--t-16);
+  font-weight: 700;
+  border: 1px solid transparent;
+  border-top: 0;
+  border-bottom: 0;
+}
+
+.setWon {
+  color: var(--ink);
+}
+
+.setLost {
+  color: var(--pencil);
+}
+
+.currentCell {
+  color: var(--ink);
+  border-color: currentColor;
+}
+
+.board tbody tr:last-child .currentCell {
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+}
+
+.tiebreak {
+  font-size: 10px;
+  font-weight: 600;
+  vertical-align: super;
+  margin-left: 1px;
+}
+
+/* Motion, only while a match is being played out and only when wanted. */
+@media (prefers-reduced-motion: no-preference) {
+  .pulse {
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+
+  .pop {
+    display: inline-block;
+    animation: pop 350ms ease-out;
+  }
+
+  .flash {
+    animation: flash 900ms ease-out;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes pop {
+  from {
+    transform: scale(1.35);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes flash {
+  from {
+    background-color: var(--highlight);
+  }
+  to {
+    background-color: transparent;
+  }
+}
