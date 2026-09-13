@@ -19,13 +19,13 @@
 
 .a {
   font-weight: 700;
-  color: var(--ink);
+  color: var(--player-a);
   white-space: nowrap;
 }
 
 .b {
   font-weight: 700;
-  color: var(--pencil);
+  color: var(--player-b);
   white-space: nowrap;
 }
 

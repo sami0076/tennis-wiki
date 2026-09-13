@@ -102,19 +102,32 @@ export function Playback({ chain, bestOf, players, surface }: PlaybackProps) {
   const shown: Snapshot | null = event?.snapshot ?? (phase === 'playing' ? startingBoard(last) : null)
   const line = event ? commentary(event, names) : ''
   const heard = event && announced(event) ? line : ''
+  // The line names a side in that side's hue.
+  const coloured = line
+    .split(new RegExp(`(${names.map(escape).join('|')})`))
+    .map((part, index) =>
+      part === names[0] ? (
+        <span key={index} className={styles.sideA}>
+          {part}
+        </span>
+      ) : part === names[1] ? (
+        <span key={index} className={styles.sideB}>
+          {part}
+        </span>
+      ) : (
+        part
+      ),
+    )
 
   return (
     <div className={styles.playback}>
       <h2 className={styles.title}>One simulated match</h2>
-      <p className={styles.lede}>
-        A single draw from the odds above, played point by point from the chain's serve
-        figures. A sample of the model, not a prediction.
-      </p>
+      <p className={styles.lede}>One draw from the odds above. A sample, not a prediction.</p>
 
       {shown ? (
         <>
           <Scoreboard snapshot={shown} names={names} surface={surface} playing={phase === 'playing'} />
-          <p className={fading ? `${styles.line} ${styles.faded}` : styles.line}>{line}</p>
+          <p className={fading ? `${styles.line} ${styles.faded}` : styles.line}>{coloured}</p>
           <p className="sr-only" aria-live="polite">
             {heard}
           </p>
@@ -129,6 +142,11 @@ export function Playback({ chain, bestOf, players, surface }: PlaybackProps) {
       </div>
     </div>
   )
+}
+
+/** A name as a regex literal: O'Brien and a dotted initial must match themselves. */
+function escape(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 /** The empty board a match starts from: nothing played, A to serve. */

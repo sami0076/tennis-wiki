@@ -134,7 +134,7 @@ describe('Simulator', () => {
     stub(chain)
     renderAt('/simulator?a=a&b=b')
 
-    const caption = await screen.findByText(/Tennis scoring is an amplifier/)
+    const caption = await screen.findByText(/edge on serve becomes/)
     expect(caption).toHaveTextContent('2-point edge on serve')
     expect(caption).toHaveTextContent('19-point edge on the match')
   })
@@ -145,7 +145,7 @@ describe('Simulator', () => {
     stub(chain)
     renderAt('/simulator?a=a&b=b')
 
-    const inputs = await screen.findByText(/derived from the ratings rather than measured/)
+    const inputs = await screen.findByText(/Derived from the ratings/)
     expect(inputs).toHaveTextContent('2571')
     expect(inputs).toHaveTextContent('2503')
     expect(inputs).toHaveTextContent('61.3%')
@@ -207,7 +207,13 @@ describe('Simulator', () => {
     expect(screen.getByText('How it ends')).toBeInTheDocument()
     // Reduced motion in these tests, so the whole match lands at once.
     await user.click(watch)
-    expect(screen.getAllByText(/^Game, set, match: (Alcaraz|Sinner) wins 3-[012]$/).length).toBeGreaterThan(0)
+    expect(
+      screen.getAllByText(
+        (_, element) =>
+          element?.tagName === 'P' &&
+          /^Game, set, match: (Alcaraz|Sinner) wins 3-[012]$/.test(element.textContent ?? ''),
+      ).length,
+    ).toBeGreaterThan(0)
     expect(screen.getByText('Points won')).toBeInTheDocument()
   })
 

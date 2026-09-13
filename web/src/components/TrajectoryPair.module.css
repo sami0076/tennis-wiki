@@ -23,15 +23,14 @@
 
 .lineA {
   fill: none;
-  stroke: var(--ink);
+  stroke: var(--player-a);
   stroke-width: 1.5;
 }
 
-/* Player B is pencil, the same grey every comparison gives the second player.
-   Hue is spent on surface and cannot be borrowed here. */
+/* The pair's own hues, which no surface uses. */
 .lineB {
   fill: none;
-  stroke: var(--pencil);
+  stroke: var(--player-b);
   stroke-width: 1.5;
 }
 
@@ -47,12 +46,12 @@
 }
 
 .tagA {
-  color: var(--ink);
+  color: var(--player-a);
   font-weight: 600;
 }
 
 .tagB {
-  color: var(--pencil);
+  color: var(--player-b);
   font-weight: 600;
 }
 

@@ -104,7 +104,11 @@
 }
 
 .chainA {
-  color: var(--ink);
+  color: var(--player-a);
+}
+
+.chainB {
+  color: var(--player-b);
 }
 
 .rung {
@@ -148,8 +152,12 @@
   white-space: nowrap;
 }
 
+.rungA {
+  color: var(--player-a);
+}
+
 .rungB {
-  color: var(--pencil);
+  color: var(--player-b);
 }
 
 .caption {

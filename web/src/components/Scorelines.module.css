@@ -32,12 +32,12 @@
 
 .scoreA,
 .figureA {
-  color: var(--ink);
+  color: var(--player-a);
 }
 
 .scoreB,
 .figureB {
-  color: var(--pencil);
+  color: var(--player-b);
 }
 
 .figureA,
@@ -59,11 +59,11 @@
 }
 
 .fillA {
-  background: var(--ink);
+  background: var(--player-a);
 }
 
 .fillB {
-  background: var(--pencil);
+  background: var(--player-b);
 }
 
 /* The bars grow in after the split and the rungs, as the prototype times it:

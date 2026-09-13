@@ -202,6 +202,20 @@
           "oklch(83% 0.139 30)",
           "oklch(95% 0.139 30)"
         ]
+      },
+      "player-a": {
+        "role": "tertiary",
+        "displayName": "Player A",
+        "canonical": "#0f6e78",
+        "oklch": "oklch(46% 0.08 205)",
+        "tonalRamp": []
+      },
+      "player-b": {
+        "role": "tertiary",
+        "displayName": "Player B",
+        "canonical": "#a8285f",
+        "oklch": "oklch(48% 0.17 5)",
+        "tonalRamp": []
       }
     },
     "typographyMeta": {
@@ -471,12 +485,12 @@
     "rules": [
       {
         "name": "The Hue Means Surface Rule",
-        "body": "A colour other than ink, pencil, win or loss appears only on an element whose value belongs to one surface, and the surface word or square is always beside it. Never as decoration, never to tell two players apart.",
+        "body": "A colour other than ink, pencil, win, loss, teal or rose appears only on an element whose value belongs to one surface, and the surface word or square is always beside it. Never as decoration.",
         "section": "colors"
       },
       {
-        "name": "The Ink and Pencil Rule",
-        "body": "In any two-player comparison player A is ink and player B is pencil: names, chart lines, bar halves, tags. Never two hues.",
+        "name": "The Two Sides Rule",
+        "body": "In any two-player comparison player A is teal (#0f6e78) and player B is rose (#a8285f): names, chart lines, bar halves, tags, the board's rows. Two hues no surface uses, each 5.5:1 on the bond.",
         "section": "colors"
       },
       {

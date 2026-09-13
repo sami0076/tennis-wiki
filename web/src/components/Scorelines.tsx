@@ -51,8 +51,7 @@ export function Scorelines({ setShare, bestOf, nameA, nameB, animate = false }: 
         })}
       </ol>
       <p className={styles.caption}>
-        The chance of each set score, {nameA} first, from the set rung with sets modelled as
-        independent, which the methodology flags.
+        {nameA} first. Sets modelled as independent.
       </p>
     </div>
   )

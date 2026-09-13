@@ -24,6 +24,13 @@ function show() {
   return render(<Playback chain={chain} bestOf={3} players={players} surface="clay" />)
 }
 
+/** Lines name a side in its own span, so a line is matched on its paragraph. */
+function lines(pattern: RegExp): HTMLElement[] {
+  return screen.queryAllByText(
+    (_, element) => element?.tagName === 'P' && pattern.test(element.textContent ?? ''),
+  )
+}
+
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.useRealTimers()
@@ -45,7 +52,7 @@ describe('Playback', () => {
     await user.click(screen.getByRole('button', { name: 'Watch a simulated match' }))
 
     // The line under the board, and the same line announced to a screen reader.
-    expect(screen.getAllByText(/^Game, set, match: (Alcaraz|Sinner) wins 2-[01]$/)).toHaveLength(2)
+    expect(lines(/^Game, set, match: (Alcaraz|Sinner) wins 2-[01]$/)).toHaveLength(2)
     expect(screen.getByRole('button', { name: 'Watch another' })).toBeEnabled()
     expect(screen.getByText('Service holds')).toBeInTheDocument()
   })
@@ -63,16 +70,16 @@ describe('Playback', () => {
     await act(async () => {
       vi.advanceTimersByTime(250)
     })
-    expect(screen.getByText(/^(Alcaraz|Sinner) (holds|breaks)|^Break point, /)).toBeInTheDocument()
+    expect(lines(/^(Alcaraz|Sinner) (holds|breaks)|^Break point, /)).toHaveLength(1)
 
     // Each beat schedules the next once React has committed it, so the match
     // is played through a beat at a time rather than in one jump.
-    for (let beat = 0; beat < 400 && screen.queryAllByText(/^Game, set, match: /).length === 0; beat++) {
+    for (let beat = 0; beat < 400 && lines(/^Game, set, match: /).length === 0; beat++) {
       await act(async () => {
         vi.advanceTimersByTime(1500)
       })
     }
-    expect(screen.getAllByText(/^Game, set, match: /)).toHaveLength(2)
+    expect(lines(/^Game, set, match: /)).toHaveLength(2)
     expect(screen.getByRole('button', { name: 'Watch another' })).toBeEnabled()
   }, 20000)
 

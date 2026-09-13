@@ -33,8 +33,7 @@
   transition: background-color 120ms ease-out;
 }
 
-.nameLeads,
-.nameTrails {
+.name {
   padding: 7px 0;
   text-align: left;
   font-size: var(--t-14);
@@ -44,12 +43,13 @@
   text-overflow: ellipsis;
 }
 
-.nameLeads {
-  color: var(--ink);
+/* Each row in its side's hue: the name, the sets it won, the set in play. */
+.sideA {
+  color: var(--player-a);
 }
 
-.nameTrails {
-  color: var(--pencil);
+.sideB {
+  color: var(--player-b);
 }
 
 /* The serve square: an 8px square in the surface hue before the server. */
@@ -76,7 +76,7 @@
 }
 
 .setWon {
-  color: var(--ink);
+  color: inherit;
 }
 
 .setLost {
@@ -84,8 +84,7 @@
 }
 
 .currentCell {
-  color: var(--ink);
-  border-color: currentColor;
+  color: inherit;
 }
 
 .board tbody tr:last-child .currentCell {

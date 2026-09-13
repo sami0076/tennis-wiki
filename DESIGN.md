@@ -14,6 +14,8 @@ colors:
   indoor: "#6b5b95"
   win: "#4a7a3f"
   loss: "#b0483a"
+  player-a: "#0f6e78"
+  player-b: "#a8285f"
 typography:
   display:
     fontFamily: "'Martian Mono Variable', 'Martian Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
@@ -155,7 +157,7 @@ It refuses the sports-stats dashboard (tiles, one accent, a big chart) and the b
 Bond paper, one ink, three pencils, and hue only where a value is surface-scoped. Every colour is a custom property in `web/src/styles/tokens.css`; nothing else in the artifact declares a hex.
 
 ### Primary
-- **Ink** (`{colors.ink}`): the entry. Body text, names, figures, headings, the active tab, the box around a selected cell, the first player in any comparison, the leader's line, the sort chevron, focus outline, selection background. Fills a hovered button.
+- **Ink** (`{colors.ink}`): the entry. Body text, names, figures, headings, the active tab, the box around a selected cell, the leader's line, the sort chevron, focus outline, selection background. Fills a hovered button.
 - **Bond** (`{colors.bond}`): the ground on every page, the table head background, the text of a hovered button, the 2px gap in a split bar, the background of the search combobox panel.
 
 ### Secondary
@@ -171,15 +173,15 @@ Two outcome hues, for W/L marks, rank deltas, the champion mark, and the one err
 - **Loss** (`{colors.loss}`): the `L` mark, a downward rank delta, and a fetch error's sentence.
 
 ### Neutral
-- **Pencil** (`{colors.pencil}`): every caption, standfirst and footer line; table heads; the seed number and country; the second player in any comparison (name, line, bar half); `n/r`; a rank delta of 0; placeholder text; inactive tabs and filter cells.
+- **Pencil** (`{colors.pencil}`): every caption, standfirst and footer line; table heads; the seed number and country; a set the side lost, on the board; `n/r`; a rank delta of 0; placeholder text; inactive tabs and filter cells.
 - **Pencil-mid** (`{colors.pencil-mid}`): the third line of a chart, the field behind the named lines at 0.6 opacity, the dotted leader between a name and its figure, a disabled button's border and label, the scrollbar thumb.
 - **Pencil-light** (`{colors.pencil-light}`): the row rule, chart ruling and baselines, the interval whisker on an odds bar, a skeleton block, the dimmed lines when a seed row is hovered.
 - **Highlight** (`{colors.highlight}`): the hovered seed row, the keyboard-active combobox option, inline code in the methodology.
 
 ### Named Rules
-**The Hue Means Surface Rule.** A colour other than ink, pencil, win or loss appears only on an element whose value belongs to one surface, and the surface word or square is always beside it. Never as decoration, never to tell two players apart.
+**The Hue Means Surface Rule.** A colour other than ink, pencil, win, loss, teal or rose appears only on an element whose value belongs to one surface, and the surface word or square is always beside it. Never as decoration.
 
-**The Ink and Pencil Rule.** In any two-player comparison player A is ink and player B is pencil: names, chart lines, bar halves, tags. Never two hues.
+**The Two Sides Rule.** In any two-player comparison player A is teal (`#0f6e78`) and player B is rose (`#a8285f`): names, chart lines, bar halves, tags, the board's rows, the side named in a line of commentary. Two hues no surface uses, each 5.5:1 on the bond, so a side and a court are never the same colour. Amended 2026-09-12 from ink and pencil, at the user's request for colour that tells the players apart.
 
 **The Outcome Rule.** Win and loss colour appears only on a W/L mark, a rank delta and the champion mark, and always with a letter or sign, so removing colour loses nothing.
 

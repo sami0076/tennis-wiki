@@ -17,21 +17,21 @@ interface ScoreboardProps {
  * loser's tiebreak points as a superscript on their 6, the set in progress
  * boxed in the surface's hue, and a square in that hue before whoever serves.
  *
- * The leader is ink and the trailer pencil, the same pair as every comparison;
- * a broken player's row flashes the highlight and a moving figure pops.
+ * Each side is in its own hue, teal and rose, as in every comparison; a set
+ * they lost is pencil. A broken player's row flashes the highlight and a
+ * moving figure pops.
  */
 export function Scoreboard({ snapshot, names, surface, playing }: ScoreboardProps) {
   const hue = surfaceVar(surface)
   const columns = snapshot.sets.length + (snapshot.current ? 1 : 0)
-  const [wonA, wonB] = snapshot.setsWon
 
   const row = (side: Side) => {
-    const leads = side === 0 ? wonA >= wonB : wonB >= wonA
     const serving = snapshot.current !== null && snapshot.server === side
     const flashing = snapshot.flash === side
+    const own = side === 0 ? styles.sideA : styles.sideB
     return (
-      <tr className={flashing ? `${styles.row} ${styles.flash}` : styles.row}>
-        <th scope="row" className={leads ? styles.nameLeads : styles.nameTrails}>
+      <tr className={flashing ? `${styles.row} ${styles.flash} ${own}` : `${styles.row} ${own}`}>
+        <th scope="row" className={styles.name}>
           <span
             className={serving ? (playing ? `${styles.serve} ${styles.pulse}` : styles.serve) : styles.serveGap}
             style={serving ? { background: hue } : undefined}

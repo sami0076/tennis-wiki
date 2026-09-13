@@ -1,8 +1,18 @@
-/* The prototype's proportions: a board a phone could hold, not a banner. */
+/* The prototype's proportions: a board a phone could hold, centred on the sheet. */
 .playback {
   display: grid;
   gap: var(--s-3);
   max-width: 560px;
+  margin: 0 auto;
+}
+
+.title,
+.lede {
+  text-align: center;
+}
+
+.controls {
+  justify-content: center;
 }
 
 .title {
@@ -31,10 +41,24 @@
   opacity: 0;
 }
 
+.sideA {
+  color: var(--player-a);
+  font-weight: 600;
+}
+
+.sideB {
+  color: var(--player-b);
+  font-weight: 600;
+}
+
 .controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s-3);
   padding-top: var(--s-2);
+}
+
+.line {
+  text-align: center;
 }

@@ -17,6 +17,6 @@ describe('Scorelines', () => {
   it('has six scores in a best of five', () => {
     render(<Scorelines setShare={0.552} bestOf={5} nameA="Alcaraz" nameB="Sinner" />)
     expect(screen.getAllByRole('listitem')).toHaveLength(6)
-    expect(screen.getByText(/sets modelled as independent/)).toBeInTheDocument()
+    expect(screen.getByText(/sets modelled as independent/i)).toBeInTheDocument()
   })
 })
