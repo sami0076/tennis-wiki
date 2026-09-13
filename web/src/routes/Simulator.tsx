@@ -109,8 +109,10 @@ function Pickers({
   onB: (v: string | null) => void
   match: Resource<MatchSimulation | null>
 }) {
-  const [queryA, setQueryA] = useState('')
-  const [queryB, setQueryB] = useState('')
+  // undefined is nobody typing, which shows the name in play; '' is a box the
+  // reader has cleared, which has to stay clear or a name can never be deleted.
+  const [queryA, setQueryA] = useState<string>()
+  const [queryB, setQueryB] = useState<string>()
   const [pickedA, setPickedA] = useState<PlayerSearchResult>()
   const [pickedB, setPickedB] = useState<PlayerSearchResult>()
   const named = match.state === 'ready' && match.data !== null ? match.data.players : undefined
@@ -119,8 +121,8 @@ function Pickers({
   // simulated. The pick is what carries the first player through the wait for
   // the second: a simulation names neither side until both are chosen, so
   // falling straight back to it would empty the box somebody just filled.
-  const value = (side: 0 | 1, typed: string, picked?: PlayerSearchResult) =>
-    typed !== '' ? typed : (named?.[side].name ?? picked?.name ?? '')
+  const value = (side: 0 | 1, typed: string | undefined, picked?: PlayerSearchResult) =>
+    typed ?? named?.[side].name ?? picked?.name ?? ''
 
   return (
     <div className={styles.pickers}>
@@ -130,7 +132,7 @@ function Pickers({
         value={value(0, queryA, pickedA)}
         onChange={setQueryA}
         onSelect={(p: PlayerSearchResult) => {
-          setQueryA('')
+          setQueryA(undefined)
           setPickedA(p)
           onA(p.slug)
         }}
@@ -141,7 +143,7 @@ function Pickers({
         value={value(1, queryB, pickedB)}
         onChange={setQueryB}
         onSelect={(p: PlayerSearchResult) => {
-          setQueryB('')
+          setQueryB(undefined)
           setPickedB(p)
           onB(p.slug)
         }}

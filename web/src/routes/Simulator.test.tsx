@@ -169,6 +169,24 @@ describe('Simulator', () => {
     expect(box).toHaveValue('Carlos Alcaraz')
   })
 
+  // A cleared box has to stay clear. Falling back to the name the moment the
+  // box is empty makes it impossible to delete one.
+  it('lets a picked name be deleted', async () => {
+    stub(null)
+    const user = userEvent.setup()
+    renderAt('/simulator')
+
+    const box = screen.getByRole('combobox', { name: 'First player' })
+    await user.type(box, 'alcaraz')
+    await user.click(await screen.findByText('Carlos Alcaraz'))
+    expect(box).toHaveValue('Carlos Alcaraz')
+
+    await user.clear(box)
+    expect(box).toHaveValue('')
+    await user.type(box, 'sin')
+    expect(box).toHaveValue('sin')
+  })
+
   it('asks for two players before simulating anything', async () => {
     stub(null)
     renderAt('/simulator')
