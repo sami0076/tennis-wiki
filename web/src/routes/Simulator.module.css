@@ -117,6 +117,26 @@
   border-bottom: var(--rule-ink);
 }
 
+/* When a result lands the rungs rise in, top to bottom, after the split has
+   started counting: the prototype's 200, 350, 500, 650ms. */
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    animation: rise 450ms ease both;
+    animation-delay: calc(200ms + var(--i) * 150ms);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .rungLabel {
   color: var(--ink);
 }

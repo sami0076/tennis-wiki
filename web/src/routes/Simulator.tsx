@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ApiError,
@@ -21,6 +21,7 @@ import {
 } from '../components'
 import { formatPercent, surname } from '../lib/format'
 import { surfaceLabel } from '../lib/surface'
+import { prefersReducedMotion } from '../lib/useReducedMotion'
 import { useUrlParam } from '../lib/useUrlParam'
 import { FEATURED_DRAW } from '../lib/featuredDraw'
 import styles from './Simulator.module.css'
@@ -164,6 +165,8 @@ function MatchPanel({
   surface: string
   sets: number
 }) {
+  const revealing = useReveal(match.state === 'ready' ? match.data : null)
+
   if (match.state === 'loading') return <Skeleton lines={6} />
 
   if (match.state === 'error') {
@@ -205,12 +208,39 @@ function MatchPanel({
           sets === 5 ? 'best of five' : 'best of three',
         ]}
       />
-      <WinSplit nameA={playerA.name} nameB={playerB.name} share={sim.chain.match[0]} />
-      <Chain chain={sim.chain} nameA={playerA.name} nameB={playerB.name} />
+      <WinSplit
+        nameA={playerA.name}
+        nameB={playerB.name}
+        share={sim.chain.match[0]}
+        animate={revealing}
+      />
+      <Chain chain={sim.chain} nameA={playerA.name} nameB={playerB.name} animate={revealing} />
       <Amplification chain={sim.chain} />
       <Inputs sim={sim} />
     </section>
   )
+}
+
+/** How long the result takes to arrive: the count-up, then the rungs, then the bars. */
+const REVEAL_MS = 1300
+
+/**
+ * True for the moment after a new result lands, which is when the split counts
+ * up and the rungs rise in. The answer to a choice the reader made, not ambient
+ * motion, and nothing at all for anyone who asked for less.
+ */
+function useReveal(result: unknown): boolean {
+  const [revealing, setRevealing] = useState(false)
+  useEffect(() => {
+    if (result === null || prefersReducedMotion()) {
+      setRevealing(false)
+      return
+    }
+    setRevealing(true)
+    const timer = setTimeout(() => setRevealing(false), REVEAL_MS)
+    return () => clearTimeout(timer)
+  }, [result])
+  return revealing
 }
 
 const rungs: ReadonlyArray<{ key: keyof SimulationChain; label: string }> = [
@@ -224,7 +254,17 @@ const rungs: ReadonlyArray<{ key: keyof SimulationChain; label: string }> = [
  * The rungs, as ruled rows with a column for each player: A in ink, B in
  * pencil, the same pair the split above uses.
  */
-function Chain({ chain, nameA, nameB }: { chain: SimulationChain; nameA: string; nameB: string }) {
+function Chain({
+  chain,
+  nameA,
+  nameB,
+  animate = false,
+}: {
+  chain: SimulationChain
+  nameA: string
+  nameB: string
+  animate?: boolean
+}) {
   return (
     <div className={styles.chain}>
       <h2 className={styles.sectionTitle}>How the edge compounds</h2>
@@ -233,8 +273,12 @@ function Chain({ chain, nameA, nameB }: { chain: SimulationChain; nameA: string;
         <span className={styles.chainA}>{surname(nameA)}</span>
         <span className={styles.chainB}>{surname(nameB)}</span>
       </div>
-      {rungs.map(({ key, label }) => (
-        <div key={key} className={styles.rung}>
+      {rungs.map(({ key, label }, index) => (
+        <div
+          key={key}
+          className={animate ? `${styles.rung} ${styles.rise}` : styles.rung}
+          style={{ '--i': index } as React.CSSProperties}
+        >
           <span className={styles.rungLabel}>{label}</span>
           <span className={styles.rungA}>
             <span className="sr-only">{nameA} </span>

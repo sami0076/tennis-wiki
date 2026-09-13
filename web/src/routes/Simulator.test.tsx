@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DrawSimulation, MatchSimulation, PlayerSearchResult } from '../api/client'
 import { Simulator } from './Simulator'
 
@@ -97,6 +97,17 @@ function renderAt(path: string) {
     </MemoryRouter>,
   )
 }
+
+// The result's count-up and the played-out match answer the reader's own
+// motion preference; these tests read the finished figures, so they ask for less.
+beforeEach(() => {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: true,
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }))
+})
 
 afterEach(() => {
   vi.unstubAllGlobals()
