@@ -44,7 +44,8 @@ Routes: `/` (Elo leaders, trajectory chart, what the database holds), `/players`
 career, official ranking, serve, splits by surface and tier, match log), `/h2h` and
 `/h2h/:a/:b` (career score, surface filter, split bars, rivalry strip, every meeting,
 simulate button), `/rankings` (Elo vs official, rank delta), `/simulator` (two pickers,
-the chain from point to match, a draw played ten thousand times), `/methodology`
+the chain from point to match, the chance of each set score, one match played out from the
+chain on request and labelled a sample of the model, a draw played ten thousand times), `/methodology`
 (generated from `docs/methodology.md`), `/_components` (every component in every state).
 
 Player search lives in the header on every page: a combobox, debounced, every row

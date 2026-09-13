@@ -148,7 +148,7 @@ It refuses the sports-stats dashboard (tiles, one accent, a big chart) and the b
 - Ruled lines at 1px are the entire structural vocabulary; ink for a head or total, pencil-light between rows
 - No cards, no shadows, no radius, no icons; selection is a box drawn in one rule
 - One breakpoint at 880px; below it the sheet is one column
-- One piece of ambient motion, the seeding sheet drawing in, retired after 1400ms and static under reduced motion
+- One piece of ambient motion, the seeding sheet drawing in, retired after 1400ms and static under reduced motion; everything else that moves over time answers a choice the reader made (the simulator's result revealing, a match they asked to watch), finishes on its own, and renders finished under reduced motion
 
 ## Colors
 
@@ -299,7 +299,8 @@ Hand-rolled SVG over the sheet's ruling (pencil-light, 1px). Names sit at the en
 - **TrajectoryPair:** 120px tall; A ink, B pencil, both 1.5px.
 - **Sparkline:** one ink line at 1.25px with round joins.
 - **SplitBar:** two 6px halves growing outward from the centre, ink left, pencil right, a 2px bond gap; numbers at the outer edges in 700, the label centred in 12px pencil; each on a pencil rule, the last on ink.
-- **WinSplit:** one 10px bar divided ink against pencil with a 2px bond edge; the share at 28px/700.
+- **WinSplit:** one 10px bar divided ink against pencil with a 2px bond edge; the share at 28px/700. With `animate`, the figures count up from 50.0 over 700ms on an ease-out cubic while the fill eases with them, and the last frame writes the API's own figure.
+- **Scorelines:** the chance of each set score, most likely first, A's sets written first: a 4ch score, a 6px bar scaled to the likeliest (ink for A's wins, pencil for B's), the percentage right-aligned in 700; rows on pencil rules between ink rules; the bars grow over 550ms, 300ms after the result lands.
 - **OddsBar:** a 6px fill in the tournament's surface hue inside a 10px track, the 95% interval as a pencil-light whisker around the bar's end; the figure in 700 with its `±` at 11px pencil. Name, track and figure sit in one row from 880px and the track drops to its own line on a phone.
 - **RivalryStrip:** 13px squares (1px radius) 3px apart; filled when player A won, outlined when B did, fill or stroke in the match's surface; the legend is a caption underneath.
 
@@ -307,6 +308,11 @@ Hand-rolled SVG over the sheet's ruling (pencil-light, 1px). Names sit at the en
 The home page's first viewport and the site's one piece of ambient motion. Left, the eight leaders' form lines over 24 months on the ruling, the top three in the ink ramp and the field in pencil-mid at 0.6 opacity; a dotted lead (`1 3`) carries a line that stopped early to the edge. A 40px gutter holds an L-shaped ruled step from each line's end to its row. Right, the seed rows: `[seed] Name (CTY) ····· best-surface Elo in its hue ····· Elo delta`, 40px tall on pencil rules, a dotted leader between name and figures, the surface figure (12px, the surface word and the raw series rating from `best_surface` on the rankings response) the one coloured cell on the row, the list opened and closed by ink rules. Hover on a row lights its line to ink and dims the others to pencil-light and their rows to 0.55 opacity; the row itself goes highlight. On a phone the two stack, the steps are not drawn, the surface figure steps aside as the rankings table's column does, and the top three lines carry `[1]` `[2]` `[3]` at their ends instead.
 
 **Motion.** Under `prefers-reduced-motion: no-preference` only: lines draw in over 900ms on `cubic-bezier(0.16, 1, 0.3, 1)` via `stroke-dasharray` with `pathLength="1"`; the dotted leads fade in over 300ms from 700ms; the gutter unclips left to right over 420ms from 700ms; each seed row slides 6px in and fades over 480ms, delayed `120ms + index * 45ms`. After 1400ms the component drops its animate class and what remains is the finished sheet, so a resize or capture has nothing to trip over. Under reduced motion the sheet is static; `base.css` also collapses every animation and transition to 0.01ms. The TrajectoryChart on the rankings page draws in the same way (900ms named, 700ms field) and is otherwise still. Everything else on the site moves only as a 120ms to 160ms ease-out on colour, border or stroke.
+
+### The simulated match (Scoreboard, Tracker, Playback)
+One draw from the odds above, played out at the prototype's pace once the reader presses `Watch a simulated match`, never on its own. The section is at most 560px wide, a board a phone could hold. **Scoreboard:** a table between two ink rules, `table-layout: fixed`; a header row of set numbers (11px/500 pencil); one row per player with the name at 14px/700 (the leader ink, the trailer pencil), a column per finished set at 16px/700 (the set's winner ink, the loser pencil, the loser's tiebreak points as a 10px superscript on their 6), and the set in progress boxed in a 1px rule in the match's surface hue, its header number in that hue. An 8px square in the surface hue stands before whoever serves and pulses (1 to 0.3 opacity, 1.2s) only while the match plays. A broken player's row fades from highlight to transparent over 900ms; a moving figure pops from `scale(1.35)` over 350ms. Set columns are 6ch, 5ch and 14px figures below 880px. **Commentary:** one 13px pencil line with a 20px floor under the board, fading out 200ms and in 220ms between beats; its words follow the sample (`Sinner holds comfortably`, `Break point, Alcaraz`, `Alcaraz breaks`, `Tiebreak at 6-6`, `Sinner takes the tiebreak 7-5`, `Set 2 to Alcaraz`, `Game, set, match: Alcaraz wins 3-1`); a visually hidden polite live region carries set and match lines only. **Tracker:** `Points won` as a SplitBar whose fills ease 500ms, then `Break points won` (`2 of 5` against `1 of 3`) and `Service holds` on ruled lines, A in ink at the left, B in pencil at the right, the label pencil between; every figure counted from the points the sample played.
+
+**Beats** (the prototype's): a routine hold 480ms, a hold after a break point 800ms, the break-point beat 850ms, a break 950ms, `Tiebreak at 6-6` 1000ms then its result 1100ms, a set 1300ms; the match line ends the run. The button reads `Playing…` and is disabled while it runs, then `Watch another`. `matchMedia` is asked in JS: under reduced motion the finished match renders at once.
 
 ### Skeleton
 A line of the sheet not yet typed: a pencil-light block, 12px tall with 10px under it, matching the final layout; it pulses between 1 and 0.45 opacity over 1.6s only when motion is allowed.
@@ -323,7 +329,7 @@ A line of the sheet not yet typed: a pencil-light block, 12px tall with 10px und
 - **Do** keep tabular numerals on every element carrying data and never let a cell wrap; scroll the wrapper instead.
 - **Do** write buttons as what happens, in sentence case, boxed in one ink rule.
 - **Do** keep one column below 880px and prove every component at 360px.
-- **Do** gate any motion on `prefers-reduced-motion: no-preference`, and keep the seeding sheet's draw-in the only ambient motion.
+- **Do** gate any motion on `prefers-reduced-motion: no-preference` (and ask `matchMedia` from any timer), keep the seeding sheet's draw-in the only ambient motion, and let anything else that moves over time answer a choice the reader made, finish on its own, and render finished under reduced motion.
 
 ### Don't:
 - **Don't** add a card, a panel background, a shadow, a gradient, or a radius above 1px.
