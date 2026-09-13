@@ -76,6 +76,8 @@ const rankings: RankingPage = {
       matches: 474,
       age: 24,
       delta: 0,
+      best_surface: 'hard',
+      best_surface_elo: 2100,
     },
     {
       position: 2,
@@ -90,6 +92,8 @@ const rankings: RankingPage = {
       matches: 1416,
       age: 38,
       delta: 5,
+      best_surface: 'hard',
+      best_surface_elo: 2100,
     },
   ],
   next_cursor: null,

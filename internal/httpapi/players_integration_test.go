@@ -66,6 +66,17 @@ func (f *apiFixture) player(slug, fullName string, tour db.Tour) int64 {
 	return id
 }
 
+// playerID looks a seeded player up again, for tests that build on a fixture
+// which did not hand the ids back.
+func (f *apiFixture) playerID(slug string) int64 {
+	f.t.Helper()
+	var id int64
+	if err := f.tx.QueryRow(f.ctx, `SELECT id FROM players WHERE slug = $1`, slug).Scan(&id); err != nil {
+		f.t.Fatalf("look up player %s: %v", slug, err)
+	}
+	return id
+}
+
 func (f *apiFixture) tournament(sourceID string, tier db.Tier, season int) int64 {
 	return f.tourTournament(sourceID, tier, season, db.TourAtp)
 }

@@ -83,6 +83,10 @@
   border-bottom: var(--rule-ink);
 }
 
+.best {
+  white-space: nowrap;
+}
+
 .country {
   margin-left: var(--s-2);
   font-size: var(--t-12);

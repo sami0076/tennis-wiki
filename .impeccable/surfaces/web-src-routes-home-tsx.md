@@ -59,9 +59,8 @@ two lines, the standfirst in pencil, spanning the left 7 of 12; the ATP | WTA to
 trajectory chart of the eight leaders over 24 months, ink ramp for the top three, the
 field in pencil-mid at reduced weight; a 40px gutter in which a ruled step joins each
 line's end to its seed's row; right, the seeding list `[1]` to `[8]`, each row `[seed]
-Name (CTY) ····· Elo delta`, ruled. The best-surface Elo in its hue, promised in the
-first draft of this block, is not in the rankings response; it is a follow-up that needs
-an API field, not a design gap. Mobile: header, headline, toggle, chart with `[1]` `[2]`
+Name (CTY) ····· best-surface Elo in its hue ····· Elo delta`, ruled; the surface figure
+comes from `best_surface` on the rankings response and steps aside on a phone. Mobile: header, headline, toggle, chart with `[1]` `[2]`
 `[3]` at the line ends, seeds, stacked. The primary action is the search field; the
 second is `See the full rankings` as a typed button under the seeds.
 

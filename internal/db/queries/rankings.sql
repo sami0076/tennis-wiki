@@ -119,3 +119,22 @@ SELECT r.player_id, r.as_of AS week, r.elo::float8 AS elo
    AND r.as_of > @from_date::date
    AND r.as_of <= @to_date::date
  ORDER BY r.player_id, r.as_of;
+
+-- name: BestSurfaceEloAsOf :many
+-- The surface each of a page of players is currently best on, and the rating
+-- there, as of a date. The same window the leaderboard uses, so a surface
+-- last played years ago is not anyone's best today, and the raw series rather
+-- than the blend: it is the figure the player page's strip shows.
+WITH latest AS (
+    SELECT DISTINCT ON (r.player_id, r.surface)
+           r.player_id, r.surface, r.elo, r.matches_played
+      FROM ratings r
+     WHERE r.surface <> 'overall'
+       AND r.as_of <= @on_date::date
+       AND r.as_of > @since::date
+       AND r.player_id = ANY(@player_ids::bigint[])
+     ORDER BY r.player_id, r.surface, r.as_of DESC
+)
+SELECT DISTINCT ON (l.player_id) l.player_id, l.surface, l.elo::float8 AS elo, l.matches_played
+  FROM latest l
+ ORDER BY l.player_id, l.elo DESC, l.surface;

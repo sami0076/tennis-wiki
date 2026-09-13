@@ -207,6 +207,15 @@
   border-bottom: 1px dotted var(--pencil-mid);
 }
 
+/* The surface they are best on, and the rating there, in that surface's hue:
+   the one coloured cell on the row, because it is the one surface-scoped value.
+   A phone's row has no room for it; the rankings table hides the same column. */
+.best {
+  display: none;
+  white-space: nowrap;
+  font-size: var(--t-12);
+}
+
 .elo {
   font-weight: 700;
   min-width: 4ch;
@@ -254,6 +263,10 @@
   .seeds {
     margin-top: 0;
     border-top: 0;
+  }
+
+  .best {
+    display: inline;
   }
 
   .row:first-child {

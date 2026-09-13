@@ -49,6 +49,12 @@ type RankingRow struct {
 	// puts them. Null under the official type, where this list's position is
 	// the official rank and the comparison would be with itself.
 	Delta *int `json:"delta"`
+	// BestSurface is the surface series they are currently highest on, and
+	// BestSurfaceElo the raw rating there: the figure the player page's strip
+	// shows, not the blend the simulator uses. Both null for a player with no
+	// surface rated inside the active window, never 1500.
+	BestSurface    *string  `json:"best_surface"`
+	BestSurfaceElo *float64 `json:"best_surface_elo"`
 }
 
 // RankingPage is a page of a ranking, and the date it is a ranking as of.
@@ -245,6 +251,11 @@ func (a *API) eloRankings(
 		Internal(w, r, err)
 		return
 	}
+	best, err := a.bestSurfaces(r, asOf, ids)
+	if err != nil {
+		Internal(w, r, err)
+		return
+	}
 
 	for _, row := range rows {
 		out := RankingRow{
@@ -265,6 +276,7 @@ func (a *API) eloRankings(
 			value := round1(peak)
 			out.PeakElo = &value
 		}
+		out.BestSurface, out.BestSurfaceElo = best[row.PlayerID].fields()
 		// Positive means the model puts them higher than the tour does, which
 		// is the direction the caption on the design reads.
 		if row.OfficialRank != nil {
@@ -332,6 +344,11 @@ func (a *API) officialRankings(
 		Internal(w, r, err)
 		return
 	}
+	best, err := a.bestSurfaces(r, asOf, ids)
+	if err != nil {
+		Internal(w, r, err)
+		return
+	}
 
 	for _, row := range rows {
 		rank := row.Rank
@@ -355,6 +372,7 @@ func (a *API) officialRankings(
 			value := round1(peak)
 			out.PeakElo = &value
 		}
+		out.BestSurface, out.BestSurfaceElo = best[row.PlayerID].fields()
 		page.Data = append(page.Data, out)
 	}
 
@@ -387,6 +405,41 @@ func (a *API) peaks(
 	}
 	for _, row := range rows {
 		out[row.PlayerID] = row.Peak
+	}
+	return out, nil
+}
+
+// bestSurface is the surface a player is currently highest on, and the rating.
+type bestSurface struct {
+	surface string
+	elo     float64
+}
+
+// fields is the pair as the row carries it: both null when there is no entry,
+// which is what the zero value of a map lookup is.
+func (b *bestSurface) fields() (*string, *float64) {
+	if b == nil {
+		return nil, nil
+	}
+	elo := round1(b.elo)
+	return &b.surface, &elo
+}
+
+// bestSurfaces reads the best surface of one page of players, inside the same
+// window the leaderboard uses.
+func (a *API) bestSurfaces(r *http.Request, asOf time.Time, ids []int64) (map[int64]*bestSurface, error) {
+	out := map[int64]*bestSurface{}
+	if len(ids) == 0 {
+		return out, nil
+	}
+	rows, err := a.Queries.BestSurfaceEloAsOf(r.Context(), db.BestSurfaceEloAsOfParams{
+		OnDate: asOf, Since: asOf.Add(-activeWindow), PlayerIds: ids,
+	})
+	if err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		out[row.PlayerID] = &bestSurface{surface: string(row.Surface), elo: row.Elo}
 	}
 	return out, nil
 }

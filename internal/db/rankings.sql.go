@@ -10,6 +10,64 @@ import (
 	"time"
 )
 
+const bestSurfaceEloAsOf = `-- name: BestSurfaceEloAsOf :many
+WITH latest AS (
+    SELECT DISTINCT ON (r.player_id, r.surface)
+           r.player_id, r.surface, r.elo, r.matches_played
+      FROM ratings r
+     WHERE r.surface <> 'overall'
+       AND r.as_of <= $1::date
+       AND r.as_of > $2::date
+       AND r.player_id = ANY($3::bigint[])
+     ORDER BY r.player_id, r.surface, r.as_of DESC
+)
+SELECT DISTINCT ON (l.player_id) l.player_id, l.surface, l.elo::float8 AS elo, l.matches_played
+  FROM latest l
+ ORDER BY l.player_id, l.elo DESC, l.surface
+`
+
+type BestSurfaceEloAsOfParams struct {
+	OnDate    time.Time
+	Since     time.Time
+	PlayerIds []int64
+}
+
+type BestSurfaceEloAsOfRow struct {
+	PlayerID      int64
+	Surface       RatingSurface
+	Elo           float64
+	MatchesPlayed int32
+}
+
+// The surface each of a page of players is currently best on, and the rating
+// there, as of a date. The same window the leaderboard uses, so a surface
+// last played years ago is not anyone's best today, and the raw series rather
+// than the blend: it is the figure the player page's strip shows.
+func (q *Queries) BestSurfaceEloAsOf(ctx context.Context, arg BestSurfaceEloAsOfParams) ([]BestSurfaceEloAsOfRow, error) {
+	rows, err := q.db.Query(ctx, bestSurfaceEloAsOf, arg.OnDate, arg.Since, arg.PlayerIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []BestSurfaceEloAsOfRow{}
+	for rows.Next() {
+		var i BestSurfaceEloAsOfRow
+		if err := rows.Scan(
+			&i.PlayerID,
+			&i.Surface,
+			&i.Elo,
+			&i.MatchesPlayed,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const currentEloAsOf = `-- name: CurrentEloAsOf :many
 SELECT DISTINCT ON (r.player_id) r.player_id, r.elo::float8 AS elo, r.matches_played
   FROM ratings r
