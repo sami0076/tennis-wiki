@@ -1,6 +1,8 @@
 /* The board sits on the bond between two ink rules: no panel. */
 .board {
   width: 100%;
+  /* Fixed so the set columns keep their width and the name takes the rest. */
+  table-layout: fixed;
   border-collapse: collapse;
   border-top: var(--rule-ink);
   border-bottom: var(--rule-ink);
@@ -40,7 +42,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 0;
 }
 
 .nameLeads {
@@ -65,7 +66,6 @@
 .setWon,
 .setLost,
 .currentCell {
-  width: 6ch;
   padding: 7px 0;
   text-align: center;
   font-size: var(--t-16);
@@ -141,5 +141,19 @@
   }
   to {
     background-color: transparent;
+  }
+}
+
+/* Five sets and a name have to share 358px. */
+@media (max-width: 879px) {
+  .setHead,
+  .setHeadCurrent {
+    width: 5ch;
+  }
+
+  .setWon,
+  .setLost,
+  .currentCell {
+    font-size: var(--t-14);
   }
 }
