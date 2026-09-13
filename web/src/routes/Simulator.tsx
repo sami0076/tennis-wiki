@@ -15,6 +15,7 @@ import {
   Meta,
   OddsBar,
   PlayerSearch,
+  Scorelines,
   Skeleton,
   SurfaceToggle,
   WinSplit,
@@ -215,6 +216,13 @@ function MatchPanel({
         animate={revealing}
       />
       <Chain chain={sim.chain} nameA={playerA.name} nameB={playerB.name} animate={revealing} />
+      <Scorelines
+        setShare={sim.chain.set[0]}
+        bestOf={sim.best_of}
+        nameA={surname(playerA.name)}
+        nameB={surname(playerB.name)}
+        animate={revealing}
+      />
       <Amplification chain={sim.chain} />
       <Inputs sim={sim} />
     </section>
