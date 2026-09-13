@@ -17,7 +17,7 @@
 }
 
 .nameA {
-  color: var(--ink);
+  color: var(--player-a);
   border-bottom: 0;
 }
 
@@ -30,10 +30,10 @@
   text-align: right;
 }
 
-/* Player B is pencil everywhere on this page, the same grey the SplitBar and
-   the trajectory give them. Hue would collide with the surface encoding. */
+/* Player B is turquoise everywhere on this page, as A is orange, the same
+   pair every comparison uses. */
 .nameB {
-  color: var(--pencil);
+  color: var(--player-b);
   border-bottom: 0;
 }
 
@@ -83,12 +83,12 @@
 
 .winnerA {
   font-weight: 700;
-  color: var(--ink);
+  color: var(--player-a);
 }
 
 .winnerB {
   font-weight: 700;
-  color: var(--pencil);
+  color: var(--player-b);
 }
 
 .event {

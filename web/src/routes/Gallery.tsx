@@ -14,10 +14,13 @@ import {
   Meta,
   OddsBar,
   PartialAggregate,
+  Playback,
   PlayerSearch,
   PlayerSummary,
   RankDelta,
   RivalryStrip,
+  Scoreboard,
+  Scorelines,
   Skeleton,
   Sparkline,
   SplitBar,
@@ -25,11 +28,13 @@ import {
   SurfaceDot,
   SurfaceToggle,
   TourFilter,
+  Tracker,
   TrajectoryChart,
   WinLossMark,
   WinSplit,
   type Column,
 } from '../components'
+import type { Snapshot } from '../lib/playback'
 import styles from './Gallery.module.css'
 
 interface Row {
@@ -100,6 +105,28 @@ const rivalry = [
  * waiting for the pages that use it, and it is the only place the three
  * absences appear side by side, which is the comparison that matters most.
  */
+/** The simulator's fixture chain, for the played-out match. */
+const chain = {
+  point: [0.621, 0.606] as [number, number],
+  hold: [0.777, 0.748] as [number, number],
+  set: [0.552, 0.448] as [number, number],
+  match: [0.596, 0.404] as [number, number],
+}
+
+/** A board one set in, the first taken on a tiebreak, the second at 3-4. */
+const midMatch: Snapshot = {
+  sets: [{ a: 7, b: 6, tiebreakA: null, tiebreakB: 5, aWon: true }],
+  current: { a: 3, b: 4 },
+  setsWon: [1, 0],
+  points: [61, 58],
+  breakPointsWon: [1, 2],
+  breakPointsFaced: [3, 4],
+  holds: [9, 8],
+  server: 1,
+  flash: null,
+  pop: null,
+}
+
 export function Gallery() {
   const [surface, setSurface] = useUrlParam('surface')
   const [tour, setTour] = useState<string | null>(null)
@@ -229,6 +256,22 @@ export function Gallery() {
         <OddsBar name="Roger Federer" probability={0.277} interval={0.009} max={0.401} surface="grass" />
         <OddsBar name="Rafael Nadal" probability={0.075} interval={0.005} max={0.401} surface="grass" />
         <OddsBar name="The field" probability={0.247} max={0.401} surface={null} />
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>Scorelines, Scoreboard, Tracker and Playback</h2>
+        <p className={styles.note}>
+          The simulator&apos;s second half: the chance of each set score under the chain, and
+          one match played out from it. The board boxes the set in progress in the
+          surface&apos;s hue and marks the server with a square in it; the tally is counted
+          from the points the sample played. Watch a match to see the beats.
+        </p>
+        <Scorelines setShare={0.552} bestOf={5} nameA="Alcaraz" nameB="Sinner" />
+        <div className={styles.note}>Mid-match, a tiebreak set on the board:</div>
+        <Scoreboard snapshot={midMatch} names={['Alcaraz', 'Sinner']} surface="clay" playing />
+        <Tracker snapshot={midMatch} />
+        <div className={styles.note}>The whole section, idle until asked:</div>
+        <Playback chain={chain} bestOf={3} players={[{ name: 'Carlos Alcaraz' }, { name: 'Jannik Sinner' }]} surface="clay" />
       </section>
 
       <section className={styles.block}>

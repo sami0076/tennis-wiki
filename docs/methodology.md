@@ -210,7 +210,10 @@ correlation is not small.
 This is stated rather than corrected because correcting it properly means a model of
 between-set correlation, which is a larger piece of work than the one that found the
 problem. What it does mean today: the chain's set and match rungs are sound as an ordering
-and its deciding-set implication is not a number to quote.
+and its deciding-set implication is not a number to quote. The scorelines under the chain
+and the single match the simulator plays out sample under the same assumption, so a
+2-1 or 3-2 there is likelier than it would be on court, which is why both are captioned as
+the model's and neither as a prediction.
 
 There are no rows above 60% because there cannot be. The chance of a deciding set peaks at
 50% for a best of three and 37.5% for a best of five, both at evenly matched players, so

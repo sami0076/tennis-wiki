@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DrawSimulation, MatchSimulation, PlayerSearchResult } from '../api/client'
 import { Simulator } from './Simulator'
 
@@ -98,6 +98,17 @@ function renderAt(path: string) {
   )
 }
 
+// The result's count-up and the played-out match answer the reader's own
+// motion preference; these tests read the finished figures, so they ask for less.
+beforeEach(() => {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: true,
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }))
+})
+
 afterEach(() => {
   vi.unstubAllGlobals()
 })
@@ -123,7 +134,7 @@ describe('Simulator', () => {
     stub(chain)
     renderAt('/simulator?a=a&b=b')
 
-    const caption = await screen.findByText(/Tennis scoring is an amplifier/)
+    const caption = await screen.findByText(/edge on serve becomes/)
     expect(caption).toHaveTextContent('2-point edge on serve')
     expect(caption).toHaveTextContent('19-point edge on the match')
   })
@@ -134,7 +145,7 @@ describe('Simulator', () => {
     stub(chain)
     renderAt('/simulator?a=a&b=b')
 
-    const inputs = await screen.findByText(/derived from the ratings rather than measured/)
+    const inputs = await screen.findByText(/Derived from the ratings/)
     expect(inputs).toHaveTextContent('2571')
     expect(inputs).toHaveTextContent('2503')
     expect(inputs).toHaveTextContent('61.3%')
@@ -185,6 +196,25 @@ describe('Simulator', () => {
     expect(box).toHaveValue('')
     await user.type(box, 'sin')
     expect(box).toHaveValue('sin')
+  })
+
+  it('offers one simulated match under the chain, and plays it out when asked', async () => {
+    stub(chain)
+    const user = userEvent.setup()
+    renderAt('/simulator?a=carlos-alcaraz&b=jannik-sinner')
+
+    const watch = await screen.findByRole('button', { name: 'Watch a simulated match' })
+    expect(screen.getByText('How it ends')).toBeInTheDocument()
+    // Reduced motion in these tests, so the whole match lands at once.
+    await user.click(watch)
+    expect(
+      screen.getAllByText(
+        (_, element) =>
+          element?.tagName === 'P' &&
+          /^Game, set, match: (Alcaraz|Sinner) wins 3-[012]$/.test(element.textContent ?? ''),
+      ).length,
+    ).toBeGreaterThan(0)
+    expect(screen.getByText('Points won')).toBeInTheDocument()
   })
 
   it('asks for two players before simulating anything', async () => {
