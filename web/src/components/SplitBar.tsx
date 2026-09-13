@@ -43,11 +43,11 @@ export function SplitBar({ label, left, right, max, format = String }: SplitBarP
         aria-label={`${label}: ${format(left)} to ${format(right)}`}
       >
         <div className={`${styles.half} ${styles.halfLeft}`}>
-          <div className={styles.fillLeft} style={{ width: `${share(left)}%` }} />
+          <div className={styles.fillLeft} style={{ transform: `scaleX(${share(left) / 100})` }} />
         </div>
         <div className={styles.gap} />
         <div className={styles.half}>
-          <div className={styles.fillRight} style={{ width: `${share(right)}%` }} />
+          <div className={styles.fillRight} style={{ transform: `scaleX(${share(right) / 100})` }} />
         </div>
       </div>
     </div>

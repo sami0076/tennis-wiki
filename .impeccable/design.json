@@ -202,6 +202,20 @@
           "oklch(83% 0.139 30)",
           "oklch(95% 0.139 30)"
         ]
+      },
+      "player-a": {
+        "role": "tertiary",
+        "displayName": "Player A",
+        "canonical": "#c2410c",
+        "oklch": "oklch(52% 0.18 40)",
+        "tonalRamp": []
+      },
+      "player-b": {
+        "role": "tertiary",
+        "displayName": "Player B",
+        "canonical": "#0b7a80",
+        "oklch": "oklch(50% 0.09 200)",
+        "tonalRamp": []
       }
     },
     "typographyMeta": {
@@ -321,6 +335,41 @@
         "name": "reduced-motion",
         "value": "animation-duration 0.01ms; transition-duration 0.01ms",
         "purpose": "base.css collapses everything under prefers-reduced-motion: reduce; every animation is also declared only under no-preference."
+      },
+      {
+        "name": "count-up",
+        "value": "700ms ease-out cubic (rAF)",
+        "purpose": "The simulator's split counting from 50.0 to the share while its fill eases 700ms cubic-bezier(0.25, 0.7, 0.25, 1); the answer to a choice the reader made."
+      },
+      {
+        "name": "rise",
+        "value": "450ms ease, delays 200/350/500/650ms",
+        "purpose": "The chain's four rungs fading and rising 6px in, top to bottom, when a result lands."
+      },
+      {
+        "name": "grow",
+        "value": "550ms cubic-bezier(0.25, 0.7, 0.25, 1) 300ms",
+        "purpose": "The scoreline bars growing in after the split and the rungs."
+      },
+      {
+        "name": "beat",
+        "value": "480 / 800 / 850 / 950 / 1000 / 1100 / 1300ms",
+        "purpose": "The simulated match's holds, holds after a break point, break points, breaks, tiebreaks, tiebreak results and sets, each holding before the commentary fades 200ms out and 220ms in."
+      },
+      {
+        "name": "serve-pulse",
+        "value": "1.2s ease-in-out infinite, 1 to 0.3 opacity",
+        "purpose": "The surface-hue square before the server, only while a match plays."
+      },
+      {
+        "name": "pop",
+        "value": "350ms ease-out from scale(1.35)",
+        "purpose": "A game figure that just moved on the board."
+      },
+      {
+        "name": "break-flash",
+        "value": "900ms ease-out from highlight",
+        "purpose": "The broken player's row on the board."
       }
     ],
     "breakpoints": [
@@ -436,12 +485,12 @@
     "rules": [
       {
         "name": "The Hue Means Surface Rule",
-        "body": "A colour other than ink, pencil, win or loss appears only on an element whose value belongs to one surface, and the surface word or square is always beside it. Never as decoration, never to tell two players apart.",
+        "body": "A colour other than ink, pencil, win, loss, orange or turquoise appears only on an element whose value belongs to one surface, and the surface word or square is always beside it. Never as decoration.",
         "section": "colors"
       },
       {
-        "name": "The Ink and Pencil Rule",
-        "body": "In any two-player comparison player A is ink and player B is pencil: names, chart lines, bar halves, tags. Never two hues.",
+        "name": "The Two Sides Rule",
+        "body": "In any two-player comparison player A is orange (#c2410c) and player B is turquoise (#0b7a80): names, chart lines, bar halves, tags, the board's rows. Both pass 4.5:1 on the bond; a clay cell keeps its word or square beside the figure.",
         "section": "colors"
       },
       {

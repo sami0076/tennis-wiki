@@ -44,7 +44,8 @@ Routes: `/` (Elo leaders, trajectory chart, what the database holds), `/players`
 career, official ranking, serve, splits by surface and tier, match log), `/h2h` and
 `/h2h/:a/:b` (career score, surface filter, split bars, rivalry strip, every meeting,
 simulate button), `/rankings` (Elo vs official, rank delta), `/simulator` (two pickers,
-the chain from point to match, a draw played ten thousand times), `/methodology`
+the chain from point to match, the chance of each set score, one match played out from the
+chain on request and labelled a sample of the model, a draw played ten thousand times), `/methodology`
 (generated from `docs/methodology.md`), `/_components` (every component in every state).
 
 Player search lives in the header on every page: a combobox, debounced, every row
@@ -63,7 +64,8 @@ Seed fixture of ~4,100 real matches covers every data regime. Served as a static
   `/api/v1/coverage` reports the real dates from the database.
 - A ranking is always as of the last week that exists, never today, and says which week.
 - Product rules the redesign keeps (confirmed 2026-09-11): hue means surface and is
-  never decorative; players are monochrome in any two-player comparison; win/loss colour
+  never decorative; the two sides of any comparison are orange (A) and turquoise (B), never named by
+  colour alone (amended 2026-09-12 from monochrome, at the user's request); win/loss colour
   only on W/L marks and rank deltas; absence is never rendered as zero and nothing
   absent is hidden (AbsentCell, PartialAggregate, EmptyState are three distinct cases);
   tabular numerals on every element carrying data; colour is never the only encoding.

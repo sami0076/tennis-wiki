@@ -238,10 +238,14 @@ record is [`DESIGN.md`](DESIGN.md), the reasoning is
 [ADR-0010](docs/decisions/0010-the-draw-sheet.md), and `/_components` renders every
 component in every state, which is the fastest way to check the system against a page.
 
-`/simulator` is the third: two pickers, the chain from a service point up to the match, and
-a draw played ten thousand times with an interval on every figure. The caption carries the
-matchup's own numbers rather than the design's, and says where the inputs came from. The
-head-to-head page's "Simulate this matchup" button leads here with both players.
+`/simulator` is the third: two pickers, the chain from a service point up to the match, the
+chance of each set score, one match played out game by game from the chain's serve figures
+when asked (a sample of the model, with a board, a line of commentary and a tally counted
+from the points it played), and a draw played ten thousand times with an interval on every
+figure. The caption carries the matchup's own numbers rather than the design's, and says
+where the inputs came from. The head-to-head page's "Simulate this matchup" button leads
+here with both players. The page's layout and beats follow
+[`docs/design/prototypes/simulator.html`](docs/design/prototypes/simulator.html).
 
 `/h2h/:a/:b` is the comparison and `/h2h` the picker, which is the same page: the URL is the
 state, so a comparison is a link somebody can send, and asking the other way round is the same

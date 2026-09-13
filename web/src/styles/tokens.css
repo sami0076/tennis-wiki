@@ -24,6 +24,11 @@
   --win: #4a7a3f;
   --loss: #b0483a;
 
+  /* the two sides of any comparison: orange and turquoise, both past 4.5:1
+     on bond. Orange sits near clay, so the clay square always has its word. */
+  --player-a: #c2410c;
+  --player-b: #0b7a80;
+
   /* rules. Row rules are pencil; section and total rules are ink. */
   --rule: 1px solid var(--pencil-light);
   --rule-ink: 1px solid var(--ink);

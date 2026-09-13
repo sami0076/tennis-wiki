@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ApiError,
@@ -14,13 +14,16 @@ import {
   EmptyState,
   Meta,
   OddsBar,
+  Playback,
   PlayerSearch,
+  Scorelines,
   Skeleton,
   SurfaceToggle,
   WinSplit,
 } from '../components'
 import { formatPercent, surname } from '../lib/format'
 import { surfaceLabel } from '../lib/surface'
+import { prefersReducedMotion } from '../lib/useReducedMotion'
 import { useUrlParam } from '../lib/useUrlParam'
 import { FEATURED_DRAW } from '../lib/featuredDraw'
 import styles from './Simulator.module.css'
@@ -57,9 +60,8 @@ export function Simulator() {
     <>
       <h1 className={styles.title}>Simulator</h1>
       <p className={styles.standfirst}>
-        From first principles: a probability per service point, compounded by the scoring
-        system into a probability per match. Every step is shown, because the compounding is
-        the interesting part.
+        A probability per service point, compounded by the scoring system into a probability
+        per match, every step shown.
       </p>
 
       <Pickers a={a} b={b} onA={setA} onB={setB} match={match} />
@@ -164,6 +166,8 @@ function MatchPanel({
   surface: string
   sets: number
 }) {
+  const revealing = useReveal(match.state === 'ready' ? match.data : null)
+
   if (match.state === 'loading') return <Skeleton lines={6} />
 
   if (match.state === 'error') {
@@ -205,12 +209,55 @@ function MatchPanel({
           sets === 5 ? 'best of five' : 'best of three',
         ]}
       />
-      <WinSplit nameA={playerA.name} nameB={playerB.name} share={sim.chain.match[0]} />
-      <Chain chain={sim.chain} nameA={playerA.name} nameB={playerB.name} />
+      <WinSplit
+        nameA={playerA.name}
+        nameB={playerB.name}
+        share={sim.chain.match[0]}
+        animate={revealing}
+      />
+      <Chain chain={sim.chain} nameA={playerA.name} nameB={playerB.name} animate={revealing} />
+      <Scorelines
+        setShare={sim.chain.set[0]}
+        bestOf={sim.best_of}
+        nameA={surname(playerA.name)}
+        nameB={surname(playerB.name)}
+        animate={revealing}
+      />
       <Amplification chain={sim.chain} />
       <Inputs sim={sim} />
+      <section className={styles.section}>
+        <Playback
+          key={`${playerA.slug}/${playerB.slug}/${sim.surface}/${sim.best_of}`}
+          chain={sim.chain}
+          bestOf={sim.best_of}
+          players={sim.players}
+          surface={sim.surface}
+        />
+      </section>
     </section>
   )
+}
+
+/** How long the result takes to arrive: the count-up, then the rungs, then the bars. */
+const REVEAL_MS = 1300
+
+/**
+ * True for the moment after a new result lands, which is when the split counts
+ * up and the rungs rise in. The answer to a choice the reader made, not ambient
+ * motion, and nothing at all for anyone who asked for less.
+ */
+function useReveal(result: unknown): boolean {
+  const [revealing, setRevealing] = useState(false)
+  useEffect(() => {
+    if (result === null || prefersReducedMotion()) {
+      setRevealing(false)
+      return
+    }
+    setRevealing(true)
+    const timer = setTimeout(() => setRevealing(false), REVEAL_MS)
+    return () => clearTimeout(timer)
+  }, [result])
+  return revealing
 }
 
 const rungs: ReadonlyArray<{ key: keyof SimulationChain; label: string }> = [
@@ -224,7 +271,17 @@ const rungs: ReadonlyArray<{ key: keyof SimulationChain; label: string }> = [
  * The rungs, as ruled rows with a column for each player: A in ink, B in
  * pencil, the same pair the split above uses.
  */
-function Chain({ chain, nameA, nameB }: { chain: SimulationChain; nameA: string; nameB: string }) {
+function Chain({
+  chain,
+  nameA,
+  nameB,
+  animate = false,
+}: {
+  chain: SimulationChain
+  nameA: string
+  nameB: string
+  animate?: boolean
+}) {
   return (
     <div className={styles.chain}>
       <h2 className={styles.sectionTitle}>How the edge compounds</h2>
@@ -233,8 +290,12 @@ function Chain({ chain, nameA, nameB }: { chain: SimulationChain; nameA: string;
         <span className={styles.chainA}>{surname(nameA)}</span>
         <span className={styles.chainB}>{surname(nameB)}</span>
       </div>
-      {rungs.map(({ key, label }) => (
-        <div key={key} className={styles.rung}>
+      {rungs.map(({ key, label }, index) => (
+        <div
+          key={key}
+          className={animate ? `${styles.rung} ${styles.rise}` : styles.rung}
+          style={{ '--i': index } as React.CSSProperties}
+        >
           <span className={styles.rungLabel}>{label}</span>
           <span className={styles.rungA}>
             <span className="sr-only">{nameA} </span>
@@ -261,15 +322,14 @@ function Amplification({ chain }: { chain: SimulationChain }) {
   if (point < 0.05) {
     return (
       <p className={styles.caption}>
-        Two players this evenly matched stay even all the way up. The scoring system
-        amplifies a difference; it does not invent one.
+        Two players this evenly matched stay even all the way up.
       </p>
     )
   }
   return (
     <p className={styles.caption}>
       A {point.toFixed(0)}-point edge on serve becomes a {match.toFixed(0)}-point edge on the
-      match. Tennis scoring is an amplifier.
+      match.
     </p>
   )
 }
@@ -281,19 +341,17 @@ function Inputs({ sim }: { sim: MatchSimulation }) {
 
   return (
     <p className={styles.caption}>
-      Point probabilities are derived from the ratings rather than measured: {playerA.name}{' '}
-      {playerA.elo === null ? 'unrated' : Math.round(playerA.elo)} against {playerB.name}{' '}
-      {playerB.elo === null ? 'unrated' : Math.round(playerB.elo)}, blended{' '}
-      {Math.round((playerA.surface_weight ?? 0) * 100)}% toward the surface. Anchored on{' '}
+      Derived from the ratings, {playerA.elo === null ? 'unrated' : Math.round(playerA.elo)}{' '}
+      against {playerB.elo === null ? 'unrated' : Math.round(playerB.elo)}, blended{' '}
+      {Math.round((playerA.surface_weight ?? 0) * 100)}% toward the surface and anchored on{' '}
       {inputs.anchor === null ? 'no measured average' : formatPercent(inputs.anchor * 100)} of
-      service points won across {inputs.tier} level
-      {inputs.anchor_scope === 'tier_surface_decade' ? ` in the ${inputs.decade}s` : ''}, over{' '}
-      {inputs.anchor_points} recorded points.{' '}
+      service points at {inputs.tier} level
+      {inputs.anchor_scope === 'tier_surface_decade' ? ` in the ${inputs.decade}s` : ''}.{' '}
       <Link
         className={styles.inline}
         to="/methodology#what-the-simulator-can-be-checked-for-and-what-it-cannot"
       >
-        What this chain can be checked for, and what it gets wrong
+        What this gets wrong
       </Link>
       .
     </p>
