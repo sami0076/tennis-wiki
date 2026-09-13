@@ -42,7 +42,7 @@ export function Scorelines({ setShare, bestOf, nameA, nameB, animate = false }: 
               <span className={styles.track} aria-hidden="true">
                 <span
                   className={`${row.aWins ? styles.fillA : styles.fillB} ${animate ? styles.growing : ''}`}
-                  style={{ width: grown ? `${(96 * row.p) / max}%` : '0%' }}
+                  style={{ width: `${(96 * row.p) / max}%`, transform: grown ? 'none' : 'scaleX(0)' }}
                 />
               </span>
               <span className={row.aWins ? styles.figureA : styles.figureB}>{percent}%</span>

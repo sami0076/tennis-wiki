@@ -55,6 +55,7 @@
 .fillB {
   display: block;
   height: 100%;
+  transform-origin: left;
 }
 
 .fillA {
@@ -65,9 +66,10 @@
   background: var(--pencil);
 }
 
-/* The bars grow in after the split and the rungs, as the prototype times it. */
+/* The bars grow in after the split and the rungs, as the prototype times it:
+   a scale, so nothing is laid out again per frame. */
 .growing {
-  transition: width 550ms cubic-bezier(0.25, 0.7, 0.25, 1);
+  transition: transform 550ms cubic-bezier(0.25, 0.7, 0.25, 1);
 }
 
 .caption {

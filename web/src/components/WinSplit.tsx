@@ -45,7 +45,7 @@ export function WinSplit({ nameA, nameB, share, animate = false }: WinSplitProps
         role="img"
         aria-label={`${nameA} ${a.toFixed(1)}%, ${nameB} ${b.toFixed(1)}%`}
       >
-        <div className={animate ? `${styles.fill} ${styles.easing}` : styles.fill} style={{ width: `${shown}%` }} />
+        <div className={styles.fill} style={{ width: `${shown}%` }} />
       </div>
     </div>
   )
