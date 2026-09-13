@@ -206,15 +206,15 @@
       "player-a": {
         "role": "tertiary",
         "displayName": "Player A",
-        "canonical": "#0f6e78",
-        "oklch": "oklch(46% 0.08 205)",
+        "canonical": "#c2410c",
+        "oklch": "oklch(52% 0.18 40)",
         "tonalRamp": []
       },
       "player-b": {
         "role": "tertiary",
         "displayName": "Player B",
-        "canonical": "#a8285f",
-        "oklch": "oklch(48% 0.17 5)",
+        "canonical": "#0b7a80",
+        "oklch": "oklch(50% 0.09 200)",
         "tonalRamp": []
       }
     },
@@ -485,12 +485,12 @@
     "rules": [
       {
         "name": "The Hue Means Surface Rule",
-        "body": "A colour other than ink, pencil, win, loss, teal or rose appears only on an element whose value belongs to one surface, and the surface word or square is always beside it. Never as decoration.",
+        "body": "A colour other than ink, pencil, win, loss, orange or turquoise appears only on an element whose value belongs to one surface, and the surface word or square is always beside it. Never as decoration.",
         "section": "colors"
       },
       {
         "name": "The Two Sides Rule",
-        "body": "In any two-player comparison player A is teal (#0f6e78) and player B is rose (#a8285f): names, chart lines, bar halves, tags, the board's rows. Two hues no surface uses, each 5.5:1 on the bond.",
+        "body": "In any two-player comparison player A is orange (#c2410c) and player B is turquoise (#0b7a80): names, chart lines, bar halves, tags, the board's rows. Both pass 4.5:1 on the bond; a clay cell keeps its word or square beside the figure.",
         "section": "colors"
       },
       {

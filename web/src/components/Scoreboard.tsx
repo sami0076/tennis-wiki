@@ -17,7 +17,7 @@ interface ScoreboardProps {
  * loser's tiebreak points as a superscript on their 6, the set in progress
  * boxed in the surface's hue, and a square in that hue before whoever serves.
  *
- * Each side is in its own hue, teal and rose, as in every comparison; a set
+ * Each side is in its own hue, orange and turquoise, as in every comparison; a set
  * they lost is pencil. A broken player's row flashes the highlight and a
  * moving figure pops.
  */

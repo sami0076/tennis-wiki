@@ -64,8 +64,8 @@ Seed fixture of ~4,100 real matches covers every data regime. Served as a static
   `/api/v1/coverage` reports the real dates from the database.
 - A ranking is always as of the last week that exists, never today, and says which week.
 - Product rules the redesign keeps (confirmed 2026-09-11): hue means surface and is
-  never decorative; the two sides of any comparison are teal (A) and rose (B), hues no surface
-  uses (amended 2026-09-12 from monochrome, at the user's request); win/loss colour
+  never decorative; the two sides of any comparison are orange (A) and turquoise (B), never named by
+  colour alone (amended 2026-09-12 from monochrome, at the user's request); win/loss colour
   only on W/L marks and rank deltas; absence is never rendered as zero and nothing
   absent is hidden (AbsentCell, PartialAggregate, EmptyState are three distinct cases);
   tabular numerals on every element carrying data; colour is never the only encoding.

@@ -14,8 +14,8 @@ colors:
   indoor: "#6b5b95"
   win: "#4a7a3f"
   loss: "#b0483a"
-  player-a: "#0f6e78"
-  player-b: "#a8285f"
+  player-a: "#c2410c"
+  player-b: "#0b7a80"
 typography:
   display:
     fontFamily: "'Martian Mono Variable', 'Martian Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
@@ -179,9 +179,9 @@ Two outcome hues, for W/L marks, rank deltas, the champion mark, and the one err
 - **Highlight** (`{colors.highlight}`): the hovered seed row, the keyboard-active combobox option, inline code in the methodology.
 
 ### Named Rules
-**The Hue Means Surface Rule.** A colour other than ink, pencil, win, loss, teal or rose appears only on an element whose value belongs to one surface, and the surface word or square is always beside it. Never as decoration.
+**The Hue Means Surface Rule.** A colour other than ink, pencil, win, loss, orange or turquoise appears only on an element whose value belongs to one surface, and the surface word or square is always beside it. Never as decoration.
 
-**The Two Sides Rule.** In any two-player comparison player A is teal (`#0f6e78`) and player B is rose (`#a8285f`): names, chart lines, bar halves, tags, the board's rows, the side named in a line of commentary. Two hues no surface uses, each 5.5:1 on the bond, so a side and a court are never the same colour. Amended 2026-09-12 from ink and pencil, at the user's request for colour that tells the players apart.
+**The Two Sides Rule.** In any two-player comparison player A is orange (`#c2410c`) and player B is turquoise (`#0b7a80`): names, chart lines, bar halves, tags, the board's rows, the side named in a line of commentary. Both pass 4.5:1 on the bond. Orange is a neighbour of clay, so a clay cell always carries its word or square beside the figure, and a side is never named by colour alone. Amended 2026-09-12 from ink and pencil, at the user's request for colour that tells the players apart.
 
 **The Outcome Rule.** Win and loss colour appears only on a W/L mark, a rank delta and the champion mark, and always with a letter or sign, so removing colour loses nothing.
 

@@ -47,8 +47,9 @@ still declares its denominator.
 read as text on the bond at 4.5:1 (clay `#a84f1f`, hard `#2e6fa8`, grass `#4a7a3f`,
 indoor `#6b5b95`). The active surface filter is a cell boxed in its hue; the best surface
 on a player page is boxed in its hue. A two-player comparison was ink against pencil until
-2026-09-12, when the user asked for colour that tells the players apart: player A is now teal
-(`#0f6e78`) and player B rose (`#a8285f`), two hues no surface uses, so the surface rule holds.
+2026-09-12, when the user asked for colour that tells the players apart: player A is now orange
+(`#c2410c`) and player B turquoise (`#0b7a80`). Orange neighbours clay, so a clay cell keeps its
+word or square beside the figure and a side is never named by colour alone.
 
 ## Consequences
 

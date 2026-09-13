@@ -30,8 +30,8 @@
   text-align: right;
 }
 
-/* Player B is rose everywhere on this page, as A is teal: the two hues no
-   surface uses, so a side and a court are never the same colour. */
+/* Player B is turquoise everywhere on this page, as A is orange, the same
+   pair every comparison uses. */
 .nameB {
   color: var(--player-b);
   border-bottom: 0;
