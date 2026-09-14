@@ -302,6 +302,10 @@ func TestTierFromLevel(t *testing.T) {
 		{"15", "tour", "itf"}, // WTA prize-money codes
 		{"25", "tour", "itf"},
 		{"100", "tour", "itf"},
+		{"250", "itf", "tour"}, // TML writes tour categories as points
+		{"500", "itf", "tour"},
+		{"1000", "itf", "tour"},
+		{"125", "tour", "challenger"},    // WTA 125 series
 		{"", "challenger", "challenger"}, // only an empty level falls back
 		{"g", "challenger", "tour"},      // case insensitive
 	}

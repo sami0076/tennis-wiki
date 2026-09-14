@@ -86,24 +86,34 @@ func (m MatchRow) Tier(fallback string) string {
 		// ATP Satellite and Futures.
 		return "futures"
 	}
-	// The WTA writes ITF events as their prize money in thousands: 15, 25, 60,
-	// 80, 100. Everything else alphabetic is a tour-level event.
-	if isNumericLevel(level) {
+	// Numeric codes mean two things. The WTA writes ITF events as their prize
+	// money in thousands: 10 to 100. TML writes tour categories as their
+	// points: 250, 500, 1000. Nothing in the data sits between 100 and 125,
+	// and 125 is the WTA 125 series, which is Challenger standard.
+	if n, ok := numericLevel(level); ok {
+		switch {
+		case n >= 250:
+			return "tour"
+		case n == 125:
+			return "challenger"
+		}
 		return "itf"
 	}
 	return "tour"
 }
 
-func isNumericLevel(s string) bool {
+func numericLevel(s string) (int, bool) {
 	if s == "" {
-		return false
+		return 0, false
 	}
+	n := 0
 	for _, r := range s {
 		if r < '0' || r > '9' {
-			return false
+			return 0, false
 		}
+		n = n*10 + int(r-'0')
 	}
-	return true
+	return n, true
 }
 
 // qualifyingRound matches Q1, Q2, Q3 and so on. It must not match QF, which is
