@@ -3,6 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-09-02
 - **Supersedes:** build specification §3.1 and §3.2
+- **Amended:** 2026-09-14, layer D moved to the maintainer's site (#120); see the end
 
 ## Context
 
@@ -29,7 +30,7 @@ cover every tier, which is what makes the lower rows matter.
 | **A** | Complete Sackmann snapshot | ATP + WTA | tour, qual+Challenger, Futures, qual+ITF, doubles, amateur | → **2022-01-10** | The **only** located source for Futures, WTA ITF, and doubles. WTA goes back to **1923**, not 1968 |
 | **B** | Restructured ATP mirror | ATP | tour, qual+Challenger | → 2024 | Fresher than A for the tiers it carries |
 | **C** | Vendored WTA snapshots | WTA | tour | → 2024 | Several candidates, none authoritative |
-| **D** | `Tennismylife/TML-Database` | ATP | tour | 2025 → 2026-01-17 | Official ATP alphanumeric player IDs; extra `indoor` column |
+| **D** | `Tennismylife/TML-Database` | ATP | tour | 2025 → 2026-01-17 | Official ATP alphanumeric player IDs; extra `indoor` column. **Amended below:** the GitHub copy lags the maintainer's site |
 | **E** | `JeffSackmann/tennis_MatchChartingProject` | ATP + WTA | charted matches only | → **2026-05-24** | **Still public and actively maintained.** The most current source available |
 
 Layer A's headline files stop at 2022-01-10 — the 2022 files are partial, and 2021 is the
@@ -90,3 +91,43 @@ enough to build and validate every phase.
 - The methodology page gains a data-provenance section. Given the circumstances this is an
   asset: being straightforward about where the data came from, and what is missing, is
   exactly the credibility this project trades on.
+
+## Amendment, 2026-09-14
+
+The GitHub repository in layer D is a lagging copy. The maintainer publishes at
+`https://stats.tennismylife.org/data/`, with an index at `/api/data-files`, and on
+13 September 2026 the files there carried:
+
+| File family | Seasons | Last match | Rows |
+|---|---|---|---|
+| `{season}.csv`, ATP tour | 1968–2026 | 2026-08-30 | 2,132 in 2026 |
+| `{season}_challenger.csv` | 1978–2026 | 2026-09-01 | 5,389 in 2026 |
+| `atp_quali/{season}_atp_quali.csv` | 2007–2026 | 2026-08-28 | 1,105 in 2026 |
+| `{season}_wta.csv` | 1990–2026 | 2026-08-30 | 2,095 in 2026 |
+
+against 137 rows and a last match of 2026-01-17 in the GitHub copy. Same layout, serve
+statistics present on all but a few dozen rows per file, and the WTA files use Sackmann's
+numeric ids, so nothing to reconcile on that tour.
+
+**Decision 4 now reads:** layer D is the website, used for ATP tour, Challenger and
+qualifying 2025–26 and for WTA tour 2022–26. The Sackmann mirrors stay the base for
+everything through 2024 (ATP) and 2021 (WTA): the website rewrites its historical files
+in place and keeps no history, so what is already loaded and validated is not swapped
+for it. The website serves ETags, so the ledger's conditional fetch works unchanged.
+
+**What the files needed** (all fixed in the same change, none of it config): tour
+categories written as `250`, `500` and `1000` in `tourney_level`, which the tier
+derivation had been filing as ITF (#132); 489 rows of the 2025 ATP file with no
+`match_num`, the whole US Open among them, which were being rejected — they now get a
+number hashed from round and players; a date of birth in a height column and ages with
+the decimal point dropped, which overflowed their columns; and 135 empty player ids in
+the 2026 WTA file, which are rejected and counted as before.
+
+**The licence line on the site says "MIT".** A derivative of CC BY-NC-SA data cannot
+grant that, and the attribution here names both Tennismylife and Sackmann as before;
+nothing in this project's use depends on the claim.
+
+**Snapshot.** The files read on 2026-09-14, with their sizes and the ETags the ledger
+recorded, are in `ingest_files` on the database that was loaded; the raw CSVs are archived
+with the rest of the build inputs per decision 3.
+
