@@ -21,15 +21,9 @@ Three things this directory assumes and does not install: **k3s** (which brings
 Traefik and the `local-path` storage class), **cert-manager**, and a DNS record
 pointing at the node.
 
-Two values are placeholders and must be replaced together:
-
-| | |
-|---|---|
-| `api.deucepoint.example` | `base/10-config.yaml` and `base/50-ingress.yaml` |
-| `email: REPLACE_ME` | `base/50-ingress.yaml`, for expiry warnings |
-
-`.example` is reserved by RFC 2606, so nothing here can resolve to a host that
-belongs to someone else while the real name is undecided.
+The name is `api.deucepoint.net`, in `base/10-config.yaml` (the CORS origin is
+the site, `deucepoint.net`) and `base/50-ingress.yaml`. Both files change
+together if it ever moves.
 
 ## First time
 
@@ -58,13 +52,9 @@ reference stage, then 1m 36s for the ratings. Every figure here is from
 
 This is inherent to pinning in-tree: the image for a commit does not exist until
 CI has built that commit, so a manifest can only name an image built from an
-earlier one. Right now it matters more than usual.
-
-**Bump the API digest before the first apply.** The liveness probe asks for
-`/api/v1/live`, which was added in the same change as these manifests, so the
-digest in `base/40-api.yaml` is one commit too old to answer it. An API applied
-against that digest passes readiness and is then killed by liveness about a
-hundred seconds later, repeatedly. #101 bumps it as its first step.
+earlier one. CI builds `api` and `tools` only when Go, the migrations or the
+Dockerfiles change, so the newest image is usually older than `main`; that is
+fine as long as it is not older than what the manifests ask of it.
 
 ## Rolling out a new image
 

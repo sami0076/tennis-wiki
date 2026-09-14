@@ -12,7 +12,7 @@ spec:
     server: https://acme-v02.api.letsencrypt.org/directory
     # Let's Encrypt sends expiry warnings here. Fill it in before applying --
     # a certificate nobody is told about is one that silently lapses.
-    email: REPLACE_ME
+    email: samisaleh07@gmail.com
     privateKeySecretRef:
       name: letsencrypt-account-key
     solvers:
@@ -50,7 +50,7 @@ spec:
   rules:
     # The placeholder from 10-config.yaml. Both files name the host, and both
     # have to change together when #101 picks the real one.
-    - host: api.deucepoint.example
+    - host: api.deucepoint.net
       http:
         paths:
           - path: /
@@ -76,11 +76,11 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - api.deucepoint.example
+        - api.deucepoint.net
       # cert-manager creates and renews this; nothing applies it by hand.
       secretName: api-tls
   rules:
-    - host: api.deucepoint.example
+    - host: api.deucepoint.net
       http:
         paths:
           - path: /
