@@ -16,7 +16,7 @@ working shown.
      the title. The page shipped with Phase 2; the screenshot has not been taken yet. -->
 _Screenshot of the head-to-head page — the page exists, the screenshot is still to come._
 
-**Live URL:** _pending Phase 4._
+**Live URL:** [deucepoint.net](https://deucepoint.net) — API at [api.deucepoint.net](https://api.deucepoint.net/api/v1/health)
 
 ---
 

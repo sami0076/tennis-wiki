@@ -7,7 +7,9 @@
 ## Context
 
 The site needs a database that survives a pod restart, on a host chosen in ADR-0008: one
-Hetzner CX33, 4 vCPU, 8 GB, 80 GB NVMe, 8.49 EUR/month.
+Hetzner CX33, 4 vCPU, 8 GB, 80 GB NVMe, 8.49 EUR/month. (*Amended 2026-09-14:* the host
+became a GreenCloud VPS of the same shape with 60 GB NVMe; the budget below is unchanged
+and the disk arithmetic still holds with room to spare.)
 
 The database is not small and not growing. `docs/performance.md` measures **2,054 MB**
 before ratings and a **449 MB** `ratings` table after them — about 2.5 GB, and it stops
