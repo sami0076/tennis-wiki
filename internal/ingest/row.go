@@ -2,6 +2,7 @@ package ingest
 
 import (
 	"fmt"
+	"hash/fnv"
 	"regexp"
 	"strconv"
 	"strings"
@@ -86,25 +87,61 @@ func (m MatchRow) Tier(fallback string) string {
 		// ATP Satellite and Futures.
 		return "futures"
 	}
-	// The WTA writes ITF events as their prize money in thousands: 15, 25, 60,
-	// 80, 100. Everything else alphabetic is a tour-level event.
-	if isNumericLevel(level) {
+	// Numeric codes mean two things. The WTA writes ITF events as their prize
+	// money in thousands: 10 to 100. TML writes tour categories as their
+	// points: 250, 500, 1000. Nothing in the data sits between 100 and 125,
+	// and 125 is the WTA 125 series, which is Challenger standard.
+	if n, ok := numericLevel(level); ok {
+		switch {
+		case n >= 250:
+			return "tour"
+		case n == 125:
+			return "challenger"
+		}
 		return "itf"
 	}
 	return "tour"
 }
 
-func isNumericLevel(s string) bool {
+func numericLevel(s string) (int, bool) {
 	if s == "" {
-		return false
+		return 0, false
 	}
+	n := 0
 	for _, r := range s {
 		if r < '0' || r > '9' {
-			return false
+			return 0, false
 		}
+		n = n*10 + int(r-'0')
 	}
-	return true
+	return n, true
 }
+
+// syntheticMatchNum stands in for a match_num the source left empty. TML's
+// 2025 ATP file has none for 489 rows, the whole US Open among them, and a
+// row without one was rejected, which lost the tournament.
+//
+// The number only has to be stable and unique within the tournament. It is
+// hashed from the round and the two players rather than taken from the row's
+// position, because the source edits files in place and a position would move.
+// Real match numbers stay below 1000, so the synthetic range starts there.
+// Reader resolves the rare collision within one file.
+func syntheticMatchNum(m MatchRow) int {
+	h := fnv.New32a()
+	h.Write([]byte(m.Round))
+	h.Write([]byte{0})
+	h.Write([]byte(m.Winner.SourceID))
+	h.Write([]byte{0})
+	h.Write([]byte(m.Loser.SourceID))
+	return syntheticBase + int(h.Sum32()%uint32(syntheticRange))
+}
+
+// The synthetic range sits above any real match_num and below smallint's
+// 32767.
+const (
+	syntheticBase  = 1000
+	syntheticRange = 31000
+)
 
 // qualifyingRound matches Q1, Q2, Q3 and so on. It must not match QF, which is
 // the quarterfinal of a main draw.
@@ -123,9 +160,12 @@ func parseRow(c *columns, rec []string) (MatchRow, error) {
 	if err != nil {
 		return MatchRow{}, err
 	}
-	matchNum, err := strconv.Atoi(c.get(rec, "match_num"))
-	if err != nil {
-		return MatchRow{}, fmt.Errorf("match_num %q: %w", c.get(rec, "match_num"), err)
+	matchNum := 0
+	if raw := c.get(rec, "match_num"); raw != "" {
+		matchNum, err = strconv.Atoi(raw)
+		if err != nil {
+			return MatchRow{}, fmt.Errorf("match_num %q: %w", raw, err)
+		}
 	}
 
 	m := MatchRow{
@@ -151,6 +191,9 @@ func parseRow(c *columns, rec []string) (MatchRow, error) {
 	if m.Winner.SourceID == "" || m.Loser.SourceID == "" {
 		return MatchRow{}, fmt.Errorf("row %s/%d has a missing player id", m.TourneyID, m.MatchNum)
 	}
+	if m.MatchNum == 0 {
+		m.MatchNum = syntheticMatchNum(m)
+	}
 	// The source occasionally records a player as beating themselves. Both
 	// participants would collapse onto one primary key, leaving a match with a
 	// single player that corrupts head-to-head records and Elo alike.
@@ -167,8 +210,8 @@ func parsePlayer(c *columns, rec []string, side, statPrefix string) Player {
 		Name:       c.get(rec, side+"_name"),
 		Hand:       normaliseHand(c.get(rec, side+"_hand")),
 		Country:    strings.ToUpper(c.get(rec, side+"_ioc")),
-		HeightCM:   optInt(c.get(rec, side+"_ht")),
-		Age:        optFloat(c.get(rec, side+"_age")),
+		HeightCM:   optHeight(c.get(rec, side+"_ht")),
+		Age:        optAge(c.get(rec, side+"_age")),
 		Seed:       optInt(c.get(rec, side+"_seed")),
 		Entry:      strings.ToUpper(c.get(rec, side+"_entry")),
 		Rank:       optInt(c.get(rec, side+"_rank")),
@@ -271,6 +314,26 @@ func normaliseHand(s string) string {
 
 // optInt returns nil for anything that is not a number, so an unrecorded value
 // stays unrecorded rather than becoming zero.
+// optHeight and optAge are optInt and optFloat bounded to a human. TML's 2026
+// WTA file carries a date of birth in one player's height column and ages
+// with the decimal point dropped, 2808 for 28.08; the first overflows a
+// smallint and the second a numeric(4,1). Absent is the right reading of both.
+func optHeight(s string) *int {
+	h := optInt(s)
+	if h == nil || *h < 100 || *h > 250 {
+		return nil
+	}
+	return h
+}
+
+func optAge(s string) *float64 {
+	a := optFloat(s)
+	if a == nil || *a < 10 || *a > 70 {
+		return nil
+	}
+	return a
+}
+
 func optInt(s string) *int {
 	if s == "" {
 		return nil

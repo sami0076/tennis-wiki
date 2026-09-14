@@ -3,6 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-09-04
 - **Context:** [ADR-0002](0002-data-sources-after-upstream-removal.md), issue #15
+- **Amended:** 2026-09-14, the gap closed from the full-schema side; see the end
 
 ## Context
 
@@ -76,3 +77,17 @@ rate statistics — not a migration. That was the expensive part, and it is alre
 
 **Revisit when** the site is real enough to judge whether staleness actually undermines it.
 That is a better basis for the call than a prediction made now.
+
+## Amendment, 2026-09-14
+
+The option this ADR was waiting on — a full-schema source — turned out to exist: the
+TML-Database maintainer's own site carries the Sackmann layout, serve statistics
+included, to within a fortnight of the present for both tours (ADR-0002, amendment).
+`configs/sources.json` now reads it (#120), and full-schema coverage runs to late August
+2026 for ATP tour, Challenger and qualifying and for WTA tour. ATP Futures still stops in
+2021 and WTA ITF in 2021; those gaps stand and are disclosed the same way.
+
+The decision itself is unchanged: no results-only supplement, no scraping, and the
+coverage claim stays derived from the database rather than written down. What changed is
+that "behind" is now the maintainer's update lag rather than eight months.
+

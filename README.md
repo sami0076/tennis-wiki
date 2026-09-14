@@ -44,7 +44,7 @@ interface that is designed rather than assembled.
 flowchart LR
     subgraph sources["Data sources (CC BY-NC-SA 4.0)"]
         A["Sackmann-lineage mirrors<br/>ATP + WTA, all tiers<br/>tour / Challenger / Futures / ITF"]
-        B["TML-Database<br/>ATP 2025-26"]
+        B["Tennismylife<br/>ATP 2025-26, WTA 2022-26"]
         C["Match Charting Project<br/>shot-by-shot, to May 2026"]
     end
 
@@ -87,10 +87,12 @@ matches support win/loss, head-to-head, and Elo but carry no point-level data, s
 cannot feed the simulator. Where a statistic does not exist, the site explains why instead
 of showing a zero.
 
-**There is a currency gap, and it is disclosed rather than papered over.** Full-schema data
-runs through **2026-01-17 (ATP)** and **2024-12-31 (WTA)**; the upstream repositories were
-withdrawn mid-project and the mirrors stop there. Filling it with results-only data would
-put two data regimes in one database and produce plausible-looking wrong numbers, so
+**Coverage is disclosed rather than papered over.** Full-schema data runs to within a few
+weeks of the present for the ATP tour, Challenger and qualifying and for the WTA tour, and
+stops in 2021 for ATP Futures and WTA ITF. The upstream repositories were withdrawn
+mid-project; the lower tiers stop where the last mirror does. Filling that with
+results-only data would put two data regimes in one database and produce
+plausible-looking wrong numbers, so
 [ADR-0006](docs/decisions/0006-accept-and-disclose-the-coverage-gap.md) accepts the gap
 instead. `GET /api/v1/coverage` reports the real dates, queried from the database, so the
 claim cannot drift from the data.

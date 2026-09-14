@@ -285,6 +285,72 @@ func TestLocalFetcher(t *testing.T) {
 
 // Tier comes from tourney_level, never from the file: atp_matches_qual_chall
 // mixes Challenger main draws with Grand Slam and Masters qualifying.
+func TestOptHeightRejectsNonHeights(t *testing.T) {
+	cases := map[string]*int{"183": ptr(183), "183.0": ptr(183), "": nil, "20011008": nil, "0": nil}
+	for in, want := range cases {
+		got := optHeight(in)
+		switch {
+		case got == nil && want == nil:
+		case got == nil || want == nil || *got != *want:
+			t.Errorf("optHeight(%q) = %v, want %v", in, got, want)
+		}
+	}
+}
+
+func ptr(n int) *int { return &n }
+
+func TestMissingMatchNumIsSynthesised(t *testing.T) {
+	header := "tourney_id,tourney_name,tourney_date,tourney_level,match_num,round,best_of,score,winner_id,winner_name,loser_id,loser_name"
+	rows := strings.Join([]string{
+		header,
+		"2025-560,US Open,20250825,G,,R128,5,6-4 6-4 6-4,S0AG,Jannik Sinner,V0AB,Vit Kopriva",
+		"2025-560,US Open,20250825,G,,R128,5,6-4 6-4 6-4,A0E2,Carlos Alcaraz,O0AA,Reilly Opelka",
+		"2025-560,US Open,20250825,G,7,R128,5,6-4 6-4 6-4,Z355,Alexander Zverev,T0AA,Alejandro Tabilo",
+	}, "\n") + "\n"
+	src := Source{Name: "t", Profile: "tml"}
+	r, err := NewReader(src, strings.NewReader(rows))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var nums []int
+	for {
+		row, err := r.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		nums = append(nums, row.MatchNum)
+	}
+	if len(nums) != 3 || nums[2] != 7 {
+		t.Fatalf("got %v", nums)
+	}
+	if nums[0] < syntheticBase || nums[1] < syntheticBase || nums[0] == nums[1] {
+		t.Errorf("synthetic numbers %v should be distinct and above %d", nums[:2], syntheticBase)
+	}
+	if nums[0] >= syntheticBase+syntheticRange || nums[0] > 32767 {
+		t.Errorf("synthetic number %d outside smallint", nums[0])
+	}
+	// The same row read again gets the same number.
+	r2, _ := NewReader(src, strings.NewReader(rows))
+	again, _ := r2.Next()
+	if again.MatchNum != nums[0] {
+		t.Errorf("not stable: %d then %d", nums[0], again.MatchNum)
+	}
+}
+
+func TestOptAgeRejectsNonAges(t *testing.T) {
+	for _, in := range []string{"2808", "", "x", "9.9", "71"} {
+		if got := optAge(in); got != nil {
+			t.Errorf("optAge(%q) = %v, want nil", in, *got)
+		}
+	}
+	if got := optAge("28.08"); got == nil || *got != 28.08 {
+		t.Errorf("optAge(28.08) = %v", got)
+	}
+}
+
 func TestTierFromLevel(t *testing.T) {
 	cases := []struct {
 		level, fallback, want string
@@ -302,6 +368,10 @@ func TestTierFromLevel(t *testing.T) {
 		{"15", "tour", "itf"}, // WTA prize-money codes
 		{"25", "tour", "itf"},
 		{"100", "tour", "itf"},
+		{"250", "itf", "tour"}, // TML writes tour categories as points
+		{"500", "itf", "tour"},
+		{"1000", "itf", "tour"},
+		{"125", "tour", "challenger"},    // WTA 125 series
 		{"", "challenger", "challenger"}, // only an empty level falls back
 		{"g", "challenger", "tour"},      // case insensitive
 	}

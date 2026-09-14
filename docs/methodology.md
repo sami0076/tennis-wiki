@@ -25,18 +25,21 @@ the database rather than taken on trust.
 the share carrying serve statistics per tour and tier, queried live. This page describes
 the shape; the endpoint has the current numbers.
 
-Full-schema data — the layout carrying serve statistics — runs out before the present:
+Full-schema data — the layout carrying serve statistics — runs to within a few weeks of
+the present at the top of each tour and stops years earlier below it:
 
-| Tour | Full schema through |
+| Tour and tier | Full schema through |
 |---|---|
-| ATP | 2026-01-17 |
-| WTA | 2024-12-31 |
+| ATP tour, Challenger, qualifying | late August 2026, refreshed from the source |
+| ATP Futures | 2021 |
+| WTA tour | late August 2026, refreshed from the source |
+| WTA ITF and 125 | 2021 |
 
-[ADR-0006](decisions/0006-accept-and-disclose-the-coverage-gap.md) decided to accept that
-gap rather than fill it with results-only data or by scraping. The reasoning is there in
-full; the short version is that mixing two data regimes in one database produces
-plausible-looking wrong numbers, and this project would rather be visibly behind than
-quietly wrong.
+`/api/v1/coverage` has the exact dates. [ADR-0006](decisions/0006-accept-and-disclose-the-coverage-gap.md)
+decided to accept whatever gap exists rather than fill it with results-only data or by
+scraping. The reasoning is there in full; the short version is that mixing two data
+regimes in one database produces plausible-looking wrong numbers, and this project would
+rather be visibly behind than quietly wrong.
 
 What the gap means in practice:
 
