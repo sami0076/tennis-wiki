@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-10T15:17:28.626691Z",
+  "generated_at": "2026-09-14T22:34:59.461284091Z",
   "weights": {
     "grand_slam_final": 1.2,
     "grand_slam": 1.1,
@@ -11,33 +11,33 @@
     "futures": 0.6,
     "qualifying": 0.9
   },
-  "matches_replayed": 1585442,
-  "predictions_scored": 1270908,
+  "matches_replayed": 1614079,
+  "predictions_scored": 1296441,
   "min_matches": 10,
   "accuracy": [
     {
       "tier": "tour",
-      "matches": 449144,
-      "correct": 314144,
-      "accuracy": 69.94282457296546
+      "matches": 466222,
+      "correct": 325052,
+      "accuracy": 69.72043361317141
     },
     {
       "tier": "challenger",
-      "matches": 216073,
-      "correct": 139460,
-      "accuracy": 64.54300167073166
+      "matches": 225744,
+      "correct": 145451,
+      "accuracy": 64.43183429016939
     },
     {
       "tier": "futures",
-      "matches": 326368,
-      "correct": 223425,
-      "accuracy": 68.45799833316993
+      "matches": 326399,
+      "correct": 223385,
+      "accuracy": 68.43924154179393
     },
     {
       "tier": "itf",
-      "matches": 279323,
-      "correct": 190735,
-      "accuracy": 68.2847456170813
+      "matches": 278076,
+      "correct": 189955,
+      "accuracy": 68.31046188811692
     }
   ],
   "calibration": [
@@ -47,75 +47,75 @@
         {
           "from": 0.5,
           "to": 0.55,
-          "predicted": 52.50067274657,
-          "observed": 51.955635408748535,
-          "matches": 57884
+          "predicted": 52.501798101401526,
+          "observed": 51.80209318140353,
+          "matches": 60291
         },
         {
           "from": 0.55,
           "to": 0.6,
-          "predicted": 57.481089635963954,
-          "observed": 57.00286472889883,
-          "matches": 57248
+          "predicted": 57.483376850963495,
+          "observed": 56.926323546652824,
+          "matches": 59707
         },
         {
           "from": 0.6,
           "to": 0.65,
-          "predicted": 62.476681309958316,
-          "observed": 61.27402683481719,
-          "matches": 55823
+          "predicted": 62.47755034085859,
+          "observed": 61.176409939168984,
+          "matches": 58194
         },
         {
           "from": 0.65,
           "to": 0.7,
-          "predicted": 67.4696738995205,
-          "observed": 65.90188220546618,
-          "matches": 52651
+          "predicted": 67.4708627961903,
+          "observed": 65.77978641979809,
+          "matches": 54874
         },
         {
           "from": 0.7,
           "to": 0.75,
-          "predicted": 72.4658817228389,
-          "observed": 70.61857788738183,
-          "matches": 48660
+          "predicted": 72.4681169990394,
+          "observed": 70.4303307043033,
+          "matches": 50589
         },
         {
           "from": 0.75,
           "to": 0.8,
-          "predicted": 77.45329324129531,
-          "observed": 74.67531010968798,
-          "matches": 44581
+          "predicted": 77.45124626155322,
+          "observed": 74.50498252879514,
+          "matches": 46362
         },
         {
           "from": 0.8,
-          "to": 0.85,
-          "predicted": 82.45695445732818,
-          "observed": 79.92976902913101,
-          "matches": 40438
+          "to": 0.8500000000000001,
+          "predicted": 82.45284493166892,
+          "observed": 79.79499404052443,
+          "matches": 41950
         },
         {
-          "from": 0.85,
+          "from": 0.8500000000000001,
           "to": 0.9,
-          "predicted": 87.44197218266264,
-          "observed": 84.83239757629663,
-          "matches": 35978
+          "predicted": 87.44018918369257,
+          "observed": 84.50341086104099,
+          "matches": 37234
         },
         {
           "from": 0.9,
-          "to": 0.9500000000000001,
-          "predicted": 92.43951261732718,
-          "observed": 90.68332806074027,
-          "matches": 31610
+          "to": 0.95,
+          "predicted": 92.4380123216784,
+          "observed": 90.55737098464763,
+          "matches": 32438
         },
         {
-          "from": 0.9500000000000001,
+          "from": 0.95,
           "to": 1,
-          "predicted": 97.24116575611785,
-          "observed": 96.2959911004903,
-          "matches": 24271
+          "predicted": 97.23495341465588,
+          "observed": 96.20062644917219,
+          "matches": 24583
         }
       ],
-      "mean_error": 1.5515690737243033
+      "mean_error": 1.6964467207915808
     },
     {
       "tier": "challenger",
@@ -123,75 +123,75 @@
         {
           "from": 0.5,
           "to": 0.55,
-          "predicted": 52.484510100612674,
-          "observed": 52.085275501692756,
-          "matches": 40762
+          "predicted": 52.48511538865678,
+          "observed": 52.042213617905375,
+          "matches": 42356
         },
         {
           "from": 0.55,
           "to": 0.6,
-          "predicted": 57.45786471012413,
-          "observed": 56.88701335460463,
-          "matches": 38863
+          "predicted": 57.45957862006858,
+          "observed": 56.918550022254095,
+          "matches": 40442
         },
         {
           "from": 0.6,
           "to": 0.65,
-          "predicted": 62.45326030993477,
-          "observed": 61.10337774495043,
-          "matches": 35201
+          "predicted": 62.45327389318516,
+          "observed": 61.01981304335977,
+          "matches": 36693
         },
         {
           "from": 0.65,
           "to": 0.7,
-          "predicted": 67.42474876274612,
-          "observed": 66.17418093881471,
-          "matches": 30187
+          "predicted": 67.42548512126227,
+          "observed": 65.97664039502422,
+          "matches": 31593
         },
         {
           "from": 0.7,
           "to": 0.75,
-          "predicted": 72.38955485607015,
-          "observed": 70.19242604521396,
-          "matches": 24373
+          "predicted": 72.3927119432551,
+          "observed": 70.04584819154356,
+          "matches": 25519
         },
         {
           "from": 0.75,
           "to": 0.8,
-          "predicted": 77.38989889891855,
-          "observed": 75.1347854216088,
-          "matches": 18548
+          "predicted": 77.391281038853,
+          "observed": 74.74783677231069,
+          "matches": 19531
         },
         {
           "from": 0.8,
-          "to": 0.85,
-          "predicted": 82.34534731390818,
-          "observed": 79.76747697418088,
-          "matches": 13246
+          "to": 0.8500000000000001,
+          "predicted": 82.35153242603008,
+          "observed": 79.3401413982718,
+          "matches": 14003
         },
         {
-          "from": 0.85,
+          "from": 0.8500000000000001,
           "to": 0.9,
-          "predicted": 87.30704047864843,
-          "observed": 84.57058017359525,
-          "matches": 8756
+          "predicted": 87.31692468621218,
+          "observed": 84.07684793226962,
+          "matches": 9213
         },
         {
           "from": 0.9,
-          "to": 0.9500000000000001,
-          "predicted": 92.1625212778721,
-          "observed": 90.2377972465582,
-          "matches": 4794
+          "to": 0.95,
+          "predicted": 92.15991732782052,
+          "observed": 89.73285486443382,
+          "matches": 5016
         },
         {
-          "from": 0.9500000000000001,
+          "from": 0.95,
           "to": 1,
-          "predicted": 96.38725465970158,
-          "observed": 96.4259121370067,
-          "matches": 1343
+          "predicted": 96.38885670705544,
+          "observed": 96.08127721335269,
+          "matches": 1378
         }
       ],
-      "mean_error": 1.325899720257094
+      "mean_error": 1.4846339568610825
     },
     {
       "tier": "futures",
@@ -199,75 +199,75 @@
         {
           "from": 0.5,
           "to": 0.55,
-          "predicted": 52.502965159422615,
-          "observed": 52.52956758571802,
-          "matches": 53606
+          "predicted": 52.50268165949019,
+          "observed": 52.655032255658725,
+          "matches": 53634
         },
         {
           "from": 0.55,
           "to": 0.6,
-          "predicted": 57.48489158102793,
-          "observed": 58.138015830323525,
-          "matches": 52052
+          "predicted": 57.48415691430057,
+          "observed": 57.96051370519456,
+          "matches": 52170
         },
         {
           "from": 0.6,
           "to": 0.65,
-          "predicted": 62.475319921939004,
-          "observed": 63.977940730864795,
-          "matches": 49503
+          "predicted": 62.47247287266339,
+          "observed": 63.81199772708824,
+          "matches": 49276
         },
         {
           "from": 0.65,
           "to": 0.7,
-          "predicted": 67.46061495527205,
-          "observed": 69.19297168052296,
-          "matches": 45587
+          "predicted": 67.45223694245102,
+          "observed": 69.39538340473901,
+          "matches": 45748
         },
         {
           "from": 0.7,
           "to": 0.75,
-          "predicted": 72.44042188560967,
-          "observed": 74.08931828264406,
-          "matches": 40574
+          "predicted": 72.43639887573018,
+          "observed": 74.03649112411426,
+          "matches": 40503
         },
         {
           "from": 0.75,
           "to": 0.8,
-          "predicted": 77.41505187581387,
-          "observed": 79.75738303447869,
-          "matches": 33963
+          "predicted": 77.41620678829764,
+          "observed": 79.73334903022634,
+          "matches": 33977
         },
         {
           "from": 0.8,
-          "to": 0.85,
-          "predicted": 82.36704585042176,
-          "observed": 84.58502523623392,
-          "matches": 26351
+          "to": 0.8500000000000001,
+          "predicted": 82.35626329033079,
+          "observed": 84.4571211256893,
+          "matches": 26295
         },
         {
-          "from": 0.85,
+          "from": 0.8500000000000001,
           "to": 0.9,
-          "predicted": 87.26588049854728,
-          "observed": 88.97491122882589,
-          "matches": 17179
+          "predicted": 87.25622328265963,
+          "observed": 89.14557696772695,
+          "matches": 17228
         },
         {
           "from": 0.9,
-          "to": 0.9500000000000001,
-          "predicted": 91.9203143902907,
-          "observed": 93.34957718216998,
-          "matches": 6977
+          "to": 0.95,
+          "predicted": 91.91904730079636,
+          "observed": 93.2074932074932,
+          "matches": 6993
         },
         {
-          "from": 0.9500000000000001,
+          "from": 0.95,
           "to": 1,
-          "predicted": 95.9234376531108,
-          "observed": 96.18055555555556,
-          "matches": 576
+          "predicted": 95.92229296084034,
+          "observed": 96.17391304347827,
+          "matches": 575
         }
       ],
-      "mean_error": 1.3272136137836474
+      "mean_error": 1.3125312910569074
     },
     {
       "tier": "itf",
@@ -275,90 +275,90 @@
         {
           "from": 0.5,
           "to": 0.55,
-          "predicted": 52.496389945270025,
-          "observed": 53.049876667084746,
-          "matches": 47838
+          "predicted": 52.49750542248975,
+          "observed": 53.08121486701904,
+          "matches": 47676
         },
         {
           "from": 0.55,
           "to": 0.6,
-          "predicted": 57.484367707946205,
-          "observed": 58.396447038125686,
-          "matches": 46609
+          "predicted": 57.4833485480214,
+          "observed": 58.39924142835593,
+          "matches": 46403
         },
         {
           "from": 0.6,
           "to": 0.65,
-          "predicted": 62.47559778625147,
-          "observed": 64.1922698009027,
-          "matches": 43647
+          "predicted": 62.47478001942836,
+          "observed": 64.21752432656254,
+          "matches": 43471
         },
         {
           "from": 0.65,
           "to": 0.7,
-          "predicted": 67.45446820161402,
-          "observed": 69.3653376729048,
-          "matches": 39328
+          "predicted": 67.45563840237833,
+          "observed": 69.42756472450596,
+          "matches": 39166
         },
         {
           "from": 0.7,
           "to": 0.75,
-          "predicted": 72.4102064555663,
-          "observed": 74.88764044943821,
-          "matches": 33820
+          "predicted": 72.41178701990195,
+          "observed": 74.91163978734147,
+          "matches": 33669
         },
         {
           "from": 0.75,
           "to": 0.8,
-          "predicted": 77.39031188602642,
-          "observed": 79.71526361782698,
-          "matches": 27464
+          "predicted": 77.39380146056784,
+          "observed": 79.75415233774785,
+          "matches": 27334
         },
         {
           "from": 0.8,
-          "to": 0.85,
-          "predicted": 82.33607513195737,
-          "observed": 84.74041727316836,
-          "matches": 20610
+          "to": 0.8500000000000001,
+          "predicted": 82.33745722636262,
+          "observed": 84.78048780487805,
+          "matches": 20500
         },
         {
-          "from": 0.85,
+          "from": 0.8500000000000001,
           "to": 0.9,
-          "predicted": 87.24467500831273,
-          "observed": 89.22713054093232,
-          "matches": 13107
+          "predicted": 87.24880604325693,
+          "observed": 89.32873034138856,
+          "matches": 13035
         },
         {
           "from": 0.9,
-          "to": 0.9500000000000001,
-          "predicted": 92.05544717516794,
-          "observed": 93.6188510491916,
-          "matches": 5814
+          "to": 0.95,
+          "predicted": 92.05342606041526,
+          "observed": 93.70544253173361,
+          "matches": 5751
         },
         {
-          "from": 0.9500000000000001,
+          "from": 0.95,
           "to": 1,
-          "predicted": 96.40866365539348,
-          "observed": 93.73848987108656,
-          "matches": 1086
+          "predicted": 96.40233366417102,
+          "observed": 93.93090569561157,
+          "matches": 1071
         }
       ],
-      "mean_error": 1.6261937913224715
+      "mean_error": 1.659069365143965
     }
   ],
   "mean_reversion": {
     "base": 1500,
-    "pool_mean": 1481.446553302241,
-    "pool_players": 75021,
-    "tour_mean": 1519.7785907807095,
-    "tour_players": 40087
+    "pool_mean": 1482.3281309004192,
+    "pool_players": 75587,
+    "tour_mean": 1521.308887850793,
+    "tour_players": 40569
   },
   "promotion_continuity": {
-    "promotions": 7054,
-    "matches": 81161,
-    "expected_wins": 31341.53217597121,
-    "actual_wins": 33152,
-    "z": 14.59852800537518,
+    "promotions": 7253,
+    "matches": 83957,
+    "expected_wins": 32273.09562008749,
+    "actual_wins": 34227,
+    "z": 15.50806500811618,
     "systematic": true,
     "threshold": 3
   },
@@ -369,42 +369,42 @@
       {
         "from": 0,
         "to": 0.2,
-        "matches": 317,
-        "expected": 0.15411919521470738,
-        "observed": 0.11356466876971609
+        "matches": 302,
+        "expected": 0.1524913525924897,
+        "observed": 0.1390728476821192
       },
       {
         "from": 0.2,
         "to": 0.4,
-        "matches": 5981,
-        "expected": 0.3374044236705519,
-        "observed": 0.26567463634843674
+        "matches": 5998,
+        "expected": 0.337594171570179,
+        "observed": 0.2874291430476826
       },
       {
         "from": 0.4,
         "to": 0.6,
-        "matches": 23702,
-        "expected": 0.4733156650457726,
-        "observed": 0.36359800860686864
+        "matches": 23700,
+        "expected": 0.4729403324265633,
+        "observed": 0.3659493670886076
       }
     ],
     "draws": {
-      "events": 296,
-      "brier": 0.8550295743243183,
-      "brier_uniform": 0.9696209881756757,
-      "top_pick": 0.27364864864864863,
-      "mean_champion_odds": 0.14373817567567584
+      "events": 298,
+      "brier": 0.8328096392617406,
+      "brier_uniform": 0.9693005453020134,
+      "top_pick": 0.31208053691275167,
+      "mean_champion_odds": 0.14929026845637586
     },
     "findings": [
       {
         "name": "deciding sets",
         "severity": "warning",
-        "detail": "Over 30000 matches the chain expected 44.3% to reach a deciding set and 34.1% did, a gap of -10.1 points. This is the first thing the chain claims that the rating alone does not, so it is the first thing worth checking."
+        "detail": "Over 30000 matches the chain expected 44.3% to reach a deciding set and 34.8% did, a gap of -9.5 points. This is the first thing the chain claims that the rating alone does not, so it is the first thing worth checking."
       },
       {
         "name": "draw simulation",
         "severity": "info",
-        "detail": "Over 296 draws the simulation scored 0.8550 against 0.9696 for a model that knew only the size of the field. It gave the eventual champion 14.4% on average and named them its favourite 27.4% of the time."
+        "detail": "Over 298 draws the simulation scored 0.8328 against 0.9693 for a model that knew only the size of the field. It gave the eventual champion 14.9% on average and named them its favourite 31.2% of the time."
       },
       {
         "name": "match level",
@@ -412,24 +412,24 @@
         "detail": "Match-level calibration is not reported here and cannot be. The chain is solved so its match probability equals the rating's, so agreement is an identity rather than a result. The accuracy and calibration sections above are the check on that number."
       }
     ],
-    "took": "1m10.448s"
+    "took": "24.071s"
   },
   "findings": [
     {
       "name": "tour-level accuracy in band",
       "severity": "info",
-      "detail": "69.9%, inside the expected 68-72%."
+      "detail": "69.7%, inside the expected 68-72%."
     },
     {
       "name": "pool mean against the base rating",
       "severity": "info",
-      "detail": "1481 against a base of 1500, -19. Measured over each player once, not over each snapshot: averaging the rows would count a player who was rated for four hundred weeks four hundred times. Tour players sit at 1520, above the pool, which is what one weighted pool is supposed to look like."
+      "detail": "1482 against a base of 1500, -18. Measured over each player once, not over each snapshot: averaging the rows would count a player who was rated for four hundred weeks four hundred times. Tour players sit at 1521, above the pool, which is what one weighted pool is supposed to look like."
     },
     {
       "name": "promoted players beat their rating",
       "severity": "warning",
-      "detail": "33152 won of 31342 expected across 81161 first tour-level matches, z=+14.6. Promoted players arrive underrated. Weighting the lower tiers too low looks like this, and so does promotion selecting for players who are improving."
+      "detail": "34227 won of 32273 expected across 83957 first tour-level matches, z=+15.5. Promoted players arrive underrated. Weighting the lower tiers too low looks like this, and so does promotion selecting for players who are improving."
     }
   ],
-  "took": "25.039s"
+  "took": "10.48s"
 }

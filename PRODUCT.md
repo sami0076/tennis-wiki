@@ -94,8 +94,8 @@ Seed fixture of ~4,100 real matches covers every data regime. Served as a static
 ## Evidence on Hand
 
 - Real data through the API and the seed fixture; every number on the site is queried.
-- Validation: tour-level predictive accuracy 69.9%; Wimbledon 2019 draw gives Djokovic
-  40.1% ±1.0 and he won it; 296 real draws score 0.855 Brier. All in
+- Validation: tour-level predictive accuracy 69.7%; Wimbledon 2019 draw gives Djokovic
+  39.9% ±1.0 and he won it; 298 real draws score 0.833 Brier. All in
   `docs/methodology.md` and `docs/validation.json`.
 - Nine ADRs in `docs/decisions/`, `docs/performance.md` with measured query costs.
 - No player photographs, and none may be fabricated or scraped. No customer quotes,

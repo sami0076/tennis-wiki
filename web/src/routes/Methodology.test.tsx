@@ -45,7 +45,7 @@ describe('Methodology', () => {
       screen.getByRole('heading', { name: /chain expects too many deciding sets/ }),
     ).toBeInTheDocument()
     expect(screen.getByText(/Promoted/)).toBeInTheDocument()
-    expect(screen.getAllByText(/34\.1%/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/34\.8%/).length).toBeGreaterThan(0)
   })
 
   // Not retyped: the figures beside the title come from the committed run, and
