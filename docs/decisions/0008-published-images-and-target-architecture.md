@@ -37,11 +37,16 @@ resolves `configs/sources.json` relative to the working directory and goose is p
 directory of SQL. That makes a tools image a self-contained statement of the schema and the
 source registry at one commit, which is what a migration Job wants to pin to.
 
-**`linux/amd64`, and no arm64 job.** The site runs on a Hetzner **CX33** — 4 vCPU, 8 GB,
-80 GB NVMe, Intel. Hetzner's June 2026 price adjustment raised the Arm line harder than the
-Intel one: **CAX21 is 10.49 EUR/month against CX33's 8.49** for identical specs, so the
-advice above now has the arithmetic backwards for this host. One native runner, no buildx
-emulation. **If the host ever changes, this paragraph is the one to revisit.**
+**`linux/amd64`, and no arm64 job.** When this was written the site was to run on a
+Hetzner **CX33** — 4 vCPU, 8 GB, 80 GB NVMe, Intel — because Hetzner's June 2026 price
+adjustment raised the Arm line harder than the Intel one (CAX21 at 10.49 EUR/month against
+CX33's 8.49 for identical specs), so the usual advice had the arithmetic backwards for
+this host. One native runner, no buildx emulation.
+
+*Amended 2026-09-14:* the host is a GreenCloud BudgetKVM in Staten Island, 4 EPYC Rome
+cores, 8 GB, 60 GB NVMe, at $45 a year — the same shape at 40% of the cost. Still x86-64,
+so the decision stands; the Arm-price argument is simply no longer the reason.
+**If the host ever changes architecture, this paragraph is the one to revisit.**
 
 **GHCR rather than Docker Hub.** Free for a public repository, no account or credential
 beyond the `GITHUB_TOKEN` the workflow already has, no pull rate limit to plan around, and

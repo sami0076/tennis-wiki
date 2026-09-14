@@ -151,13 +151,13 @@ before there was any data to check them against. `cmd/validate` is what checks t
 | Futures / ITF | 0.60 |
 | Qualifying | multiply by 0.90 |
 
-**What the evidence says.** Tour-level predictive accuracy is 69.9%, inside the 68-72% the
-specification asks for, and calibration is within 1.6 percentage points at every tier. On
+**What the evidence says.** Tour-level predictive accuracy is 69.7%, inside the 68-72% the
+specification asks for, and calibration is within 1.7 percentage points at every tier. On
 those two measures the weights are fine.
 
 The third measure is less comfortable. A player's rating should carry across a promotion
-from Challenger to tour without a step in it, and it does not: across 7,054 promotions,
-players won 33,152 of their first tour-level matches against 31,342 expected. Promoted
+from Challenger to tour without a step in it, and it does not: across 7,253 promotions,
+players won 34,227 of their first tour-level matches against 32,273 expected. Promoted
 players arrive underrated.
 
 **Raising the lower tiers is not the fix, and the numbers say so.** Moving Challenger to
@@ -194,10 +194,10 @@ Over 30,000 recent ATP matches, rated as of the day each was played:
 
 | Predicted chance of a deciding set | Matches | Expected | Observed | Gap |
 |---|---|---|---|---|
-| 0-20% | 317 | 15.4% | 11.4% | −4.1 |
-| 20-40% | 5,981 | 33.7% | 26.6% | −7.2 |
-| 40-60% | 23,702 | 47.3% | 36.4% | −11.0 |
-| **All** | **30,000** | **44.3%** | **34.1%** | **−10.1** |
+| 0-20% | 302 | 15.2% | 13.9% | −1.3 |
+| 20-40% | 5,998 | 33.8% | 28.7% | −5.0 |
+| 40-60% | 23,700 | 47.3% | 36.6% | −10.7 |
+| **All** | **30,000** | **44.3%** | **34.8%** | **−9.5** |
 
 The model expects nearly half of matches to go the distance and about a third do. The gap
 widens exactly where the model is least certain, which points at the assumption that
@@ -224,15 +224,15 @@ the top buckets are empty by arithmetic rather than for want of data.
 
 ### The draw simulation beats knowing nothing, and not by as much as it looks
 
-Over 296 reconstructed ATP draws, each replayed 2,000 times with the ratings as of the week
+Over 298 reconstructed ATP draws, each replayed 2,000 times with the ratings as of the week
 it began:
 
 | | |
 |---|---|
-| Brier score | **0.8550** |
-| Brier for a model that knows only the field size | 0.9696 |
-| Average probability given to the eventual champion | 14.4% |
-| How often its favourite actually won | 27.4% |
+| Brier score | **0.8328** |
+| Brier for a model that knows only the field size | 0.9693 |
+| Average probability given to the eventual champion | 14.9% |
+| How often its favourite actually won | 31.2% |
 
 Better than uninformed, which is the least a rating-driven simulation should manage. The
 absolute numbers are modest because most of these draws are 32 and 64-player events where

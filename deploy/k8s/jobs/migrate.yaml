@@ -18,7 +18,13 @@ metadata:
     app.kubernetes.io/name: migrate
     app.kubernetes.io/part-of: deucepoint
 spec:
-  backoffLimit: 3
+  # High because the first apply races Postgres's own first start: the
+  # StatefulSet is still initialising its volume when this Job's pod is
+  # scheduled, and every attempt until then fails on connect. At three the
+  # first deploy hit the limit and reported failure for a migration that then
+  # succeeded on the attempt that was already running. OnFailure restarts
+  # back off to five minutes, so ten attempts is about half an hour.
+  backoffLimit: 10
   # Completed Jobs clean themselves up after a day. Long enough to read the
   # logs the morning after, short enough not to accumulate.
   ttlSecondsAfterFinished: 86400
@@ -37,7 +43,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: goose
-          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:2a6e96e6a03c57f0b658fc5a1d0126615309e447144f9c0c1daed0eea2b64625
+          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:0f3fc96a5e50650b33702655433d9af1959533014d98311fc138df360b521bde
           command: ["goose", "up"]
           env:
             - name: DATABASE_URL

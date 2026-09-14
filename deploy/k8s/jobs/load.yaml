@@ -50,7 +50,7 @@ spec:
       # proceed.
       initContainers:
         - name: ingest
-          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:2a6e96e6a03c57f0b658fc5a1d0126615309e447144f9c0c1daed0eea2b64625
+          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:0f3fc96a5e50650b33702655433d9af1959533014d98311fc138df360b521bde
           # docs/performance.md: the default of one reader per CPU with
           # 2,000-row batches was enough to get the process killed for memory
           # pressure on a machine with other things running, and two readers
@@ -90,7 +90,7 @@ spec:
               drop: ["ALL"]
       containers:
         - name: rate
-          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:2a6e96e6a03c57f0b658fc5a1d0126615309e447144f9c0c1daed0eea2b64625
+          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:0f3fc96a5e50650b33702655433d9af1959533014d98311fc138df360b521bde
           command: ["rate"]
           env:
             - name: DATABASE_URL

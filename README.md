@@ -16,7 +16,7 @@ working shown.
      the title. The page shipped with Phase 2; the screenshot has not been taken yet. -->
 _Screenshot of the head-to-head page — the page exists, the screenshot is still to come._
 
-**Live URL:** _pending Phase 4._
+**Live URL:** [deucepoint.net](https://deucepoint.net) — API at [api.deucepoint.net](https://api.deucepoint.net/api/v1/health)
 
 ---
 
@@ -183,7 +183,7 @@ serve is an answer with a reason, not a coin flip.
 `/simulate/draw` replays a draw that was actually played, with the ratings as of the week it
 began, ten thousand times, and reports a confidence interval on every figure. There is no
 upcoming draw to simulate and there will not be one, so the simulator does the thing the data
-supports and can be scored against: Wimbledon 2019 gives Djokovic 40.1% ±1.0, and he won it.
+supports and can be scored against: Wimbledon 2019 gives Djokovic 39.9% ±1.0, and he won it.
 
 **Under pressure is measured against a stated population.** `/clutch` reports break points
 saved, tiebreaks won and deciding sets won, each against what the tour did at the same
@@ -315,19 +315,19 @@ correct.
 `make validate` replays the whole history and reports predictive accuracy and calibration
 per tier, mean reversion across the pool, promotion continuity, and what the simulation
 chain adds on top of the ratings. Tour-level accuracy is
-**69.9%**, inside the 68-72% the spec asks for. The tier weights are configuration rather
+**69.7%**, inside the 68-72% the spec asks for. The tier weights are configuration rather
 than constants, so `validate --weights` tries alternatives without a rebuild; what the
 evidence says about them is in [the methodology](docs/methodology.md).
 
 The simulator is checked for what it can be checked for. Its match-level answer is the
 rating's by construction, so the interesting question is what the chain claims underneath:
-it expects 44.3% of matches to reach a deciding set and 34.1% do, which is the independent-
+it expects 44.3% of matches to reach a deciding set and 34.8% do, which is the independent-
 sets assumption showing through, and it is written up rather than quietly corrected. Draw
-simulations of 296 real events score 0.855 on Brier against 0.970 for knowing only the field
+simulations of 298 real events score 0.833 on Brier against 0.969 for knowing only the field
 size. Both are in [the methodology](docs/methodology.md).
 
-The full derivation, including the simulation chain from point to match, will live at
-`/methodology` on the live site.
+The full derivation, including the simulation chain from point to match, is at
+[deucepoint.net/methodology](https://deucepoint.net/methodology).
 
 ## Data attribution and license
 
