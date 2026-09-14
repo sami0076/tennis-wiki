@@ -18,7 +18,13 @@ metadata:
     app.kubernetes.io/name: migrate
     app.kubernetes.io/part-of: deucepoint
 spec:
-  backoffLimit: 3
+  # High because the first apply races Postgres's own first start: the
+  # StatefulSet is still initialising its volume when this Job's pod is
+  # scheduled, and every attempt until then fails on connect. At three the
+  # first deploy hit the limit and reported failure for a migration that then
+  # succeeded on the attempt that was already running. OnFailure restarts
+  # back off to five minutes, so ten attempts is about half an hour.
+  backoffLimit: 10
   # Completed Jobs clean themselves up after a day. Long enough to read the
   # logs the morning after, short enough not to accumulate.
   ttlSecondsAfterFinished: 86400

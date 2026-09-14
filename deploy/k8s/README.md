@@ -42,7 +42,9 @@ kubectl -n deucepoint logs -f job/load -c ingest
 
 The API pods crash-loop until the migration has run — they open the pool and
 verify it at startup, and an unmigrated database fails that check. That is the
-intended order, not a fault.
+intended order, not a fault. The migrate Job's first attempts fail the same way
+while Postgres initialises its volume; it retries on its own, and the `wait`
+above covers it.
 
 The load takes about an hour: roughly 40 minutes for the match stage, 23 for the
 reference stage, then 1m 36s for the ratings. Every figure here is from
