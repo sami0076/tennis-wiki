@@ -2,6 +2,7 @@ package ingest
 
 import (
 	"fmt"
+	"hash/fnv"
 	"regexp"
 	"strconv"
 	"strings"
@@ -116,6 +117,32 @@ func numericLevel(s string) (int, bool) {
 	return n, true
 }
 
+// syntheticMatchNum stands in for a match_num the source left empty. TML's
+// 2025 ATP file has none for 489 rows, the whole US Open among them, and a
+// row without one was rejected, which lost the tournament.
+//
+// The number only has to be stable and unique within the tournament. It is
+// hashed from the round and the two players rather than taken from the row's
+// position, because the source edits files in place and a position would move.
+// Real match numbers stay below 1000, so the synthetic range starts there.
+// Reader resolves the rare collision within one file.
+func syntheticMatchNum(m MatchRow) int {
+	h := fnv.New32a()
+	h.Write([]byte(m.Round))
+	h.Write([]byte{0})
+	h.Write([]byte(m.Winner.SourceID))
+	h.Write([]byte{0})
+	h.Write([]byte(m.Loser.SourceID))
+	return syntheticBase + int(h.Sum32()%uint32(syntheticRange))
+}
+
+// The synthetic range sits above any real match_num and below smallint's
+// 32767.
+const (
+	syntheticBase  = 1000
+	syntheticRange = 31000
+)
+
 // qualifyingRound matches Q1, Q2, Q3 and so on. It must not match QF, which is
 // the quarterfinal of a main draw.
 var qualifyingRound = regexp.MustCompile(`^Q\d+$`)
@@ -133,9 +160,12 @@ func parseRow(c *columns, rec []string) (MatchRow, error) {
 	if err != nil {
 		return MatchRow{}, err
 	}
-	matchNum, err := strconv.Atoi(c.get(rec, "match_num"))
-	if err != nil {
-		return MatchRow{}, fmt.Errorf("match_num %q: %w", c.get(rec, "match_num"), err)
+	matchNum := 0
+	if raw := c.get(rec, "match_num"); raw != "" {
+		matchNum, err = strconv.Atoi(raw)
+		if err != nil {
+			return MatchRow{}, fmt.Errorf("match_num %q: %w", raw, err)
+		}
 	}
 
 	m := MatchRow{
@@ -160,6 +190,9 @@ func parseRow(c *columns, rec []string) (MatchRow, error) {
 	}
 	if m.Winner.SourceID == "" || m.Loser.SourceID == "" {
 		return MatchRow{}, fmt.Errorf("row %s/%d has a missing player id", m.TourneyID, m.MatchNum)
+	}
+	if m.MatchNum == 0 {
+		m.MatchNum = syntheticMatchNum(m)
 	}
 	// The source occasionally records a player as beating themselves. Both
 	// participants would collapse onto one primary key, leaving a match with a

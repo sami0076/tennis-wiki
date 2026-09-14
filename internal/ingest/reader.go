@@ -147,6 +147,9 @@ type Reader struct {
 	cols *columns
 	src  Source
 	rows int
+	// synthetic tracks the match numbers invented for rows without one, per
+	// tournament, so two rows of one file never share one.
+	synthetic map[string]map[int]bool
 }
 
 // NewReader reads the header and prepares to stream rows.
@@ -178,7 +181,33 @@ func (r *Reader) Next() (MatchRow, error) {
 	if err != nil {
 		return MatchRow{}, fmt.Errorf("%s row %d: %w", r.src.Name, r.rows, err)
 	}
+	if row.MatchNum >= syntheticBase {
+		row.MatchNum = r.uniqueSynthetic(row)
+	}
 	return row, nil
+}
+
+// uniqueSynthetic probes past a synthetic match_num another row of the same
+// tournament already took. Rows arrive in file order, so the result is the
+// same every time the same file is read.
+func (r *Reader) uniqueSynthetic(row MatchRow) int {
+	if r.synthetic == nil {
+		r.synthetic = map[string]map[int]bool{}
+	}
+	used := r.synthetic[row.TourneyID]
+	if used == nil {
+		used = map[int]bool{}
+		r.synthetic[row.TourneyID] = used
+	}
+	n := row.MatchNum
+	for used[n] {
+		n++
+		if n >= syntheticBase+syntheticRange {
+			n = syntheticBase
+		}
+	}
+	used[n] = true
+	return n
 }
 
 // Rows returns how many records have been read, header excluded.

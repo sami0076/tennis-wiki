@@ -299,6 +299,47 @@ func TestOptHeightRejectsNonHeights(t *testing.T) {
 
 func ptr(n int) *int { return &n }
 
+func TestMissingMatchNumIsSynthesised(t *testing.T) {
+	header := "tourney_id,tourney_name,tourney_date,tourney_level,match_num,round,best_of,score,winner_id,winner_name,loser_id,loser_name"
+	rows := strings.Join([]string{
+		header,
+		"2025-560,US Open,20250825,G,,R128,5,6-4 6-4 6-4,S0AG,Jannik Sinner,V0AB,Vit Kopriva",
+		"2025-560,US Open,20250825,G,,R128,5,6-4 6-4 6-4,A0E2,Carlos Alcaraz,O0AA,Reilly Opelka",
+		"2025-560,US Open,20250825,G,7,R128,5,6-4 6-4 6-4,Z355,Alexander Zverev,T0AA,Alejandro Tabilo",
+	}, "\n") + "\n"
+	src := Source{Name: "t", Profile: "tml"}
+	r, err := NewReader(src, strings.NewReader(rows))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var nums []int
+	for {
+		row, err := r.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		nums = append(nums, row.MatchNum)
+	}
+	if len(nums) != 3 || nums[2] != 7 {
+		t.Fatalf("got %v", nums)
+	}
+	if nums[0] < syntheticBase || nums[1] < syntheticBase || nums[0] == nums[1] {
+		t.Errorf("synthetic numbers %v should be distinct and above %d", nums[:2], syntheticBase)
+	}
+	if nums[0] >= syntheticBase+syntheticRange || nums[0] > 32767 {
+		t.Errorf("synthetic number %d outside smallint", nums[0])
+	}
+	// The same row read again gets the same number.
+	r2, _ := NewReader(src, strings.NewReader(rows))
+	again, _ := r2.Next()
+	if again.MatchNum != nums[0] {
+		t.Errorf("not stable: %d then %d", nums[0], again.MatchNum)
+	}
+}
+
 func TestOptAgeRejectsNonAges(t *testing.T) {
 	for _, in := range []string{"2808", "", "x", "9.9", "71"} {
 		if got := optAge(in); got != nil {
