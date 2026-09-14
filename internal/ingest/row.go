@@ -177,8 +177,8 @@ func parsePlayer(c *columns, rec []string, side, statPrefix string) Player {
 		Name:       c.get(rec, side+"_name"),
 		Hand:       normaliseHand(c.get(rec, side+"_hand")),
 		Country:    strings.ToUpper(c.get(rec, side+"_ioc")),
-		HeightCM:   optInt(c.get(rec, side+"_ht")),
-		Age:        optFloat(c.get(rec, side+"_age")),
+		HeightCM:   optHeight(c.get(rec, side+"_ht")),
+		Age:        optAge(c.get(rec, side+"_age")),
 		Seed:       optInt(c.get(rec, side+"_seed")),
 		Entry:      strings.ToUpper(c.get(rec, side+"_entry")),
 		Rank:       optInt(c.get(rec, side+"_rank")),
@@ -281,6 +281,26 @@ func normaliseHand(s string) string {
 
 // optInt returns nil for anything that is not a number, so an unrecorded value
 // stays unrecorded rather than becoming zero.
+// optHeight and optAge are optInt and optFloat bounded to a human. TML's 2026
+// WTA file carries a date of birth in one player's height column and ages
+// with the decimal point dropped, 2808 for 28.08; the first overflows a
+// smallint and the second a numeric(4,1). Absent is the right reading of both.
+func optHeight(s string) *int {
+	h := optInt(s)
+	if h == nil || *h < 100 || *h > 250 {
+		return nil
+	}
+	return h
+}
+
+func optAge(s string) *float64 {
+	a := optFloat(s)
+	if a == nil || *a < 10 || *a > 70 {
+		return nil
+	}
+	return a
+}
+
 func optInt(s string) *int {
 	if s == "" {
 		return nil

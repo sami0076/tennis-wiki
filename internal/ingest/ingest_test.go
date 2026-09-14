@@ -285,6 +285,31 @@ func TestLocalFetcher(t *testing.T) {
 
 // Tier comes from tourney_level, never from the file: atp_matches_qual_chall
 // mixes Challenger main draws with Grand Slam and Masters qualifying.
+func TestOptHeightRejectsNonHeights(t *testing.T) {
+	cases := map[string]*int{"183": ptr(183), "183.0": ptr(183), "": nil, "20011008": nil, "0": nil}
+	for in, want := range cases {
+		got := optHeight(in)
+		switch {
+		case got == nil && want == nil:
+		case got == nil || want == nil || *got != *want:
+			t.Errorf("optHeight(%q) = %v, want %v", in, got, want)
+		}
+	}
+}
+
+func ptr(n int) *int { return &n }
+
+func TestOptAgeRejectsNonAges(t *testing.T) {
+	for _, in := range []string{"2808", "", "x", "9.9", "71"} {
+		if got := optAge(in); got != nil {
+			t.Errorf("optAge(%q) = %v, want nil", in, *got)
+		}
+	}
+	if got := optAge("28.08"); got == nil || *got != 28.08 {
+		t.Errorf("optAge(28.08) = %v", got)
+	}
+}
+
 func TestTierFromLevel(t *testing.T) {
 	cases := []struct {
 		level, fallback, want string
