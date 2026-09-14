@@ -68,13 +68,52 @@
       "tour": "atp",
       "tier": "tour",
       "profile": "tml",
-      "base_url": "https://raw.githubusercontent.com/Tennismylife/TML-Database/master",
+      "base_url": "https://stats.tennismylife.org/data",
       "path": "{season}.csv",
       "first_season": 2025,
       "last_season": 2026,
-      "through": "2026-01-17",
+      "through": "2026-08-30",
       "precedence": 60,
-      "attribution": "Tennismylife TML-Database, built on Jeff Sackmann's structure"
+      "attribution": "Tennismylife, stats.tennismylife.org, built on Jeff Sackmann's structure"
+    },
+    {
+      "name": "tml-atp-challenger",
+      "tour": "atp",
+      "tier": "challenger",
+      "profile": "tml",
+      "base_url": "https://stats.tennismylife.org/data",
+      "path": "{season}_challenger.csv",
+      "first_season": 2025,
+      "last_season": 2026,
+      "through": "2026-09-01",
+      "precedence": 60,
+      "attribution": "Tennismylife, stats.tennismylife.org, built on Jeff Sackmann's structure"
+    },
+    {
+      "name": "tml-atp-quali",
+      "tour": "atp",
+      "tier": "tour",
+      "profile": "tml",
+      "base_url": "https://stats.tennismylife.org/data",
+      "path": "atp_quali/{season}_atp_quali.csv",
+      "first_season": 2025,
+      "last_season": 2026,
+      "through": "2026-08-28",
+      "precedence": 60,
+      "attribution": "Tennismylife, stats.tennismylife.org, built on Jeff Sackmann's structure"
+    },
+    {
+      "name": "tml-wta-current",
+      "tour": "wta",
+      "tier": "tour",
+      "profile": "tml",
+      "base_url": "https://stats.tennismylife.org/data",
+      "path": "{season}_wta.csv",
+      "first_season": 2022,
+      "last_season": 2026,
+      "through": "2026-08-30",
+      "precedence": 60,
+      "attribution": "Tennismylife, stats.tennismylife.org, built on Jeff Sackmann's structure"
     }
   ],
   "reference": [
