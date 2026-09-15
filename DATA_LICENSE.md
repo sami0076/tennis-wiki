@@ -78,7 +78,7 @@ to cover every tier.
 | A | Complete Sackmann snapshot | ATP + WTA | tour, qualifying+Challenger, Futures, qualifying+ITF, doubles, amateur | → 2022-01-10 |
 | B | Restructured ATP mirror | ATP | tour, qualifying+Challenger | → 2024 |
 | C | Vendored WTA snapshots | WTA | tour | → 2024 |
-| D | [`Tennismylife/TML-Database`](https://github.com/Tennismylife/TML-Database) | ATP | tour | 2025 → 2026-01-17 |
+| D | [Tennismylife](https://stats.tennismylife.org/) | ATP + WTA | tour, qualifying+Challenger (ATP) | ATP 2025 →, WTA 2022 → late August 2026 |
 | E | [`JeffSackmann/tennis_MatchChartingProject`](https://github.com/JeffSackmann/tennis_MatchChartingProject) | ATP + WTA | charted matches | → 2026-05-24 |
 
 Layer A is the **only** located source for Futures, WTA ITF, and doubles, and its WTA
