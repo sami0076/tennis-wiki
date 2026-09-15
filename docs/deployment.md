@@ -79,6 +79,21 @@ The database is reproducible from public files, and that is the recovery plan (#
 there is no backup to restore, because a rebuild produces the current schema from the
 current sources in about an hour and a restore would produce an old one.
 
+The plan has been run end to end once, because standing the site up was the plan: on
+14 September 2026 an empty volume took `migrate` in 4 seconds and `load` in 39 minutes,
+and `smoke.sh` passed against the result. Rebuilding on a new node is that plus the host
+setup above, and the DNS record.
+
+**What a rebuild does not bring back.** Nothing, checked table by table. `identity_reviews`
+is the one that looked like it might: it is where the ingest queues an ambiguous match for
+a human, but the human's answer never goes into the database — it goes into
+`configs/player_overrides.json`, which is committed, and the next ingest re-queues whatever
+is still open. The ledgers (`ingest_runs`, `ingest_files`) are rewritten by the run that
+rebuilds them. Ratings, clutch and serve baselines are computed, never edited. The only
+thing on the node that is not derived from the repository or the sources is
+`/root/secrets.yaml`, the Postgres password, and a rebuild from empty can just mint a new
+one.
+
 ```sh
 ssh deucepoint
 kubectl -n deucepoint delete job load --ignore-not-found
