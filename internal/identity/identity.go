@@ -142,18 +142,20 @@ func score(a, b Player) (float64, string) {
 // pairs rather than showing one of them to a human.
 //
 // So when both sides derived a year, those are the years to compare: they carry
-// the same error and it cancels. Only when one side has no derived year at all
-// does an exact year meet an approximate one, and then a single year of
-// disagreement is a question for a person rather than an answer.
+// the same error and it cancels. When they disagree and one side has an exact
+// date, that date gets the second opinion -- a derived year off by one on the
+// side that did not need deriving is no reason to drop a pair the exact date
+// confirms. A single year of disagreement is a question for a person rather
+// than an answer.
 func scoreByYear(a, b Player) (float64, string) {
-	if a.BirthYear != nil && b.BirthYear != nil {
-		if *a.BirthYear != *b.BirthYear {
-			return 0, "same name and country, different birth year"
-		}
+	if a.BirthYear != nil && b.BirthYear != nil && *a.BirthYear == *b.BirthYear {
 		// No exact date exists on one side -- the ATP id space has no player
 		// table -- but sharing a name, a country and a birth year is about as
 		// unlikely as sharing a birthday.
 		return 0.90, "name, country and birth year match, birth year derived from age"
+	}
+	if a.BirthDate == nil && b.BirthDate == nil {
+		return 0, "same name and country, different birth year"
 	}
 
 	gap := birthYear(a) - birthYear(b)

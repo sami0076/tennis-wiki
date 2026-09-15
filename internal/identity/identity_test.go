@@ -227,6 +227,22 @@ func TestDerivedYearsThatDisagreeAreNotMerged(t *testing.T) {
 	}
 }
 
+// Alcaraz as the live database held him before the derivation was fixed: the
+// exact date says 2003, his own Sackmann rows derived 2002, the ATP row derived
+// 2003. The two derived years disagree, but the exact date agrees with the
+// side that had nothing else, and that is not a pair to drop.
+func TestAnExactDateOutvotesItsOwnDerivedYear(t *testing.T) {
+	sackmannDerived, atpDerived := 2002, 2003
+	got, reason := score(
+		Player{SourceID: "207989", FullName: "Carlos Alcaraz", Country: "ESP",
+			BirthDate: date(t, "2003-05-05"), BirthYear: &sackmannDerived},
+		Player{SourceID: "A0E2", FullName: "Carlos Alcaraz", Country: "ESP", BirthYear: &atpDerived},
+	)
+	if got < AutoLink {
+		t.Errorf("score = %.2f (%s), want an automatic merge", got, reason)
+	}
+}
+
 // One side with no derived year at all is the only case where an exact year
 // meets an approximate one. A single year of disagreement is then a question
 // for a person, not an answer either way.
