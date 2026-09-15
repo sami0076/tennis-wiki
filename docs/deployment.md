@@ -142,7 +142,8 @@ that passes says the site is up, and one that fails says only that it is not.
 
 ## Runbook
 
-Everything below starts from the laptop with `deploy/kubectl.sh`, which is `kubectl`
+Everything below starts from the laptop with `bash deploy/kubectl.sh` (on Windows, a bare
+`.sh` opens an editor), which is `kubectl`
 through an SSH tunnel to the node; no shell on the node is needed until a step says so.
 
 **The uptime run failed.** `deploy/uptime.sh https://api.deucepoint.net https://deucepoint.net`
