@@ -5,6 +5,9 @@
 // (B0BI, MU94); everything through 2024 uses Sackmann numeric ids. They do not
 // join. Left alone, Carlos Alcaraz is two players either side of 2025, every
 // career total is wrong, and every rating is computed over half a career.
+// The WTA files from the same site mint numeric ids of their own for a few
+// rows, and Sackmann's own player file holds some people under two or three
+// ids with the same date of birth; both are the same problem in a smaller form.
 //
 // The governing asymmetry: a wrong merge is far worse than a missed one. An
 // unmerged pair is visible — two thin player pages where there should be one.
