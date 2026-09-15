@@ -1,0 +1,20 @@
+name: Uptime
+
+# Something outside the cluster asking whether the site is up. A failed run
+# emails whoever last committed this file, which is the alert (#102).
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: API health
+        run: deploy/uptime.sh https://api.deucepoint.net https://deucepoint.net
