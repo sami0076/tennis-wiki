@@ -179,6 +179,26 @@ var anomalyChecks = []Check{
 			 LIMIT 5`,
 	},
 	{
+		Name:     "split_same_source_namesakes",
+		Severity: Warning,
+		Why: "Two ids of one source sharing a name, a tour and a date of birth: the " +
+			"source holding one person twice. Reconciliation folds these into the " +
+			"longer career; any left are ones it has not run over since they arrived.",
+		Query: `
+			SELECT count(*) FROM (
+			    SELECT 1 FROM players
+			     WHERE source_id ~ '^[0-9]+$' AND birth_date IS NOT NULL
+			     GROUP BY tour, lower(full_name), birth_date
+			    HAVING count(*) > 1) x`,
+		Sample: `
+			SELECT string_agg(slug, ' and ' ORDER BY slug)
+			  FROM players
+			 WHERE source_id ~ '^[0-9]+$' AND birth_date IS NOT NULL
+			 GROUP BY tour, lower(full_name), birth_date
+			HAVING count(*) > 1
+			 ORDER BY 1 LIMIT 5`,
+	},
+	{
 		Name:     "matches_without_surface",
 		Severity: Info,
 		Why:      "Surface was empty or None in the source and is stored NULL rather than guessed.",
