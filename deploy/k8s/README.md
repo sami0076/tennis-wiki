@@ -1,10 +1,11 @@
 # Deploying Deucepoint
 
-Manifests for a single-node k3s cluster on a Hetzner CX33. What runs here is the
+Manifests for a single-node k3s cluster on one VPS. What runs here is the
 API, Redis and Postgres — three things, not four. The frontend is static files on
 a CDN and is deliberately not in the cluster.
 
-This directory is the manifests. Standing up the cluster is #101.
+This directory is the manifests. The host, the deploy and the runbook are
+[`docs/deployment.md`](../../docs/deployment.md).
 
 ```
 base/     applied together, in filename order
