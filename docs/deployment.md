@@ -110,6 +110,20 @@ scratch every time and never patched, so there is nothing to carry over.
 sources that changed are re-read; the 340 that did not are skipped. Run it whenever the
 site should catch up; nothing schedules it yet.
 
+**After a change to identity scoring or to `configs/player_overrides.json`** — the
+reconcile stage on its own, then the ratings, which a merge invalidates:
+
+```sh
+sed 's/"reconcile"\]/"reconcile", "--dry-run"]/' deploy/k8s/jobs/reconcile.yaml   | kubectl -n deucepoint apply -f -              # what it would do, in the log
+kubectl -n deucepoint logs -f job/reconcile -c reconcile
+kubectl -n deucepoint delete job reconcile
+kubectl -n deucepoint apply -f deploy/k8s/jobs/reconcile.yaml
+```
+
+The dry run is the review: a change to the scoring is judged on the pairs it would
+merge, listed one per line with the reason, before it merges any. Twenty seconds, then
+1m 36s for the ratings.
+
 **From empty** (a new node, a lost volume): the README's first-time sequence — secrets,
 `base/`, migrate, load. The first `migrate` attempts fail while Postgres initialises its
 volume and the Job retries; that is expected.

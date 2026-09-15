@@ -24,15 +24,28 @@ func (s *Store) LoadPlayers(ctx context.Context, tour string) ([]Player, error) 
 	rows, err := s.pool.Query(ctx, `
 		SELECT p.id, p.source_id, p.slug, p.full_name,
 		       coalesce(p.country, ''), p.birth_date,
-		       -- The ATP id space has no player table, so for those players the
-		       -- only age signal is the one recorded on a match row.
-		       -- floor, not round: age is elapsed years, so a player born late in
-		       -- the year would otherwise come out a year too young.
-		       (SELECT floor(extract(year FROM m.played_on) - mp.age)::int
+		       -- A player with no player-table row has only the ages on match
+		       -- rows. The match date minus the age is the birth date to within
+		       -- the age's rounding, as long as the date is a fraction of a year
+		       -- and not just the year: 2025 - 22.5 floors to 2002 for a player
+		       -- born in May 2003, and November 2025 - 22.5 floors to 2003. The
+		       -- mode across rows outvotes a row charted near the birthday.
+		       (SELECT mode() WITHIN GROUP (ORDER BY floor(
+		               extract(year FROM m.played_on)
+		               + (extract(doy FROM m.played_on) - 1) / 365.25
+		               - mp.age)::int)
 		          FROM match_players mp JOIN matches m ON m.id = mp.match_id
-		         WHERE mp.player_id = p.id AND mp.age IS NOT NULL
-		         ORDER BY m.played_on DESC LIMIT 1),
-		       (SELECT count(*) FROM match_players mp WHERE mp.player_id = p.id)
+		         WHERE mp.player_id = p.id AND mp.age IS NOT NULL),
+		       (SELECT count(*) FROM match_players mp WHERE mp.player_id = p.id),
+		       -- Known from match rows alone: the Tennismylife files have no
+		       -- player table and mint ids of their own on the WTA side.
+		       p.birth_date IS NULL AND EXISTS (
+		           SELECT 1 FROM matches m
+		            WHERE m.winner_id = p.id OR m.loser_id = p.id)
+		       AND NOT EXISTS (
+		           SELECT 1 FROM matches m
+		            WHERE (m.winner_id = p.id OR m.loser_id = p.id)
+		              AND m.source NOT LIKE 'tml-%')
 		  FROM players p
 		 WHERE p.tour = $1::tour`, tour)
 	if err != nil {
@@ -44,7 +57,7 @@ func (s *Store) LoadPlayers(ctx context.Context, tour string) ([]Player, error) 
 	for rows.Next() {
 		var p Player
 		if err := rows.Scan(&p.ID, &p.SourceID, &p.Slug, &p.FullName,
-			&p.Country, &p.BirthDate, &p.BirthYear, &p.Matches); err != nil {
+			&p.Country, &p.BirthDate, &p.BirthYear, &p.Matches, &p.MatchOnly); err != nil {
 			return nil, fmt.Errorf("load players: %w", err)
 		}
 		out = append(out, p)
