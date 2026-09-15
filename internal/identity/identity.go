@@ -15,6 +15,7 @@ package identity
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -202,8 +203,12 @@ func sameDay(a, b time.Time) bool {
 
 // Reconcile proposes links among players of one tour.
 //
-// Only pairs spanning the two id spaces are considered: two Sackmann ids that
-// look alike are a different problem, and merging them here would be guessing.
+// Two kinds of pair are considered. A stub -- a row no player table backs --
+// against a row one does, in whichever id space; and two backed rows of one
+// source that carry the same date of birth, which is the source holding one
+// person under two ids. Two backed rows that merely share a name are not a
+// pair: merging them would be guessing, and Sackmann's file already says they
+// are different people by giving them different ids.
 func Reconcile(players []Player) []Match {
 	groups := map[string][]Player{}
 	for _, p := range players {
@@ -223,21 +228,26 @@ func Reconcile(players []Player) []Match {
 }
 
 func reconcileGroup(group []Player) []Match {
-	var numeric, alphanumeric []Player
+	var anchored, stubs []Player
 	for _, p := range group {
-		if p.Numeric() {
-			numeric = append(numeric, p)
+		if p.Stub() {
+			stubs = append(stubs, p)
 		} else {
-			alphanumeric = append(alphanumeric, p)
+			anchored = append(anchored, p)
 		}
 	}
-	if len(numeric) == 0 || len(alphanumeric) == 0 {
-		return nil
+	// The source's own duplicates fold first, and leave the candidate list, so
+	// a stub is not asked to choose between two rows that are about to be one.
+	// They are emitted last: a stub merged into one of them is carried along
+	// when that one folds in turn, where the other order would strand it.
+	folded, anchored := foldSameSource(anchored)
+	if len(anchored) == 0 {
+		return folded
 	}
 
 	var out []Match
-	for _, dup := range alphanumeric {
-		best, second := bestTwo(numeric, dup)
+	for _, dup := range stubs {
+		best, second := bestTwo(anchored, dup)
 		if best == nil {
 			continue
 		}
@@ -260,7 +270,53 @@ func reconcileGroup(group []Player) []Match {
 			Reason:     reason,
 		})
 	}
-	return out
+	return append(out, folded...)
+}
+
+// foldSameSource pairs backed rows that share a date of birth: one person under
+// two ids of one source. The longest career is kept. It returns the pairs and
+// the rows that remain candidates, which is every row not folded away.
+func foldSameSource(anchored []Player) (folded []Match, remaining []Player) {
+	byDay := map[string][]int{}
+	for i, p := range anchored {
+		if p.BirthDate != nil {
+			day := p.BirthDate.Format("2006-01-02")
+			byDay[day] = append(byDay[day], i)
+		}
+	}
+	dropped := map[int]bool{}
+	for _, idx := range byDay {
+		if len(idx) < 2 {
+			continue
+		}
+		sort.Slice(idx, func(a, b int) bool {
+			pa, pb := anchored[idx[a]], anchored[idx[b]]
+			if pa.Matches != pb.Matches {
+				return pa.Matches > pb.Matches
+			}
+			return pa.ID < pb.ID
+		})
+		keep := anchored[idx[0]]
+		for _, i := range idx[1:] {
+			confidence, reason := score(keep, anchored[i])
+			if confidence < ReviewFloor {
+				continue
+			}
+			folded = append(folded, Match{
+				Canonical:  keep,
+				Duplicate:  anchored[i],
+				Confidence: confidence,
+				Reason:     reason + ", under two ids of one source",
+			})
+			dropped[i] = true
+		}
+	}
+	for i, p := range anchored {
+		if !dropped[i] {
+			remaining = append(remaining, p)
+		}
+	}
+	return folded, remaining
 }
 
 // bestTwo returns the highest and second-highest scoring candidates.

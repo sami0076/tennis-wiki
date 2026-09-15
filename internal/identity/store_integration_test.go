@@ -531,3 +531,42 @@ func TestDerivedBirthYearUsesTheDateNotJustTheYear(t *testing.T) {
 		t.Fatalf("got %+v, want one automatic merge into %d", matches, canonical)
 	}
 }
+
+// A source's own duplicate folds after the stub that joined it, so the stub's
+// career and alias end up on the survivor rather than on a row that is gone.
+func TestRunnerCarriesAStubThroughAFold(t *testing.T) {
+	f := newFixture(t)
+	born := date(t, "1999-05-09")
+	survivor := f.player("209399", "Dan Martin", "CAN", born)
+	folded := f.player("202297", "Dan Martin", "CAN", born)
+	stub := f.player("M0C2", "Dan Martin", "CAN", nil)
+	opponent := f.player("100001", "Some Opponent", "FRA", nil)
+
+	open := f.tournament("open", 2025)
+	f.match(open, survivor, opponent, 1, "sackmann-atp-tour")
+	f.match(open, survivor, opponent, 2, "sackmann-atp-tour")
+	f.match(open, folded, opponent, 3, "sackmann-atp-futures")
+	f.match(open, stub, opponent, 4, "tml-atp-current")
+	if _, err := f.pool.Exec(f.ctx,
+		`UPDATE match_players SET age = 25.9 WHERE player_id = $1`, stub); err != nil {
+		t.Fatal(err)
+	}
+
+	runner := &Runner{Store: f.Store, Decisions: (&Overrides{}).Index()}
+	stats, err := runner.Run(f.ctx, []string{"atp"})
+	if err != nil {
+		t.Fatalf("run: %v", err)
+	}
+	if stats.Merged != 2 {
+		t.Fatalf("merged %d, want 2: %+v", stats.Merged, stats)
+	}
+	if n := f.count(`SELECT count(*) FROM players WHERE full_name = 'Dan Martin'`); n != 1 {
+		t.Errorf("%d Dan Martins left, want 1", n)
+	}
+	if n := f.count(`SELECT count(*) FROM match_players WHERE player_id = $1`, survivor); n != 4 {
+		t.Errorf("survivor holds %d matches, want all 4", n)
+	}
+	if n := f.count(`SELECT count(*) FROM player_aliases WHERE player_id = $1`, survivor); n != 2 {
+		t.Errorf("%d aliases point at the survivor, want 2", n)
+	}
+}

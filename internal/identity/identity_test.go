@@ -137,16 +137,83 @@ func TestReconcileLinksAcrossIDSpaces(t *testing.T) {
 	}
 }
 
-// Two Sackmann ids that look alike are a different problem, and merging them
-// here would be guessing.
-func TestReconcileIgnoresPairsInsideOneIDSpace(t *testing.T) {
-	born := date(t, "1997-04-20")
+// Two Sackmann ids that share only a name are two people: the file gave them
+// different ids, and merging them would be guessing.
+func TestReconcileIgnoresNamesakesInsideOneIDSpace(t *testing.T) {
 	players := []Player{
-		{ID: 1, SourceID: "100001", FullName: "Alexander Zverev", BirthDate: born},
-		{ID: 2, SourceID: "100002", FullName: "Alexander Zverev", BirthDate: born},
+		{ID: 1, SourceID: "100001", FullName: "Juan Perez", Country: "ARG", Matches: 40},
+		{ID: 2, SourceID: "100002", FullName: "Juan Perez", Country: "ARG", Matches: 12},
 	}
 	if got := Reconcile(players); len(got) != 0 {
 		t.Errorf("got %d matches, want none: %+v", len(got), got)
+	}
+}
+
+// Dan Martin as the live database held him: three Sackmann ids, one name, one
+// date of birth, one country. That is the source holding one person three
+// times, and the longest career keeps the page.
+func TestReconcileFoldsOneSourcesDuplicateIDs(t *testing.T) {
+	born := date(t, "1999-05-09")
+	players := []Player{
+		{ID: 1, SourceID: "202297", FullName: "Dan Martin", Country: "CAN", BirthDate: born, Matches: 30},
+		{ID: 2, SourceID: "209399", FullName: "Dan Martin", Country: "CAN", BirthDate: born, Matches: 210},
+		{ID: 3, SourceID: "206876", FullName: "Dan Martin", Country: "CAN", BirthDate: born, Matches: 5},
+	}
+	matches := Reconcile(players)
+	if len(matches) != 2 {
+		t.Fatalf("got %d matches, want 2: %+v", len(matches), matches)
+	}
+	for _, m := range matches {
+		if !m.Auto() {
+			t.Errorf("%s: want an automatic merge", m.Describe())
+		}
+		if m.Canonical.ID != 2 {
+			t.Errorf("canonical = %d, want 2, the longest career", m.Canonical.ID)
+		}
+	}
+}
+
+// The Tennismylife WTA files mint a numeric id of their own for a few rows of
+// a player Sackmann already has. Numeric on both sides, but one is a stub, and
+// the evidence is the same as for an ATP alphanumeric id.
+func TestReconcileLinksAMatchOnlyNumericID(t *testing.T) {
+	derived := 1987
+	players := []Player{
+		{ID: 1, SourceID: "213583", FullName: "Tatjana Maria", Country: "GER",
+			BirthDate: date(t, "1987-08-08"), BirthYear: &derived, Matches: 1108},
+		{ID: 2, SourceID: "310440", FullName: "Tatjana Maria", Country: "GER",
+			BirthYear: &derived, Matches: 1, MatchOnly: true},
+	}
+	matches := Reconcile(players)
+	if len(matches) != 1 || !matches[0].Auto() {
+		t.Fatalf("got %+v, want one automatic merge", matches)
+	}
+	if matches[0].Canonical.ID != 1 || matches[0].Duplicate.ID != 2 {
+		t.Errorf("canonical=%d duplicate=%d, want 1 and 2", matches[0].Canonical.ID, matches[0].Duplicate.ID)
+	}
+}
+
+// A stub arriving on top of a source's own duplicates links to the row that
+// survives the fold, and its merge is emitted before the fold so it travels
+// with the row it joined.
+func TestAStubIsNotAskedToChooseBetweenRowsAboutToFold(t *testing.T) {
+	born := date(t, "1999-05-09")
+	derived := 1999
+	players := []Player{
+		{ID: 1, SourceID: "202297", FullName: "Dan Martin", Country: "CAN", BirthDate: born, BirthYear: &derived, Matches: 30},
+		{ID: 2, SourceID: "209399", FullName: "Dan Martin", Country: "CAN", BirthDate: born, BirthYear: &derived, Matches: 210},
+		{ID: 4, SourceID: "M0C2", FullName: "Dan Martin", Country: "CAN", BirthYear: &derived, Matches: 8},
+	}
+	matches := Reconcile(players)
+	if len(matches) != 2 {
+		t.Fatalf("got %d matches, want 2: %+v", len(matches), matches)
+	}
+	stub, fold := matches[0], matches[1]
+	if stub.Duplicate.ID != 4 || stub.Canonical.ID != 2 || !stub.Auto() {
+		t.Errorf("first merge %s: want the stub into the survivor, automatically", stub.Describe())
+	}
+	if fold.Duplicate.ID != 1 || fold.Canonical.ID != 2 {
+		t.Errorf("second merge %s: want the source's duplicate into the survivor", fold.Describe())
 	}
 }
 
