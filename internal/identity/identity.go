@@ -47,7 +47,16 @@ type Player struct {
 	// Matches is how much history this row carries. The larger of a pair
 	// becomes canonical, so the merge moves the shorter career onto the longer.
 	Matches int
+	// MatchOnly marks a numeric id that no player table backs: the Tennismylife
+	// WTA files mint ids of their own for a few rows of a player Sackmann already
+	// has, and the result is a namesake with one match and nothing else.
+	MatchOnly bool
 }
+
+// Stub reports whether this row is known from match rows alone, which is the
+// side of a pair that gets folded away: every alphanumeric id, and a numeric
+// one the sources' player tables do not carry.
+func (p Player) Stub() bool { return !p.Numeric() || p.MatchOnly }
 
 // Numeric reports whether the source id is a Sackmann numeric id rather than an
 // ATP alphanumeric one. The two id spaces never collide, which is what makes a

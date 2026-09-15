@@ -456,6 +456,19 @@ func TestDerivedBirthYearUsesElapsedYears(t *testing.T) {
 		`UPDATE match_players SET age = 27.4 WHERE player_id = $1`, duplicate); err != nil {
 		t.Fatal(err)
 	}
+	// A second row, played in November at 27.9: the year alone would say
+	// 2025 - 27.9 = 1997.1, still right, but a player born in May and playing
+	// in November is the case the year alone gets wrong, and the mode over
+	// both rows has to come out 1997 either way.
+	f.match(open, duplicate, opponent, 2, "tml-atp-current")
+	if _, err := f.pool.Exec(f.ctx,
+		`UPDATE matches SET played_on = make_date(2025, 11, 20) WHERE match_num = 2`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.pool.Exec(f.ctx,
+		`UPDATE match_players SET age = 27.9 WHERE player_id = $1 AND age IS NULL`, duplicate); err != nil {
+		t.Fatal(err)
+	}
 
 	players, err := f.LoadPlayers(f.ctx, "atp")
 	if err != nil {
@@ -480,5 +493,41 @@ func TestDerivedBirthYearUsesElapsedYears(t *testing.T) {
 	}
 	if matches[0].Canonical.ID != canonical {
 		t.Errorf("canonical = %d, want %d", matches[0].Canonical.ID, canonical)
+	}
+}
+
+// Carlos Alcaraz, born 5 May 2003, as the live database held him: the Sackmann
+// row with the exact date, the ATP row with a 2025 match at 22.5. Year minus
+// age floors to 2002 on that row, the exact date says 2003, and the pair was
+// scored zero and dropped. The date as a fraction of the year gets it right.
+func TestDerivedBirthYearUsesTheDateNotJustTheYear(t *testing.T) {
+	f := newFixture(t)
+	canonical := f.player("207989", "Carlos Alcaraz", "ESP", date(t, "2003-05-05"))
+	duplicate := f.player("A0E2", "Carlos Alcaraz", "ESP", nil)
+	opponent := f.player("100001", "Some Opponent", "FRA", nil)
+
+	open := f.tournament("open", 2025)
+	f.match(open, duplicate, opponent, 1, "tml-atp-current")
+	if _, err := f.pool.Exec(f.ctx,
+		`UPDATE matches SET played_on = make_date(2025, 11, 20)`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.pool.Exec(f.ctx,
+		`UPDATE match_players SET age = 22.5 WHERE player_id = $1`, duplicate); err != nil {
+		t.Fatal(err)
+	}
+
+	players, err := f.LoadPlayers(f.ctx, "atp")
+	if err != nil {
+		t.Fatalf("LoadPlayers: %v", err)
+	}
+	for _, p := range players {
+		if p.ID == duplicate && (p.BirthYear == nil || *p.BirthYear != 2003) {
+			t.Errorf("derived birth year = %v, want 2003", p.BirthYear)
+		}
+	}
+	matches := Reconcile(players)
+	if len(matches) != 1 || !matches[0].Auto() || matches[0].Canonical.ID != canonical {
+		t.Fatalf("got %+v, want one automatic merge into %d", matches, canonical)
 	}
 }
