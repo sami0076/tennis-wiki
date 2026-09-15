@@ -142,6 +142,16 @@ that passes says the site is up, and one that fails says only that it is not.
 
 ## Runbook
 
+Everything below starts from the laptop with `deploy/kubectl.sh`, which is `kubectl`
+through an SSH tunnel to the node; no shell on the node is needed until a step says so.
+
+**The uptime run failed.** `deploy/uptime.sh https://api.deucepoint.net https://deucepoint.net`
+from here says which of the two names it was. If it is the site, Cloudflare Pages has a
+status page and a deployment log, and nothing in this repository can fix it. If it is the
+API, `deploy/kubectl.sh -n deucepoint get pods` and read on. If `kubectl` cannot connect
+either, `ssh deucepoint`; if that cannot either, the GreenCloud panel has a console and a
+reboot button, and k3s starts on boot.
+
 **A pod is down.** `kubectl -n deucepoint get pods`. The API self-heals behind readiness;
 Postgres is a StatefulSet and comes back on its volume; Redis comes back empty, which is
 allowed — every cache miss is a query. If a pod is `Pending`, the node is out of memory:
@@ -159,8 +169,13 @@ half-written survives, because each batch is a transaction.
 `kubectl -n deucepoint get challenge` shows what is stuck. The HTTP-01 challenge needs port
 80 open and `api.deucepoint.net` resolving to the node, DNS-only, not proxied.
 
-**Logs** without a shell on a node are #102's open item; today it is
-`ssh deucepoint kubectl -n deucepoint logs deploy/api`.
+**Logs.** `deploy/kubectl.sh -n deucepoint logs deploy/api --since=1h`, and `-c ingest`
+or `-c rate` on `job/load`. The first run copies the cluster's kubeconfig to
+`~/.kube/deucepoint.yaml` — it is the admin credential, so it stays there — and opens the
+tunnel, which stays up until the ssh process is killed or the laptop sleeps; the script
+reopens it. The kubelet keeps five files of 10 MB per container and nothing keeps a
+finished pod's, so the logs of the pod a rollout replaced are gone with it; nothing ships
+them anywhere, and at this traffic nothing needs to.
 
 ## What it costs
 
