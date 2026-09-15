@@ -88,8 +88,10 @@ records reach back to **1923**. Layers B–D are fresher but carry only the uppe
 
 Worth stating plainly, because it is easy to misread its role: **`tennis_MatchChartingProject`
 is public, intact, and actively maintained.** It is the one Sackmann repository that
-survived, and it is also **the most current source available to this project** — charted
-through 24 May 2026, ahead of every other source.
+survived. Until September 2026 it was also the most current source available, charted
+through 24 May 2026; the Tennismylife site (layer D) now runs three months past that,
+so what the MCP offers is depth rather than currency. What it may feed is decided in
+[ADR-0011](docs/decisions/0011-what-the-match-charting-project-may-touch.md).
 
 It cannot substitute for the match database. It holds 7,566 ATP and 4,080 WTA matches
 against roughly 195,000 ATP tour-level matches alone — 3.9% coverage, skewed heavily toward
