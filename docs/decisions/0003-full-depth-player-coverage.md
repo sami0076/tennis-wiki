@@ -3,6 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-09-02
 - **Amends:** build specification §1 (non-goals), §2 (Phase 1 scope), §7 (rating engine)
+- **Amended:** 2026-09-15, what a duplicate inside one source is allowed to be; see the end
 
 ## Context
 
@@ -115,3 +116,20 @@ unmerged pair, because it is invisible.**
 
 Challengers, Futures, and ITF move out of it. What remains deliberately excluded: live
 scores, betting products, user accounts, mobile apps, and — for now — doubles.
+
+## Amendment, 2026-09-15
+
+"Genuine duplicate records in the source" turned out to number 154 groups on the ATP side
+and 16 on the WTA: two or three Sackmann ids carrying one name, one date of birth and
+one country (`Dan Martin`, CAN, 1999-05-09, three times). The conservative rule above was
+read, until now, as "never merge inside one id space", and that left every one of them as
+a career split across pages.
+
+**Decided:** inside one source, a shared name **and** a shared date of birth is one
+person, and folds into the longer career automatically at the same confidence a
+cross-source pair earns from the same evidence. A shared name alone still is not — the
+source gave them different ids, and that is its statement that they are different
+people. Two dates six days apart (`Bill Scanlon`, 1956-11-13 and 1956-11-19) are not the
+same date; that pair waits for a hand decision in `configs/player_overrides.json` like
+any other. #137 has the counts; `internal/identity` has the rule.
+

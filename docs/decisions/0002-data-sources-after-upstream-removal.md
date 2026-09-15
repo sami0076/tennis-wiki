@@ -107,7 +107,11 @@ The GitHub repository in layer D is a lagging copy. The maintainer publishes at
 
 against 137 rows and a last match of 2026-01-17 in the GitHub copy. Same layout, serve
 statistics present on all but a few dozen rows per file, and the WTA files use Sackmann's
-numeric ids, so nothing to reconcile on that tour.
+numeric ids, so nothing to reconcile on that tour. (*Corrected 2026-09-15:* mostly. The
+WTA files mint numeric ids of their own for a few rows per player — Tatjana Maria is
+`213583` for 1,108 matches and `310440` for one — and the live database held 49 such
+pairs among the players the Match Charting Project names alone. Reconciliation now pairs
+any row no player table backs, whatever its id looks like; #137.)
 
 **Decision 4 now reads:** layer D is the website, used for ATP tour, Challenger and
 qualifying 2025–26 and for WTA tour 2022–26. The Sackmann mirrors stay the base for
