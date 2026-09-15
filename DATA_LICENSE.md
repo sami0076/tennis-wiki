@@ -78,7 +78,7 @@ to cover every tier.
 | A | Complete Sackmann snapshot | ATP + WTA | tour, qualifying+Challenger, Futures, qualifying+ITF, doubles, amateur | → 2022-01-10 |
 | B | Restructured ATP mirror | ATP | tour, qualifying+Challenger | → 2024 |
 | C | Vendored WTA snapshots | WTA | tour | → 2024 |
-| D | [`Tennismylife/TML-Database`](https://github.com/Tennismylife/TML-Database) | ATP | tour | 2025 → 2026-01-17 |
+| D | [Tennismylife](https://stats.tennismylife.org/) | ATP + WTA | tour, qualifying+Challenger (ATP) | ATP 2025 →, WTA 2022 → late August 2026 |
 | E | [`JeffSackmann/tennis_MatchChartingProject`](https://github.com/JeffSackmann/tennis_MatchChartingProject) | ATP + WTA | charted matches | → 2026-05-24 |
 
 Layer A is the **only** located source for Futures, WTA ITF, and doubles, and its WTA
@@ -88,8 +88,10 @@ records reach back to **1923**. Layers B–D are fresher but carry only the uppe
 
 Worth stating plainly, because it is easy to misread its role: **`tennis_MatchChartingProject`
 is public, intact, and actively maintained.** It is the one Sackmann repository that
-survived, and it is also **the most current source available to this project** — charted
-through 24 May 2026, ahead of every other source.
+survived. Until September 2026 it was also the most current source available, charted
+through 24 May 2026; the Tennismylife site (layer D) now runs three months past that,
+so what the MCP offers is depth rather than currency. What it may feed is decided in
+[ADR-0011](docs/decisions/0011-what-the-match-charting-project-may-touch.md).
 
 It cannot substitute for the match database. It holds 7,566 ATP and 4,080 WTA matches
 against roughly 195,000 ATP tour-level matches alone — 3.9% coverage, skewed heavily toward
