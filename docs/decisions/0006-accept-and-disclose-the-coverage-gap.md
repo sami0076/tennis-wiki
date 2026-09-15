@@ -3,7 +3,8 @@
 - **Status:** Accepted
 - **Date:** 2026-09-04
 - **Context:** [ADR-0002](0002-data-sources-after-upstream-removal.md), issue #15
-- **Amended:** 2026-09-14, the gap closed from the full-schema side; see the end
+- **Amended:** 2026-09-14, the gap closed from the full-schema side; 2026-09-15, the
+  Match Charting Project revisited; see the end
 
 ## Context
 
@@ -91,3 +92,12 @@ The decision itself is unchanged: no results-only supplement, no scraping, and t
 coverage claim stays derived from the database rather than written down. What changed is
 that "behind" is now the maintainer's update lag rather than eight months.
 
+
+## Amendment, 2026-09-15
+
+The revisit this ADR asked for has happened, as [ADR-0011](0011-what-the-match-charting-project-may-touch.md).
+Option E is adopted in a narrower form than "the natural first supplement" suggested: the
+Match Charting Project attaches per-set figures to matches the database already holds,
+resolved through the match rather than the player name, and feeds neither ratings, nor
+the simulator, nor the coverage claim. Its currency, which is what made it interesting
+here, is no longer ahead of the sources; the September amendment above overtook it.
