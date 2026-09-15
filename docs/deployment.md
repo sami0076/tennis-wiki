@@ -79,6 +79,21 @@ The database is reproducible from public files, and that is the recovery plan (#
 there is no backup to restore, because a rebuild produces the current schema from the
 current sources in about an hour and a restore would produce an old one.
 
+The plan has been run end to end once, because standing the site up was the plan: on
+14 September 2026 an empty volume took `migrate` in 4 seconds and `load` in 39 minutes,
+and `smoke.sh` passed against the result. Rebuilding on a new node is that plus the host
+setup above, and the DNS record.
+
+**What a rebuild does not bring back.** Nothing, checked table by table. `identity_reviews`
+is the one that looked like it might: it is where the ingest queues an ambiguous match for
+a human, but the human's answer never goes into the database — it goes into
+`configs/player_overrides.json`, which is committed, and the next ingest re-queues whatever
+is still open. The ledgers (`ingest_runs`, `ingest_files`) are rewritten by the run that
+rebuilds them. Ratings, clutch and serve baselines are computed, never edited. The only
+thing on the node that is not derived from the repository or the sources is
+`/root/secrets.yaml`, the Postgres password, and a rebuild from empty can just mint a new
+one.
+
 ```sh
 ssh deucepoint
 kubectl -n deucepoint delete job load --ignore-not-found
@@ -111,7 +126,31 @@ deploy/smoke.sh https://api.deucepoint.net
 `/api/v1/coverage` is the claim the README rests on; check it after a load and make sure
 the dates are the ones the sources carry.
 
+## Knowing it is down
+
+Nothing inside the cluster can report that the cluster is gone, so the watcher is outside
+it: the `Uptime` workflow (`.github/workflows/uptime.yml`) runs `deploy/uptime.sh` from a
+GitHub runner every fifteen minutes. It asks `/api/v1/health` for `"database":"ok"` and
+`deucepoint.net` for the page, retries once after thirty seconds so a blip is not a page,
+and fails the run otherwise. GitHub emails a failed scheduled run to whoever last
+committed the workflow file; that is the alert, and it reaches a phone.
+
+Two things to know about it. A scheduled workflow is switched off after sixty days without
+a push to the repository, and GitHub says so by email when it does; the `Run workflow`
+button turns it back on. And the check is of the two public names, not the node — a check
+that passes says the site is up, and one that fails says only that it is not.
+
 ## Runbook
+
+Everything below starts from the laptop with `deploy/kubectl.sh`, which is `kubectl`
+through an SSH tunnel to the node; no shell on the node is needed until a step says so.
+
+**The uptime run failed.** `deploy/uptime.sh https://api.deucepoint.net https://deucepoint.net`
+from here says which of the two names it was. If it is the site, Cloudflare Pages has a
+status page and a deployment log, and nothing in this repository can fix it. If it is the
+API, `deploy/kubectl.sh -n deucepoint get pods` and read on. If `kubectl` cannot connect
+either, `ssh deucepoint`; if that cannot either, the GreenCloud panel has a console and a
+reboot button, and k3s starts on boot.
 
 **A pod is down.** `kubectl -n deucepoint get pods`. The API self-heals behind readiness;
 Postgres is a StatefulSet and comes back on its volume; Redis comes back empty, which is
@@ -130,8 +169,13 @@ half-written survives, because each batch is a transaction.
 `kubectl -n deucepoint get challenge` shows what is stuck. The HTTP-01 challenge needs port
 80 open and `api.deucepoint.net` resolving to the node, DNS-only, not proxied.
 
-**Logs** without a shell on a node are #102's open item; today it is
-`ssh deucepoint kubectl -n deucepoint logs deploy/api`.
+**Logs.** `deploy/kubectl.sh -n deucepoint logs deploy/api --since=1h`, and `-c ingest`
+or `-c rate` on `job/load`. The first run copies the cluster's kubeconfig to
+`~/.kube/deucepoint.yaml` — it is the admin credential, so it stays there — and opens the
+tunnel, which stays up until the ssh process is killed or the laptop sleeps; the script
+reopens it. The kubelet keeps five files of 10 MB per container and nothing keeps a
+finished pod's, so the logs of the pod a rollout replaced are gone with it; nothing ships
+them anywhere, and at this traffic nothing needs to.
 
 ## What it costs
 
