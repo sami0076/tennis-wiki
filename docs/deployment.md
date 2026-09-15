@@ -111,6 +111,20 @@ deploy/smoke.sh https://api.deucepoint.net
 `/api/v1/coverage` is the claim the README rests on; check it after a load and make sure
 the dates are the ones the sources carry.
 
+## Knowing it is down
+
+Nothing inside the cluster can report that the cluster is gone, so the watcher is outside
+it: the `Uptime` workflow (`.github/workflows/uptime.yml`) runs `deploy/uptime.sh` from a
+GitHub runner every fifteen minutes. It asks `/api/v1/health` for `"database":"ok"` and
+`deucepoint.net` for the page, retries once after thirty seconds so a blip is not a page,
+and fails the run otherwise. GitHub emails a failed scheduled run to whoever last
+committed the workflow file; that is the alert, and it reaches a phone.
+
+Two things to know about it. A scheduled workflow is switched off after sixty days without
+a push to the repository, and GitHub says so by email when it does; the `Run workflow`
+button turns it back on. And the check is of the two public names, not the node — a check
+that passes says the site is up, and one that fails says only that it is not.
+
 ## Runbook
 
 **A pod is down.** `kubectl -n deucepoint get pods`. The API self-heals behind readiness;
