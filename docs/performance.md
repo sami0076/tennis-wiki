@@ -55,6 +55,22 @@ about 23 minutes, and identity reconciliation over 126,114 players in **20 secon
 dominated by fetching a few hundred files. `make ingest` loads the seed fixture in ten
 seconds precisely so this is not on anyone's critical path.
 
+### The Match Charting Project attaches in a minute and a half
+
+`ingest --stage charting` reads the project's four files (11,625 charted matches, 83,670
+stat rows) and resolves each to a row the database already holds, by tour, date window and
+the two names, with the round asked for first and then not at all (ADR-0011). **Measured
+on the full dataset, 16 September 2026:** 11,251 resolved, 374 not, 81,144 stat rows
+written, in **1m30s** — of which almost everything is the 120 or so per-tour-year queries
+that load the candidate rows, and almost nothing is the writes, which go one transaction
+per tour and year. The first cut wrote one transaction per charted match and took 28
+minutes on the same machine; the difference is entirely fsync.
+
+The 374 that do not resolve are counted by reason in `unresolved_references` and are, on
+inspection, the sources' gaps rather than the resolver's: WTA ITF events after 2021,
+juniors, team-event ties the files do not carry, exhibitions, a name the player has since
+changed, and a few dozen the charter dated to the wrong week.
+
 ### A second run over unchanged sources costs almost nothing
 
 An ingest used to re-read every configured file from the start and re-upsert rows it already
@@ -110,6 +126,7 @@ ingest --stage matches --tours wta --seasons 1990-2005
 ingest --stage matches --tours atp --seasons 2020-2026
 ingest --stage reference
 ingest --stage reconcile
+ingest --stage charting
 ```
 
 Each chunk is idempotent, so a failed one is simply repeated — and now a repeated one is

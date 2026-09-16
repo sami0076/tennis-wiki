@@ -32,6 +32,7 @@ a read against indexed tables.
 | `internal/simulate` | Closed-form match, Monte Carlo draw |
 | `internal/score` | Score-string parser |
 | `internal/identity` | Player reconciliation across the source id spaces |
+| `internal/charting` | The Match Charting Project, attached to matches the database already holds |
 | `internal/validate` | Rating accuracy, calibration and continuity checks |
 | `internal/dataqual` | Data-quality checks over the loaded database |
 | `internal/testdb` | Throwaway Postgres and Redis containers for the tests |
