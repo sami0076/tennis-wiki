@@ -43,7 +43,7 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: reconcile
-          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:ce722c5323ea2361eaee4c710458f879f2d17d80f6f8cb085f39501f408a608d
+          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:2742ce1cafb024e32a5de8f5fa027966095b940a5feec463c50768ace054d761
           command: ["ingest", "--stage", "reconcile"]
           env:
             - name: DATABASE_URL
@@ -73,7 +73,7 @@ spec:
               drop: ["ALL"]
       containers:
         - name: rate
-          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:ce722c5323ea2361eaee4c710458f879f2d17d80f6f8cb085f39501f408a608d
+          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:2742ce1cafb024e32a5de8f5fa027966095b940a5feec463c50768ace054d761
           command: ["rate"]
           env:
             - name: DATABASE_URL
