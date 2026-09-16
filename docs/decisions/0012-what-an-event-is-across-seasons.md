@@ -26,7 +26,7 @@ Five families, and a tour is not in the same family for its whole history.
 
 | Family | Shape | ATP rows | WTA rows | Carries an identity across seasons? |
 |---|---|---|---|---|
-| The tour's number | `2019-580`, `2024-0421` | 10,302 (418,050 matches) | 17,314 | ATP: yes, every era. WTA: **only from 1988**, and on the tour tier effectively only from 2016 |
+| The tour's number | `2019-580`, `2024-0421` | 10,302 (418,050 matches) | 17,314 | ATP: yes, every era. WTA: **only from 2016** |
 | Sackmann's M-codes, 2016–20 | `2016-M006` | 58 | 56 | Within the five years, yes; to the number before and after only through the name |
 | ITF-style | `1998-M-FU-ARG-01A-1998`, `2009-W-INT-AUS-01A-2009` | 14,396 (446,201 matches) | 12,723 | By construction, no: country plus a sequence number within the year |
 | A team tie | `2019-M-DC-2019-FLS-A-M-FRA-JPN-01`, `1968-D001` | 4,069 (15,123 matches) | 5,612 (12,400 matches) | One row per tie; the competition is in the name |
@@ -64,9 +64,11 @@ in twenty-eight seasons. The tour is filed under ITF-style ids (1,855 rows, 148,
 matches), and the middle of those — category, country, sequence — holds only for events
 that are the only one of their category in their country: Wimbledon is `W-SL-GBR-01A` and
 the US Open `W-SL-USA-01A` for all 48 editions from 1968 to 2015; everything else shifts
-as the calendar does, and name continuity across the family is 68%. The 1,500-odd
-numeric Challenger rows of the same era (`1991-0297 ITF Schwarzach`) are real ids, with
-73% name continuity.
+as the calendar does, and name continuity across the family is 68%. The 1,309 numeric
+Challenger rows of 1988–95 (`1991-0297 ITF Schwarzach`) are the ITF circuit's own
+numbering, with 73% name continuity — and a space that collides with the WTA's: 540 is
+ITF Indianapolis in 1991 and Wimbledon in 2016, 560 is Haskovo and then the US Open. Four
+numbers collide, all four of them Slams, so those rows cannot be numbers either.
 
 **From 2016 the WTA number is the WTA's own, except where Sackmann used the ATP's.**
 Sackmann's 2016–21 files carry the WTA's numbering (1003 Doha, 1017 Cincinnati, 806
@@ -124,30 +126,35 @@ runs after the match stage in the load job, the way the reconcile stage does for
 
 For each `tournaments` row, in this order, the first that applies:
 
-1. **An override.** `configs/event_overrides.json` maps a `(tour, raw key)` to the
-   number the event is filed under. It holds the renumberings the data shows and a person
-   has checked: the women's Slams (580 → 901, 520 → 903, 540 → 904, 560 → 905), the
-   Olympics (ATP 84, 88, 92 and `O16` → 96; WTA `O16`, `1924-1181` and the city-named
-   `W-OL` rows → 650), the six WTA renumberings above, and the M-codes whose name sits
-   under several numbers — Sydney, Brisbane, Acapulco, Moscow, Beijing, Washington, Rio,
-   Eastbourne: 58 of the 114 rows. Each entry carries a reason. It is under a hundred
-   lines and stays that way: an override is for a number that changed, never for a name.
+1. **An override.** `configs/event_overrides.json` names rows — one number, one of
+   Sackmann's M-codes, one exact id, or a list of ids — and the number the event is filed
+   under. It holds the renumberings the data shows and a person has checked: the women's
+   Slams (580 → 901, 520 → 903, 540 → 904, 560 → 905), the Olympics (ATP 84, 88, 92 and
+   `O16` → 96; WTA `O16`, `1924-1181` and the city-named `W-OL` rows → 650), the six WTA
+   renumberings above, the seven ATP M-codes whose name sits under several numbers
+   (Sydney, Acapulco, Eastbourne, Brisbane, Washington, Rio, Adelaide: 29 rows), and the
+   WTA's year-end championships of 1975–2013 — forty ids under five names, filed under
+   808, because the ATP's equivalent is one number since 1970 and the women's would
+   otherwise be five pages. Each entry carries a reason. Thirty entries; an override is
+   for a number that changed, never for a name.
 2. **The tour's number**, where the id is `YYYY-N` and the number is a real one: every
-   ATP row, and WTA rows from 1988. The key is `(tour, N)` with leading zeros dropped, so
+   ATP row, and WTA rows from 2016. The key is `(tour, N)` with leading zeros dropped, so
    `2018-0451` and `2019-451` are one event.
 3. **The name**, normalised, within the tour and the tier: everything else — the women's
    tour before 2016, Futures, ITF, the M-codes, the 1968 T-codes. A name-keyed run
    **bridges** to a numbered event when exactly one numbered event of the same tour and
    tier has an edition under that normalised name; if none has, the run is an event of
-   its own; if more than one has, it stays its own rather than guess. Measured with the
-   overrides above applied first: on the women's tour tier, 17,361 name-keyed rows, of
-   which 2,428 bridge, 275 stay apart because the name is under two numbers (Melbourne,
-   Budapest, Chicago, Tokyo, Istanbul, Charleston — each a city with two events since
-   2016), and 14,658 are events of their own. The women's Wimbledon of 1923–2015 (87
-   editions), Roland Garros (82), the US Open (48) and the Australian Open (47) all
-   bridge, and 21 of the M-codes (`Indian Wells Masters` → 404) resolve without an
-   override. Without the bridge the women's Slams are two pages each, and the site's
-   "both tours on the same footing" is false on the page a visitor opens first.
+   its own; if more than one has, it stays its own rather than guess. As implemented,
+   with the overrides applied first: on the women's tour tier, 17,314 name-keyed rows, of
+   which 2,378 bridge and 14,936 are events of their own; fifteen names across both
+   tours stay apart because the name is under two numbers (Melbourne, Budapest, Chicago,
+   Tokyo, Istanbul, Charleston — each a city with two events since 2016). The women's
+   Wimbledon of 1923–2015 (87 editions), Roland Garros (82), the US Open (48) and the
+   Australian Open (47) all bridge, and so do Sydney (91), Lausanne (86) and Eastbourne
+   (84), which is the rule's reach and its risk in one line. All but seven of the
+   M-codes (`Indian Wells Masters` → 404) resolve here without an override. Without the
+   bridge the women's Slams are two pages each, and the site's "both tours on the same
+   footing" is false on the page a visitor opens first.
 4. **Team ties** key on the competition, which is the name before the colon — Davis Cup,
    Fed Cup, Billie Jean King Cup, United Cup, ATP Cup — within the tour. An edition of a
    team competition is a season and holds its ties; it is not a draw, and #122 decides
@@ -160,9 +167,11 @@ category prefix (`W15 Antalya`), because the category is part of what the event 
 
 ### What the row keeps
 
-`tournaments.event_id` is `NOT NULL`, and `tournaments.event_link` says how the row got
-there: `number`, `override`, `name`, or `bridged`. **The link is provenance, and the page
-prints it** — an event page whose early editions were joined by name says so, in the same
+`tournaments.event_id` points at the event, and `tournaments.event_link` says how the
+row got there: `number`, `override`, `name`, `bridged`, or `team`. The column is nullable
+in the schema because the match stage writes the row and the events stage keys it; a row
+still null after a load is a `dataqual` integrity failure. **The link is provenance, and
+the page prints it** — an event page whose early editions were joined by name says so, in the same
 place a serve-statistics table says which matches it is missing. This is the standing
 rule, absent is not zero, applied to identity: a row on an event page by exact number and
 a row on it by name are two different claims, and the reader gets to see which.
@@ -183,9 +192,12 @@ decade split on the player page — gets the tour's season for free.
 exists on both tours under the same name, so a rule that added the tour only on collision
 would add it almost everywhere and unpredictably; adding it always is predictable, says
 on the URL which draw sheet the reader is on, and leaves the bare `wimbledon` unclaimed
-for a combined page if one is ever built. Collisions inside a tour — the eight Sao Paulo
-Challengers, the 465 sequential ones — get a serial in order of first season,
-`sao-paulo-atp-2`, so the numbering is stable across reloads.
+for a combined page if one is ever built. A name that already carries the tour is not
+suffixed again: `wta-finals`, `next-gen-atp-finals`. Collisions inside a tour — the eight
+Sao Paulo Challengers, the 465 sequential ones — get a serial, `sao-paulo-atp-2`, the run
+still on the calendar (then the longer one) taking the bare slug, so the current Acapulco
+is `acapulco-atp` and the 1974 one-off the serial; 676 events carry one, twelve of them
+current, and those are cities with two events in one season.
 
 The display name is the name of the event's most recent edition, unless the overrides
 file pins one: Canada is `Canada Masters` in every ATP file, but the WTA's 806 alternates
@@ -250,21 +262,23 @@ of a few hundred rows, is its own issue, and the bare slug is left free for it.
 ## Consequences
 
 - Migration 00016: `events` (`id`, `tour`, `slug` unique, `name`, `key`, `first_season`,
-  `last_season`), `tournaments.event_id` not null, `tournaments.event_link`. The ingest
-  match stage sets `season` from the id. On today's data the rule yields about 1,660
-  numbered and 2,040 named ATP events, 630 numbered and 6,300 named WTA events; by row,
-  the ATP is 10,299 by number, 39 by override, 14,458 by name (6 of them bridged) and
-  4,069 team ties, and the WTA is 1,848 by number, 86 by override, 28,215 by name (2,518
-  bridged) and 5,612 ties. Those are the proportions the page's provenance line will
-  show, and they are what "the women's tour before 2016 is joined by name" means in
-  numbers.
+  `last_season`), `tournaments.event_id`, `tournaments.event_link`; it also moves the 371
+  rows to the season in their id and merges the two United Cup editions the old rule had
+  split across New Year. The ingest match stage sets `season` from the id from then on.
+  On today's data the rule yields 1,586 numbered, 2,003 named and 1 team event on the
+  ATP, and 143 numbered, 6,721 named and 8 team events on the WTA; by row, the ATP is
+  10,299 by number, 26 by override, 42 bridged, 14,429 by name and 4,069 team ties, and
+  the WTA is 540 by number, 79 by override, 2,394 bridged, 27,083 by name and 5,663
+  ties. Those are the proportions the page's provenance line will show, and they are
+  what "the women's tour before 2016 is joined by name" means in numbers.
 - `configs/event_overrides.json`, loaded by the new stage the way `player_overrides.json`
   is; `cmd/dataqual` reports every override that matched no row, so a renumbering that
   a source undoes does not sit in the file forever.
-- `cmd/ingest -stage events` derives the table; `deploy/k8s/jobs/load.yaml` runs it after
-  `matches` and before `rate`. `dataqual` reports rows by `event_link`, the name-keyed
-  runs that bridged, the ones that were ambiguous, and the ten name-keyed events with the
-  most editions, so the rule's reach is a number rather than a guess.
+- `cmd/ingest -stage events` derives the table in nine seconds; a full load runs it after
+  the matches, and `deploy/k8s/jobs/events.yaml` runs it alone after a change to the
+  overrides. `dataqual` checks that no row is left unkeyed and no event is left empty,
+  and reports the editions joined by name, the bridged ones, and the events named after
+  a serial, so the rule's reach is a number rather than a guess.
 - The three endpoints, with ETag and cache behaviour matching the rest of `v1`;
   `FindTournament` is replaced by a lookup on `(slug, season)`. `docs/performance.md`
   carries the measured cost of the edition endpoint on a 128 draw, cold and warm.
