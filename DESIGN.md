@@ -292,6 +292,9 @@ Three distinct cases, unchanged from the handoff.
 - **Score:** each set an unbreakable word; the mark (`ret.`, `w/o`) at 11px pencil.
 - **Meta:** typed fields two real spaces apart (`Spain  right-handed  23  turned pro 2018`), 13px pencil; empty parts drop out.
 
+### The charted sheet (ChartedMark, ChartedSheet)
+A match the Match Charting Project's volunteers charted carries the typed word `charted` after its score, 11px pencil on a pencil rule, ink on an ink rule while open; the other rows carry nothing where it would go. Opening it puts the sheet under the row, indented a step and pinned to the visible edge when the table scrolls: a head naming both players on the two sides rule with the event and the day, then a table with a row per figure and a column per set and one for the match, both players in every cell, A before B. Rates are derived from the counts and shown as the counts (`0/0`) where the set gave the rate no denominator; a set missing for one player is `n/r`. One 12px pencil note under it says who charts it, that the counts are the charter's, and that they are in no career total. Nothing charted feeds an aggregate anywhere on the site.
+
 ### Surface Elo cells (SurfaceEloStrip)
 Typed cells in a row, 12px apart, each flex 128px to 200px wide and padded 8px 12px with a transparent 1px border. The label is 12px/500 with the 8px square, the figure 28px/700 in the surface's hue, the match count 11px pencil. The best surface is boxed in its hue: the one place a box carries meaning on the player page. The overall cell is ink with a pencil label.
 
