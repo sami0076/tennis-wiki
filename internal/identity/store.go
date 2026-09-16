@@ -130,6 +130,10 @@ func (s *Store) Merge(ctx context.Context, m Match) (err error) {
 	if _, err := tx.Exec(ctx, `DELETE FROM rankings WHERE player_id = $1`, dup); err != nil {
 		return fmt.Errorf("clear duplicate rankings: %w", err)
 	}
+	if _, err := tx.Exec(ctx, `
+		UPDATE charted_stats SET player_id = $1 WHERE player_id = $2`, canonical, dup); err != nil {
+		return fmt.Errorf("move charted figures: %w", err)
+	}
 
 	// Aliases already pointing at the duplicate follow it.
 	if _, err := tx.Exec(ctx,

@@ -129,6 +129,46 @@ func (f *fixture) count(query string, args ...any) int {
 }
 
 // The whole point: one career, not two.
+// Charted figures hang off the player id too, and follow it.
+func TestMergeMovesChartedFigures(t *testing.T) {
+	f := newFixture(t)
+	born := date(t, "2003-05-05")
+	canonical := f.player("207989", "Carlos Alcaraz", "ESP", born)
+	dup := f.player("AC30", "Carlos Alcaraz", "ESP", born)
+	opponent := f.player("100001", "Some Opponent", "FRA", nil)
+	open := f.tournament("open", 2025)
+	f.match(open, dup, opponent, 1, "tml-atp-current")
+
+	if _, err := f.pool.Exec(f.ctx, `
+		INSERT INTO charted_matches (match_id, charting_id, played_on, source)
+		SELECT id, 'x', played_on, 'mcp-atp' FROM matches LIMIT 1`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.pool.Exec(f.ctx, `
+		INSERT INTO charted_stats (match_id, player_id, set_no, serve_points, aces, double_faults,
+		        first_in, first_won, second_in, second_won, bp_faced, bp_saved, return_points,
+		        return_points_won, winners, winners_fh, winners_bh, unforced, unforced_fh, unforced_bh)
+		SELECT match_id, $1, 0, 80, 6, 4, 48, 33, 32, 13, 11, 8, 61, 18, 25, 13, 5, 25, 15, 6
+		  FROM charted_matches`, dup); err != nil {
+		t.Fatal(err)
+	}
+
+	players, err := f.LoadPlayers(f.ctx, "atp")
+	if err != nil {
+		t.Fatal(err)
+	}
+	matches := Reconcile(players)
+	if len(matches) != 1 {
+		t.Fatalf("got %+v, want one merge", matches)
+	}
+	if err := f.Merge(f.ctx, matches[0]); err != nil {
+		t.Fatal(err)
+	}
+	if n := f.count(`SELECT count(*) FROM charted_stats WHERE player_id = $1`, canonical); n != 1 {
+		t.Errorf("%d charted rows under the canonical player, want 1", n)
+	}
+}
+
 func TestMergeMovesTheEntireCareer(t *testing.T) {
 	f := newFixture(t)
 	born := date(t, "2003-05-05")
