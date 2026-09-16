@@ -54,7 +54,7 @@ spec:
           # Pinned by digest, from the images job in ci.yml. A tag can be
           # repointed; this cannot, so what is running is answerable from the
           # manifest alone. deploy/k8s/README.md says how to move it.
-          image: ghcr.io/sami0076/tennis-wiki/api@sha256:209cd631b47744370076f9e39cebf32fbc4e6b64911d1b7769bb27566b7b2e06
+          image: ghcr.io/sami0076/tennis-wiki/api@sha256:f689de62951a145b160a8d0594b27c74195220707631e388c66bf49dd2960ffa
           ports:
             - name: http
               containerPort: 8080
