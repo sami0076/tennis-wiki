@@ -6,6 +6,7 @@ import { Home } from './Home'
 
 const coverage: CoverageResponse = {
   current_through: { atp: '2026-01-17', wta: '2021-12-27' },
+  charted: [],
   tiers: [
     {
       tour: 'atp',
