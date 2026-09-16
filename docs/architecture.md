@@ -1,7 +1,9 @@
 # Architecture
 
-> The shape below is current through Phase 4. The simulation chain is in
-> [`docs/methodology.md`](methodology.md).
+> Current as of the end of Phase 4, 16 September 2026, and deployed at
+> [deucepoint.net](https://deucepoint.net). The simulation chain is in
+> [`docs/methodology.md`](methodology.md); the measurements every figure below rests on
+> are in [`docs/performance.md`](performance.md).
 
 ## Shape of the system
 
@@ -105,13 +107,61 @@ rebuilds it from empty in about an hour, which is the recovery plan.
 and [ADR-0009](decisions/0009-postgres-in-the-cluster.md) have the reasoning; the
 manifests are in [`deploy/k8s/`](../deploy/k8s/README.md).
 
-## To be documented
+## The ingest pipeline
 
-Filled in as the work happens rather than guessed at now:
+A plan, a pool of readers, and one writer. The plan is every (source, season) file the
+registry says exists for the tours and seasons asked for — 340 on a full run — minus the
+ones the ledger says have not changed. Readers take files from a channel, parse them
+streaming, and hand chunks of parsed rows to a single writer over a channel; the writer
+holds the only connection that writes matches, so the database sees one ordered stream
+however many files are being read. The defaults are one reader per CPU and 2,000 rows per
+chunk; the live cluster runs two readers and 500-row chunks, because the bottleneck is the
+mirrors and not the machine, and the defaults were once enough to get the process killed
+for memory next to a busy Postgres while two readers were not measurably slower.
 
-- [ ] Ingest pipeline: worker pool shape, batching, idempotency keys
-- [ ] Rating recompute: runtime over the full dataset (#20)
-- [ ] Query plans for the hot paths, with `EXPLAIN` output (#20)
+Each chunk is one transaction. Matches, participants and stat lines go in as one
+`pgx.Batch` — one round trip per chunk rather than per row, which was the difference
+between 145 and 231 matches a second. The write is an upsert on the match's natural key,
+`(tournament, match number, qualifying, the two players)`: the same row from two mirrors
+lands once, and a corrected row replaces its earlier self. A file is recorded in
+`ingest_files` with its ETag only after its last chunk commits, so a killed run resumes at
+the file it was in, and an unchanged file on the next run costs one conditional request.
+The reference stage (player tables, ranking history) and the charting stage run after the
+matches, sequentially, because each needs everything the stage before it created.
+
+## The rating recompute
+
+`cmd/rate` replays every match from scratch in draw order — the round within an event,
+not the calendar, since most events carry one date for all their matches — and never
+patches a rating in place. On the full database that is 1.61 million rated matches, 75,000
+players and 3.1 million snapshots in **1m 41s**, and it runs after every load and after
+any identity merge, because a merge moves matches between players and the stored ratings
+would otherwise describe a database that no longer exists. Snapshots are written only for
+the weeks a player played: every player every week would be 1.4 billion rows against
+roughly 7 million.
+
+## The hot paths
+
+Measured rather than planned, and recorded by shape rather than as `EXPLAIN` dumps, which
+go stale with the statistics and were dropped for that reason.
+
+- **A player's match history** reads `match_players` by player, joins each of their matches
+  by primary key, sorts on `(played_on, id)` and returns a page; the cursor is a keyset on
+  that pair, so a deep page costs what the first one does — 19ms warm for the longest
+  career in the database, 590ms cold. The ordering key lives on `matches` and the player on
+  `match_players`, which is why every page reads the whole career; carrying `played_on` on
+  `match_players` would make it a 25-row scan and is not yet worth the schema change.
+- **A player's ratings** read the `ratings` primary key, which begins with `player_id`, so
+  a trajectory of 406 weekly points is 3ms and a current-and-peak per series 9ms warm.
+- **Search** ranks trigram similarity on `full_name` (a GIN index) weighted by two derived
+  columns on `players` — the career match count and the best tier reached — refreshed
+  after every ingest, in place of the lateral aggregate over each candidate's matches that
+  it began as.
+- **Head-to-head** is one query over both players' `match_players` rows joined on the match;
+  the record, the surface split and the tier split are counted in Go from the same rows so
+  three aggregates cannot disagree.
+- **The API** answers from a Redis read cache with a 24-hour TTL that the ingest clears when
+  it finishes; nothing else invalidates it, because nothing else changes the data.
 
 ## Decisions
 
