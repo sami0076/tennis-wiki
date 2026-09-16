@@ -1,6 +1,6 @@
 # ADR-0012: An event is keyed by the tour's number where there is one, and by its name where there is not
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-09-16
 - **Context:** issue #121, the first of Phase 5 (#131); three page issues (#122, #123,
   #128) and the structured data (#130) address an edition and depend on this
