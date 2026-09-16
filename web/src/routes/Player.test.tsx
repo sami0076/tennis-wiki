@@ -84,6 +84,7 @@ function match(overrides: Partial<PlayerMatch> = {}): PlayerMatch {
     won: true,
     score: '6-4 7-6(3)',
     incomplete: false,
+    charting_id: null,
     minutes: 128,
     serve: {
       availability: AvailabilityRecorded,
@@ -275,6 +276,64 @@ describe('the player page', () => {
     expect(await screen.findByText('Older Rival')).toBeInTheDocument()
     // Still the same page: the identity header never went away.
     expect(screen.getByRole('heading', { name: 'Itg Player' })).toBeInTheDocument()
+  })
+
+  // The charted mark is on the one row with a sheet behind it and nowhere
+  // else; opening it puts the per-set sheet under that row, with this
+  // player on the A side, and the note about who charts it.
+  it('opens a charted sheet under its row and draws nothing on the others', async () => {
+    const charted = match({
+      date: '2025-11-03',
+      opponent: { slug: 'a', name: 'Charted Rival' },
+      charting_id: '20251105-M-Paris-F-Itg_Player-Charted_Rival',
+    })
+    const plain = match({ date: '2019-05-02', opponent: { slug: 'b', name: 'Plain Rival' } })
+    routes({
+      '/matches': { data: [charted, plain], next_cursor: '' },
+      '/charted/': {
+        charting_id: charted.charting_id,
+        played_on: '2025-11-05',
+        charted_by: 'a volunteer',
+        tournament: 'Paris',
+        season: 2025,
+        round: 'F',
+        score: '6-4 7-6(3)',
+        players: [
+          { slug: 'itg-player', name: 'Itg Player' },
+          { slug: 'a', name: 'Charted Rival' },
+        ],
+        sets: [
+          {
+            set: 0,
+            lines: [
+              { serve_points: 80, aces: 9, double_faults: 2, first_in: 50, first_won: 40, second_in: 28, second_won: 15, bp_faced: 4, bp_saved: 3, return_points: 70, return_points_won: 28, winners: 20, winners_fh: 12, winners_bh: 8, unforced: 18, unforced_fh: 10, unforced_bh: 8 },
+              { serve_points: 70, aces: 3, double_faults: 4, first_in: 40, first_won: 28, second_in: 26, second_won: 12, bp_faced: 6, bp_saved: 2, return_points: 80, return_points_won: 30, winners: 15, winners_fh: 9, winners_bh: 6, unforced: 25, unforced_fh: 14, unforced_bh: 11 },
+            ],
+          },
+        ],
+      },
+      '/coverage': coverage,
+      '/clutch': clutch(),
+      '/ratings': emptySeries,
+      '/rankings': emptyRankings,
+      '/players/itg-player': profile(),
+    })
+    show()
+
+    expect(await screen.findByText('Plain Rival')).toBeInTheDocument()
+    const marks = screen.getAllByRole('button', { name: 'charted' })
+    expect(marks).toHaveLength(1)
+    expect(screen.queryByText(/Match Charting Project/)).toBeNull()
+
+    await userEvent.click(marks[0] as HTMLElement)
+    const sheet = await screen.findByRole('row', { name: /^Aces/ })
+    expect(sheet.textContent?.replace(/\s+/g, ' ')).toContain('9 3')
+    expect(screen.getByText(/Charted point by point by a volunteer/)).toBeInTheDocument()
+    // This player is the A side.
+    expect(screen.getAllByRole('link', { name: 'Itg Player' }).length).toBeGreaterThan(0)
+
+    await userEvent.click(screen.getByRole('button', { name: 'charted' }))
+    expect(screen.queryByText(/Charted point by point/)).toBeNull()
   })
 
   // An address that does not exist gets an explanation, not a blank screen.

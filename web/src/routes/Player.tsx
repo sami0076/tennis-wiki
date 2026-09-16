@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   ApiError,
@@ -21,6 +21,8 @@ import {
   AbsentCell,
   ButtonLink,
   Button,
+  ChartedMark,
+  ChartedSheet,
   EmptyState,
   Meta,
   PartialAggregate,
@@ -157,6 +159,7 @@ export function Player() {
       {player.career === null ? null : (
         <MatchesSection
           matches={matches}
+          slug={slug}
           surface={surface}
           onSurface={(next) => {
             setCursors([])
@@ -466,7 +469,15 @@ function SplitsSection({ career }: { career: Career }) {
   )
 }
 
-const matchColumns: ReadonlyArray<Column<PlayerMatch>> = [
+/**
+ * The history's columns. The score cell carries the charted mark on the rows
+ * that have a sheet behind them, so the columns depend on which one is open.
+ */
+function matchColumns(
+  open: string | null,
+  onToggle: (id: string) => void,
+): ReadonlyArray<Column<PlayerMatch>> {
+  return [
   { key: 'date', header: 'Date', value: (row) => row.date },
   {
     key: 'result',
@@ -510,7 +521,17 @@ const matchColumns: ReadonlyArray<Column<PlayerMatch>> = [
     wrap: true,
     minWidth: '10ch',
     value: (row) => row.score,
-    render: (row) => <Score score={row.score} incomplete={row.incomplete} />,
+    render: (row) => (
+      <>
+        <Score score={row.score} incomplete={row.incomplete} />
+        {row.charting_id !== null ? (
+          <ChartedMark
+            open={row.charting_id === open}
+            onToggle={() => onToggle(row.charting_id as string)}
+          />
+        ) : null}
+      </>
+    ),
     sortable: false,
   },
   {
@@ -521,10 +542,13 @@ const matchColumns: ReadonlyArray<Column<PlayerMatch>> = [
     // The column a phone has no room for; the score is the one it needs.
     wide: true,
   },
-]
+  ]
+}
 
 interface MatchesSectionProps {
   matches: ReturnType<typeof useResource<import('../api/client').Page<PlayerMatch>>>
+  /** The page's player, who takes the A side of a charted sheet. */
+  slug: string
   surface: string | null
   onSurface: (surface: string | null) => void
   onMore: (cursor: string) => void
@@ -532,7 +556,20 @@ interface MatchesSectionProps {
   onFirst: () => void
 }
 
-function MatchesSection({ matches, surface, onSurface, onMore, paged, onFirst }: MatchesSectionProps) {
+function MatchesSection({
+  matches,
+  slug,
+  surface,
+  onSurface,
+  onMore,
+  paged,
+  onFirst,
+}: MatchesSectionProps) {
+  const [openChart, setOpenChart] = useState<string | null>(null)
+  const columns = useMemo(
+    () => matchColumns(openChart, (id) => setOpenChart((current) => (current === id ? null : id))),
+    [openChart],
+  )
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>Matches</h2>
@@ -558,9 +595,14 @@ function MatchesSection({ matches, surface, onSurface, onMore, paged, onFirst }:
           <>
             <StatTable
               caption="Most recent first. Aces reading n/r is a match nobody recorded serve statistics for; ret. is a retirement and w/o a walkover, which count in the record and sit out of every rate."
-              columns={matchColumns}
+              columns={columns}
               rows={matches.data.data}
               rowKey={(row) => `${row.date}-${row.tournament}-${row.opponent.slug}-${row.round}`}
+              detail={(row) =>
+                row.charting_id !== null && row.charting_id === openChart ? (
+                  <ChartedSheet chartingId={row.charting_id} first={slug} />
+                ) : null
+              }
             />
             <div className={styles.more}>
               {matches.data.next_cursor !== null && matches.data.next_cursor !== '' ? (

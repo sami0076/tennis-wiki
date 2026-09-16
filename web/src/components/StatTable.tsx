@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { Fragment, useMemo, useState, type ReactNode } from 'react'
 import { AbsentCell } from './AbsentCell'
 import styles from './StatTable.module.css'
 
@@ -43,6 +43,12 @@ interface StatTableProps<Row> {
   defaultSort?: { key: string; direction: Direction }
   /** A totals row, drawn under the heavier rule. */
   aggregate?: ReadonlyArray<ReactNode>
+  /**
+   * A sheet opened under a row: the per-set figures of a charted match. Only
+   * rows it returns something for get one; the rest of the table is unchanged,
+   * so nothing is drawn where there is nothing to show.
+   */
+  detail?: (row: Row) => ReactNode | null
 }
 
 type Direction = 'asc' | 'desc'
@@ -63,6 +69,7 @@ export function StatTable<Row>({
   rowKey,
   defaultSort,
   aggregate,
+  detail,
 }: StatTableProps<Row>) {
   const [sort, setSort] = useState<{ key: string; direction: Direction } | null>(
     defaultSort ?? null,
@@ -137,29 +144,41 @@ export function StatTable<Row>({
           </tr>
         </thead>
         <tbody>
-          {sorted.map((row) => (
-            <tr key={rowKey(row)} className={styles.row}>
-              {columns.map((column) => {
-                const value = column.value(row)
-                const className = cellClass(column, styles.td)
-                return (
-                  <td
-                    key={column.key}
-                    className={className}
-                    style={column.minWidth ? { minWidth: column.minWidth } : undefined}
-                  >
-                    {value === null ? (
-                      <AbsentCell label={column.header} />
-                    ) : column.render ? (
-                      column.render(row)
-                    ) : (
-                      value
-                    )}
-                  </td>
-                )
-              })}
-            </tr>
-          ))}
+          {sorted.map((row) => {
+            const opened = detail ? detail(row) : null
+            return (
+              <Fragment key={rowKey(row)}>
+                <tr className={styles.row}>
+                  {columns.map((column) => {
+                    const value = column.value(row)
+                    const className = cellClass(column, styles.td)
+                    return (
+                      <td
+                        key={column.key}
+                        className={className}
+                        style={column.minWidth ? { minWidth: column.minWidth } : undefined}
+                      >
+                        {value === null ? (
+                          <AbsentCell label={column.header} />
+                        ) : column.render ? (
+                          column.render(row)
+                        ) : (
+                          value
+                        )}
+                      </td>
+                    )
+                  })}
+                </tr>
+                {opened !== null ? (
+                  <tr className={styles.detail}>
+                    <td className={styles.detailCell} colSpan={columns.length}>
+                      {opened}
+                    </td>
+                  </tr>
+                ) : null}
+              </Fragment>
+            )
+          })}
           {aggregate ? (
             <tr className={styles.aggregate}>
               {aggregate.map((cell, index) => {

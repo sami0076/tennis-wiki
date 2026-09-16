@@ -98,6 +98,18 @@
   white-space: normal;
 }
 
+/* A sheet opened under its row: indented a step, ruled like the rows around
+   it, and closed by the same pencil rule the row would have had. */
+.detailCell {
+  padding: var(--s-3) 0 var(--s-4) var(--s-4);
+  border-bottom: var(--rule);
+  white-space: normal;
+}
+
+.detail:last-child .detailCell {
+  border-bottom: 0;
+}
+
 /* A ledger total: the ink rule above is what makes it read as a total. */
 .aggregate .td {
   border-top: var(--rule-ink);
