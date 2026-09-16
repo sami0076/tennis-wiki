@@ -60,13 +60,13 @@ func TestNormalise(t *testing.T) {
 
 func TestCompetition(t *testing.T) {
 	cases := map[string]string{
-		"Davis Cup WG R1: ESP vs CZE":                      "davis-cup",
-		"Davis Cup SAM PQ: PER vs BOL":                     "davis-cup",
-		"Fed Cup G1 AM PPO: PAR vs ARG":                    "billie-jean-king-cup",
-		"BJK Cup Finals":                                   "billie-jean-king-cup",
+		"Davis Cup WG R1: ESP vs CZE":                     "davis-cup",
+		"Davis Cup SAM PQ: PER vs BOL":                    "davis-cup",
+		"Fed Cup G1 AM PPO: PAR vs ARG":                   "billie-jean-king-cup",
+		"BJK Cup Finals":                                  "billie-jean-king-cup",
 		"Billie Jean King Cup qualifying round - Group A": "billie-jean-king-cup",
-		"Wightman Cup":                                     "wightman-cup",
-		"Porto Alegre BRA vs COL":                          "porto-alegre-bra-vs-col",
+		"Wightman Cup":                                    "wightman-cup",
+		"Porto Alegre BRA vs COL":                         "porto-alegre-bra-vs-col",
 	}
 	for in, want := range cases {
 		if got := Competition(in); got != want {
