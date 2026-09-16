@@ -115,12 +115,14 @@ func TestChallengerSuffixIsNotARename(t *testing.T) {
 	}
 }
 
-// A WTA number before 1988 is a sequence within the year, not an identity.
+// A WTA number before 2016 is not the WTA's: a sequence within the year to
+// 1987, the ITF circuit's numbering on the Challenger tier to 1995.
 func TestWTASequenceNumbersAreNotIdentities(t *testing.T) {
 	res := Resolve([]Row{
 		row("wta", "1923-1056", "Wimbledon", "tour", 1923),
 		row("wta", "1924-1056", "Bastad", "tour", 1924),
 		row("wta", "1925-1114", "Wimbledon", "tour", 1925),
+		row("wta", "1991-0540", "ITF Indianapolis", "challenger", 1991),
 		row("wta", "2016-1056", "Tokyo", "tour", 2016),
 		row("wta", "2017-1056", "Tokyo", "tour", 2017),
 	}, nil)
@@ -130,6 +132,9 @@ func TestWTASequenceNumbersAreNotIdentities(t *testing.T) {
 	}
 	if _, ok := keys["wta name:tour:bastad"]; !ok {
 		t.Error("Bastad 1924 should be its own name-keyed event")
+	}
+	if _, ok := keys["wta name:challenger:itf-indianapolis"]; !ok {
+		t.Error("the ITF circuit's 540 of 1991 is not the WTA's 540")
 	}
 	if ev, ok := keys["wta number:1056"]; !ok || len(ev.Editions) != 2 || ev.FirstSeason != 2016 {
 		t.Errorf("Tokyo 2016-17 should be number:1056 alone: %+v", ev)

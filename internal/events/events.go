@@ -62,11 +62,12 @@ type Edition struct {
 	Link Link
 }
 
-// wtaNumbersFrom is the first season a WTA numeric id is the WTA's own number
-// rather than a sequence within the year. Measured in ADR-0012: contiguous
-// blocks through 1983, a trailing handful of exhibitions numbered the same way
-// to 1987, real ids after.
-const wtaNumbersFrom = 1988
+// wtaNumbersFrom is the first season a WTA numeric id is the WTA's own number.
+// Measured in ADR-0012: a sequence within the year through 1987, then the ITF
+// circuit's numbering on the Challenger tier to 1995 -- a space that collides
+// with the WTA's, 540 being ITF Indianapolis in 1991 and Wimbledon in 2016 --
+// and nothing on the tour tier until Sackmann's 2016 files.
+const wtaNumbersFrom = 2016
 
 var (
 	numberID = regexp.MustCompile(`^\d{4}-(\d+)(?:-\d{4})?$`)
