@@ -10,6 +10,57 @@ import (
 	"time"
 )
 
+const getChartedCoverage = `-- name: GetChartedCoverage :many
+SELECT t.tour,
+       count(*)::bigint           AS matches,
+       min(c.played_on)::date     AS first_match,
+       max(c.played_on)::date     AS last_match,
+       count(DISTINCT p.player_id)::bigint AS players
+  FROM charted_matches c
+  JOIN matches m ON m.id = c.match_id
+  JOIN tournaments t ON t.id = m.tournament_id
+  LEFT JOIN charted_stats p ON p.match_id = c.match_id AND p.set_no = 0
+ GROUP BY t.tour
+ ORDER BY t.tour
+`
+
+type GetChartedCoverageRow struct {
+	Tour       Tour
+	Matches    int64
+	FirstMatch time.Time
+	LastMatch  time.Time
+	Players    int64
+}
+
+// The Match Charting Project's reach, kept apart from the dates above: a
+// charted match is a match the database already had, so it moves nothing in
+// GetCoverage and is its own line here (ADR-0011).
+func (q *Queries) GetChartedCoverage(ctx context.Context) ([]GetChartedCoverageRow, error) {
+	rows, err := q.db.Query(ctx, getChartedCoverage)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetChartedCoverageRow{}
+	for rows.Next() {
+		var i GetChartedCoverageRow
+		if err := rows.Scan(
+			&i.Tour,
+			&i.Matches,
+			&i.FirstMatch,
+			&i.LastMatch,
+			&i.Players,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCoverage = `-- name: GetCoverage :many
 SELECT t.tour,
        t.tier,

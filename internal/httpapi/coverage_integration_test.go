@@ -77,6 +77,47 @@ func TestCoverageReportsWhatWasIngested(t *testing.T) {
 	if got.CurrentThrough["atp"] == got.CurrentThrough["wta"] {
 		t.Error("both tours report the same currency; they are reported separately for a reason")
 	}
+	if len(got.Charted) != 0 {
+		t.Errorf("charted = %+v with nothing charted", got.Charted)
+	}
+}
+
+// A charted match is its own line and moves nothing else: charted on a later
+// date than any match the tour has, the tour's current_through stays put.
+func TestCoverageKeepsChartingApartFromTheDates(t *testing.T) {
+	f := newAPIFixture(t)
+	pts := int16(100)
+	a := f.player("cov-a", "Cov Aaa", db.TourAtp)
+	b := f.player("cov-b", "Cov Bbb", db.TourAtp)
+	tour := f.tournament("cov-tour", db.TierTour, 2019)
+	f.match(tour, a, b, 1, "F", 2019, &pts, false)
+
+	if _, err := f.tx.Exec(f.ctx, `
+		INSERT INTO charted_matches (match_id, charting_id, played_on, source)
+		SELECT id, '20190630-M-x-F-A-B', '2019-06-30', 'mcp-atp' FROM matches`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.tx.Exec(f.ctx, `
+		INSERT INTO charted_stats (match_id, player_id, set_no, serve_points, aces, double_faults,
+		        first_in, first_won, second_in, second_won, bp_faced, bp_saved, return_points,
+		        return_points_won, winners, winners_fh, winners_bh, unforced, unforced_fh, unforced_bh)
+		SELECT match_id, $1, 0, 80, 6, 4, 48, 33, 32, 13, 11, 8, 61, 18, 25, 13, 5, 25, 15, 6
+		  FROM charted_matches`, a); err != nil {
+		t.Fatal(err)
+	}
+
+	res := f.get("/api/v1/coverage")
+	var got CoverageResponse
+	if err := json.NewDecoder(res.Body).Decode(&got); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if got.CurrentThrough["atp"] != "2019-05-02" {
+		t.Errorf("atp current_through = %q; a charted date must not move it", got.CurrentThrough["atp"])
+	}
+	if len(got.Charted) != 1 || got.Charted[0].Tour != "atp" || got.Charted[0].Matches != 1 ||
+		got.Charted[0].Players != 1 || got.Charted[0].LastMatch != "2019-06-30" {
+		t.Errorf("charted = %+v", got.Charted)
+	}
 }
 
 func TestCoverageIsRevalidatable(t *testing.T) {

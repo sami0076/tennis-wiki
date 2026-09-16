@@ -53,6 +53,15 @@ What the gap means in practice:
   simulated; the tour-and-surface average that anchors the derivation is still measured from
   the 3% of matches that recorded serve statistics.
 
+**The Match Charting Project is in the database and not in any of the above.** Its
+volunteers have charted about 11,000 of these matches point by point, and their per-set
+figures are attached to the rows the database already had. They feed nothing: not the
+ratings, not the simulator, and not the coverage dates — a charted match was a match here
+already, so `/api/v1/coverage` reports charting on a line of its own rather than moving
+anything. Where a charted total disagrees with the tour file's, neither is corrected; both
+are records of one match, and the difference is reported by `cmd/dataqual`.
+[ADR-0011](decisions/0011-what-the-match-charting-project-may-touch.md) is the decision.
+
 ## Where statistics do not exist
 
 Absence is not zero, and the API keeps three kinds of absence apart rather than collapsing

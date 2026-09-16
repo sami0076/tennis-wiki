@@ -230,6 +230,37 @@ func (ns NullTour) Value() (driver.Value, error) {
 	return string(ns.Tour), nil
 }
 
+type ChartedMatch struct {
+	MatchID    int64
+	ChartingID string
+	PlayedOn   time.Time
+	ChartedBy  *string
+	Source     string
+}
+
+type ChartedStat struct {
+	MatchID         int64
+	PlayerID        int64
+	SetNo           int16
+	ServePoints     int16
+	Aces            int16
+	DoubleFaults    int16
+	FirstIn         int16
+	FirstWon        int16
+	SecondIn        int16
+	SecondWon       int16
+	BpFaced         int16
+	BpSaved         int16
+	ReturnPoints    int16
+	ReturnPointsWon int16
+	Winners         int16
+	WinnersFh       int16
+	WinnersBh       int16
+	Unforced        int16
+	UnforcedFh      int16
+	UnforcedBh      int16
+}
+
 // What "vs tour average" is measured against. Rebuilt by the ingest refresh step; stale between runs.
 type ClutchBaseline struct {
 	Tour               Tour

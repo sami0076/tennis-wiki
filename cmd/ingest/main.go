@@ -17,6 +17,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/sami0076/tennis-wiki/internal/cache"
+	"github.com/sami0076/tennis-wiki/internal/charting"
 	"github.com/sami0076/tennis-wiki/internal/db"
 	"github.com/sami0076/tennis-wiki/internal/identity"
 	"github.com/sami0076/tennis-wiki/internal/ingest"
@@ -45,6 +46,9 @@ const (
 	stageMatches   = "matches"
 	stageReference = "reference"
 	stageReconcile = "reconcile"
+	// The Match Charting Project, attached to matches that exist by then and
+	// to players as reconciliation left them; ADR-0011.
+	stageCharting = "charting"
 	// The derived columns on their own. A full ingest ends with them anyway;
 	// this is for a schema change that adds one to data already loaded.
 	stageRefresh = "refresh"
@@ -63,8 +67,8 @@ func main() {
 	flag.IntVar(&cfg.batchSize, "batch", ingest.DefaultBatchSize, "rows per transaction")
 	flag.StringVar(&cfg.stage, "stage", stageAll,
 		"what to run: all, matches, reference (player tables and rankings), reconcile, "+
-			"refresh (derived columns only), or prune (clear stat lines the parser "+
-			"now rejects)")
+			"charting (the Match Charting Project), refresh (derived columns only), or "+
+			"prune (clear stat lines the parser now rejects)")
 	flag.StringVar(&cfg.overrides, "overrides", "configs/player_overrides.json",
 		"identity decisions made by hand")
 	flag.BoolVar(&cfg.dryRun, "dry-run", false,
@@ -122,10 +126,10 @@ func run(ctx context.Context, cfg config) error {
 	defer pool.Close()
 
 	switch cfg.stage {
-	case stageAll, stageMatches, stageReference, stageReconcile, stageRefresh, stagePrune:
+	case stageAll, stageMatches, stageReference, stageReconcile, stageCharting, stageRefresh, stagePrune:
 	default:
 		return fmt.Errorf(
-			"unknown stage %q: want all, matches, reference, reconcile, refresh or prune",
+			"unknown stage %q: want all, matches, reference, reconcile, charting, refresh or prune",
 			cfg.stage)
 	}
 
@@ -142,9 +146,16 @@ func run(ctx context.Context, cfg config) error {
 			return err
 		}
 	}
-	// Last: it needs every player that any source is going to create.
+	// After the rest: it needs every player that any source is going to create.
 	if cfg.stage == stageAll || cfg.stage == stageReconcile {
 		if err := runReconcile(ctx, cfg, pool, tours); err != nil {
+			return err
+		}
+	}
+	// Last of all: it attaches to rows and player ids as everything above
+	// left them.
+	if cfg.stage == stageAll || cfg.stage == stageCharting {
+		if err := runCharting(ctx, cfg, registry, fetcher, pool, store); err != nil {
 			return err
 		}
 	}
@@ -331,6 +342,37 @@ func runReference(ctx context.Context, cfg config, registry *ingest.Registry,
 	written := int(stats.RankingsWritten) + stats.Players
 	if err := store.FinishRun(ctx, runID, stats.RankingRowsSeen+stats.Players, written, runErr); err != nil {
 		slog.Error("could not record reference run", "error", err)
+	}
+	return runErr
+}
+
+func runCharting(ctx context.Context, cfg config, registry *ingest.Registry,
+	fetcher ingest.Fetcher, pool *pgxpool.Pool, store *ingest.Store) error {
+	if len(registry.Charting) == 0 {
+		slog.Warn("no charting sources configured; skipping the Match Charting Project")
+		return nil
+	}
+	paths, ok := fetcher.(ingest.PathFetcher)
+	if !ok {
+		return errors.New("fetcher cannot open charting files")
+	}
+
+	runID, err := store.StartRun(ctx, sourceLabel(cfg)+" (charting)")
+	if err != nil {
+		return err
+	}
+
+	loader := &charting.Loader{
+		Sources: registry.Charting,
+		Fetcher: paths,
+		Store:   charting.NewStore(pool),
+		Ledger:  store,
+		Log:     slog.Default(),
+		Force:   cfg.force,
+	}
+	stats, runErr := loader.Run(ctx)
+	if err := store.FinishRun(ctx, runID, stats.Charted, stats.Resolved, runErr); err != nil {
+		slog.Error("could not record charting run", "error", err)
 	}
 	return runErr
 }

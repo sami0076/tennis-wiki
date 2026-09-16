@@ -72,12 +72,41 @@ func (s Source) RelPath(season int) string {
 	return strings.ReplaceAll(s.Path, "{season}", strconv.Itoa(season))
 }
 
+// ChartingSource is one tour of the Match Charting Project: a matches file
+// and a stats file, neither seasonal, neither carrying ids or results. It is
+// read by internal/charting, not by a profile; ADR-0011 says what it may feed.
+type ChartingSource struct {
+	Name    string `json:"name"`
+	Tour    Tour   `json:"tour"`
+	BaseURL string `json:"base_url"`
+	// Matches is the charting-*-matches.csv path, Stats the stats-Overview one.
+	Matches     string `json:"matches"`
+	Stats       string `json:"stats"`
+	Attribution string `json:"attribution"`
+}
+
+func (c ChartingSource) validate() error {
+	switch {
+	case c.Name == "":
+		return fmt.Errorf("charting source with no name")
+	case c.Tour != TourATP && c.Tour != TourWTA:
+		return fmt.Errorf("charting source %q: unknown tour %q", c.Name, c.Tour)
+	case c.BaseURL == "" || c.Matches == "" || c.Stats == "":
+		return fmt.Errorf("charting source %q: base_url, matches and stats are required", c.Name)
+	case c.Attribution == "":
+		return fmt.Errorf("charting source %q: attribution is required", c.Name)
+	}
+	return nil
+}
+
 // Registry is the configured set of sources.
 type Registry struct {
 	Sources []Source `json:"sources"`
 	// Reference holds the player tables and ranking history, which are not
 	// seasonal and so do not fit Source.
 	Reference []RefSource `json:"reference,omitempty"`
+	// Charting holds the Match Charting Project, which fits neither.
+	Charting []ChartingSource `json:"charting,omitempty"`
 }
 
 // ReferenceFor returns the reference sources of one kind.
@@ -113,6 +142,11 @@ func (r *Registry) validate() error {
 	}
 	for _, ref := range r.Reference {
 		if err := ref.validate(); err != nil {
+			return err
+		}
+	}
+	for _, c := range r.Charting {
+		if err := c.validate(); err != nil {
 			return err
 		}
 	}
@@ -185,14 +219,20 @@ func (r *Registry) Seasons() []int {
 func (r *Registry) Attributions() []string {
 	seen := map[string]struct{}{}
 	var out []string
+	add := func(a string) {
+		if a == "" {
+			return
+		}
+		if _, ok := seen[a]; !ok {
+			seen[a] = struct{}{}
+			out = append(out, a)
+		}
+	}
 	for _, s := range r.Sources {
-		if s.Attribution == "" {
-			continue
-		}
-		if _, ok := seen[s.Attribution]; !ok {
-			seen[s.Attribution] = struct{}{}
-			out = append(out, s.Attribution)
-		}
+		add(s.Attribution)
+	}
+	for _, c := range r.Charting {
+		add(c.Attribution)
 	}
 	sort.Strings(out)
 	return out

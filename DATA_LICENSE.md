@@ -95,19 +95,27 @@ so what the MCP offers is depth rather than currency. What it may feed is decide
 
 It cannot substitute for the match database. It holds 7,566 ATP and 4,080 WTA matches
 against roughly 195,000 ATP tour-level matches alone — 3.9% coverage, skewed heavily toward
-famous players and recent decades, with 1,002 ATP and 731 WTA distinct players. Its
-`charting-*-matches.csv` files carry **no winner, no score, and no player IDs**; results
-must be derived by replaying the point-by-point files.
+famous players and recent decades, with 1,003 ATP and 732 WTA distinct players. Its
+`charting-*-matches.csv` files carry **no winner, no score, and no player IDs**.
+
+**It is ingested** (since September 2026, `ingest --stage charting`) on the terms of
+ADR-0011: each charted match is resolved to a row the database already holds, by tour,
+date and the two names, and its `stats-Overview` figures — per set and per match — are
+attached to that row in `charted_stats`. It creates no matches and no players, feeds
+neither the ratings nor the simulator, and does not move the coverage dates; `/api/v1/coverage`
+reports it on a line of its own. 11,251 of the 11,625 charted matches resolve; the rest are
+counted with a reason, and are events the other sources do not carry rather than failures
+to find one. The point-by-point files, which are what the project is really for, are not
+read yet.
 
 What it uniquely provides:
 
 - **Shot-by-shot data** — shot type, direction, depth, error type. Nothing else public
   has this.
 - **Per-set as well as per-match aggregates** in `charting-*-stats-Overview.csv`, including
-  `serve_pts`, `aces`, `dfs`, `first_in`, `first_won`, `second_won`, `bp_saved`, and
-  `return_pts_won`. This is a superset of what the tour CSVs carry, and it is exactly the
-  input the simulation engine needs.
-- **Currency for elite players** in the window where every other source has run out.
+  `serve_pts`, `aces`, `dfs`, `first_in`, `first_won`, `second_won`, `bp_saved`,
+  `return_pts_won`, and winners and unforced errors by wing. A superset of what the tour
+  CSVs carry, kept beside them rather than in their place.
 
 It is crowdsourced by volunteers, one match at a time. The license notice above is not
 boilerplate: thousands of person-hours went into it.
