@@ -287,6 +287,43 @@ var anomalyChecks = []Check{
 		Query:    `SELECT count(*) FROM player_aliases`,
 	},
 	{
+		Name:     "charted_matches",
+		Severity: Info,
+		Why: "Matches the Match Charting Project has charted and this database could name: " +
+			"per-set figures attached to a row it already held (ADR-0011).",
+		Query: `SELECT count(*) FROM charted_matches`,
+	},
+	{
+		Name:     "charted_matches_unresolved",
+		Severity: Warning,
+		Why: "Charted matches with no row to attach to, or two. Exhibitions and matches the " +
+			"sources do not carry land here by design; a name the tour files spell " +
+			"differently lands here by accident, and the reason says which.",
+		Query: `SELECT count(*) FROM unresolved_references WHERE source LIKE 'mcp-%'`,
+		Sample: `SELECT kind || ': ' || source_id FROM unresolved_references
+		          WHERE source LIKE 'mcp-%' ORDER BY kind, source_id LIMIT 5`,
+	},
+	{
+		Name:     "charted_totals_disagree_with_tour",
+		Severity: Warning,
+		Why: "A charted match whose total serve points or aces differ from the tour file's " +
+			"for the same player. Both are records of one match, one by a volunteer and one " +
+			"official, and neither is corrected from the other; the difference is reported.",
+		Query: `SELECT count(*) FROM charted_stats c
+		          JOIN match_players mp ON mp.match_id = c.match_id AND mp.player_id = c.player_id
+		         WHERE c.set_no = 0 AND mp.serve_points IS NOT NULL
+		           AND (mp.serve_points <> c.serve_points OR mp.aces <> c.aces)`,
+		Sample: `SELECT p.slug || ' in ' || cm.charting_id || ': serve points ' || mp.serve_points ||
+		                ' vs ' || c.serve_points || ', aces ' || mp.aces || ' vs ' || c.aces
+		           FROM charted_stats c
+		           JOIN charted_matches cm ON cm.match_id = c.match_id
+		           JOIN match_players mp ON mp.match_id = c.match_id AND mp.player_id = c.player_id
+		           JOIN players p ON p.id = c.player_id
+		          WHERE c.set_no = 0 AND mp.serve_points IS NOT NULL
+		            AND (mp.serve_points <> c.serve_points OR mp.aces <> c.aces)
+		          ORDER BY abs(mp.serve_points - c.serve_points) DESC LIMIT 5`,
+	},
+	{
 		Name:     "players_without_biography",
 		Severity: Info,
 		Why: "No date of birth: either the player table has none, or the player appears only in " +
