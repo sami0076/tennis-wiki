@@ -264,7 +264,7 @@ func (s *Store) upsertPlayer(ctx context.Context, tx pgx.Tx, tour Tour, p Player
 func (s *Store) upsertTournaments(ctx context.Context, tx pgx.Tx, src Source, rows []MatchRow) (map[tourneyKey]int64, error) {
 	seen := make(map[tourneyKey]MatchRow)
 	for _, r := range rows {
-		k := tourneyKey{r.TourneyID, r.TourneyDate.Year(), src.Tour}
+		k := tourneyKey{r.TourneyID, r.Season(), src.Tour}
 		if _, ok := seen[k]; !ok {
 			seen[k] = r
 		}
@@ -310,7 +310,7 @@ func (s *Store) upsertMatches(
 	labels := make([]string, 0, len(rows))
 
 	for _, r := range rows {
-		tid, ok := tournaments[tourneyKey{r.TourneyID, r.TourneyDate.Year(), src.Tour}]
+		tid, ok := tournaments[tourneyKey{r.TourneyID, r.Season(), src.Tour}]
 		if !ok {
 			return nil, 0, fmt.Errorf("match %s/%d: tournament not written", r.TourneyID, r.MatchNum)
 		}
@@ -390,7 +390,7 @@ func (s *Store) upsertMatchPlayers(
 	batch := &pgx.Batch{}
 	labels := make([]string, 0, len(rows)*2)
 	for _, r := range rows {
-		tid, ok := tournaments[tourneyKey{r.TourneyID, r.TourneyDate.Year(), src.Tour}]
+		tid, ok := tournaments[tourneyKey{r.TourneyID, r.Season(), src.Tour}]
 		if !ok {
 			return fmt.Errorf("match %s/%d: tournament not written", r.TourneyID, r.MatchNum)
 		}
