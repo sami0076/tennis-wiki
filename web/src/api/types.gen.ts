@@ -209,6 +209,11 @@ export interface Meeting {
   winner_index: number /* int */;
   score: string | null;
   incomplete: boolean;
+  /**
+   * ChartingID is the Match Charting Project's id when this meeting was
+   * charted, and the key to /charted/{id}; null otherwise.
+   */
+  charting_id: string | null;
 }
 
 //////////
@@ -232,6 +237,11 @@ export interface PlayerMatch {
   incomplete: boolean;
   minutes: number /* int16 */ | null;
   serve: MatchServe;
+  /**
+   * ChartingID is the Match Charting Project's id when its volunteers
+   * charted this match, and the key to /charted/{id}; null otherwise.
+   */
+  charting_id: string | null;
 }
 /**
  * Opponent is the other player, named well enough to link to.

@@ -69,6 +69,9 @@ type Meeting struct {
 	WinnerIndex int     `json:"winner_index"`
 	Score       *string `json:"score"`
 	Incomplete  bool    `json:"incomplete"`
+	// ChartingID is the Match Charting Project's id when this meeting was
+	// charted, and the key to /charted/{id}; null otherwise.
+	ChartingID *string `json:"charting_id"`
 }
 
 func (a *API) handleHeadToHead(w http.ResponseWriter, r *http.Request) {
@@ -258,6 +261,7 @@ func buildHeadToHead(
 			WinnerIndex: side,
 			Score:       row.Score,
 			Incomplete:  row.Incomplete,
+			ChartingID:  row.ChartingID,
 		}
 		if row.Surface != nil {
 			value := string(*row.Surface)

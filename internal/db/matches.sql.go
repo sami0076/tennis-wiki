@@ -10,6 +10,139 @@ import (
 	"time"
 )
 
+const getChartedMatch = `-- name: GetChartedMatch :one
+SELECT cm.charting_id,
+       cm.played_on,
+       cm.charted_by,
+       t.name AS tournament,
+       t.season,
+       m.round,
+       m.score,
+       w.slug AS winner_slug, w.full_name AS winner_name,
+       l.slug AS loser_slug,  l.full_name AS loser_name,
+       m.winner_id, m.loser_id
+  FROM charted_matches cm
+  JOIN matches m     ON m.id = cm.match_id
+  JOIN tournaments t ON t.id = m.tournament_id
+  JOIN players w     ON w.id = m.winner_id
+  JOIN players l     ON l.id = m.loser_id
+ WHERE cm.charting_id = $1
+`
+
+type GetChartedMatchRow struct {
+	ChartingID string
+	PlayedOn   time.Time
+	ChartedBy  *string
+	Tournament string
+	Season     int16
+	Round      string
+	Score      *string
+	WinnerSlug string
+	WinnerName string
+	LoserSlug  string
+	LoserName  string
+	WinnerID   int64
+	LoserID    int64
+}
+
+// The charted match by the project's own key, with the two players as the row
+// names them: player 1 is the winner, player 2 the loser, and charted_stats
+// is read per player so the sheet's columns follow.
+func (q *Queries) GetChartedMatch(ctx context.Context, chartingID string) (GetChartedMatchRow, error) {
+	row := q.db.QueryRow(ctx, getChartedMatch, chartingID)
+	var i GetChartedMatchRow
+	err := row.Scan(
+		&i.ChartingID,
+		&i.PlayedOn,
+		&i.ChartedBy,
+		&i.Tournament,
+		&i.Season,
+		&i.Round,
+		&i.Score,
+		&i.WinnerSlug,
+		&i.WinnerName,
+		&i.LoserSlug,
+		&i.LoserName,
+		&i.WinnerID,
+		&i.LoserID,
+	)
+	return i, err
+}
+
+const listChartedStats = `-- name: ListChartedStats :many
+SELECT cs.player_id, cs.set_no,
+       cs.serve_points, cs.aces, cs.double_faults, cs.first_in, cs.first_won,
+       cs.second_in, cs.second_won, cs.bp_faced, cs.bp_saved,
+       cs.return_points, cs.return_points_won,
+       cs.winners, cs.winners_fh, cs.winners_bh, cs.unforced, cs.unforced_fh, cs.unforced_bh
+  FROM charted_stats cs
+  JOIN charted_matches cm ON cm.match_id = cs.match_id
+ WHERE cm.charting_id = $1
+ ORDER BY cs.set_no, cs.player_id
+`
+
+type ListChartedStatsRow struct {
+	PlayerID        int64
+	SetNo           int16
+	ServePoints     int16
+	Aces            int16
+	DoubleFaults    int16
+	FirstIn         int16
+	FirstWon        int16
+	SecondIn        int16
+	SecondWon       int16
+	BpFaced         int16
+	BpSaved         int16
+	ReturnPoints    int16
+	ReturnPointsWon int16
+	Winners         int16
+	WinnersFh       int16
+	WinnersBh       int16
+	Unforced        int16
+	UnforcedFh      int16
+	UnforcedBh      int16
+}
+
+func (q *Queries) ListChartedStats(ctx context.Context, chartingID string) ([]ListChartedStatsRow, error) {
+	rows, err := q.db.Query(ctx, listChartedStats, chartingID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListChartedStatsRow{}
+	for rows.Next() {
+		var i ListChartedStatsRow
+		if err := rows.Scan(
+			&i.PlayerID,
+			&i.SetNo,
+			&i.ServePoints,
+			&i.Aces,
+			&i.DoubleFaults,
+			&i.FirstIn,
+			&i.FirstWon,
+			&i.SecondIn,
+			&i.SecondWon,
+			&i.BpFaced,
+			&i.BpSaved,
+			&i.ReturnPoints,
+			&i.ReturnPointsWon,
+			&i.Winners,
+			&i.WinnersFh,
+			&i.WinnersBh,
+			&i.Unforced,
+			&i.UnforcedFh,
+			&i.UnforcedBh,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listHeadToHeadMeetings = `-- name: ListHeadToHeadMeetings :many
 SELECT m.id,
        m.played_on,
@@ -28,9 +161,11 @@ SELECT m.id,
        a.bp_saved AS a_bp_saved, a.bp_faced AS a_bp_faced,
        b.aces AS b_aces, b.double_faults AS b_double_faults, b.serve_points AS b_serve_points,
        b.first_in AS b_first_in, b.first_won AS b_first_won, b.second_won AS b_second_won,
-       b.bp_saved AS b_bp_saved, b.bp_faced AS b_bp_faced
+       b.bp_saved AS b_bp_saved, b.bp_faced AS b_bp_faced,
+       cm.charting_id
   FROM matches m
   JOIN tournaments t   ON t.id = m.tournament_id
+  LEFT JOIN charted_matches cm ON cm.match_id = m.id
   JOIN match_players a ON a.match_id = m.id AND a.player_id = $1
   JOIN match_players b ON b.match_id = m.id AND b.player_id = $2
  WHERE (m.winner_id = $1 AND m.loser_id = $2)
@@ -72,6 +207,7 @@ type ListHeadToHeadMeetingsRow struct {
 	BSecondWon    *int16
 	BBpSaved      *int16
 	BBpFaced      *int16
+	ChartingID    *string
 }
 
 // Every match the two have played, oldest first, with both serve lines.
@@ -119,6 +255,7 @@ func (q *Queries) ListHeadToHeadMeetings(ctx context.Context, arg ListHeadToHead
 			&i.BSecondWon,
 			&i.BBpSaved,
 			&i.BBpFaced,
+			&i.ChartingID,
 		); err != nil {
 			return nil, err
 		}
@@ -154,9 +291,11 @@ SELECT m.id,
        mp.second_won,
        mp.serve_games,
        mp.bp_saved,
-       mp.bp_faced
+       mp.bp_faced,
+       cm.charting_id
   FROM match_players mp
   JOIN matches m     ON m.id = mp.match_id
+  LEFT JOIN charted_matches cm ON cm.match_id = m.id
   JOIN tournaments t ON t.id = m.tournament_id
   JOIN players op    ON op.id = CASE WHEN mp.won THEN m.loser_id ELSE m.winner_id END
  WHERE mp.player_id = $1
@@ -206,6 +345,7 @@ type ListPlayerMatchesRow struct {
 	ServeGames   *int16
 	BpSaved      *int16
 	BpFaced      *int16
+	ChartingID   *string
 }
 
 // The list a player page is mostly made of. Most recent first, keyed on
@@ -260,6 +400,7 @@ func (q *Queries) ListPlayerMatches(ctx context.Context, arg ListPlayerMatchesPa
 			&i.ServeGames,
 			&i.BpSaved,
 			&i.BpFaced,
+			&i.ChartingID,
 		); err != nil {
 			return nil, err
 		}

@@ -28,6 +28,9 @@ type PlayerMatch struct {
 	Incomplete bool       `json:"incomplete"`
 	Minutes    *int16     `json:"minutes"`
 	Serve      MatchServe `json:"serve"`
+	// ChartingID is the Match Charting Project's id when its volunteers
+	// charted this match, and the key to /charted/{id}; null otherwise.
+	ChartingID *string `json:"charting_id"`
 }
 
 // Opponent is the other player, named well enough to link to.
@@ -205,6 +208,7 @@ func buildPlayerMatch(row db.ListPlayerMatchesRow) PlayerMatch {
 		Minutes:    row.Minutes,
 		Opponent:   Opponent{Slug: row.OpponentSlug, Name: row.OpponentName},
 		Serve:      buildMatchServe(row),
+		ChartingID: row.ChartingID,
 	}
 	if row.Surface != nil {
 		surface := string(*row.Surface)
