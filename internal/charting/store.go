@@ -121,8 +121,7 @@ func (s *PGStore) Write(ctx context.Context, source string, batch []Attachment) 
 	results := tx.SendBatch(ctx, q)
 	for i := 0; i < q.Len(); i++ {
 		if _, err := results.Exec(); err != nil {
-			_ = results.Close()
-			return 0, fmt.Errorf("write charted batch: %w", err)
+			return 0, errors.Join(fmt.Errorf("write charted batch: %w", err), results.Close())
 		}
 	}
 	if err := results.Close(); err != nil {

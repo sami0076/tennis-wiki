@@ -83,7 +83,7 @@ func (l *Loader) load(ctx context.Context, src ingest.ChartingSource, stats *Sta
 	statsUnchanged := errors.Is(err, ingest.ErrUnchanged)
 	if err != nil && !statsUnchanged {
 		if !matchesUnchanged {
-			_ = matchesBody.Close()
+			l.close(ctx, src, src.Matches, matchesBody)
 		}
 		return l.absent(ctx, src, src.Stats, err, stats)
 	}
@@ -95,18 +95,18 @@ func (l *Loader) load(ctx context.Context, src ingest.ChartingSource, stats *Sta
 	// One changed: read both, unconditionally for the one that did not.
 	if matchesUnchanged {
 		if matchesBody, err = l.Fetcher.OpenPath(ctx, src.BaseURL, src.Matches); err != nil {
-			_ = statsBody.Close()
+			l.close(ctx, src, src.Stats, statsBody)
 			return fmt.Errorf("open %s: %w", src.Matches, err)
 		}
 	}
 	if statsUnchanged {
 		if statsBody, err = l.Fetcher.OpenPath(ctx, src.BaseURL, src.Stats); err != nil {
-			_ = matchesBody.Close()
+			l.close(ctx, src, src.Matches, matchesBody)
 			return fmt.Errorf("open %s: %w", src.Stats, err)
 		}
 	}
-	defer func() { _ = matchesBody.Close() }()
-	defer func() { _ = statsBody.Close() }()
+	defer l.close(ctx, src, src.Matches, matchesBody)
+	defer l.close(ctx, src, src.Stats, statsBody)
 
 	matches, mc, err := ReadMatches(src.Tour, matchesBody)
 	if err != nil {
@@ -217,6 +217,13 @@ func (l *Loader) absent(ctx context.Context, src ingest.ChartingSource, path str
 		return nil
 	}
 	return fmt.Errorf("open %s: %w", path, err)
+}
+
+// close is a warning on failure: the file has been read by then.
+func (l *Loader) close(ctx context.Context, src ingest.ChartingSource, path string, body io.Closer) {
+	if err := body.Close(); err != nil {
+		l.log().WarnContext(ctx, "closing charting file", "source", src.Name, "path", path, "error", err)
+	}
 }
 
 func (l *Loader) record(ctx context.Context, src ingest.ChartingSource, path, validator string, seen, written int) {
