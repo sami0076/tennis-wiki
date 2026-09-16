@@ -305,10 +305,10 @@ var anomalyChecks = []Check{
 	},
 	{
 		Name:     "charted_totals_disagree_with_tour",
-		Severity: Warning,
-		Why: "A charted match whose total serve points or aces differ from the tour file's " +
-			"for the same player. Both are records of one match, one by a volunteer and one " +
-			"official, and neither is corrected from the other; the difference is reported.",
+		Severity: Info,
+		Why: "Player totals whose charted serve points or aces differ from the tour file's. " +
+			"About a quarter do, usually by a point or two: two records of one match, one by " +
+			"a volunteer and one official, and neither is corrected from the other.",
 		Query: `SELECT count(*) FROM charted_stats c
 		          JOIN match_players mp ON mp.match_id = c.match_id AND mp.player_id = c.player_id
 		         WHERE c.set_no = 0 AND mp.serve_points IS NOT NULL

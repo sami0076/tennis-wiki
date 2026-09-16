@@ -51,6 +51,8 @@ func NewIndex(cands []Candidate) *Index {
 			for _, b := range surnames(c.Loser) {
 				k := key(c.Round, a, b)
 				ix.byKey[k] = append(ix.byKey[k], c)
+				k = key("", a, b)
+				ix.byKey[k] = append(ix.byKey[k], c)
 			}
 		}
 	}
@@ -60,25 +62,15 @@ func NewIndex(cands []Candidate) *Index {
 // Resolve finds the one row a charted match is. The reason is empty on
 // success and says why otherwise; a charted match with no row, or with two,
 // is left rather than guessed.
+//
+// The round is asked for first and then not at all: a charter's "R16" is the
+// files' "R32" often enough, and two players inside one event's window name
+// the match on their own. What that cannot settle -- the same two in the same
+// window twice -- stays unresolved either way.
 func (ix *Index) Resolve(m Match) (Resolution, string) {
-	if m.Round == "" {
-		return Resolution{}, "no round"
-	}
-	var found []Candidate
-	seen := map[int64]struct{}{}
-	for _, s1 := range surnames(m.Player1) {
-		for _, s2 := range surnames(m.Player2) {
-			for _, c := range ix.byKey[key(m.Round, s1, s2)] {
-				if _, dup := seen[c.MatchID]; dup || !inWindow(m.PlayedOn, c.PlayedOn) {
-					continue
-				}
-				if samePerson(m.Player1, c.Winner) && samePerson(m.Player2, c.Loser) ||
-					samePerson(m.Player1, c.Loser) && samePerson(m.Player2, c.Winner) {
-					found = append(found, c)
-					seen[c.MatchID] = struct{}{}
-				}
-			}
-		}
+	found := ix.candidates(m, m.Round)
+	if len(found) == 0 && m.Round != "" {
+		found = ix.candidates(m, "")
 	}
 	switch len(found) {
 	case 0:
@@ -103,6 +95,28 @@ func (ix *Index) Resolve(m Match) (Resolution, string) {
 		r.Player1ID, r.Player2ID = c.LoserID, c.WinnerID
 	}
 	return r, ""
+}
+
+// candidates is every row in the window with these two players, in the round
+// or, for "", in any.
+func (ix *Index) candidates(m Match, round string) []Candidate {
+	var found []Candidate
+	seen := map[int64]struct{}{}
+	for _, s1 := range surnames(m.Player1) {
+		for _, s2 := range surnames(m.Player2) {
+			for _, c := range ix.byKey[key(round, s1, s2)] {
+				if _, dup := seen[c.MatchID]; dup || !inWindow(m.PlayedOn, c.PlayedOn) {
+					continue
+				}
+				if samePerson(m.Player1, c.Winner) && samePerson(m.Player2, c.Loser) ||
+					samePerson(m.Player1, c.Loser) && samePerson(m.Player2, c.Winner) {
+					found = append(found, c)
+					seen[c.MatchID] = struct{}{}
+				}
+			}
+		}
+	}
+	return found
 }
 
 func inWindow(charted, eventStart time.Time) bool {

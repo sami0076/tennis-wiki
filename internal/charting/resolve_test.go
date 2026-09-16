@@ -109,3 +109,16 @@ func TestResolveRefusesAGenuineTie(t *testing.T) {
 		t.Error("two rows with nothing to choose between them must not be resolved to one")
 	}
 }
+
+// Indian Wells 2022: the files say Berrettini beat Harris in the R32, the
+// charter wrote R16. The two players in that fortnight are one match.
+func TestResolveFallsBackToAnyRoundWhenTheLabelDisagrees(t *testing.T) {
+	ix := NewIndex([]Candidate{
+		{MatchID: 1, WinnerID: 1, LoserID: 2, Winner: "Matteo Berrettini", Loser: "Lloyd Harris", Round: "R32", PlayedOn: day(t, "2022-03-07")},
+		{MatchID: 2, WinnerID: 3, LoserID: 1, Winner: "Miomir Kecmanovic", Loser: "Matteo Berrettini", Round: "R16", PlayedOn: day(t, "2022-03-07")},
+	})
+	r, reason := ix.Resolve(charted(t, "Lloyd Harris", "Matteo Berrettini", "2022-03-15", "R16"))
+	if reason != "" || r.MatchID != 1 {
+		t.Errorf("got %+v (%s), want match 1", r, reason)
+	}
+}
