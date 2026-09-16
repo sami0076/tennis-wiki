@@ -16,6 +16,19 @@ type CoverageResponse struct {
 	// answer to "how up to date is this site".
 	CurrentThrough map[string]string `json:"current_through"`
 	Tiers          []CoverageEntry   `json:"tiers"`
+	// Charted is the Match Charting Project's reach, per tour. It is its own
+	// line because a charted match is one the database already had: it moves
+	// none of the dates above, and its last date is not the site's (ADR-0011).
+	Charted []ChartedCoverage `json:"charted"`
+}
+
+// ChartedCoverage is one tour's charted matches.
+type ChartedCoverage struct {
+	Tour       string `json:"tour"`
+	Matches    int64  `json:"matches"`
+	Players    int64  `json:"players"`
+	FirstMatch string `json:"first_match"`
+	LastMatch  string `json:"last_match"`
 }
 
 // CoverageEntry is one tour and tier.
@@ -36,9 +49,25 @@ func (a *API) handleCoverage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	charted, err := a.Queries.GetChartedCoverage(r.Context())
+	if err != nil {
+		Internal(w, r, err)
+		return
+	}
+
 	out := CoverageResponse{
 		CurrentThrough: map[string]string{},
 		Tiers:          make([]CoverageEntry, 0, len(rows)),
+		Charted:        make([]ChartedCoverage, 0, len(charted)),
+	}
+	for _, c := range charted {
+		out.Charted = append(out.Charted, ChartedCoverage{
+			Tour:       string(c.Tour),
+			Matches:    c.Matches,
+			Players:    c.Players,
+			FirstMatch: c.FirstMatch.Format(time.DateOnly),
+			LastMatch:  c.LastMatch.Format(time.DateOnly),
+		})
 	}
 	for _, row := range rows {
 		tour := string(row.Tour)

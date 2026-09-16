@@ -93,6 +93,22 @@ export interface CoverageResponse {
    */
   current_through: { [key: string]: string};
   tiers: CoverageEntry[];
+  /**
+   * Charted is the Match Charting Project's reach, per tour. It is its own
+   * line because a charted match is one the database already had: it moves
+   * none of the dates above, and its last date is not the site's (ADR-0011).
+   */
+  charted: ChartedCoverage[];
+}
+/**
+ * ChartedCoverage is one tour's charted matches.
+ */
+export interface ChartedCoverage {
+  tour: string;
+  matches: number /* int64 */;
+  players: number /* int64 */;
+  first_match: string;
+  last_match: string;
 }
 /**
  * CoverageEntry is one tour and tier.
