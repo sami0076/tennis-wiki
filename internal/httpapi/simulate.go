@@ -303,6 +303,9 @@ type DrawSimulation struct {
 
 // SimulatedEvent names the draw that was replayed.
 type SimulatedEvent struct {
+	// Slug is the event's, the key to /tournaments/{slug}/{season}: the
+	// sheet this draw is a replay of.
+	Slug    string `json:"slug"`
 	Name    string `json:"name"`
 	Season  int    `json:"season"`
 	Tour    string `json:"tour"`
@@ -322,8 +325,10 @@ func (a *API) handleSimulateDraw(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	query := r.URL.Query()
 
+	// An edition is addressed the way the sheet is: event=<slug>&season=. The
+	// older form, tour= with the event's name, is kept for one release.
 	tour := query.Get("tour")
-	if tour != string(db.TourAtp) && tour != string(db.TourWta) {
+	if tour != "" && tour != string(db.TourAtp) && tour != string(db.TourWta) {
 		BadRequest(w, r, "tour must be atp or wta.")
 		return
 	}
@@ -334,7 +339,7 @@ func (a *API) handleSimulateDraw(w http.ResponseWriter, r *http.Request) {
 	}
 	name := query.Get("event")
 	if name == "" {
-		BadRequest(w, r, "Name the event, for example event=Wimbledon.")
+		BadRequest(w, r, "Name the event by its slug, for example event=wimbledon-atp.")
 		return
 	}
 
@@ -357,11 +362,18 @@ func (a *API) handleSimulateDraw(w http.ResponseWriter, r *http.Request) {
 		seed = n
 	}
 
-	event, err := a.Queries.FindTournament(ctx, db.FindTournamentParams{
-		Tour: db.Tour(tour), Season: int16(season), Name: name,
-	})
+	var event db.FindEditionRow
+	if tour == "" {
+		event, err = a.Queries.FindEdition(ctx, db.FindEditionParams{Slug: name, Season: int16(season)})
+	} else {
+		var byName db.FindTournamentRow
+		byName, err = a.Queries.FindTournament(ctx, db.FindTournamentParams{
+			Tour: db.Tour(tour), Season: int16(season), Name: name,
+		})
+		event = db.FindEditionRow(byName)
+	}
 	if errors.Is(err, pgx.ErrNoRows) {
-		NotFound(w, r, "No event of that name was played that season.")
+		NotFound(w, r, "That event was not played that season.")
 		return
 	}
 	if err != nil {
@@ -385,7 +397,7 @@ func (a *API) handleSimulateDraw(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) simulateDraw(
-	ctx context.Context, event db.FindTournamentRow, runs int, seed uint64,
+	ctx context.Context, event db.FindEditionRow, runs int, seed uint64,
 ) (DrawSimulation, error) {
 	var out DrawSimulation
 
@@ -486,7 +498,7 @@ func (a *API) simulateDraw(
 
 	out = DrawSimulation{
 		Event: SimulatedEvent{
-			Name: event.Name, Season: int(event.Season), Tour: event.Tour,
+			Slug: event.Slug, Name: event.Name, Season: int(event.Season), Tour: event.Tour,
 			Tier: event.Tier, Surface: event.Surface,
 			RatingsAsOf: asOf.Format(time.DateOnly),
 		},

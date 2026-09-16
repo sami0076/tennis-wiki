@@ -13,7 +13,8 @@ import (
 const findEdition = `-- name: FindEdition :one
 SELECT t.id, t.name, t.season, t.tour::text AS tour, t.tier::text AS tier,
        coalesce(t.surface::text, 'unknown')::text AS surface,
-       t.level, t.draw_size, t.start_date
+       t.level, t.draw_size, t.start_date,
+       e.slug::text AS slug
   FROM tournaments t
   JOIN events e ON e.id = t.event_id
  WHERE e.slug = $1 AND t.season = $2::smallint
@@ -36,6 +37,7 @@ type FindEditionRow struct {
 	Level     string
 	DrawSize  *int16
 	StartDate time.Time
+	Slug      string
 }
 
 // What the draw simulator asks for: an edition by the slug and season a URL
@@ -54,6 +56,7 @@ func (q *Queries) FindEdition(ctx context.Context, arg FindEditionParams) (FindE
 		&i.Level,
 		&i.DrawSize,
 		&i.StartDate,
+		&i.Slug,
 	)
 	return i, err
 }

@@ -123,7 +123,8 @@ SELECT m.id, m.tournament_id, t.name AS tie,
 -- is returned and the simulator declines it as it declines any tie.
 SELECT t.id, t.name, t.season, t.tour::text AS tour, t.tier::text AS tier,
        coalesce(t.surface::text, 'unknown')::text AS surface,
-       t.level, t.draw_size, t.start_date
+       t.level, t.draw_size, t.start_date,
+       e.slug::text AS slug
   FROM tournaments t
   JOIN events e ON e.id = t.event_id
  WHERE e.slug = @slug AND t.season = @season::smallint

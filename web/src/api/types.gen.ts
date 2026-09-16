@@ -787,6 +787,11 @@ export interface DrawSimulation {
  * SimulatedEvent names the draw that was replayed.
  */
 export interface SimulatedEvent {
+  /**
+   * Slug is the event's, the key to /tournaments/{slug}/{season}: the
+   * sheet this draw is a replay of.
+   */
+  slug: string;
   name: string;
   season: number /* int */;
   tour: string;
