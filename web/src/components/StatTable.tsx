@@ -172,7 +172,7 @@ export function StatTable<Row>({
                 {opened !== null ? (
                   <tr className={styles.detail}>
                     <td className={styles.detailCell} colSpan={columns.length}>
-                      {opened}
+                      <div className={styles.detailInner}>{opened}</div>
                     </td>
                   </tr>
                 ) : null}

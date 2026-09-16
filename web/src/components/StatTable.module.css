@@ -99,11 +99,21 @@
 }
 
 /* A sheet opened under its row: indented a step, ruled like the rows around
-   it, and closed by the same pencil rule the row would have had. */
+   it, and closed by the same pencil rule the row would have had. The table
+   may be wider than the phone and scrolling; the sheet stays at the visible
+   edge rather than sliding off with the columns. */
 .detailCell {
-  padding: var(--s-3) 0 var(--s-4) var(--s-4);
+  padding: 0;
   border-bottom: var(--rule);
   white-space: normal;
+}
+
+.detailInner {
+  position: sticky;
+  left: 0;
+  box-sizing: border-box;
+  max-width: calc(100vw - 2 * var(--s-4));
+  padding: var(--s-3) 0 var(--s-4) var(--s-4);
 }
 
 .detail:last-child .detailCell {

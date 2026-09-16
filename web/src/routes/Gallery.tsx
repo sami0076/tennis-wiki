@@ -10,6 +10,8 @@ import {
   AbsentCell,
   Button,
   ButtonLink,
+  ChartedMark,
+  ChartedSheet,
   EmptyState,
   Meta,
   OddsBar,
@@ -130,6 +132,7 @@ const midMatch: Snapshot = {
 export function Gallery() {
   const [surface, setSurface] = useUrlParam('surface')
   const [tour, setTour] = useState<string | null>(null)
+  const [chartOpen, setChartOpen] = useState(false)
   const [query, setQuery] = useState('')
 
   return (
@@ -182,6 +185,23 @@ export function Gallery() {
             aggregate={['Total', '', '', '', '27']}
           />
         </PartialAggregate>
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>ChartedMark and ChartedSheet</h2>
+        <p className={styles.note}>
+          The mark sits on a match row the Match Charting Project has charted, and on no
+          other row. Opening it puts the per-set sheet under the row: a column per set and
+          one for the match, both players in every cell, A in orange and B in turquoise.
+          The sheet below reads a real charted match from the API and says so if it cannot.
+        </p>
+        <p>
+          7-6(5) 6-3
+          <ChartedMark open={chartOpen} onToggle={() => setChartOpen((o) => !o)} />
+        </p>
+        {chartOpen ? (
+          <ChartedSheet chartingId="20260412-M-Monte_Carlo_Masters-F-Carlos_Alcaraz-Jannik_Sinner" />
+        ) : null}
       </section>
 
       <section className={styles.block}>
