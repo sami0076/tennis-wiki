@@ -8,7 +8,409 @@
     "Each entry names the id being folded away and the one being kept. Set",
     "same_person to false to record that two rows which look alike are different",
     "people; that is as useful a decision as a merge, and stops the pair being",
-    "re-proposed on every run."
+    "re-proposed on every run.",
+    "",
+    "The entries of 16 September 2026 settle the 64 pairs the reconcile of that day queued,",
+    "from the evidence in #137: both rows' country, date of birth, derived birth year, match",
+    "count, career window and tiers. The reasoning is in the notes; 'guessed' marks the two",
+    "that rest on judgement rather than a fact in the data."
   ],
-  "overrides": []
+  "overrides": [
+    {
+      "tour": "atp",
+      "duplicate_source_id": "T0JO",
+      "canonical_source_id": "212725",
+      "note": "Born 2007-01-16; the year derived from the match ages is one low, which is age rounding across New Year."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "202659",
+      "canonical_source_id": "106594",
+      "note": "Same name and date of birth; HUN and GER are the same nationality recorded two ways."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "B0UZ",
+      "canonical_source_id": "212860",
+      "note": "Born 2003-01-16; the year derived from the match ages is one low, which is age rounding across New Year."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "B0U0",
+      "canonical_source_id": "149266",
+      "note": "Born 2006-01-01; the year derived from the match ages is one low, which is age rounding across New Year."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "112494",
+      "canonical_source_id": "107072",
+      "note": "Same name and date of birth; AUS and USA are the same nationality recorded two ways."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "T0E0",
+      "canonical_source_id": "209198",
+      "note": "Born 2001-01-12; the year derived from the match ages is one low, which is age rounding across New Year."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "T0EN",
+      "canonical_source_id": "209870",
+      "note": "Born 2003-01-09; the year derived from the match ages is one low, which is age rounding across New Year."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "109179",
+      "canonical_source_id": "117420",
+      "note": "Same name and date of birth; COL and BOL are the same nationality recorded two ways."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "L0M5",
+      "canonical_source_id": "213399",
+      "note": "Born 2006-01-03; the year derived from the match ages is one low, which is age rounding across New Year."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "Z0CO",
+      "canonical_source_id": "212784",
+      "note": "Uncommon name, one country, careers contiguous (2024 then 2025); the derived years differ by one. Guessed."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "P0IN",
+      "canonical_source_id": "211355",
+      "note": "Born 2002-01-15; the year derived from the match ages is one low, which is age rounding across New Year."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "141952",
+      "canonical_source_id": "139227",
+      "note": "Same name and date of birth; HAI and USA are the same nationality recorded two ways."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "Z0CR",
+      "canonical_source_id": "213143",
+      "note": "Born 2007-01-12; the year derived from the match ages is one low, which is age rounding across New Year."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "D0L8",
+      "canonical_source_id": "212157",
+      "note": "Born 2007-01-07; the year derived from the match ages is one low, which is age rounding across New Year."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "207047",
+      "canonical_source_id": "113574",
+      "note": "Same name and date of birth; BRI and GBR are the same nationality recorded two ways."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "W0F8",
+      "canonical_source_id": "213048",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "J0DM",
+      "canonical_source_id": "213026",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "M0WL",
+      "canonical_source_id": "212748",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "I0A0",
+      "canonical_source_id": "210318",
+      "note": "Same name and country; the numeric id's matches (2021-10 to 2026-08) run into the ATP id's (2026-07 on)."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "W0FH",
+      "canonical_source_id": "213653",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "Z0DA",
+      "canonical_source_id": "212785",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "D0NH",
+      "canonical_source_id": "213691",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "Z0DF",
+      "canonical_source_id": "212846",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "P0MJ",
+      "canonical_source_id": "213677",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "wta",
+      "duplicate_source_id": "327845",
+      "canonical_source_id": "220750",
+      "note": "A Tennismylife id for 3 row(s) of 2026-06 beside a career of 159 matches; no age on those rows to confirm it."
+    },
+    {
+      "tour": "wta",
+      "duplicate_source_id": "324261",
+      "canonical_source_id": "215035",
+      "note": "A Tennismylife id for 1 row(s) of 2026-06 beside a career of 401 matches; no age on those rows to confirm it."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "B0X2",
+      "canonical_source_id": "213600",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "wta",
+      "duplicate_source_id": "320408",
+      "canonical_source_id": "211817",
+      "note": "A Tennismylife id for 3 row(s) of 2026-05 beside a career of 411 matches; no age on those rows to confirm it."
+    },
+    {
+      "tour": "wta",
+      "duplicate_source_id": "330920",
+      "canonical_source_id": "239397",
+      "note": "A Tennismylife id for 2 row(s) of 2026-07 beside a career of 9 matches; no age on those rows to confirm it."
+    },
+    {
+      "tour": "wta",
+      "duplicate_source_id": "325410",
+      "canonical_source_id": "215613",
+      "note": "A Tennismylife id for 1 row(s) of 2026-06 beside a career of 278 matches; no age on those rows to confirm it."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "A0K8",
+      "canonical_source_id": "213698",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "wta",
+      "duplicate_source_id": "331102",
+      "canonical_source_id": "243420",
+      "note": "A Tennismylife id for 2 row(s) of 2026-06 beside a career of 20 matches; no age on those rows to confirm it."
+    },
+    {
+      "tour": "wta",
+      "duplicate_source_id": "313169",
+      "canonical_source_id": "201593",
+      "note": "A Tennismylife id for 1 row(s) of 2026-06 beside a career of 824 matches; no age on those rows to confirm it."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "V0J1",
+      "canonical_source_id": "213635",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "L0MB",
+      "canonical_source_id": "213552",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "L0LX",
+      "canonical_source_id": "213127",
+      "note": "Same name and country; the numeric id's matches (2024-11 to 2024-11) run into the ATP id's (2025-10 on)."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "G0ON",
+      "canonical_source_id": "213200",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "wta",
+      "duplicate_source_id": "327391",
+      "canonical_source_id": "220465",
+      "note": "A Tennismylife id for 1 row(s) of 2026-06 beside a career of 245 matches; no age on those rows to confirm it."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "A0MG",
+      "canonical_source_id": "213119",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "wta",
+      "duplicate_source_id": "328884",
+      "canonical_source_id": "222391",
+      "note": "A Tennismylife id for 1 row(s) of 2026-06 beside a career of 84 matches; no age on those rows to confirm it."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "K0MW",
+      "canonical_source_id": "213210",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "wta",
+      "duplicate_source_id": "269269",
+      "canonical_source_id": "222837",
+      "note": "A Tennismylife id for 1 row(s) of 2025-02 beside a career of 29 matches; no age on those rows to confirm it."
+    },
+    {
+      "tour": "wta",
+      "duplicate_source_id": "327469",
+      "canonical_source_id": "221195",
+      "note": "A Tennismylife id for 1 row(s) of 2026-07 beside a career of 6 matches; no age on those rows to confirm it."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "C0RO",
+      "canonical_source_id": "213130",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "K0O6",
+      "canonical_source_id": "213576",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "K0NT",
+      "canonical_source_id": "213174",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "wta",
+      "duplicate_source_id": "326113",
+      "canonical_source_id": "216095",
+      "note": "A Tennismylife id for 1 row(s) of 2026-07 beside a career of 89 matches; no age on those rows to confirm it."
+    },
+    {
+      "tour": "wta",
+      "duplicate_source_id": "330364",
+      "canonical_source_id": "223360",
+      "note": "A Tennismylife id for 1 row(s) of 2026-06 beside a career of 67 matches; no age on those rows to confirm it."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "B0W9",
+      "canonical_source_id": "213062",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "B0VF",
+      "canonical_source_id": "212839",
+      "note": "Same name and country; the numeric id's matches (2024-06 to 2024-06) run into the ATP id's (2025-06 on)."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "P0N6",
+      "canonical_source_id": "213619",
+      "note": "Same name and country; the numeric id's matches (2024-11 to 2024-11) run into the ATP id's (2025-07 on)."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "P0O7",
+      "canonical_source_id": "212966",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "wta",
+      "duplicate_source_id": "325956",
+      "canonical_source_id": "215910",
+      "note": "A Tennismylife id for 2 row(s) of 2026-06 beside a career of 326 matches; no age on those rows to confirm it."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "D0LK",
+      "canonical_source_id": "213046",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "D0JM",
+      "canonical_source_id": "208908",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "L0LD",
+      "canonical_source_id": "212830",
+      "note": "Same name and country; the numeric id's matches (2024-08 to 2024-09) run into the ATP id's (2025-08 on)."
+    },
+    {
+      "tour": "wta",
+      "duplicate_source_id": "327193",
+      "canonical_source_id": "220364",
+      "note": "A Tennismylife id for 1 row(s) of 2026-07 beside a career of 256 matches; no age on those rows to confirm it."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "B0T6",
+      "canonical_source_id": "212275",
+      "note": "Same name and country; the numeric id's matches (2024-02 to 2024-02) run into the ATP id's (2025-02 on)."
+    },
+    {
+      "tour": "wta",
+      "duplicate_source_id": "330970",
+      "canonical_source_id": "239456",
+      "note": "A Tennismylife id for 1 row(s) of 2026-05 beside a career of 21 matches; no age on those rows to confirm it."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "T0FL",
+      "canonical_source_id": "210485",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "CH90",
+      "canonical_source_id": "212803",
+      "note": "Same name and country; the numeric id's matches (2024-04 to 2024-08) run into the ATP id's (2026-04 on)."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "O0E1",
+      "canonical_source_id": "212639",
+      "note": "A players-file row with no matches beside the ATP id that carries them; same name, same country, junior age."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "K0NP",
+      "canonical_source_id": "213194",
+      "note": "Born 2008; 213194's one match is a tour-level entry in August 2024, which fits a 16-year-old wildcard and not the older namesake. Guessed."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "S0RE",
+      "canonical_source_id": "209992",
+      "note": "Shang Juncheng was born 2005-02-02, which is 209992; 210234 carries the placeholder 2005-01-01 and is folded too."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "210234",
+      "canonical_source_id": "209992",
+      "note": "Shang Juncheng under a placeholder date of birth, 2005-01-01 against the real 2005-02-02; 18 ITF matches in autumn 2021 at sixteen."
+    },
+    {
+      "tour": "atp",
+      "duplicate_source_id": "202859",
+      "canonical_source_id": "100452",
+      "note": "Bill Scanlon, born 1956-11-13; the duplicate says 11-19 and was never proposed because six days is not the same day."
+    }
+  ]
 }
