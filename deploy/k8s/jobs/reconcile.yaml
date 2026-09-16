@@ -1,0 +1,101 @@
+# Identity reconciliation on its own, then the ratings, which describe a
+# database that no longer exists once a merge has moved a career. For after a
+# change to the scoring or to configs/player_overrides.json; a full load runs
+# the same stage anyway.
+#
+#   kubectl -n deucepoint delete job reconcile --ignore-not-found
+#   kubectl -n deucepoint apply -f deploy/k8s/jobs/reconcile.yaml
+#   kubectl -n deucepoint logs -f job/reconcile -c reconcile
+#
+# To see what it would do first, without touching anything:
+#
+#   sed 's/"reconcile"\]/"reconcile", "--dry-run"]/' deploy/k8s/jobs/reconcile.yaml \
+#     | kubectl -n deucepoint apply -f -
+#
+# Twenty seconds over 127,000 players, then 1m 36s for the ratings; the
+# figures in docs/performance.md.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: reconcile
+  namespace: deucepoint
+  labels:
+    app.kubernetes.io/name: reconcile
+    app.kubernetes.io/part-of: deucepoint
+spec:
+  # Each merge is one transaction, so a retry picks up with whatever the last
+  # attempt had already folded.
+  backoffLimit: 2
+  activeDeadlineSeconds: 3600
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: reconcile
+        app.kubernetes.io/part-of: deucepoint
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: reconcile
+          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:0f3fc96a5e50650b33702655433d9af1959533014d98311fc138df360b521bde
+          command: ["ingest", "--stage", "reconcile"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: api
+                  key: REDIS_URL
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 1Gi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      containers:
+        - name: rate
+          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:0f3fc96a5e50650b33702655433d9af1959533014d98311fc138df360b521bde
+          command: ["rate"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: DATABASE_URL
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 1Gi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: tmp
+          emptyDir: {}

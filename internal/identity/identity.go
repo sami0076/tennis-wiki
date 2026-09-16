@@ -5,6 +5,9 @@
 // (B0BI, MU94); everything through 2024 uses Sackmann numeric ids. They do not
 // join. Left alone, Carlos Alcaraz is two players either side of 2025, every
 // career total is wrong, and every rating is computed over half a career.
+// The WTA files from the same site mint numeric ids of their own for a few
+// rows, and Sackmann's own player file holds some people under two or three
+// ids with the same date of birth; both are the same problem in a smaller form.
 //
 // The governing asymmetry: a wrong merge is far worse than a missed one. An
 // unmerged pair is visible — two thin player pages where there should be one.
@@ -15,6 +18,7 @@ package identity
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -47,7 +51,16 @@ type Player struct {
 	// Matches is how much history this row carries. The larger of a pair
 	// becomes canonical, so the merge moves the shorter career onto the longer.
 	Matches int
+	// MatchOnly marks a numeric id that no player table backs: the Tennismylife
+	// WTA files mint ids of their own for a few rows of a player Sackmann already
+	// has, and the result is a namesake with one match and nothing else.
+	MatchOnly bool
 }
+
+// Stub reports whether this row is known from match rows alone, which is the
+// side of a pair that gets folded away: every alphanumeric id, and a numeric
+// one the sources' player tables do not carry.
+func (p Player) Stub() bool { return !p.Numeric() || p.MatchOnly }
 
 // Numeric reports whether the source id is a Sackmann numeric id rather than an
 // ATP alphanumeric one. The two id spaces never collide, which is what makes a
@@ -133,18 +146,20 @@ func score(a, b Player) (float64, string) {
 // pairs rather than showing one of them to a human.
 //
 // So when both sides derived a year, those are the years to compare: they carry
-// the same error and it cancels. Only when one side has no derived year at all
-// does an exact year meet an approximate one, and then a single year of
-// disagreement is a question for a person rather than an answer.
+// the same error and it cancels. When they disagree and one side has an exact
+// date, that date gets the second opinion -- a derived year off by one on the
+// side that did not need deriving is no reason to drop a pair the exact date
+// confirms. A single year of disagreement is a question for a person rather
+// than an answer.
 func scoreByYear(a, b Player) (float64, string) {
-	if a.BirthYear != nil && b.BirthYear != nil {
-		if *a.BirthYear != *b.BirthYear {
-			return 0, "same name and country, different birth year"
-		}
+	if a.BirthYear != nil && b.BirthYear != nil && *a.BirthYear == *b.BirthYear {
 		// No exact date exists on one side -- the ATP id space has no player
 		// table -- but sharing a name, a country and a birth year is about as
 		// unlikely as sharing a birthday.
 		return 0.90, "name, country and birth year match, birth year derived from age"
+	}
+	if a.BirthDate == nil && b.BirthDate == nil {
+		return 0, "same name and country, different birth year"
 	}
 
 	gap := birthYear(a) - birthYear(b)
@@ -191,8 +206,12 @@ func sameDay(a, b time.Time) bool {
 
 // Reconcile proposes links among players of one tour.
 //
-// Only pairs spanning the two id spaces are considered: two Sackmann ids that
-// look alike are a different problem, and merging them here would be guessing.
+// Two kinds of pair are considered. A stub -- a row no player table backs --
+// against a row one does, in whichever id space; and two backed rows of one
+// source that carry the same date of birth, which is the source holding one
+// person under two ids. Two backed rows that merely share a name are not a
+// pair: merging them would be guessing, and Sackmann's file already says they
+// are different people by giving them different ids.
 func Reconcile(players []Player) []Match {
 	groups := map[string][]Player{}
 	for _, p := range players {
@@ -212,21 +231,26 @@ func Reconcile(players []Player) []Match {
 }
 
 func reconcileGroup(group []Player) []Match {
-	var numeric, alphanumeric []Player
+	var anchored, stubs []Player
 	for _, p := range group {
-		if p.Numeric() {
-			numeric = append(numeric, p)
+		if p.Stub() {
+			stubs = append(stubs, p)
 		} else {
-			alphanumeric = append(alphanumeric, p)
+			anchored = append(anchored, p)
 		}
 	}
-	if len(numeric) == 0 || len(alphanumeric) == 0 {
-		return nil
+	// The source's own duplicates fold first, and leave the candidate list, so
+	// a stub is not asked to choose between two rows that are about to be one.
+	// They are emitted last: a stub merged into one of them is carried along
+	// when that one folds in turn, where the other order would strand it.
+	folded, anchored := foldSameSource(anchored)
+	if len(anchored) == 0 {
+		return folded
 	}
 
 	var out []Match
-	for _, dup := range alphanumeric {
-		best, second := bestTwo(numeric, dup)
+	for _, dup := range stubs {
+		best, second := bestTwo(anchored, dup)
 		if best == nil {
 			continue
 		}
@@ -249,7 +273,53 @@ func reconcileGroup(group []Player) []Match {
 			Reason:     reason,
 		})
 	}
-	return out
+	return append(out, folded...)
+}
+
+// foldSameSource pairs backed rows that share a date of birth: one person under
+// two ids of one source. The longest career is kept. It returns the pairs and
+// the rows that remain candidates, which is every row not folded away.
+func foldSameSource(anchored []Player) (folded []Match, remaining []Player) {
+	byDay := map[string][]int{}
+	for i, p := range anchored {
+		if p.BirthDate != nil {
+			day := p.BirthDate.Format("2006-01-02")
+			byDay[day] = append(byDay[day], i)
+		}
+	}
+	dropped := map[int]bool{}
+	for _, idx := range byDay {
+		if len(idx) < 2 {
+			continue
+		}
+		sort.Slice(idx, func(a, b int) bool {
+			pa, pb := anchored[idx[a]], anchored[idx[b]]
+			if pa.Matches != pb.Matches {
+				return pa.Matches > pb.Matches
+			}
+			return pa.ID < pb.ID
+		})
+		keep := anchored[idx[0]]
+		for _, i := range idx[1:] {
+			confidence, reason := score(keep, anchored[i])
+			if confidence < ReviewFloor {
+				continue
+			}
+			folded = append(folded, Match{
+				Canonical:  keep,
+				Duplicate:  anchored[i],
+				Confidence: confidence,
+				Reason:     reason + ", under two ids of one source",
+			})
+			dropped[i] = true
+		}
+	}
+	for i, p := range anchored {
+		if !dropped[i] {
+			remaining = append(remaining, p)
+		}
+	}
+	return folded, remaining
 }
 
 // bestTwo returns the highest and second-highest scoring candidates.

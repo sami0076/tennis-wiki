@@ -456,6 +456,19 @@ func TestDerivedBirthYearUsesElapsedYears(t *testing.T) {
 		`UPDATE match_players SET age = 27.4 WHERE player_id = $1`, duplicate); err != nil {
 		t.Fatal(err)
 	}
+	// A second row, played in November at 27.9: the year alone would say
+	// 2025 - 27.9 = 1997.1, still right, but a player born in May and playing
+	// in November is the case the year alone gets wrong, and the mode over
+	// both rows has to come out 1997 either way.
+	f.match(open, duplicate, opponent, 2, "tml-atp-current")
+	if _, err := f.pool.Exec(f.ctx,
+		`UPDATE matches SET played_on = make_date(2025, 11, 20) WHERE match_num = 2`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.pool.Exec(f.ctx,
+		`UPDATE match_players SET age = 27.9 WHERE player_id = $1 AND age IS NULL`, duplicate); err != nil {
+		t.Fatal(err)
+	}
 
 	players, err := f.LoadPlayers(f.ctx, "atp")
 	if err != nil {
@@ -480,5 +493,80 @@ func TestDerivedBirthYearUsesElapsedYears(t *testing.T) {
 	}
 	if matches[0].Canonical.ID != canonical {
 		t.Errorf("canonical = %d, want %d", matches[0].Canonical.ID, canonical)
+	}
+}
+
+// Carlos Alcaraz, born 5 May 2003, as the live database held him: the Sackmann
+// row with the exact date, the ATP row with a 2025 match at 22.5. Year minus
+// age floors to 2002 on that row, the exact date says 2003, and the pair was
+// scored zero and dropped. The date as a fraction of the year gets it right.
+func TestDerivedBirthYearUsesTheDateNotJustTheYear(t *testing.T) {
+	f := newFixture(t)
+	canonical := f.player("207989", "Carlos Alcaraz", "ESP", date(t, "2003-05-05"))
+	duplicate := f.player("A0E2", "Carlos Alcaraz", "ESP", nil)
+	opponent := f.player("100001", "Some Opponent", "FRA", nil)
+
+	open := f.tournament("open", 2025)
+	f.match(open, duplicate, opponent, 1, "tml-atp-current")
+	if _, err := f.pool.Exec(f.ctx,
+		`UPDATE matches SET played_on = make_date(2025, 11, 20)`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.pool.Exec(f.ctx,
+		`UPDATE match_players SET age = 22.5 WHERE player_id = $1`, duplicate); err != nil {
+		t.Fatal(err)
+	}
+
+	players, err := f.LoadPlayers(f.ctx, "atp")
+	if err != nil {
+		t.Fatalf("LoadPlayers: %v", err)
+	}
+	for _, p := range players {
+		if p.ID == duplicate && (p.BirthYear == nil || *p.BirthYear != 2003) {
+			t.Errorf("derived birth year = %v, want 2003", p.BirthYear)
+		}
+	}
+	matches := Reconcile(players)
+	if len(matches) != 1 || !matches[0].Auto() || matches[0].Canonical.ID != canonical {
+		t.Fatalf("got %+v, want one automatic merge into %d", matches, canonical)
+	}
+}
+
+// A source's own duplicate folds after the stub that joined it, so the stub's
+// career and alias end up on the survivor rather than on a row that is gone.
+func TestRunnerCarriesAStubThroughAFold(t *testing.T) {
+	f := newFixture(t)
+	born := date(t, "1999-05-09")
+	survivor := f.player("209399", "Dan Martin", "CAN", born)
+	folded := f.player("202297", "Dan Martin", "CAN", born)
+	stub := f.player("M0C2", "Dan Martin", "CAN", nil)
+	opponent := f.player("100001", "Some Opponent", "FRA", nil)
+
+	open := f.tournament("open", 2025)
+	f.match(open, survivor, opponent, 1, "sackmann-atp-tour")
+	f.match(open, survivor, opponent, 2, "sackmann-atp-tour")
+	f.match(open, folded, opponent, 3, "sackmann-atp-futures")
+	f.match(open, stub, opponent, 4, "tml-atp-current")
+	if _, err := f.pool.Exec(f.ctx,
+		`UPDATE match_players SET age = 25.9 WHERE player_id = $1`, stub); err != nil {
+		t.Fatal(err)
+	}
+
+	runner := &Runner{Store: f.Store, Decisions: (&Overrides{}).Index()}
+	stats, err := runner.Run(f.ctx, []string{"atp"})
+	if err != nil {
+		t.Fatalf("run: %v", err)
+	}
+	if stats.Merged != 2 {
+		t.Fatalf("merged %d, want 2: %+v", stats.Merged, stats)
+	}
+	if n := f.count(`SELECT count(*) FROM players WHERE full_name = 'Dan Martin'`); n != 1 {
+		t.Errorf("%d Dan Martins left, want 1", n)
+	}
+	if n := f.count(`SELECT count(*) FROM match_players WHERE player_id = $1`, survivor); n != 4 {
+		t.Errorf("survivor holds %d matches, want all 4", n)
+	}
+	if n := f.count(`SELECT count(*) FROM player_aliases WHERE player_id = $1`, survivor); n != 2 {
+		t.Errorf("%d aliases point at the survivor, want 2", n)
 	}
 }

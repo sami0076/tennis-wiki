@@ -83,7 +83,9 @@ kubectl -n deucepoint delete job migrate --ignore-not-found
 kubectl -n deucepoint apply -f deploy/k8s/jobs/migrate.yaml
 ```
 
-Both Jobs clean themselves up 24 hours after finishing.
+All three Jobs clean themselves up 24 hours after finishing. `jobs/reconcile.yaml` is
+identity reconciliation and the ratings without the load in front of them, for after a
+scoring change; its header says how to dry-run it first.
 
 ## What the probes mean
 
