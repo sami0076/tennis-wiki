@@ -31,9 +31,11 @@ SELECT m.id,
        mp.second_won,
        mp.serve_games,
        mp.bp_saved,
-       mp.bp_faced
+       mp.bp_faced,
+       cm.charting_id
   FROM match_players mp
   JOIN matches m     ON m.id = mp.match_id
+  LEFT JOIN charted_matches cm ON cm.match_id = m.id
   JOIN tournaments t ON t.id = m.tournament_id
   JOIN players op    ON op.id = CASE WHEN mp.won THEN m.loser_id ELSE m.winner_id END
  WHERE mp.player_id = @player_id
@@ -71,11 +73,46 @@ SELECT m.id,
        a.bp_saved AS a_bp_saved, a.bp_faced AS a_bp_faced,
        b.aces AS b_aces, b.double_faults AS b_double_faults, b.serve_points AS b_serve_points,
        b.first_in AS b_first_in, b.first_won AS b_first_won, b.second_won AS b_second_won,
-       b.bp_saved AS b_bp_saved, b.bp_faced AS b_bp_faced
+       b.bp_saved AS b_bp_saved, b.bp_faced AS b_bp_faced,
+       cm.charting_id
   FROM matches m
   JOIN tournaments t   ON t.id = m.tournament_id
+  LEFT JOIN charted_matches cm ON cm.match_id = m.id
   JOIN match_players a ON a.match_id = m.id AND a.player_id = @player_a
   JOIN match_players b ON b.match_id = m.id AND b.player_id = @player_b
  WHERE (m.winner_id = @player_a AND m.loser_id = @player_b)
     OR (m.winner_id = @player_b AND m.loser_id = @player_a)
  ORDER BY m.played_on, m.id;
+
+-- name: GetChartedMatch :one
+-- The charted match by the project's own key, with the two players as the row
+-- names them: player 1 is the winner, player 2 the loser, and charted_stats
+-- is read per player so the sheet's columns follow.
+SELECT cm.charting_id,
+       cm.played_on,
+       cm.charted_by,
+       t.name AS tournament,
+       t.season,
+       m.round,
+       m.score,
+       w.slug AS winner_slug, w.full_name AS winner_name,
+       l.slug AS loser_slug,  l.full_name AS loser_name,
+       m.winner_id, m.loser_id
+  FROM charted_matches cm
+  JOIN matches m     ON m.id = cm.match_id
+  JOIN tournaments t ON t.id = m.tournament_id
+  JOIN players w     ON w.id = m.winner_id
+  JOIN players l     ON l.id = m.loser_id
+ WHERE cm.charting_id = @charting_id;
+
+-- name: ListChartedStats :many
+SELECT cs.player_id, cs.set_no,
+       cs.serve_points, cs.aces, cs.double_faults, cs.first_in, cs.first_won,
+       cs.second_in, cs.second_won, cs.bp_faced, cs.bp_saved,
+       cs.return_points, cs.return_points_won,
+       cs.winners, cs.winners_fh, cs.winners_bh, cs.unforced, cs.unforced_fh, cs.unforced_bh
+  FROM charted_stats cs
+  JOIN charted_matches cm ON cm.match_id = cs.match_id
+ WHERE cm.charting_id = @charting_id
+ ORDER BY cs.set_no, cs.player_id;
+

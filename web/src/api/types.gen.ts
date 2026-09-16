@@ -9,6 +9,69 @@
 export type Pair<T> = [T, T]
 
 //////////
+// source: charted.go
+
+/**
+ * ChartedMatch is one match as the Match Charting Project's volunteers
+ * recorded it: the two players and their figures per set, with the match
+ * total as set 0. It is keyed by the project's own id, which is also how a
+ * match row says it is charted (ADR-0011).
+ */
+export interface ChartedMatch {
+  charting_id: string;
+  /**
+   * PlayedOn is the day the match was played, which the project records and
+   * the tour files do not.
+   */
+  played_on: string;
+  charted_by: string | null;
+  tournament: string;
+  season: number /* int16 */;
+  round: string;
+  score: string | null;
+  players: ChartedSide[];
+  sets: ChartedSet[];
+}
+/**
+ * ChartedSide names a player of the charted match; the winner is first.
+ */
+export interface ChartedSide {
+  slug: string;
+  name: string;
+}
+/**
+ * ChartedSet is one set's figures for both players, in Players order. Set 0
+ * is the match.
+ */
+export interface ChartedSet {
+  set: number /* int16 */;
+  lines: (ChartedFigures | undefined)[];
+}
+/**
+ * ChartedFigures are the project's stats-Overview columns. Counts, not rates:
+ * the rates are the reader's to derive, with the denominator in view.
+ */
+export interface ChartedFigures {
+  serve_points: number /* int16 */;
+  aces: number /* int16 */;
+  double_faults: number /* int16 */;
+  first_in: number /* int16 */;
+  first_won: number /* int16 */;
+  second_in: number /* int16 */;
+  second_won: number /* int16 */;
+  bp_faced: number /* int16 */;
+  bp_saved: number /* int16 */;
+  return_points: number /* int16 */;
+  return_points_won: number /* int16 */;
+  winners: number /* int16 */;
+  winners_fh: number /* int16 */;
+  winners_bh: number /* int16 */;
+  unforced: number /* int16 */;
+  unforced_fh: number /* int16 */;
+  unforced_bh: number /* int16 */;
+}
+
+//////////
 // source: clutch.go
 
 /**
@@ -209,6 +272,11 @@ export interface Meeting {
   winner_index: number /* int */;
   score: string | null;
   incomplete: boolean;
+  /**
+   * ChartingID is the Match Charting Project's id when this meeting was
+   * charted, and the key to /charted/{id}; null otherwise.
+   */
+  charting_id: string | null;
 }
 
 //////////
@@ -232,6 +300,11 @@ export interface PlayerMatch {
   incomplete: boolean;
   minutes: number /* int16 */ | null;
   serve: MatchServe;
+  /**
+   * ChartingID is the Match Charting Project's id when its volunteers
+   * charted this match, and the key to /charted/{id}; null otherwise.
+   */
+  charting_id: string | null;
 }
 /**
  * Opponent is the other player, named well enough to link to.

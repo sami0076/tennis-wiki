@@ -17,6 +17,8 @@ import { useResource, type Resource } from '../api/useResource'
 import {
   Button,
   ButtonLink,
+  ChartedMark,
+  ChartedSheet,
   EmptyState,
   Meta,
   PlayerSearch,
@@ -543,6 +545,7 @@ function MeetingsSection({
   playerA: HeadToHeadPlayer
   playerB: HeadToHeadPlayer
 }) {
+  const [openChart, setOpenChart] = useState<string | null>(null)
   const columns: ReadonlyArray<Column<Meeting>> = [
     { key: 'date', header: 'Date', value: (row) => row.date },
     {
@@ -594,7 +597,19 @@ function MeetingsSection({
       wrap: true,
       minWidth: '10ch',
       value: (row) => row.score,
-      render: (row) => <Score score={row.score} incomplete={row.incomplete} />,
+      render: (row) => (
+        <>
+          <Score score={row.score} incomplete={row.incomplete} />
+          {row.charting_id !== null ? (
+            <ChartedMark
+              open={row.charting_id === openChart}
+              onToggle={() =>
+                setOpenChart((current) => (current === row.charting_id ? null : row.charting_id))
+              }
+            />
+          ) : null}
+        </>
+      ),
       sortable: false,
     },
   ]
@@ -607,6 +622,11 @@ function MeetingsSection({
         columns={columns}
         rows={meetings}
         rowKey={(row) => `${row.date}-${row.tournament}-${row.round}`}
+        detail={(row) =>
+          row.charting_id !== null && row.charting_id === openChart ? (
+            <ChartedSheet chartingId={row.charting_id} first={playerA.slug} />
+          ) : null
+        }
       />
     </section>
   )

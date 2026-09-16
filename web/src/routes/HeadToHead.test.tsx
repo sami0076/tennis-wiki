@@ -47,6 +47,7 @@ const meetings: Meeting[] = [
     winner_index: 0,
     score: '1-6 7-5 6-3 6-7 8-6',
     incomplete: false,
+    charting_id: null,
   },
   {
     date: '1981-01-18',
@@ -60,6 +61,7 @@ const meetings: Meeting[] = [
     winner_index: 1,
     score: '6-4 6-2 6-4',
     incomplete: false,
+    charting_id: null,
   },
   {
     date: '1981-09-09',
@@ -73,6 +75,7 @@ const meetings: Meeting[] = [
     winner_index: 1,
     score: '4-6 6-2 6-4 6-3',
     incomplete: false,
+    charting_id: null,
   },
 ]
 
@@ -138,16 +141,18 @@ const searchResults = {
 }
 
 /** Answers each endpoint the page asks for, and nothing else. */
-function stub(comparison: Comparison) {
+function stub(comparison: Comparison, charted: unknown = null) {
   vi.stubGlobal('fetch', (input: string) => {
     const path = new URL(String(input), 'http://localhost').pathname
     const body = path.startsWith('/api/v1/h2h/')
       ? comparison
-      : path === '/api/v1/players'
-        ? searchResults
-        : path.endsWith('/ratings')
-          ? emptySeries
-          : profile
+      : path.startsWith('/api/v1/charted/')
+        ? charted
+        : path === '/api/v1/players'
+          ? searchResults
+          : path.endsWith('/ratings')
+            ? emptySeries
+            : profile
     return Promise.resolve(
       new Response(JSON.stringify(body), {
         status: 200,
@@ -182,6 +187,52 @@ describe('HeadToHead', () => {
     expect(screen.getByText('1-2')).toBeInTheDocument()
     expect(screen.getByText('Wimbledon F')).toBeInTheDocument()
     expect(screen.getByText('Break points saved')).toBeInTheDocument()
+  })
+
+  // One of the three meetings is charted: one mark, and the sheet opens under
+  // it with player A on the A side whoever won.
+  it('opens the charted meeting under its row and marks no other', async () => {
+    const first = meetings[0] as Meeting
+    const withChart: Comparison = {
+      ...rivalry,
+      meetings: [
+        { ...first, charting_id: '19800705-M-Wimbledon-F-Bjorn_Borg-John_Mcenroe' },
+        ...meetings.slice(1),
+      ],
+    }
+    stub(mirrored(withChart), {
+      charting_id: '19800705-M-Wimbledon-F-Bjorn_Borg-John_Mcenroe',
+      played_on: '1980-07-05',
+      charted_by: null,
+      tournament: 'Wimbledon',
+      season: 1980,
+      round: 'F',
+      score: first.score,
+      players: [
+        { slug: 'bjorn-borg', name: 'Bjorn Borg' },
+        { slug: 'john-mcenroe', name: 'John McEnroe' },
+      ],
+      sets: [
+        {
+          set: 0,
+          lines: [
+            { serve_points: 150, aces: 5, double_faults: 3, first_in: 90, first_won: 70, second_in: 57, second_won: 30, bp_faced: 8, bp_saved: 5, return_points: 140, return_points_won: 60, winners: 30, winners_fh: 18, winners_bh: 12, unforced: 25, unforced_fh: 15, unforced_bh: 10 },
+            { serve_points: 140, aces: 8, double_faults: 6, first_in: 85, first_won: 66, second_in: 49, second_won: 25, bp_faced: 10, bp_saved: 7, return_points: 150, return_points_won: 65, winners: 40, winners_fh: 22, winners_bh: 18, unforced: 35, unforced_fh: 20, unforced_bh: 15 },
+          ],
+        },
+      ],
+    })
+    renderAt('/h2h/john-mcenroe/bjorn-borg')
+
+    await screen.findByText('Wimbledon F')
+    const marks = screen.getAllByRole('button', { name: 'charted' })
+    expect(marks).toHaveLength(1)
+    await userEvent.click(marks[0] as HTMLElement)
+
+    // McEnroe is player A on this page, so his figures come first though he lost.
+    const aces = await screen.findByRole('row', { name: /^Aces/ })
+    expect(aces.textContent?.replace(/\s+/g, ' ')).toContain('8 5')
+    expect(screen.getByText(/Charted point by point/)).toBeInTheDocument()
   })
 
   // The URL is the state, so the surface filter has to survive being pasted

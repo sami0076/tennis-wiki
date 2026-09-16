@@ -17,6 +17,7 @@ packages:
       - "clutch.go"
       - "simulate.go"
       - "coverage.go"
+      - "charted.go"
       - "problem.go"
       - "cursor.go"
     type_mappings:
