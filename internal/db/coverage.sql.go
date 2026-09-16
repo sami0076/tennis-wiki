@@ -12,9 +12,9 @@ import (
 
 const getChartedCoverage = `-- name: GetChartedCoverage :many
 SELECT t.tour,
-       count(*)::bigint           AS matches,
-       min(c.played_on)::date     AS first_match,
-       max(c.played_on)::date     AS last_match,
+       count(DISTINCT c.match_id)::bigint  AS matches,
+       min(c.played_on)::date              AS first_match,
+       max(c.played_on)::date              AS last_match,
        count(DISTINCT p.player_id)::bigint AS players
   FROM charted_matches c
   JOIN matches m ON m.id = c.match_id
