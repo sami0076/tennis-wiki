@@ -39,13 +39,13 @@ func (s *Store) LoadPlayers(ctx context.Context, tour string) ([]Player, error) 
 		       (SELECT count(*) FROM match_players mp WHERE mp.player_id = p.id),
 		       -- Known from match rows alone: the Tennismylife files have no
 		       -- player table and mint ids of their own on the WTA side.
-		       p.birth_date IS NULL AND EXISTS (
-		           SELECT 1 FROM matches m
-		            WHERE m.winner_id = p.id OR m.loser_id = p.id)
+		       -- Through match_players, which is indexed by player; matches is
+		       -- indexed by winner only, and "winner or loser" scans it.
+		       p.birth_date IS NULL
+		       AND EXISTS (SELECT 1 FROM match_players mp WHERE mp.player_id = p.id)
 		       AND NOT EXISTS (
-		           SELECT 1 FROM matches m
-		            WHERE (m.winner_id = p.id OR m.loser_id = p.id)
-		              AND m.source NOT LIKE 'tml-%')
+		           SELECT 1 FROM match_players mp JOIN matches m ON m.id = mp.match_id
+		            WHERE mp.player_id = p.id AND m.source NOT LIKE 'tml-%')
 		  FROM players p
 		 WHERE p.tour = $1::tour`, tour)
 	if err != nil {
