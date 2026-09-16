@@ -1,0 +1,72 @@
+# The events stage on its own: what a tournament is across seasons, derived
+# from every tournaments row already loaded (ADR-0012). For after a change to
+# the rule or to configs/event_overrides.json, and once after the migration
+# that added the table; a full load runs the same stage anyway. Nothing the
+# ratings read changes, so there is no rate step here.
+#
+#   kubectl -n deucepoint delete job events --ignore-not-found
+#   kubectl -n deucepoint apply -f deploy/k8s/jobs/events.yaml
+#   kubectl -n deucepoint logs -f job/events
+#
+# About ten seconds over 64,600 rows; the figure in docs/performance.md.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: events
+  namespace: deucepoint
+  labels:
+    app.kubernetes.io/name: events
+    app.kubernetes.io/part-of: deucepoint
+spec:
+  # One transaction, so a retry starts from the same rows.
+  backoffLimit: 2
+  activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: events
+        app.kubernetes.io/part-of: deucepoint
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: events
+          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:23014f48b26c2b131010e8370886722e9618e950558d6fe42e08765c73dcc730
+          command: ["ingest", "--stage", "events"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: DATABASE_URL
+            # The stage clears the read cache when it finishes, as every
+            # stage does; the tournament pages are cached like the rest.
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: api
+                  key: REDIS_URL
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: tmp
+          emptyDir: {}

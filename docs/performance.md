@@ -532,6 +532,38 @@ before any run happens, every one of a 128 draw's 8,128 possible pairings is sol
 remembered. At ten thousand runs the whole simulation is **4.9ms** warm, which makes it a
 cheap endpoint rather than the expensive one it was expected to be.
 
+## Tournaments as events
+
+The events stage of `cmd/ingest` derives what a tournament is across seasons from every
+`tournaments` row (ADR-0012): **8.8s over 64,624 rows**, yielding 10,462 events, in one
+transaction. It is a pure function of the rows and `configs/event_overrides.json`, so a
+second run over the same data creates nothing and removes nothing, and runs in the same
+time; there is no incremental path, and at nine seconds there is no need for one.
+
+The three endpoints, end to end over HTTP against the full database, without the read
+cache; cold is the first request after a Postgres restart, warm the median of five after it:
+
+| | Cold | Warm | Body |
+|---|---|---|---|
+| The edition as a sheet: Wimbledon 2019, 128 draw, 239 matches with qualifying | 64ms | 22ms | 181KB |
+| The event: the women's Wimbledon, 97 editions with their finals | 29ms | 7ms | — |
+| The index, filtered to the Slams | 94ms | 55ms | 2KB |
+| The index, unfiltered, first page of 100 | 67ms | 71ms | 16KB |
+| Davis Cup 2019: a season of ties, 40 rows and their matches | 83ms | 63ms | — |
+
+**The edition is one query for the matches, both sides on one row**, with the seeds and
+the serve coverage derived in Go from the rows it already has: 181KB is the price of the
+sheet carrying every match's serve line and both players' seed, entry and rank, and it is
+what the page needs to be a sheet rather than a list.
+
+**The index costs the same filtered or not, and that is the shape to know.** An event's
+category, level and tier are those of its latest edition, and there are no such columns:
+the query takes `DISTINCT ON (event_id)` over all 64,624 rows every time, 55–62ms in
+Postgres, before it filters or pages. Denormalising the three onto `events` at stage time
+would make it a 10,000-row scan; at 70ms behind a cache whose invalidation is the events
+stage itself, it does not justify a schema change yet. Recorded here for whoever finds it
+does.
+
 ## The read cache
 
 Redis 7 has been in the compose stack since #2 and nothing used it. This data barely

@@ -35,6 +35,7 @@ a read against indexed tables.
 | `internal/score` | Score-string parser |
 | `internal/identity` | Player reconciliation across the source id spaces |
 | `internal/charting` | The Match Charting Project, attached to matches the database already holds |
+| `internal/events` | What a tournament is across seasons: the rule that keys an event, and the slugs |
 | `internal/validate` | Rating accuracy, calibration and continuity checks |
 | `internal/dataqual` | Data-quality checks over the loaded database |
 | `internal/testdb` | Throwaway Postgres and Redis containers for the tests |
@@ -76,6 +77,15 @@ one block — with nothing in the source to tell them apart. Keyed on the number
 different matches share a row and accumulate four participants. The pair is stored unordered
 in the index, so a source correcting who won updates the match rather than duplicating it.
 Migrations 00007 and 00011 carry the measurements.
+
+**An event is derived, and every tournament row says how it got onto its own.** The
+sources carry a row per event per season and no identity across seasons that holds for
+both tours: the ATP's number does, the WTA's is a sequence within the year until 1987 and
+the ITF circuit's to 1995. So `events` is written by a stage of the ingest from a rule —
+the tour's number where it is real, the name within tour and tier where it is not, a
+short overrides file for the numbers a person has checked — and `tournaments.event_link`
+records which of those placed each row, for the page to print. ADR-0012 carries the
+measurements; `configs/event_overrides.json` the decisions.
 
 **`matches` is not partitioned yet.** At ~1.63M rows it does not need to be, and
 partitioning by season would force the partition key into the primary key and every
@@ -126,8 +136,9 @@ between 145 and 231 matches a second. The write is an upsert on the match's natu
 lands once, and a corrected row replaces its earlier self. A file is recorded in
 `ingest_files` with its ETag only after its last chunk commits, so a killed run resumes at
 the file it was in, and an unchanged file on the next run costs one conditional request.
-The reference stage (player tables, ranking history) and the charting stage run after the
-matches, sequentially, because each needs everything the stage before it created.
+The reference stage (player tables, ranking history), the events stage and the charting
+stage run after the matches, sequentially, because each needs everything the stage before
+it created.
 
 ## The rating recompute
 

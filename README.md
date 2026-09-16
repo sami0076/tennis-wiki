@@ -155,7 +155,10 @@ GET /api/v1/h2h/:slug/:opponent           head-to-head, either way round
 GET /api/v1/rankings?type=elo|official    leaderboards, as of the last week that exists
 GET /api/v1/rankings/trajectory           the leaders' rating lines, for a chart
 GET /api/v1/simulate/match?a=&b=          point to match, every rung of the chain
-GET /api/v1/simulate/draw?tour=&season=   a played draw, replayed ten thousand times
+GET /api/v1/simulate/draw?event=&season=  a played draw, replayed ten thousand times
+GET /api/v1/tournaments?tour=&level=&q=   the index, grouped by level, searchable
+GET /api/v1/tournaments/:slug             an event across seasons, with how each got there
+GET /api/v1/tournaments/:slug/:season     one edition as a draw sheet
 ```
 
 ```bash

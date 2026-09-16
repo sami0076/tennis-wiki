@@ -124,6 +124,20 @@ The dry run is the review: a change to the scoring is judged on the pairs it wou
 merge, listed one per line with the reason, before it merges any. Twenty seconds, then
 1m 36s for the ratings.
 
+**After a change to `configs/event_overrides.json`, or to the rule that keys an event
+across seasons** — the events stage on its own. Nothing the ratings read changes, so
+there is no rate step; about ten seconds:
+
+```sh
+kubectl -n deucepoint delete job events --ignore-not-found
+kubectl -n deucepoint apply -f deploy/k8s/jobs/events.yaml
+kubectl -n deucepoint logs -f job/events
+```
+
+The log names every override that filed no row, which is how a renumbering a source has
+since undone gets noticed. A full load runs the same stage after the matches, so on an
+empty cluster this Job is never needed.
+
 **From empty** (a new node, a lost volume): the README's first-time sequence — secrets,
 `base/`, migrate, load. The first `migrate` attempts fail while Postgres initialises its
 volume and the Job retries; that is expected.
