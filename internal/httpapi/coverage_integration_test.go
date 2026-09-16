@@ -105,6 +105,15 @@ func TestCoverageKeepsChartingApartFromTheDates(t *testing.T) {
 		  FROM charted_matches`, a); err != nil {
 		t.Fatal(err)
 	}
+	// The other player's total too: one match, two total rows, still one match.
+	if _, err := f.tx.Exec(f.ctx, `
+		INSERT INTO charted_stats (match_id, player_id, set_no, serve_points, aces, double_faults,
+		        first_in, first_won, second_in, second_won, bp_faced, bp_saved, return_points,
+		        return_points_won, winners, winners_fh, winners_bh, unforced, unforced_fh, unforced_bh)
+		SELECT match_id, $1, 0, 70, 2, 3, 40, 28, 27, 12, 9, 5, 80, 30, 20, 10, 4, 30, 18, 8
+		  FROM charted_matches`, b); err != nil {
+		t.Fatal(err)
+	}
 
 	res := f.get("/api/v1/coverage")
 	var got CoverageResponse
@@ -115,7 +124,7 @@ func TestCoverageKeepsChartingApartFromTheDates(t *testing.T) {
 		t.Errorf("atp current_through = %q; a charted date must not move it", got.CurrentThrough["atp"])
 	}
 	if len(got.Charted) != 1 || got.Charted[0].Tour != "atp" || got.Charted[0].Matches != 1 ||
-		got.Charted[0].Players != 1 || got.Charted[0].LastMatch != "2019-06-30" {
+		got.Charted[0].Players != 2 || got.Charted[0].LastMatch != "2019-06-30" {
 		t.Errorf("charted = %+v", got.Charted)
 	}
 }

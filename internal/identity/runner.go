@@ -46,10 +46,13 @@ func (r *Runner) Run(ctx context.Context, tours []string) (Stats, error) {
 		stats.Players += len(players)
 
 		matches := Reconcile(players)
-		before := len(matches)
 		if r.Decisions != nil {
+			for _, m := range matches {
+				if r.Decisions.Separated(tour, m.Duplicate.SourceID, m.Canonical.SourceID) {
+					stats.Rejected++
+				}
+			}
 			matches = r.Decisions.Apply(tour, players, matches)
-			stats.Rejected += before - len(matches)
 		}
 		stats.Proposed += len(matches)
 

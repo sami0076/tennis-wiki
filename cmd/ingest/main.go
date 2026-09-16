@@ -167,8 +167,9 @@ func run(ctx context.Context, cfg config) error {
 
 	// Search ranks off this view, so it is stale the moment matches change --
 	// and a reconcile moves them between players, which is the same thing.
+	// Charting changes nothing the views read, but /coverage is cached.
 	if cfg.stage == stageAll || cfg.stage == stageMatches || cfg.stage == stageReference ||
-		cfg.stage == stageReconcile || cfg.stage == stageRefresh {
+		cfg.stage == stageReconcile || cfg.stage == stageCharting || cfg.stage == stageRefresh {
 		started := time.Now()
 		if err := store.RefreshProminence(ctx); err != nil {
 			return err
