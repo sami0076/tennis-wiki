@@ -166,5 +166,23 @@
       ],
       "attribution": "Jeff Sackmann / Tennis Abstract, CC BY-NC-SA 4.0"
     }
+  ],
+  "charting": [
+    {
+      "name": "mcp-atp",
+      "tour": "atp",
+      "base_url": "https://raw.githubusercontent.com/JeffSackmann/tennis_MatchChartingProject/master",
+      "matches": "charting-m-matches.csv",
+      "stats": "charting-m-stats-Overview.csv",
+      "attribution": "Match Charting Project, Jeff Sackmann / Tennis Abstract and its volunteer charters, CC BY-NC-SA 4.0"
+    },
+    {
+      "name": "mcp-wta",
+      "tour": "wta",
+      "base_url": "https://raw.githubusercontent.com/JeffSackmann/tennis_MatchChartingProject/master",
+      "matches": "charting-w-matches.csv",
+      "stats": "charting-w-stats-Overview.csv",
+      "attribution": "Match Charting Project, Jeff Sackmann / Tennis Abstract and its volunteer charters, CC BY-NC-SA 4.0"
+    }
   ]
 }
