@@ -6,15 +6,15 @@ Deep per-player statistics, head-to-head comparison, and first-principles match 
 simulation for **both the ATP and WTA tours** — built from raw match data, with the
 working shown.
 
-> **Status: Phases 1 and 2 are done; Phase 3 (simulation) is next.** Ingestion, the schema,
-> the read-only API, the Elo engine, player pages, head-to-head, rankings and search all
-> run locally today — nothing is deployed yet, which is Phase 4. This README is written to
-> the target shape so it fills in as phases land; sections marked _(pending)_ are
-> placeholders, not claims. See [Roadmap](#roadmap) for what exists.
+> **Status: live, and Phases 1 to 4 are done.** Ingestion, the schema, the API, the Elo
+> engine, player pages, head-to-head, rankings, search, both simulators, the methodology
+> page and the Match Charting Project's per-set sheets are all deployed at
+> [deucepoint.net](https://deucepoint.net), which has been up since 14 September 2026.
+> Phase 5 — tournaments and seasons as pages — is next; see [Roadmap](#roadmap).
 
 <!-- SCREENSHOT: head-to-head page. Required by the build spec §13.2 — first thing after
-     the title. The page shipped with Phase 2; the screenshot has not been taken yet. -->
-_Screenshot of the head-to-head page — the page exists, the screenshot is still to come._
+     the title. To be taken from the live site, at deucepoint.net/h2h. -->
+_Screenshot of the head-to-head page: to be taken from the live site._
 
 **Live URL:** [deucepoint.net](https://deucepoint.net) — API at [api.deucepoint.net](https://api.deucepoint.net/api/v1/health)
 
@@ -378,8 +378,9 @@ that split.
 |---|---|---|
 | 1 | Ingestion, schema, read-only API | Done |
 | 2 | Elo engine, player pages, H2H, rankings, search, clutch, caching | Done |
-| 3 | Match simulator (closed form), draw simulator (Monte Carlo) | Next |
-| 4 | Match Charting Project, methodology page, k3s, image builds, deployment | Not started |
+| 3 | Match simulator (closed form), draw simulator (Monte Carlo) | Done |
+| 4 | Methodology page, image builds, k3s, deployment, the Match Charting Project | Done |
+| 5 | Tournaments and seasons as pages, the draw sheet rendered, serve and return leaderboards, player and head-to-head splits | Next ([#131](https://github.com/sami0076/tennis-wiki/issues/131)) |
 
 Clutch metrics were pulled forward into Phase 2 and shipped there. Phase 3's shape was
 checked against the data before it was planned, and two things moved: the point-win
@@ -390,7 +391,8 @@ itself against what actually happened. Both are written up in the tracking issue
 
 ## Documentation
 
-- [`docs/architecture.md`](docs/architecture.md) — system design _(pending)_
-- [`docs/methodology.md`](docs/methodology.md) — coverage now; ratings and simulation with Phases 2 and 3
+- [`docs/architecture.md`](docs/architecture.md) — system design and the deployment topology
+- [`docs/methodology.md`](docs/methodology.md) — coverage, the rating engine, the simulation chain and what the validation says about them; rendered at [deucepoint.net/methodology](https://deucepoint.net/methodology)
+- [`docs/deployment.md`](docs/deployment.md) — how it is deployed, the runbook, and what it costs
 - [`docs/performance.md`](docs/performance.md) — measured ingest, size and query cost at scale
 - [`docs/decisions/`](docs/decisions/) — architecture decision records
