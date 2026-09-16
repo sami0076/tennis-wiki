@@ -190,4 +190,15 @@ func TestWriteReplacesUnderEitherKey(t *testing.T) {
 	if n := f.count(`SELECT count(*) FROM unresolved_references WHERE source_id LIKE '20240915-M-Davis%'`); n != 0 {
 		t.Error("a charted match that now resolves is still listed as unresolved")
 	}
+
+	// And the reverse: take the row away and the attachment goes with it.
+	if _, err := f.pool.Exec(f.ctx, `UPDATE matches SET round = 'Q1' WHERE id = $1`, fresh); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := loader.Run(f.ctx); err != nil {
+		t.Fatal(err)
+	}
+	if n := f.count(`SELECT count(*) FROM charted_matches WHERE match_id = $1`, fresh); n != 0 {
+		t.Error("a charted match that no longer resolves is still attached")
+	}
 }

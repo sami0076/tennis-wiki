@@ -131,6 +131,7 @@ func (l *Loader) load(ctx context.Context, src ingest.ChartingSource, stats *Sta
 		if err != nil {
 			return err
 		}
+		var batch []Attachment
 		for _, m := range matches {
 			if m.PlayedOn.Year() != year {
 				continue
@@ -142,15 +143,18 @@ func (l *Loader) load(ctx context.Context, src ingest.ChartingSource, stats *Sta
 				unresolved[m.ID] = reason
 				continue
 			}
-			n, err := l.Store.Write(ctx, src.Name, m, r, byMatch[m.ID])
-			if err != nil {
-				return err
-			}
-			stats.Resolved++
-			stats.StatsWritten += n
-			resolved++
-			written += n
+			batch = append(batch, Attachment{Match: m, Row: r, Stats: byMatch[m.ID]})
 		}
+		// One transaction per tour and year, which is how the index was
+		// loaded and a size a single round trip carries comfortably.
+		n, err := l.Store.Write(ctx, src.Name, batch)
+		if err != nil {
+			return err
+		}
+		stats.Resolved += len(batch)
+		stats.StatsWritten += n
+		resolved += len(batch)
+		written += n
 	}
 
 	byReason := map[string]map[string]int{}

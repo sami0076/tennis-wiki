@@ -42,12 +42,17 @@ type Index struct {
 	byKey map[string][]Candidate
 }
 
-// NewIndex builds the index.
+// NewIndex builds the index, keying each row under every surname either of
+// its players might be known by.
 func NewIndex(cands []Candidate) *Index {
 	ix := &Index{byKey: map[string][]Candidate{}}
 	for _, c := range cands {
-		k := key(c.Round, surname(c.Winner), surname(c.Loser))
-		ix.byKey[k] = append(ix.byKey[k], c)
+		for _, a := range surnames(c.Winner) {
+			for _, b := range surnames(c.Loser) {
+				k := key(c.Round, a, b)
+				ix.byKey[k] = append(ix.byKey[k], c)
+			}
+		}
 	}
 	return ix
 }
@@ -114,45 +119,82 @@ func distance(charted, eventStart time.Time) time.Duration {
 	return d
 }
 
-// samePerson is the whole name folded to ASCII, or failing that the stored
-// surname appearing in the charted name with the same initial: the project
-// writes "Edouard Roger Vasselin" where the tour files write "Edouard
-// Roger-Vasselin", and both fold the same; it writes "Alison Riske Amritraj"
-// where the files still say "Alison Riske", and that is the second rule.
+// samePerson is the whole name folded to ASCII, with or without its spaces
+// -- "Christopher Oconnell" and "Christopher O'Connell" -- or, failing that,
+// a surname in common and either the same initial or a given name in common.
+// The project writes "Coco Gauff" where the files say "Cori Gauff" and
+// "Daria Kasatkina" for "Darya Kasatkina", which the initial covers; "Alison
+// Riske Amritraj" for "Alison Riske" and "Camila Osorio" for "Maria Camila
+// Osorio Serrano", which the shared given name covers. Particles are not
+// surnames: "Van" is not what Botic Van De Zandschulp and Bart Van Den Berg
+// have in common.
 func samePerson(charted, stored string) bool {
 	a, b := name.Normalise(charted), name.Normalise(stored)
-	if a == b {
+	if a == b || strings.ReplaceAll(a, " ", "") == strings.ReplaceAll(b, " ", "") {
 		return true
 	}
-	if a == "" || b == "" || a[0] != b[0] {
+	if a == "" || b == "" || (a[0] != b[0] && !sharesGivenName(a, b)) {
 		return false
 	}
-	want := surname(stored)
-	for _, s := range surnames(charted) {
-		if s == want {
+	for _, x := range surnames(charted) {
+		for _, y := range surnames(stored) {
+			if x == y {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// sharesGivenName reports whether either name's first word is a word of the
+// other.
+func sharesGivenName(a, b string) bool {
+	wa, wb := strings.Fields(a), strings.Fields(b)
+	if len(wa) == 0 || len(wb) == 0 {
+		return false
+	}
+	for _, w := range wb {
+		if w == wa[0] {
+			return true
+		}
+	}
+	for _, w := range wa {
+		if w == wb[0] {
 			return true
 		}
 	}
 	return false
 }
 
-// surname is the last word of the stored name.
-func surname(full string) string {
-	n := name.Normalise(full)
-	if i := strings.LastIndexByte(n, ' '); i >= 0 {
-		return n[i+1:]
-	}
-	return n
+// particles are the words in a name that are not a surname on their own.
+var particles = map[string]bool{
+	"de": true, "del": true, "della": true, "der": true, "den": true, "di": true, "da": true,
+	"do": true, "dos": true, "du": true, "van": true, "von": true, "la": true, "le": true,
+	"el": true, "al": true, "y": true, "e": true, "jr": true, "sr": true, "ii": true, "iii": true,
 }
 
-// surnames is every word of a charted name but the first, any of which may be
-// the surname the tour files use.
+// surnames is every word of a name but the first, particles aside, plus all
+// of them run together, which is the form an apostrophe or a space in the
+// wrong place produces on one side and not the other.
 func surnames(full string) []string {
 	words := strings.Fields(name.Normalise(full))
 	if len(words) <= 1 {
 		return words
 	}
-	return words[1:]
+	rest := words[1:]
+	out := make([]string, 0, len(rest)+1)
+	for _, w := range rest {
+		if !particles[w] {
+			out = append(out, w)
+		}
+	}
+	if len(rest) > 1 {
+		out = append(out, strings.Join(rest, ""))
+	}
+	if len(out) == 0 {
+		out = rest // a name that is all particles is still a name
+	}
+	return out
 }
 
 func key(round, a, b string) string {

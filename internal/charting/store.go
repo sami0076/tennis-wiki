@@ -12,14 +12,22 @@ import (
 	"github.com/sami0076/tennis-wiki/internal/ingest"
 )
 
+// Attachment is one charted match resolved to its row, with its figures.
+type Attachment struct {
+	Match Match
+	Row   Resolution
+	Stats []Stat
+}
+
 // Store is the persistence the loader needs, as an interface so the loader
 // can run against a fake.
 type Store interface {
 	// Candidates returns one tour's matches whose event started in the range.
 	Candidates(ctx context.Context, tour ingest.Tour, from, to time.Time) ([]Candidate, error)
-	// Write attaches a charted match and its figures to the row it resolved
-	// to, replacing whatever an earlier run attached under either key.
-	Write(ctx context.Context, source string, m Match, r Resolution, stats []Stat) (int, error)
+	// Write attaches a batch of charted matches to the rows they resolved to,
+	// each replacing whatever an earlier run attached under either key. One
+	// transaction: the batch lands whole or not at all.
+	Write(ctx context.Context, source string, batch []Attachment) (int, error)
 	// RecordUnresolved keeps the charted matches that found no row, by reason.
 	RecordUnresolved(ctx context.Context, source, kind string, counts map[string]int) error
 }
@@ -58,9 +66,12 @@ func (s *PGStore) Candidates(ctx context.Context, tour ingest.Tour, from, to tim
 	return out, rows.Err()
 }
 
-// Write is one transaction per charted match: the old attachment under either
-// key goes, the new one lands whole or not at all.
-func (s *PGStore) Write(ctx context.Context, source string, m Match, r Resolution, stats []Stat) (written int, err error) {
+// Write is one transaction for the batch, and one round trip: the statements
+// are queued and sent together.
+func (s *PGStore) Write(ctx context.Context, source string, batch []Attachment) (written int, err error) {
+	if len(batch) == 0 {
+		return 0, nil
+	}
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("begin: %w", err)
@@ -71,57 +82,69 @@ func (s *PGStore) Write(ctx context.Context, source string, m Match, r Resolutio
 		}
 	}()
 
-	if _, err := tx.Exec(ctx,
-		`DELETE FROM charted_matches WHERE charting_id = $1 OR match_id = $2`, m.ID, r.MatchID); err != nil {
-		return 0, fmt.Errorf("clear charted match: %w", err)
-	}
-	if _, err := tx.Exec(ctx, `
-		INSERT INTO charted_matches (match_id, charting_id, played_on, charted_by, source)
-		VALUES ($1, $2, $3, NULLIF($4, ''), $5)`,
-		r.MatchID, m.ID, m.PlayedOn, m.ChartedBy, source); err != nil {
-		return 0, fmt.Errorf("write charted match %s: %w", m.ID, err)
-	}
-
-	for _, st := range stats {
-		var playerID int64
-		switch st.Player {
-		case m.Player1:
-			playerID = r.Player1ID
-		case m.Player2:
-			playerID = r.Player2ID
-		default:
-			continue // a name the match row does not carry; none in the files so far
+	q := &pgx.Batch{}
+	for _, a := range batch {
+		m, r := a.Match, a.Row
+		q.Queue(`DELETE FROM charted_matches WHERE charting_id = $1 OR match_id = $2`, m.ID, r.MatchID)
+		q.Queue(`
+			INSERT INTO charted_matches (match_id, charting_id, played_on, charted_by, source)
+			VALUES ($1, $2, $3, NULLIF($4, ''), $5)`,
+			r.MatchID, m.ID, m.PlayedOn, m.ChartedBy, source)
+		for _, st := range a.Stats {
+			var playerID int64
+			switch st.Player {
+			case m.Player1:
+				playerID = r.Player1ID
+			case m.Player2:
+				playerID = r.Player2ID
+			default:
+				continue // a name the match row does not carry; none in the files so far
+			}
+			f := st.Figures
+			q.Queue(`
+				INSERT INTO charted_stats (match_id, player_id, set_no,
+				        serve_points, aces, double_faults, first_in, first_won, second_in, second_won,
+				        bp_faced, bp_saved, return_points, return_points_won,
+				        winners, winners_fh, winners_bh, unforced, unforced_fh, unforced_bh)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+				ON CONFLICT (match_id, player_id, set_no) DO NOTHING`,
+				r.MatchID, playerID, st.Set,
+				f.ServePoints, f.Aces, f.DoubleFaults, f.FirstIn, f.FirstWon, f.SecondIn, f.SecondWon,
+				f.BPFaced, f.BPSaved, f.ReturnPoints, f.ReturnPointsWon,
+				f.Winners, f.WinnersFH, f.WinnersBH, f.Unforced, f.UnforcedFH, f.UnforcedBH)
+			written++
 		}
-		f := st.Figures
-		if _, err := tx.Exec(ctx, `
-			INSERT INTO charted_stats (match_id, player_id, set_no,
-			        serve_points, aces, double_faults, first_in, first_won, second_in, second_won,
-			        bp_faced, bp_saved, return_points, return_points_won,
-			        winners, winners_fh, winners_bh, unforced, unforced_fh, unforced_bh)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
-			ON CONFLICT (match_id, player_id, set_no) DO NOTHING`,
-			r.MatchID, playerID, st.Set,
-			f.ServePoints, f.Aces, f.DoubleFaults, f.FirstIn, f.FirstWon, f.SecondIn, f.SecondWon,
-			f.BPFaced, f.BPSaved, f.ReturnPoints, f.ReturnPointsWon,
-			f.Winners, f.WinnersFH, f.WinnersBH, f.Unforced, f.UnforcedFH, f.UnforcedBH); err != nil {
-			return 0, fmt.Errorf("write charted stats %s: %w", m.ID, err)
+		// Resolved now, so no longer unresolved.
+		q.Queue(`DELETE FROM unresolved_references WHERE source = $1 AND source_id = $2`, source, m.ID)
+	}
+
+	results := tx.SendBatch(ctx, q)
+	for i := 0; i < q.Len(); i++ {
+		if _, err := results.Exec(); err != nil {
+			_ = results.Close()
+			return 0, fmt.Errorf("write charted batch: %w", err)
 		}
-		written++
 	}
-
-	// Resolved now, so no longer unresolved.
-	if _, err := tx.Exec(ctx,
-		`DELETE FROM unresolved_references WHERE source = $1 AND source_id = $2`, source, m.ID); err != nil {
-		return 0, fmt.Errorf("clear unresolved: %w", err)
+	if err := results.Close(); err != nil {
+		return 0, fmt.Errorf("write charted batch: %w", err)
 	}
-
 	if err := tx.Commit(ctx); err != nil {
 		return 0, fmt.Errorf("commit: %w", err)
 	}
 	return written, nil
 }
 
-// RecordUnresolved is the ingest store's, on this pool.
+// RecordUnresolved is the ingest store's, on this pool -- and a charted match
+// that does not resolve now is detached from whatever an earlier run found,
+// so the table never says more than the current files and rows support.
 func (s *PGStore) RecordUnresolved(ctx context.Context, source, kind string, counts map[string]int) error {
+	ids := make([]string, 0, len(counts))
+	for id := range counts {
+		ids = append(ids, id)
+	}
+	if _, err := s.pool.Exec(ctx,
+		`DELETE FROM charted_matches WHERE charting_id = ANY($1)`, ids); err != nil {
+		return fmt.Errorf("detach unresolved: %w", err)
+	}
 	return ingest.NewStore(s.pool).RecordUnresolved(ctx, source, kind, counts)
 }

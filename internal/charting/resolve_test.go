@@ -66,8 +66,15 @@ func TestResolveNameForms(t *testing.T) {
 		{"Alison Riske Amritraj", "Alison Riske", true},
 		{"Botic Van De Zandschulp", "Botic Van De Zandschulp", true},
 		{"John Mcenroe", "John McEnroe", true},
+		{"Camila Osorio", "Maria Camila Osorio Serrano", true},
+		{"Coco Gauff", "Cori Gauff", true},
+		{"Daria Kasatkina", "Darya Kasatkina", true},
+		{"Christopher Oconnell", "Christopher O'Connell", true},
+		{"Chun Hsin Tseng", "Chun-Hsin Tseng", true},
 		{"Storm Hunter", "Storm Sanders", false},
 		{"Alexander Zverev", "Mischa Zverev", false},
+		{"Botic Van De Zandschulp", "Bart Van Den Berg", false},
+		{"Juan Martin Del Potro", "Juan Ignacio Londero", false},
 	}
 	for _, c := range cases {
 		if got := samePerson(c.charted, c.stored); got != c.want {

@@ -20,10 +20,14 @@ func (f *fakeStore) Candidates(_ context.Context, _ ingest.Tour, _, _ time.Time)
 	return f.cands, nil
 }
 
-func (f *fakeStore) Write(_ context.Context, _ string, m Match, _ Resolution, stats []Stat) (int, error) {
-	f.written = append(f.written, m.ID)
-	f.stats += len(stats)
-	return len(stats), nil
+func (f *fakeStore) Write(_ context.Context, _ string, batch []Attachment) (int, error) {
+	n := 0
+	for _, a := range batch {
+		f.written = append(f.written, a.Match.ID)
+		f.stats += len(a.Stats)
+		n += len(a.Stats)
+	}
+	return n, nil
 }
 
 func (f *fakeStore) RecordUnresolved(_ context.Context, _, kind string, counts map[string]int) error {
