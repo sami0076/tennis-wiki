@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -76,8 +77,9 @@ func (s *Store) Write(ctx context.Context, events []Event) (stats Stats, err err
 		taken[slug] = struct{}{}
 	}
 
-	// New events are minted in order of first season, then key, so a serial
-	// on a colliding slug is the same on every load.
+	// New events are minted most recent first, then the longer run, then by
+	// key: the Acapulco still on the calendar takes acapulco-atp and the 1974
+	// one-off the serial, and the order is the same on every load.
 	order := make([]int, 0, len(events))
 	for i := range events {
 		if slug, ok := existing[events[i].Tour+"\x00"+events[i].Key]; ok {
@@ -88,8 +90,11 @@ func (s *Store) Write(ctx context.Context, events []Event) (stats Stats, err err
 	}
 	sort.SliceStable(order, func(a, b int) bool {
 		x, y := events[order[a]], events[order[b]]
-		if x.FirstSeason != y.FirstSeason {
-			return x.FirstSeason < y.FirstSeason
+		if x.LastSeason != y.LastSeason {
+			return x.LastSeason > y.LastSeason
+		}
+		if len(x.Editions) != len(y.Editions) {
+			return len(x.Editions) > len(y.Editions)
 		}
 		return x.Key < y.Key
 	})
@@ -178,7 +183,10 @@ func mint(ev Event, taken map[string]struct{}) string {
 	if base == "" {
 		base = name.Slug(ev.Key)
 	}
-	base += "-" + ev.Tour
+	// "WTA Finals" and "Next Gen ATP Finals" already carry the tour.
+	if !strings.Contains("-"+base+"-", "-"+ev.Tour+"-") {
+		base += "-" + ev.Tour
+	}
 	slug := base
 	for n := 2; ; n++ {
 		if _, ok := taken[slug]; !ok {

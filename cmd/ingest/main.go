@@ -19,6 +19,7 @@ import (
 	"github.com/sami0076/tennis-wiki/internal/cache"
 	"github.com/sami0076/tennis-wiki/internal/charting"
 	"github.com/sami0076/tennis-wiki/internal/db"
+	"github.com/sami0076/tennis-wiki/internal/events"
 	"github.com/sami0076/tennis-wiki/internal/identity"
 	"github.com/sami0076/tennis-wiki/internal/ingest"
 )
@@ -33,9 +34,11 @@ type config struct {
 	batchSize int
 	stage     string
 	overrides string
-	dryRun    bool
-	force     bool
-	verbose   bool
+	// eventOverrides is the events stage's decisions file.
+	eventOverrides string
+	dryRun         bool
+	force          bool
+	verbose        bool
 }
 
 // Stages. Reference data runs after matches so the player tables, which carry
@@ -46,6 +49,9 @@ const (
 	stageMatches   = "matches"
 	stageReference = "reference"
 	stageReconcile = "reconcile"
+	// What an event is across seasons, derived from every tournaments row
+	// once the match stage has written them all; ADR-0012.
+	stageEvents = "events"
 	// The Match Charting Project, attached to matches that exist by then and
 	// to players as reconciliation left them; ADR-0011.
 	stageCharting = "charting"
@@ -67,10 +73,13 @@ func main() {
 	flag.IntVar(&cfg.batchSize, "batch", ingest.DefaultBatchSize, "rows per transaction")
 	flag.StringVar(&cfg.stage, "stage", stageAll,
 		"what to run: all, matches, reference (player tables and rankings), reconcile, "+
-			"charting (the Match Charting Project), refresh (derived columns only), or "+
-			"prune (clear stat lines the parser now rejects)")
+			"events (what a tournament is across seasons), charting (the Match Charting "+
+			"Project), refresh (derived columns only), or prune (clear stat lines the "+
+			"parser now rejects)")
 	flag.StringVar(&cfg.overrides, "overrides", "configs/player_overrides.json",
 		"identity decisions made by hand")
+	flag.StringVar(&cfg.eventOverrides, "event-overrides", "configs/event_overrides.json",
+		"tournament numbers that changed, decided by hand")
 	flag.BoolVar(&cfg.dryRun, "dry-run", false,
 		"for reconcile and prune: report what would change without doing it")
 	flag.BoolVar(&cfg.force, "force", false,
@@ -126,10 +135,10 @@ func run(ctx context.Context, cfg config) error {
 	defer pool.Close()
 
 	switch cfg.stage {
-	case stageAll, stageMatches, stageReference, stageReconcile, stageCharting, stageRefresh, stagePrune:
+	case stageAll, stageMatches, stageReference, stageReconcile, stageEvents, stageCharting, stageRefresh, stagePrune:
 	default:
 		return fmt.Errorf(
-			"unknown stage %q: want all, matches, reference, reconcile, charting, refresh or prune",
+			"unknown stage %q: want all, matches, reference, reconcile, events, charting, refresh or prune",
 			cfg.stage)
 	}
 
@@ -152,6 +161,12 @@ func run(ctx context.Context, cfg config) error {
 			return err
 		}
 	}
+	// After matches: it reads every tournaments row there is.
+	if cfg.stage == stageAll || cfg.stage == stageEvents {
+		if err := runEvents(ctx, cfg, pool); err != nil {
+			return err
+		}
+	}
 	// Last of all: it attaches to rows and player ids as everything above
 	// left them.
 	if cfg.stage == stageAll || cfg.stage == stageCharting {
@@ -169,7 +184,8 @@ func run(ctx context.Context, cfg config) error {
 	// and a reconcile moves them between players, which is the same thing.
 	// Charting changes nothing the views read, but /coverage is cached.
 	if cfg.stage == stageAll || cfg.stage == stageMatches || cfg.stage == stageReference ||
-		cfg.stage == stageReconcile || cfg.stage == stageCharting || cfg.stage == stageRefresh {
+		cfg.stage == stageReconcile || cfg.stage == stageEvents || cfg.stage == stageCharting ||
+		cfg.stage == stageRefresh {
 		started := time.Now()
 		if err := store.RefreshProminence(ctx); err != nil {
 			return err
@@ -281,6 +297,20 @@ func runReconcile(ctx context.Context, cfg config, pool *pgxpool.Pool, tours []i
 	}
 	_, err = runner.Run(ctx, names)
 	return err
+}
+
+func runEvents(ctx context.Context, cfg config, pool *pgxpool.Pool) error {
+	overrides, err := events.LoadOverrides(cfg.eventOverrides)
+	if err != nil {
+		return err
+	}
+	started := time.Now()
+	_, _, err = events.Run(ctx, events.NewStore(pool), overrides, slog.Default())
+	if err != nil {
+		return err
+	}
+	slog.Info("events stage done", "took", time.Since(started).Round(time.Millisecond))
+	return nil
 }
 
 func runMatches(ctx context.Context, cfg config, registry *ingest.Registry,

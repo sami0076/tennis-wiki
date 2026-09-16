@@ -115,34 +115,39 @@ func TestRunWritesEventsAndLinks(t *testing.T) {
 }
 
 // A slug is minted once. The event whose sanction moves city keeps its URL
-// and takes the new name; a name two events share within a tour gets a serial
-// in order of first season; an event nothing points at any more goes.
+// and takes the new name; a name two events share within a tour gets a serial,
+// the more recent run taking the bare slug; a name that already carries the
+// tour is not suffixed again; an event nothing points at any more goes.
 func TestSlugsAreKeptAndSerialled(t *testing.T) {
 	f := newFixture(t)
 	f.tournament("atp", "2013-0424", "San Jose", "A", "tour", 2013)
 	f.tournament("atp", "2001-746", "Sao Paulo CH", "C", "challenger", 2001)
 	f.tournament("atp", "2010-6492", "Sao Paulo CH", "C", "challenger", 2010)
+	f.tournament("wta", "2025-808", "WTA Finals", "F", "tour", 2025)
 	f.run(nil)
 
 	if got := f.linkOf("2013-0424"); got.slug != "san-jose-atp" {
 		t.Errorf("San Jose: %+v", got)
 	}
-	if got := f.linkOf("2001-746"); got.slug != "sao-paulo-atp" {
-		t.Errorf("the earlier Sao Paulo takes the bare slug: %+v", got)
+	if got := f.linkOf("2010-6492"); got.slug != "sao-paulo-atp" {
+		t.Errorf("the more recent Sao Paulo takes the bare slug: %+v", got)
 	}
-	if got := f.linkOf("2010-6492"); got.slug != "sao-paulo-atp-2" {
-		t.Errorf("the later Sao Paulo takes the serial: %+v", got)
+	if got := f.linkOf("2001-746"); got.slug != "sao-paulo-atp-2" {
+		t.Errorf("the earlier Sao Paulo takes the serial: %+v", got)
+	}
+	if got := f.linkOf("2025-808"); got.slug != "wta-finals" {
+		t.Errorf("a name carrying the tour is not suffixed again: %+v", got)
 	}
 
 	f.tournament("atp", "2022-424", "Dallas", "A", "tour", 2022)
-	if _, err := f.pool.Exec(f.ctx, `DELETE FROM tournaments WHERE source_id = '2010-6492'`); err != nil {
+	if _, err := f.pool.Exec(f.ctx, `DELETE FROM tournaments WHERE source_id = '2001-746'`); err != nil {
 		t.Fatal(err)
 	}
 	_, stats := f.run(nil)
 	if got := f.linkOf("2022-424"); got != (linked{"san-jose-atp", "Dallas", "number"}) {
 		t.Errorf("Dallas keeps San Jose's slug and takes the name: %+v", got)
 	}
-	if stats.Removed != 1 || f.count("events") != 2 {
+	if stats.Removed != 1 || f.count("events") != 3 {
 		t.Errorf("the emptied Sao Paulo should go: removed %d, events %d", stats.Removed, f.count("events"))
 	}
 }

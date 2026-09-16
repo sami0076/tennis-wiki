@@ -16,10 +16,13 @@ import (
 // name: a run joined by name is the rule's job, and the page says so.
 type Override struct {
 	Tour string `json:"tour"`
-	// Exactly one of these names the rows.
-	Number   string `json:"number,omitempty"`
-	Code     string `json:"code,omitempty"`
-	SourceID string `json:"source_id,omitempty"`
+	// Exactly one of these names the rows. SourceIDs is for a run that has
+	// no number at all and is one event by a person's reading, such as the
+	// WTA's year-end championships before 2014.
+	Number    string   `json:"number,omitempty"`
+	Code      string   `json:"code,omitempty"`
+	SourceID  string   `json:"source_id,omitempty"`
+	SourceIDs []string `json:"source_ids,omitempty"`
 	// To is the number the rows are filed under.
 	To string `json:"to,omitempty"`
 	// Name pins the event's display name where the latest edition's would
@@ -70,8 +73,14 @@ func (o Override) validate() error {
 			selectors++
 		}
 	}
+	if len(o.SourceIDs) > 0 {
+		selectors++
+	}
 	if selectors != 1 {
-		return errors.New("needs exactly one of number, code or source_id")
+		return errors.New("needs exactly one of number, code, source_id or source_ids")
+	}
+	if len(o.SourceIDs) > 0 && o.To == "" {
+		return errors.New("source_ids needs a number to file under (to)")
 	}
 	if o.Number != "" && !digits.MatchString(o.Number) {
 		return fmt.Errorf("number %q is not a number", o.Number)
@@ -109,6 +118,10 @@ func (o *Overrides) index() *index {
 	}
 	for i, ov := range o.Overrides {
 		switch {
+		case len(ov.SourceIDs) > 0:
+			for _, id := range ov.SourceIDs {
+				ix.bySourceID[ov.Tour+"\x00"+id] = i
+			}
 		case ov.SourceID != "":
 			ix.bySourceID[ov.Tour+"\x00"+ov.SourceID] = i
 		case ov.Code != "":
