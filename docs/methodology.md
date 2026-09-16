@@ -5,7 +5,8 @@ How the numbers on this site are produced, and — as much as anything — where
 > Everything below is current: coverage, the rating engine, the tier weights and what the
 > validation checks say about all three. The figures come from the run committed in
 > [`validation.json`](validation.json), and the page that renders this document fails to
-> build if the two disagree.
+> build if the two disagree. It is rendered at
+> [deucepoint.net/methodology](https://deucepoint.net/methodology); this file is the source.
 
 ## What the data is
 
