@@ -44,4 +44,14 @@ get "/h2h/$slug/$opp"
 get "/rankings?tour=atp"
 get "/simulate/match?a=$slug&b=$opp&surface=clay"
 
+# Wimbledon 2019 is in every load and is the draw the site opens on: a full
+# 128 bracket, so the sheet and the simulator both have to answer for it.
+get "/tournaments?q=wimbledon&tour=atp"
+event=$(grep -o '"slug":"[^"]*"' /tmp/smoke.json | head -1 | cut -d'"' -f4)
+[ -n "$event" ] || { echo "FAIL tournaments: no Wimbledon, has the events stage run?"; exit 1; }
+get "/tournaments/$event"
+get "/tournaments/$event/2019"
+grep -q '"matches":\[{' /tmp/smoke.json || { echo "FAIL edition: no matches on the sheet"; exit 1; }
+get "/simulate/draw?event=$event&season=2019&runs=200"
+
 echo "all good: $base"
