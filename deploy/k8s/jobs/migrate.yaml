@@ -43,7 +43,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: goose
-          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:23014f48b26c2b131010e8370886722e9618e950558d6fe42e08765c73dcc730
+          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:0210541590d719815e354e6eeb351eb15c10ada9f1240ac5243afa50fa0aa99b
           command: ["goose", "up"]
           env:
             - name: DATABASE_URL
