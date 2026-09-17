@@ -18,6 +18,7 @@ packages:
       - "simulate.go"
       - "coverage.go"
       - "charted.go"
+      - "tournaments.go"
       - "problem.go"
       - "cursor.go"
     type_mappings:

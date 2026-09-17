@@ -44,6 +44,7 @@ const chain: MatchSimulation = {
 
 const draw: DrawSimulation = {
   event: {
+    slug: 'wimbledon-atp',
     name: 'Wimbledon',
     season: 2019,
     tour: 'atp',

@@ -1,15 +1,17 @@
 -- name: FindTournament :one
 -- Resolve an event by what a URL can carry, rather than by a numeric id nobody
 -- can read or guess.
-SELECT id, name, season, tour::text AS tour, tier::text AS tier,
+SELECT t.id, t.name, t.season, t.tour::text AS tour, t.tier::text AS tier,
        -- The source leaves surface blank for some events. "unknown" is the same
        -- stand-in the career and head-to-head splits use, so one absent surface
        -- does not have two spellings across the API.
-       coalesce(surface::text, 'unknown')::text AS surface,
-       level, draw_size, start_date
-  FROM tournaments
- WHERE tour = @tour::tour AND season = @season::smallint AND lower(name) = lower(@name::text)
- ORDER BY start_date
+       coalesce(t.surface::text, 'unknown')::text AS surface,
+       t.level, t.draw_size, t.start_date,
+       coalesce(e.slug, '')::text AS slug
+  FROM tournaments t
+  LEFT JOIN events e ON e.id = t.event_id
+ WHERE t.tour = @tour::tour AND t.season = @season::smallint AND lower(t.name) = lower(@name::text)
+ ORDER BY t.start_date
  LIMIT 1;
 
 -- name: ListDrawMatches :many

@@ -11,15 +11,17 @@ import (
 )
 
 const findTournament = `-- name: FindTournament :one
-SELECT id, name, season, tour::text AS tour, tier::text AS tier,
+SELECT t.id, t.name, t.season, t.tour::text AS tour, t.tier::text AS tier,
        -- The source leaves surface blank for some events. "unknown" is the same
        -- stand-in the career and head-to-head splits use, so one absent surface
        -- does not have two spellings across the API.
-       coalesce(surface::text, 'unknown')::text AS surface,
-       level, draw_size, start_date
-  FROM tournaments
- WHERE tour = $1::tour AND season = $2::smallint AND lower(name) = lower($3::text)
- ORDER BY start_date
+       coalesce(t.surface::text, 'unknown')::text AS surface,
+       t.level, t.draw_size, t.start_date,
+       coalesce(e.slug, '')::text AS slug
+  FROM tournaments t
+  LEFT JOIN events e ON e.id = t.event_id
+ WHERE t.tour = $1::tour AND t.season = $2::smallint AND lower(t.name) = lower($3::text)
+ ORDER BY t.start_date
  LIMIT 1
 `
 
@@ -39,6 +41,7 @@ type FindTournamentRow struct {
 	Level     string
 	DrawSize  *int16
 	StartDate time.Time
+	Slug      string
 }
 
 // Resolve an event by what a URL can carry, rather than by a numeric id nobody
@@ -56,6 +59,7 @@ func (q *Queries) FindTournament(ctx context.Context, arg FindTournamentParams) 
 		&i.Level,
 		&i.DrawSize,
 		&i.StartDate,
+		&i.Slug,
 	)
 	return i, err
 }

@@ -276,6 +276,16 @@ type ClutchBaseline struct {
 	RefreshedAt        pgtype.Timestamptz
 }
 
+type Event struct {
+	ID          int64
+	Tour        Tour
+	Slug        string
+	Name        string
+	Key         string
+	FirstSeason int16
+	LastSeason  int16
+}
+
 type IdentityReview struct {
 	Source     string
 	SourceID   string
@@ -416,6 +426,8 @@ type Tournament struct {
 	DrawSize  *int16
 	StartDate time.Time
 	Season    int16
+	EventID   *int64
+	EventLink *string
 }
 
 type UnresolvedReference struct {

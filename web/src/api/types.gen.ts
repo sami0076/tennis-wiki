@@ -787,6 +787,11 @@ export interface DrawSimulation {
  * SimulatedEvent names the draw that was replayed.
  */
 export interface SimulatedEvent {
+  /**
+   * Slug is the event's, the key to /tournaments/{slug}/{season}: the
+   * sheet this draw is a replay of.
+   */
+  slug: string;
   name: string;
   season: number /* int */;
   tour: string;
@@ -798,6 +803,183 @@ export interface SimulatedEvent {
    * of the book.
    */
   ratings_as_of: string;
+}
+
+//////////
+// source: tournaments.go
+
+/**
+ * EventSummary is one row of the tournament index.
+ */
+export interface EventSummary {
+  slug: string;
+  name: string;
+  tour: string;
+  /**
+   * Category folds both tours' level vocabularies into the list the index
+   * groups by: slam, masters, finals, olympics, team, tour, challenger,
+   * futures, itf. Level and tier are the latest edition's own.
+   */
+  category: string;
+  level: string;
+  tier: string;
+  first_season: number /* int16 */;
+  last_season: number /* int16 */;
+  editions: number /* int */;
+}
+/**
+ * Event is a tournament across seasons, on the terms of ADR-0012.
+ */
+export interface Event {
+  slug: string;
+  name: string;
+  tour: string;
+  /**
+   * Keyed says what the run is identified by: "number" (the tour's own),
+   * "name", or "team" (a competition). Number is the tour's number when
+   * that is the key, null otherwise.
+   */
+  keyed: string;
+  number: string | null;
+  first_season: number /* int16 */;
+  last_season: number /* int16 */;
+  names: NameRun[];
+  /**
+   * Provenance counts the editions by how they were placed on this event.
+   * It is printed, not hidden: an edition here by the tour's number and one
+   * here by name are two different claims.
+   */
+  provenance: Provenance;
+  editions: EventEdition[];
+}
+/**
+ * NameRun is one stretch of seasons under one name.
+ */
+export interface NameRun {
+  name: string;
+  first_season: number /* int16 */;
+  last_season: number /* int16 */;
+}
+/**
+ * Provenance is how many editions arrived by each link (ADR-0012).
+ */
+export interface Provenance {
+  number: number /* int */;
+  override: number /* int */;
+  bridged: number /* int */;
+  name: number /* int */;
+  team: number /* int */;
+}
+/**
+ * EventEdition is one season on an event page: what the sheet writes at the
+ * top. A team competition has one per season, holding its ties and no final.
+ */
+export interface EventEdition {
+  season: number /* int16 */;
+  name: string;
+  level: string;
+  tier: string;
+  surface: string | null;
+  draw_size: number /* int16 */ | null;
+  start_date: string;
+  /**
+   * Link is how this edition got onto the event: number, override,
+   * bridged, name or team.
+   */
+  link: string;
+  champion: Opponent | null;
+  finalist: Opponent | null;
+  final_score: string | null;
+  matches: number /* int */;
+  ties: number /* int */;
+}
+/**
+ * EventRef names an event well enough to link to.
+ */
+export interface EventRef {
+  slug: string;
+  name: string;
+  tour: string;
+}
+/**
+ * Edition is one season of an event as a draw sheet.
+ */
+export interface Edition {
+  event: EventRef;
+  season: number /* int16 */;
+  name: string;
+  level: string;
+  tier: string;
+  surface: string | null;
+  draw_size: number /* int16 */ | null;
+  start_date: string;
+  link: string;
+  champion: Opponent | null;
+  finalist: Opponent | null;
+  final_score: string | null;
+  /**
+   * Serve says once for the edition whether its matches carry serve lines,
+   * rather than fifty-six times in the margin.
+   */
+  serve: EditionServe;
+  seeds: SeedLine[];
+  matches: EditionMatch[];
+}
+/**
+ * EditionServe is the edition's serve-statistics coverage.
+ */
+export interface EditionServe {
+  /**
+   * Availability is recorded when every match carries a line, partial when
+   * some do, and otherwise says why none does, in the profile's vocabulary.
+   */
+  availability: string;
+  matches_with: number /* int */;
+  matches: number /* int */;
+}
+/**
+ * SeedLine is one seed and where they went out: the round of their last
+ * main-draw loss, or W for the champion.
+ */
+export interface SeedLine {
+  seed: number /* int16 */;
+  player: Opponent;
+  exit: string;
+}
+/**
+ * EditionMatch is one match on the sheet. Players are winner first.
+ */
+export interface EditionMatch {
+  round: string;
+  match_num: number /* int16 */;
+  qualifying: boolean;
+  best_of: number /* int16 */;
+  /**
+   * Tie names the tie a team competition's match belongs to; null otherwise.
+   */
+  tie: string | null;
+  players: EditionSide[];
+  score: string | null;
+  incomplete: boolean;
+  minutes: number /* int16 */ | null;
+  /**
+   * Serve is each side's line, in Players order; null where the match has
+   * none, and the edition's Serve says why.
+   */
+  serve: (MatchServe | undefined)[];
+  charting_id: string | null;
+}
+/**
+ * EditionSide is one player as the sheet writes them: name, seed in
+ * brackets, entry and ranking in the margin.
+ */
+export interface EditionSide {
+  slug: string;
+  name: string;
+  country: string | null;
+  seed: number /* int16 */ | null;
+  entry: string | null;
+  rank: number /* int32 */ | null;
 }
 
 //////////

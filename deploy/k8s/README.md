@@ -70,7 +70,7 @@ docker buildx imagetools inspect ghcr.io/sami0076/tennis-wiki/api:<short-sha> \
   --format '{{.Manifest.Digest}}'
 ```
 
-Then edit `base/40-api.yaml`, and both Jobs if the tools image moved. Rolling
+Then edit `base/40-api.yaml`, and the Jobs if the tools image moved. Rolling
 back is putting the previous digest back and applying again.
 
 ## Re-running things
@@ -83,9 +83,10 @@ kubectl -n deucepoint delete job migrate --ignore-not-found
 kubectl -n deucepoint apply -f deploy/k8s/jobs/migrate.yaml
 ```
 
-All three Jobs clean themselves up 24 hours after finishing. `jobs/reconcile.yaml` is
+All four Jobs clean themselves up 24 hours after finishing. `jobs/reconcile.yaml` is
 identity reconciliation and the ratings without the load in front of them, for after a
-scoring change; its header says how to dry-run it first.
+scoring change; its header says how to dry-run it first. `jobs/events.yaml` is the
+events stage on its own, for after a change to `configs/event_overrides.json`.
 
 ## What the probes mean
 

@@ -3,7 +3,7 @@
  * and never will be, so it is a played one, and one whose answer a reader can
  * check: the whole advantage of simulating the past.
  */
-export const FEATURED_DRAW = { tour: 'atp', season: 2019, event: 'Wimbledon' }
+export const FEATURED_DRAW = { event: 'wimbledon-atp', season: 2019 }
 
 /**
  * A draw sheet's columns are the rounds a player is still in. The API reports

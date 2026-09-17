@@ -142,6 +142,21 @@ var integrityChecks = []Check{
 		Why:      "Slugs are URL keys and must be unique.",
 		Query:    `SELECT count(*) FROM (SELECT slug FROM players GROUP BY slug HAVING count(*) > 1) x`,
 	},
+	{
+		Name:     "tournaments_without_event",
+		Severity: Integrity,
+		Why: "Every tournaments row belongs to an event once the events stage has run " +
+			"(ADR-0012). A row without one is a load that stopped after the match stage, " +
+			"and its name links nowhere.",
+		Query:  `SELECT count(*) FROM tournaments WHERE event_id IS NULL`,
+		Sample: `SELECT source_id || ' ' || name FROM tournaments WHERE event_id IS NULL ORDER BY season DESC LIMIT 5`,
+	},
+	{
+		Name:     "events_without_editions",
+		Severity: Integrity,
+		Why:      "An event nothing points at is a page with no sheet; the events stage removes them.",
+		Query:    `SELECT count(*) FROM events e WHERE NOT EXISTS (SELECT 1 FROM tournaments t WHERE t.event_id = e.id)`,
+	},
 }
 
 // anomalyChecks describe the data rather than fault it. These are the section
@@ -285,6 +300,39 @@ var anomalyChecks = []Check{
 		Severity: Info,
 		Why:      "Source ids folded into a canonical player by identity reconciliation.",
 		Query:    `SELECT count(*) FROM player_aliases`,
+	},
+	{
+		Name:     "editions_joined_by_name",
+		Severity: Info,
+		Why: "Editions on their event by name rather than by the tour's number (ADR-0012): " +
+			"the women's tour before 2016, Futures, ITF. The page says which; this says " +
+			"how many.",
+		Query: `SELECT count(*) FROM tournaments WHERE event_link IN ('name', 'bridged')`,
+		Sample: `SELECT e.slug || ': ' || count(*) || ' editions by name'
+		           FROM tournaments t JOIN events e ON e.id = t.event_id
+		          WHERE t.event_link IN ('name', 'bridged')
+		          GROUP BY e.slug ORDER BY count(*) DESC LIMIT 5`,
+	},
+	{
+		Name:     "editions_bridged_by_name",
+		Severity: Info,
+		Why: "Name-keyed editions joined to a numbered event because exactly one event of " +
+			"the tour and tier carries that name: the women's Slams before 2016 are the " +
+			"bulk of it. Each is a claim the page prints as such.",
+		Query: `SELECT count(*) FROM tournaments WHERE event_link = 'bridged'`,
+		Sample: `SELECT e.slug || ': ' || min(t.season) || '-' || max(t.season) || ', ' || count(*) || ' bridged'
+		           FROM tournaments t JOIN events e ON e.id = t.event_id
+		          WHERE t.event_link = 'bridged'
+		          GROUP BY e.slug ORDER BY count(*) DESC LIMIT 5`,
+	},
+	{
+		Name:     "events_named_after_a_serial",
+		Severity: Info,
+		Why: "Events whose slug carries a serial because another of the tour shares the " +
+			"name: a city with two Challengers, or a sanction that changed number. The " +
+			"current one takes the bare slug.",
+		Query:  `SELECT count(*) FROM events WHERE slug ~ '-\d+$'`,
+		Sample: `SELECT slug || ' (' || first_season || '-' || last_season || ')' FROM events WHERE slug ~ '-\d+$' ORDER BY last_season DESC LIMIT 5`,
 	},
 	{
 		Name:     "charted_matches",

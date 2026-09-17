@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 	"unicode/utf8"
 )
 
@@ -141,6 +142,36 @@ func TestQualifyingDetection(t *testing.T) {
 		got := MatchRow{Round: round}.IsQualifying()
 		if got != want {
 			t.Errorf("round %q: IsQualifying() = %v, want %v", round, got, want)
+		}
+	}
+}
+
+// The season is the year in the id. Perth 1969 began on 30 December 1968 and
+// the 1985 Masters was played in January 1986; keyed on the date, each would
+// land in the wrong season beside another edition of itself.
+func TestSeasonComesFromTheID(t *testing.T) {
+	date := func(s string) time.Time {
+		d, err := time.Parse("20060102", s)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return d
+	}
+	cases := []struct {
+		id   string
+		date string
+		want int
+	}{
+		{"1969-243", "19681230", 1969},
+		{"1985-605", "19860114", 1985},
+		{"2019-M-DC-2019-FLS-A-M-FRA-JPN-01", "20191118", 2019},
+		{"W-FC-2026-QLS-M-AUS-GBR-01", "20260410", 2026},
+		{"", "20220103", 2022},
+	}
+	for _, c := range cases {
+		got := MatchRow{TourneyID: c.id, TourneyDate: date(c.date)}.Season()
+		if got != c.want {
+			t.Errorf("%q on %s: Season() = %d, want %d", c.id, c.date, got, c.want)
 		}
 	}
 }

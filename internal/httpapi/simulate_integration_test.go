@@ -224,6 +224,24 @@ func TestSimulateDrawReplaysTheBracket(t *testing.T) {
 	if repeat.Odds[0].Title != sim.Odds[0].Title {
 		t.Errorf("same seed gave %.4f then %.4f", sim.Odds[0].Title, repeat.Odds[0].Title)
 	}
+
+	// Addressed by the sheet's slug and season, the same draw comes back and
+	// names its slug, so the simulator and the sheet agree on what an event is.
+	f.event(db.TourAtp, "itg-sim-open-atp", "Itg Sim Open", "name:tour:itg-sim-open", map[int64]string{event: "name"})
+	var bySlug DrawSimulation
+	res = f.get("/api/v1/simulate/draw?event=itg-sim-open-atp&season=2019&runs=2000&seed=5")
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("by slug: status = %d", res.StatusCode)
+	}
+	if err := json.NewDecoder(res.Body).Decode(&bySlug); err != nil {
+		t.Fatalf("decode by slug: %v", err)
+	}
+	if bySlug.Event.Slug != "itg-sim-open-atp" || bySlug.Odds[0].Title != sim.Odds[0].Title {
+		t.Errorf("by slug: %+v, title %.4f", bySlug.Event, bySlug.Odds[0].Title)
+	}
+	if res := f.get("/api/v1/simulate/draw?event=itg-sim-open-atp&season=2018"); res.StatusCode != http.StatusNotFound {
+		t.Errorf("a season not played: %d", res.StatusCode)
+	}
 }
 
 // A draw that is not a complete bracket is refused with the reason, not a 500.

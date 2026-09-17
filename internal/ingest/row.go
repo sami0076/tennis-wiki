@@ -147,6 +147,19 @@ const (
 // the quarterfinal of a main draw.
 var qualifyingRound = regexp.MustCompile(`^Q\d+$`)
 
+// Season is the tour's season for the row: the year in the tourney_id where it
+// carries one, which is every source but the odd team tie. The date's year is
+// wrong for an event that starts in the last days of December, and for the
+// 1985 Masters, played in January 1986 (ADR-0012).
+func (m MatchRow) Season() int {
+	if len(m.TourneyID) > 4 && m.TourneyID[4] == '-' {
+		if y, err := strconv.Atoi(m.TourneyID[:4]); err == nil {
+			return y
+		}
+	}
+	return m.TourneyDate.Year()
+}
+
 // IsQualifying reports whether the match belongs to a qualifying draw. The
 // source bundles qualifying into the same file and the same tournament as the
 // main draw, so this is derived from the round rather than the filename.

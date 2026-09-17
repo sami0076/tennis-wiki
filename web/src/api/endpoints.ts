@@ -138,10 +138,11 @@ export function simulateMatch(
 /**
  * A draw that was played, replayed. There is no upcoming tournament in the
  * database and there will not be one, so the event is always a historical one
- * and the answer can be read against what actually happened.
+ * and the answer can be read against what actually happened. An edition is
+ * addressed the way its sheet is: the event's slug and the season.
  */
 export function simulateDraw(
-  event: { tour: string; season: number; event: string; runs?: number | null },
+  event: { event: string; season: number; runs?: number | null },
   signal?: AbortSignal,
 ): Promise<DrawSimulation> {
   return request<DrawSimulation>('/simulate/draw', { ...event }, signal)
