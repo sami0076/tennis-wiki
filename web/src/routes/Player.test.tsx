@@ -182,6 +182,8 @@ describe('the player page', () => {
     // The score is typed as the source stores it, set by set.
     expect(await screen.findByText('7-6(3)')).toBeInTheDocument()
     expect(screen.getByText('6-4')).toBeInTheDocument()
+    // The event names the sheet it is on.
+    expect(screen.getByRole('link', { name: 'Paris' })).toHaveAttribute('href', '/tournaments/paris-atp/2025')
   })
 
   // The majority case at 125,868 players, and the one normally done badly.

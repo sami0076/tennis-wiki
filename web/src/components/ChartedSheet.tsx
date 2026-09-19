@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { request, type ChartedFigures, type ChartedMatch } from '../api/client'
 import { useResource } from '../api/useResource'
 import { AbsentCell } from './AbsentCell'
+import { EventLink } from './EventLink'
 import { Skeleton } from './Skeleton'
 import styles from './ChartedSheet.module.css'
 
@@ -83,7 +84,8 @@ export function ChartedSheet({ chartingId, first }: ChartedSheetProps) {
         </span>
         <span className={styles.when}>
           {' '}
-          {match.tournament} {match.round}, {match.played_on}
+          <EventLink name={match.tournament} slug={match.event_slug} season={match.season} /> {match.round},{' '}
+          {match.played_on}
         </span>
       </p>
       <div className={styles.wrap}>

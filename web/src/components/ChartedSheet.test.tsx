@@ -94,7 +94,9 @@ describe('ChartedSheet', () => {
     )
     await screen.findByRole('table')
     const links = screen.getAllByRole('link')
-    expect(links.map((a) => a.textContent)).toEqual(['Cha Bbb', 'Cha Aaa'])
+    // Both players, then the event as the sheet it is on.
+    expect(links.map((a) => a.textContent)).toEqual(['Cha Bbb', 'Cha Aaa', 'Open'])
+    expect(links[2]).toHaveAttribute('href', '/tournaments/open-atp/2025')
     expect(links[0]).toHaveAttribute('href', '/players/cha-bbb')
     // And the figures follow the swap: B's 70 serve points come first.
     const serve = screen.getByRole('row', { name: /^Serve points/ })

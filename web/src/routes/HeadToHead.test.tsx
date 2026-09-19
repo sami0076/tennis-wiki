@@ -188,7 +188,8 @@ describe('HeadToHead', () => {
     expect(await screen.findByRole('link', { name: 'Bjorn Borg' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'John McEnroe' })).toBeInTheDocument()
     expect(screen.getByText('1-2')).toBeInTheDocument()
-    expect(screen.getByText('Wimbledon F')).toBeInTheDocument()
+    // The event is a link to its sheet, the round typed after it.
+    expect(screen.getByRole('link', { name: 'Wimbledon' })).toHaveAttribute('href', '/tournaments/wimbledon-atp/1980')
     expect(screen.getByText('Break points saved')).toBeInTheDocument()
   })
 
@@ -228,7 +229,7 @@ describe('HeadToHead', () => {
     })
     renderAt('/h2h/john-mcenroe/bjorn-borg')
 
-    await screen.findByText('Wimbledon F')
+    await screen.findByRole('link', { name: 'Wimbledon' })
     const marks = screen.getAllByRole('button', { name: 'charted' })
     expect(marks).toHaveLength(1)
     await userEvent.click(marks[0] as HTMLElement)
@@ -246,7 +247,7 @@ describe('HeadToHead', () => {
     renderAt('/h2h/bjorn-borg/john-mcenroe?surface=grass')
 
     expect(await screen.findByText('1-0')).toBeInTheDocument()
-    expect(screen.getByText('Wimbledon F')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Wimbledon' })).toBeInTheDocument()
     expect(screen.queryByText('US Open F')).not.toBeInTheDocument()
   })
 

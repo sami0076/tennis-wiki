@@ -24,6 +24,7 @@ import {
   ChartedMark,
   ChartedSheet,
   EmptyState,
+  EventLink,
   Meta,
   PartialAggregate,
   RankDelta,
@@ -500,7 +501,7 @@ function matchColumns(
           <span className={styles.eventSurface}>
             <SurfaceDot surface={row.surface} label={false} />{' '}
           </span>
-          {row.tournament} {row.round}
+          <EventLink name={row.tournament} slug={row.event_slug} season={row.season} /> {row.round}
           {row.qualifying ? ' Q' : ''}
         </div>
       </>
