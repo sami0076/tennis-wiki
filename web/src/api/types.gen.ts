@@ -26,6 +26,7 @@ export interface ChartedMatch {
   played_on: string;
   charted_by: string | null;
   tournament: string;
+  event_slug: string | null;
   season: number /* int16 */;
   round: string;
   score: string | null;
@@ -259,6 +260,7 @@ export interface HeadToHeadSplit {
 export interface Meeting {
   date: string;
   tournament: string;
+  event_slug: string | null;
   tier: string;
   level: string;
   season: number /* int16 */;
@@ -288,6 +290,11 @@ export interface Meeting {
 export interface PlayerMatch {
   date: string;
   tournament: string;
+  /**
+   * EventSlug keys /tournaments/{slug}/{season}, the sheet this match is on;
+   * null for a row the events stage has not keyed.
+   */
+  event_slug: string | null;
   tier: string;
   level: string;
   season: number /* int16 */;

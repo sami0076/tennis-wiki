@@ -15,6 +15,7 @@ SELECT cm.charting_id,
        cm.played_on,
        cm.charted_by,
        t.name AS tournament,
+       e.slug AS event_slug,
        t.season,
        m.round,
        m.score,
@@ -24,6 +25,7 @@ SELECT cm.charting_id,
   FROM charted_matches cm
   JOIN matches m     ON m.id = cm.match_id
   JOIN tournaments t ON t.id = m.tournament_id
+  LEFT JOIN events e ON e.id = t.event_id
   JOIN players w     ON w.id = m.winner_id
   JOIN players l     ON l.id = m.loser_id
  WHERE cm.charting_id = $1
@@ -34,6 +36,7 @@ type GetChartedMatchRow struct {
 	PlayedOn   time.Time
 	ChartedBy  *string
 	Tournament string
+	EventSlug  *string
 	Season     int16
 	Round      string
 	Score      *string
@@ -56,6 +59,7 @@ func (q *Queries) GetChartedMatch(ctx context.Context, chartingID string) (GetCh
 		&i.PlayedOn,
 		&i.ChartedBy,
 		&i.Tournament,
+		&i.EventSlug,
 		&i.Season,
 		&i.Round,
 		&i.Score,
@@ -147,6 +151,7 @@ const listHeadToHeadMeetings = `-- name: ListHeadToHeadMeetings :many
 SELECT m.id,
        m.played_on,
        t.name  AS tournament,
+       e.slug  AS event_slug,
        t.tier,
        t.level,
        t.season,
@@ -165,6 +170,7 @@ SELECT m.id,
        cm.charting_id
   FROM matches m
   JOIN tournaments t   ON t.id = m.tournament_id
+  LEFT JOIN events e   ON e.id = t.event_id
   LEFT JOIN charted_matches cm ON cm.match_id = m.id
   JOIN match_players a ON a.match_id = m.id AND a.player_id = $1
   JOIN match_players b ON b.match_id = m.id AND b.player_id = $2
@@ -182,6 +188,7 @@ type ListHeadToHeadMeetingsRow struct {
 	ID            int64
 	PlayedOn      time.Time
 	Tournament    string
+	EventSlug     *string
 	Tier          Tier
 	Level         string
 	Season        int16
@@ -230,6 +237,7 @@ func (q *Queries) ListHeadToHeadMeetings(ctx context.Context, arg ListHeadToHead
 			&i.ID,
 			&i.PlayedOn,
 			&i.Tournament,
+			&i.EventSlug,
 			&i.Tier,
 			&i.Level,
 			&i.Season,
@@ -271,6 +279,7 @@ const listPlayerMatches = `-- name: ListPlayerMatches :many
 SELECT m.id,
        m.played_on,
        t.name                     AS tournament,
+       e.slug                     AS event_slug,
        t.tier,
        t.level,
        t.season,
@@ -297,6 +306,7 @@ SELECT m.id,
   JOIN matches m     ON m.id = mp.match_id
   LEFT JOIN charted_matches cm ON cm.match_id = m.id
   JOIN tournaments t ON t.id = m.tournament_id
+  LEFT JOIN events e ON e.id = t.event_id
   JOIN players op    ON op.id = CASE WHEN mp.won THEN m.loser_id ELSE m.winner_id END
  WHERE mp.player_id = $1
    AND ($2::surface IS NULL OR m.surface = $2::surface)
@@ -324,6 +334,7 @@ type ListPlayerMatchesRow struct {
 	ID           int64
 	PlayedOn     time.Time
 	Tournament   string
+	EventSlug    *string
 	Tier         Tier
 	Level        string
 	Season       int16
@@ -379,6 +390,7 @@ func (q *Queries) ListPlayerMatches(ctx context.Context, arg ListPlayerMatchesPa
 			&i.ID,
 			&i.PlayedOn,
 			&i.Tournament,
+			&i.EventSlug,
 			&i.Tier,
 			&i.Level,
 			&i.Season,

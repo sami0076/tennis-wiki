@@ -30,6 +30,7 @@ const charted: ChartedMatch = {
   played_on: '2025-05-05',
   charted_by: 'stard54',
   tournament: 'Open',
+  event_slug: 'open-atp',
   season: 2025,
   round: 'F',
   score: '6-4 6-3',

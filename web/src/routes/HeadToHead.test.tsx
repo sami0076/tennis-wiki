@@ -38,6 +38,7 @@ const meetings: Meeting[] = [
   {
     date: '1980-07-05',
     tournament: 'Wimbledon',
+    event_slug: 'wimbledon-atp',
     tier: 'tour',
     level: 'G',
     season: 1980,
@@ -52,6 +53,7 @@ const meetings: Meeting[] = [
   {
     date: '1981-01-18',
     tournament: 'Masters',
+    event_slug: null,
     tier: 'tour',
     level: 'M',
     season: 1981,
@@ -66,6 +68,7 @@ const meetings: Meeting[] = [
   {
     date: '1981-09-09',
     tournament: 'US Open',
+    event_slug: 'us-open-atp',
     tier: 'tour',
     level: 'G',
     season: 1981,
@@ -205,6 +208,7 @@ describe('HeadToHead', () => {
       played_on: '1980-07-05',
       charted_by: null,
       tournament: 'Wimbledon',
+    event_slug: 'wimbledon-atp',
       season: 1980,
       round: 'F',
       score: first.score,

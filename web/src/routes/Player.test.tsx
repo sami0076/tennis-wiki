@@ -74,6 +74,7 @@ function match(overrides: Partial<PlayerMatch> = {}): PlayerMatch {
   return {
     date: '2025-11-03',
     tournament: 'Paris',
+    event_slug: 'paris-atp',
     tier: 'tour',
     level: 'M',
     season: 2025,

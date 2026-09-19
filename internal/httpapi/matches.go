@@ -14,8 +14,11 @@ import (
 
 // PlayerMatch is one match in a player's history, from that player's side.
 type PlayerMatch struct {
-	Date       string     `json:"date"`
-	Tournament string     `json:"tournament"`
+	Date       string `json:"date"`
+	Tournament string `json:"tournament"`
+	// EventSlug keys /tournaments/{slug}/{season}, the sheet this match is on;
+	// null for a row the events stage has not keyed.
+	EventSlug  *string    `json:"event_slug"`
 	Tier       string     `json:"tier"`
 	Level      string     `json:"level"`
 	Season     int16      `json:"season"`
@@ -197,6 +200,7 @@ func buildPlayerMatch(row db.ListPlayerMatchesRow) PlayerMatch {
 	m := PlayerMatch{
 		Date:       row.PlayedOn.Format(time.DateOnly),
 		Tournament: row.Tournament,
+		EventSlug:  row.EventSlug,
 		Tier:       string(row.Tier),
 		Level:      row.Level,
 		Season:     row.Season,

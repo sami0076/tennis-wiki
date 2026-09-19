@@ -20,6 +20,7 @@ type ChartedMatch struct {
 	PlayedOn   string         `json:"played_on"`
 	ChartedBy  *string        `json:"charted_by"`
 	Tournament string         `json:"tournament"`
+	EventSlug  *string        `json:"event_slug"`
 	Season     int16          `json:"season"`
 	Round      string         `json:"round"`
 	Score      *string        `json:"score"`
@@ -84,6 +85,7 @@ func (a *API) handleChartedMatch(w http.ResponseWriter, r *http.Request) {
 		PlayedOn:   match.PlayedOn.Format(time.DateOnly),
 		ChartedBy:  match.ChartedBy,
 		Tournament: match.Tournament,
+		EventSlug:  match.EventSlug,
 		Season:     match.Season,
 		Round:      match.Round,
 		Score:      match.Score,
