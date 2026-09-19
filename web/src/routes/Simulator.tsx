@@ -43,6 +43,15 @@ export function Simulator() {
   const [b, setB] = useUrlParam('b')
   const [surface, setSurface] = useUrlParam('surface')
   const [bestOf, setBestOf] = useUrlParam('best_of')
+  // The draw to replay, as its sheet addresses it: ?event=<slug>&season=. The
+  // featured draw stands in when the URL names none.
+  const [eventSlug] = useUrlParam('event')
+  const [seasonParam] = useUrlParam('season')
+  const season = Number(seasonParam)
+  const chosenDraw =
+    eventSlug !== null && Number.isInteger(season) && season > 0
+      ? { event: eventSlug, season }
+      : FEATURED_DRAW
 
   const chosen = surface ?? 'hard'
   const sets = bestOf === '5' ? 5 : 3
@@ -54,7 +63,7 @@ export function Simulator() {
         : simulateMatch(a, b, { surface: chosen, best_of: sets }, signal),
     [a, b, chosen, sets],
   )
-  const draw = useResource((signal) => simulateDraw(FEATURED_DRAW, signal), [])
+  const draw = useResource((signal) => simulateDraw(chosenDraw, signal), [chosenDraw.event, chosenDraw.season])
 
   return (
     <>
@@ -93,7 +102,7 @@ export function Simulator() {
         <MatchPanel match={match} surface={chosen} sets={sets} />
       )}
 
-      <DrawPanel draw={draw} />
+      <DrawPanel draw={draw} chosen={chosenDraw} />
     </>
   )
 }
@@ -358,7 +367,7 @@ function Inputs({ sim }: { sim: MatchSimulation }) {
   )
 }
 
-function DrawPanel({ draw }: { draw: Resource<DrawSimulation> }) {
+function DrawPanel({ draw, chosen }: { draw: Resource<DrawSimulation>; chosen: { event: string; season: number } }) {
   if (draw.state === 'loading') {
     return (
       <section className={styles.section}>
@@ -368,12 +377,24 @@ function DrawPanel({ draw }: { draw: Resource<DrawSimulation> }) {
     )
   }
   if (draw.state === 'error') {
+    // 422 is the endpoint declining a draw it cannot rebuild -- byes, a round
+    // robin -- and 404 a season not played: both are answers about the draw
+    // that was asked for, not failures of the page.
+    const declined = draw.error instanceof ApiError && (draw.error.status === 422 || draw.error.status === 404)
     return (
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Draw simulator</h2>
-        <p className={styles.note}>
-          The draw simulation could not be loaded: {draw.error.message}
-        </p>
+        {declined ? (
+          <EmptyState
+            heading="This draw cannot be replayed"
+            reason={draw.error.message}
+            action={
+              <ButtonLink to={`/tournaments/${chosen.event}/${chosen.season}`}>See the sheet instead</ButtonLink>
+            }
+          />
+        ) : (
+          <p className={styles.note}>The draw simulation could not be loaded: {draw.error.message}</p>
+        )}
       </section>
     )
   }
@@ -390,7 +411,9 @@ function DrawPanel({ draw }: { draw: Resource<DrawSimulation> }) {
       <h2 className={styles.sectionTitle}>Draw simulator</h2>
       <Meta
         parts={[
-          `${sim.event.name} ${sim.event.season}`,
+          <Link key="sheet" className={styles.sheetLink} to={`/tournaments/${sim.event.slug}/${sim.event.season}`}>
+            {sim.event.name} {sim.event.season}
+          </Link>,
           `${sim.entered} draw`,
           `${sim.runs.toLocaleString('en-GB')} runs`,
         ]}

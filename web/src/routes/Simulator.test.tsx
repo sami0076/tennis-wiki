@@ -74,15 +74,31 @@ const draw: DrawSimulation = {
   champion: 'novak-djokovic',
 }
 
-function stub(match: MatchSimulation | null, drawSim: DrawSimulation = draw) {
+let requests: string[] = []
+
+function stub(
+  match: MatchSimulation | null,
+  options: { draw?: DrawSimulation | { status: number; body: unknown } } = {},
+) {
+  requests = []
+  const drawSim = options.draw ?? draw
   vi.stubGlobal('fetch', (input: string) => {
+    requests.push(String(input))
     const path = new URL(String(input), 'http://localhost').pathname
     let body: unknown = match
-    if (path.endsWith('/simulate/draw')) body = drawSim
+    let status = 200
+    if (path.endsWith('/simulate/draw')) {
+      if ('status' in drawSim) {
+        status = drawSim.status
+        body = drawSim.body
+      } else {
+        body = drawSim
+      }
+    }
     if (path.endsWith('/players')) body = { data: [alcaraz], next_cursor: null }
     return Promise.resolve(
       new Response(JSON.stringify(body), {
-        status: 200,
+        status,
         headers: { 'Content-Type': 'application/json' },
       }),
     )
@@ -235,10 +251,40 @@ describe('Simulator', () => {
     expect(await screen.findByText('Draw simulator')).toBeInTheDocument()
     expect(screen.getByLabelText(/Novak Djokovic: 40\.1%, give or take 1\.0/)).toBeInTheDocument()
     expect(screen.getByText(/±0\.9/)).toBeInTheDocument()
-    // The event, the field size and the run count are named.
-    const meta = screen.getByText(/Wimbledon 2019/)
+    // The event, linking to its sheet, then the field size and the run count.
+    const sheet = screen.getByRole('link', { name: 'Wimbledon 2019' })
+    expect(sheet).toHaveAttribute('href', '/tournaments/wimbledon-atp/2019')
+    const meta = sheet.closest('p')
     expect(meta).toHaveTextContent('128 draw')
     expect(meta).toHaveTextContent('10,000 runs')
+  })
+
+  // The edition page's "Replay this draw" lands here with the sheet's address.
+  it('replays the draw the URL names', async () => {
+    stub(null)
+    renderAt('/simulator?event=testville-wta&season=2025')
+    await screen.findByText('Draw simulator')
+    const asked = requests.find((url) => url.includes('/simulate/draw'))
+    expect(asked).toContain('event=testville-wta')
+    expect(asked).toContain('season=2025')
+  })
+
+  // Byes and round robins are draws the endpoint declines with a reason, and
+  // the reason is the answer, with the sheet as the way on.
+  it('reads a declined draw as an answer', async () => {
+    stub(null, {
+      draw: {
+        status: 422,
+        body: { type: '/problems/bad-request', title: 'Invalid request', status: 422, detail: 'That draw has byes.', instance: '/api/v1/simulate/draw', request_id: 'x' },
+      },
+    })
+    renderAt('/simulator?event=monte-carlo-masters-atp&season=2023')
+    expect(await screen.findByText('This draw cannot be replayed')).toBeInTheDocument()
+    expect(screen.getByText('That draw has byes.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'See the sheet instead' })).toHaveAttribute(
+      'href',
+      '/tournaments/monte-carlo-masters-atp/2023',
+    )
   })
 
   // A draw simulation is always as of the week it began, and the page says so
