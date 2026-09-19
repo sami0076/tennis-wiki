@@ -41,3 +41,10 @@
   align-items: center;
   gap: var(--s-4);
 }
+
+.sub {
+  padding-top: var(--s-4);
+  font-size: var(--t-13);
+  font-weight: 500;
+  color: var(--pencil);
+}

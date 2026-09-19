@@ -12,6 +12,7 @@ import {
   ButtonLink,
   ChartedMark,
   ChartedSheet,
+  DrawSheet,
   EmptyState,
   Meta,
   OddsBar,
@@ -21,6 +22,8 @@ import {
   PlayerSummary,
   RankDelta,
   RivalryStrip,
+  RoundList,
+  RoundStepper,
   Scoreboard,
   Scorelines,
   Skeleton,
@@ -36,8 +39,60 @@ import {
   WinSplit,
   type Column,
 } from '../components'
+import type { EditionMatch, EditionSide } from '../api/client'
+import { buildBracket, pageSheets, roundGroups, MAIN_ROUNDS } from '../lib/bracket'
 import type { Snapshot } from '../lib/playback'
 import styles from './Gallery.module.css'
+
+/**
+ * A complete draw of `size` players in which the lower number always wins,
+ * so the sheet's every line is predictable; seeds on the top eight. `drop`
+ * removes matches, to show a bye and a row the file lacks.
+ */
+function sampleDraw(size: number, drop: ReadonlyArray<[string, number]> = []): EditionMatch[] {
+  const rounds: string[] = MAIN_ROUNDS.slice(-Math.log2(size))
+  const side = (n: number): EditionSide => ({
+    slug: `player-${n}`,
+    name: `Player ${n}`,
+    country: n % 3 === 0 ? 'ESP' : n % 3 === 1 ? 'SRB' : 'ITA',
+    seed: n <= 8 ? n : null,
+    entry: n > size - 3 ? 'Q' : null,
+    rank: n,
+  })
+  const out: EditionMatch[] = []
+  let players = Array.from({ length: size }, (_, i) => i + 1)
+  let num = 1
+  for (const round of rounds) {
+    const next: number[] = []
+    for (let i = 0; i < players.length; i += 2) {
+      const a = Math.min(players[i] as number, players[i + 1] as number)
+      const b = Math.max(players[i] as number, players[i + 1] as number)
+      const scores = ['6-4 6-4', '7-6(5) 3-6 6-2', '6-3 6-7(4) 7-5', '6-2 3-0 RET']
+      out.push({
+        round,
+        match_num: num++,
+        qualifying: false,
+        best_of: 3,
+        tie: null,
+        players: [side(a), side(b)],
+        score: scores[(a + b) % scores.length] as string,
+        incomplete: (a + b) % scores.length === 3,
+        minutes: null,
+        serve: [undefined, undefined],
+        charting_id: null,
+      })
+      next.push(a)
+    }
+    players = next
+  }
+  return out.filter((m) => !drop.some(([round, n]) => m.round === round && m.match_num === n))
+}
+
+const drawRounds = (size: number): string[] => MAIN_ROUNDS.slice(-Math.log2(size))
+const eightDraw = sampleDraw(8, [['QF', 1], ['SF', 2]])
+const eightPages = pageSheets(buildBracket(eightDraw, drawRounds(8)), drawRounds(8), 'main')
+const thirtyTwoPages = pageSheets(buildBracket(sampleDraw(32), drawRounds(32)), drawRounds(32), 'main')
+const bigPages = pageSheets(buildBracket(sampleDraw(128), drawRounds(128)), drawRounds(128), 'main')
 
 interface Row {
   date: string
@@ -134,6 +189,8 @@ export function Gallery() {
   const [tour, setTour] = useState<string | null>(null)
   const [chartOpen, setChartOpen] = useState(false)
   const [query, setQuery] = useState('')
+  const [lit, setLit] = useState<string | null>(null)
+  const [round, setRound] = useState('R32')
 
   return (
     <>
@@ -332,6 +389,38 @@ export function Gallery() {
           <Button>Simulate this matchup</Button>
           <Button disabled>Simulate this matchup</Button>
         </div>
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>DrawSheet, RoundStepper and RoundList</h2>
+        <p className={styles.note}>
+          The bracket as the typed sheet: a name above its rule, the pair joined at the
+          right, the winner&apos;s rule stepping in from the midpoint, the score under the
+          name in the column it earned. An eight draw with a bye and a row the file lacks,
+          typed bye and n/r; a 32 draw on one sheet; a 128 draw paged as the printed one is.
+          Hover a name and the whole run lights.
+        </p>
+        {eightPages.map((page, i) => (
+          <DrawSheet key={i} page={page} kind="main" lit={lit} onLit={setLit} />
+        ))}
+        {thirtyTwoPages.map((page, i) => (
+          <DrawSheet key={i} page={page} kind="main" lit={lit} onLit={setLit} />
+        ))}
+        {bigPages.map((page, i) => (
+          <div key={i}>
+            <h3 className={styles.sub}>{page.title}</h3>
+            <DrawSheet page={page} kind="main" lit={lit} onLit={setLit} />
+          </div>
+        ))}
+        <p className={styles.note}>
+          Below 880px the same draw is one round at a time, the sheet&apos;s page headings
+          kept so the shape survives the list.
+        </p>
+        <RoundStepper rounds={[...drawRounds(128)]} qualifying={['Q1', 'Q2']} value={round} onChange={setRound} />
+        <RoundList
+          groups={roundGroups(bigPages, Math.max(1, drawRounds(128).indexOf(round) + 1))}
+          final={round === 'F'}
+        />
       </section>
 
       <section className={styles.block}>
