@@ -1,6 +1,7 @@
 export { AbsentCell, ABSENT_SORT_KEY } from './AbsentCell'
 export { Button, ButtonLink } from './Button'
 export { ChartedMark, ChartedSheet } from './ChartedSheet'
+export { DrawSheet } from './DrawSheet'
 export { EmptyState } from './EmptyState'
 export { Meta } from './Meta'
 export { OddsBar } from './OddsBar'

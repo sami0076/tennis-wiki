@@ -1,0 +1,132 @@
+/* The sheet is as wide as its longest names and scrolls inside its wrapper
+   when the page is narrower than that. */
+.wrap {
+  overflow-x: auto;
+  padding-bottom: var(--s-2);
+}
+
+.sheet {
+  display: inline-flex;
+  align-items: flex-start;
+  min-width: 100%;
+}
+
+/* A column is a stack of lines at one pitch, doubling to the right, so the
+   lines of a pair sit either side of the line their winner steps onto. */
+.column {
+  flex: 0 0 auto;
+  --gutter: 0px;
+}
+
+.column + .column {
+  --gutter: 20px;
+}
+
+.head {
+  height: 28px;
+  padding-left: var(--gutter);
+  border-bottom: var(--rule-ink);
+  font-size: var(--t-12);
+  font-weight: 500;
+  line-height: 24px;
+  color: var(--pencil);
+  white-space: nowrap;
+}
+
+/* --pitch and --anchor come from the column: the anchor is where the rule
+   under the name sits, measured from the top of the line's box. */
+.slot {
+  position: relative;
+  box-sizing: border-box;
+  height: var(--pitch);
+  padding-top: calc(var(--anchor) - 17px);
+  padding-left: var(--gutter);
+  font-size: var(--t-13);
+  line-height: 17px;
+  color: var(--pencil);
+  white-space: nowrap;
+}
+
+.dense .slot {
+  font-size: var(--t-12);
+}
+
+.advanced {
+  color: var(--ink);
+}
+
+.name {
+  padding-right: 2px;
+  border-bottom: var(--rule);
+  transition:
+    background 120ms ease-out,
+    border-color 120ms ease-out;
+}
+
+.void .name {
+  color: var(--pencil);
+}
+
+.pre,
+.country {
+  color: var(--pencil);
+}
+
+/* The name sits on the sheet's rule, so the link draws no rule of its own. */
+.player {
+  border-bottom: 0;
+}
+
+.champion .player {
+  font-weight: 700;
+}
+
+.score {
+  margin-top: 4px;
+  font-size: var(--t-11);
+  line-height: 15px;
+  color: var(--pencil);
+}
+
+/* The step in from the gutter: the winner's rule begins at the midpoint of
+   the vertical joining the pair. */
+.stub::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: var(--anchor);
+  width: var(--gutter);
+  height: 1px;
+  background: var(--pencil-light);
+  transition: background 120ms ease-out;
+}
+
+/* Each line of a pair draws its own half of the vertical, so a player's run
+   lights as one unbroken line. */
+.joins::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  width: 1px;
+  height: calc(var(--pitch) / 2);
+  background: var(--pencil-light);
+  transition: background 120ms ease-out;
+}
+
+.joins.upper::after {
+  top: var(--anchor);
+}
+
+.joins.lower::after {
+  top: calc(var(--anchor) - var(--pitch) / 2);
+}
+
+.lit .name {
+  background: var(--highlight);
+  border-bottom-color: var(--ink);
+}
+
+.lit::before,
+.lit::after {
+  background: var(--ink);
+}
