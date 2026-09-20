@@ -556,6 +556,33 @@ the serve coverage derived in Go from the rows it already has: 181KB is the pric
 sheet carrying every match's serve line and both players' seed, entry and rank, and it is
 what the page needs to be a sheet rather than a list.
 
+## Seasons
+
+A season row and a year's list both read one thing per tournament, its final, and the
+first version read it through the tournament's whole match list: `ListSlamFinals` over
+the 635 Slam editions took 408ms and the ITF calendar of 2016, 568 events, 180ms. Both
+are a lateral `LIMIT 1` per row, and each one was an index scan over a draw's hundred-odd
+matches filtered down to the final. Migration 00017 adds a partial index on the 64,000
+finals (`matches (tournament_id) WHERE round = 'F' AND NOT is_qualifying`), 1.1s to build,
+and each lookup becomes an index hit: **21ms and 4.5ms**. The same index serves the event
+page's finals.
+
+The other cost was the date a season is complete to. `GetCoverage` groups every match by
+tour and tier, about 200ms, and the first seasons handler called it for two numbers.
+`GetCurrentThrough` walks the `played_on` index backwards to the first match of each tour
+instead, 20ms, and reports the same dates, so a season row and `/coverage` cannot disagree.
+
+End to end over HTTP against the full database, without the read cache, warm:
+
+| | Warm | Body |
+|---|---|---|
+| `/seasons`: 104 years, both tours, every Slam final | 155ms | 162KB |
+| `/seasons/2019`: the tour calendar, both tours | 43ms | 42KB |
+| `/seasons/2016?tier=itf`: the year the ITF circuit was largest, 568 events | 140ms | 190KB |
+
+The 155ms of the index page is mostly the body: 104 rows carrying 635 finals as JSON.
+It changes only when an ingest runs, and the read cache holds it between ingests.
+
 **The index costs the same filtered or not, and that is the shape to know.** An event's
 category, level and tier are those of its latest edition, and there are no such columns:
 the query takes `DISTINCT ON (event_id)` over all 64,624 rows every time, 55–62ms in

@@ -159,6 +159,8 @@ GET /api/v1/simulate/draw?event=&season=  a played draw, replayed ten thousand t
 GET /api/v1/tournaments?tour=&level=&q=   the index, grouped by level, searchable
 GET /api/v1/tournaments/:slug             an event across seasons, with how each got there
 GET /api/v1/tournaments/:slug/:season     one edition as a draw sheet
+GET /api/v1/seasons                       a row per year, both tours, with the Slam finals
+GET /api/v1/seasons/:year?tour=&tier=     every event of a year at one tier, with its final
 ```
 
 ```bash
