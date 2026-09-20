@@ -156,3 +156,100 @@
     font-size: var(--t-28);
   }
 }
+
+/* The cut in words under the tally: "3-1 in finals" is a whole sentence. */
+.tallyWords {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--t-12);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--pencil);
+  white-space: normal;
+}
+
+.filters {
+  display: grid;
+  gap: var(--s-2);
+  padding: var(--s-3) 0 var(--s-4);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-2) var(--s-5);
+}
+
+.cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+/* The same typed cell as the tour filter, in ink: none of these is a surface. */
+.cell {
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  background: none;
+  font: inherit;
+  font-size: var(--t-13);
+  font-weight: 500;
+  color: var(--pencil);
+  cursor: pointer;
+  transition:
+    color 120ms ease-out,
+    border-color 120ms ease-out;
+}
+
+.cell:hover {
+  color: var(--ink);
+}
+
+.cellActive {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+/* The typed field: prompt and entry over one rule. */
+.field {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  border-bottom: var(--rule-ink);
+}
+
+.fieldLabel {
+  font-size: var(--t-13);
+  font-weight: 500;
+}
+
+.fieldLabel::after {
+  content: ':';
+}
+
+.select,
+.year {
+  padding: 5px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font: inherit;
+  font-size: var(--t-13);
+  color: var(--ink);
+}
+
+.year {
+  width: 7ch;
+}
+
+.year::placeholder {
+  color: var(--pencil);
+  opacity: 1;
+}
+
+.select:focus-visible,
+.year:focus-visible {
+  outline: 0;
+  box-shadow: 0 1px 0 var(--ink);
+}
