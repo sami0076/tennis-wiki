@@ -811,6 +811,60 @@ export interface RankingHistory {
 }
 
 //////////
+// source: recent.go
+
+/**
+ * RecentFinals is what the most recent week of tennis came to: the finals of
+ * every event that began that week, both tours, and the date the data is
+ * current to. The site does not do live; this is the fastest way to show a
+ * visitor it is current without saying the word.
+ */
+export interface RecentFinals {
+  /**
+   * Through is the date the data runs to, per tour: the same figure
+   * /coverage reports.
+   */
+  through: { [key: string]: string};
+  /**
+   * Week is the Monday and Sunday shown. Requested is the week that was
+   * asked for when the one shown is an earlier one, because the asked-for
+   * week had no final: the off-season, said rather than hidden.
+   */
+  week: Week;
+  requested: Week | null;
+  tier: string;
+  finals: RecentFinal[];
+  /**
+   * Without names the tours with no final in the week shown.
+   */
+  without: string[];
+}
+/**
+ * Week is a Monday-to-Sunday span.
+ */
+export interface Week {
+  from: string;
+  to: string;
+}
+/**
+ * RecentFinal is one final: a link to the sheet and to both players.
+ */
+export interface RecentFinal {
+  tour: string;
+  slug: string | null;
+  name: string;
+  season: number /* int16 */;
+  level: string;
+  tier: string;
+  surface: string | null;
+  draw_size: number /* int16 */ | null;
+  start_date: string;
+  champion: Opponent;
+  finalist: Opponent;
+  final_score: string | null;
+}
+
+//////////
 // source: seasons.go
 
 /**

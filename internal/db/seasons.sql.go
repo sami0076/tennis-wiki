@@ -10,6 +10,119 @@ import (
 	"time"
 )
 
+const latestFinalStart = `-- name: LatestFinalStart :one
+SELECT t.start_date
+  FROM tournaments t
+ WHERE t.start_date <= $1::date
+   AND t.tier = $2::tier
+   AND coalesce(t.event_link, '') <> 'team'
+   AND EXISTS (SELECT 1 FROM matches m
+                WHERE m.tournament_id = t.id AND m.round = 'F'
+                  AND NOT m.is_qualifying AND NOT m.is_team_event)
+ ORDER BY t.start_date DESC
+ LIMIT 1
+`
+
+type LatestFinalStartParams struct {
+	Through time.Time
+	Tier    Tier
+}
+
+// The start date of the most recent tournament, at one tier, that has a
+// final in the file on or before a date: the week the strip shows when the
+// week asked for has none.
+func (q *Queries) LatestFinalStart(ctx context.Context, arg LatestFinalStartParams) (time.Time, error) {
+	row := q.db.QueryRow(ctx, latestFinalStart, arg.Through, arg.Tier)
+	var start_date time.Time
+	err := row.Scan(&start_date)
+	return start_date, err
+}
+
+const listFinalsBetween = `-- name: ListFinalsBetween :many
+SELECT t.tour::text AS tour, e.slug AS event_slug, t.name, t.season, t.level, t.tier::text AS tier,
+       coalesce(t.surface::text, '')::text AS surface, t.draw_size, t.start_date,
+       f.score AS final_score,
+       w.slug AS champion_slug, w.full_name AS champion_name,
+       l.slug AS finalist_slug, l.full_name AS finalist_name
+  FROM tournaments t
+  LEFT JOIN events e ON e.id = t.event_id
+  JOIN LATERAL (
+        SELECT m.score, m.winner_id, m.loser_id
+          FROM matches m
+         WHERE m.tournament_id = t.id AND m.round = 'F'
+           AND NOT m.is_qualifying AND NOT m.is_team_event
+         ORDER BY m.match_num DESC
+         LIMIT 1) f ON true
+  JOIN players w ON w.id = f.winner_id
+  JOIN players l ON l.id = f.loser_id
+ WHERE t.start_date BETWEEN $1::date AND $2::date
+   AND t.tier = $3::tier
+   AND coalesce(t.event_link, '') <> 'team'
+ ORDER BY t.tour, t.start_date, t.id
+`
+
+type ListFinalsBetweenParams struct {
+	FromDate time.Time
+	ToDate   time.Time
+	Tier     Tier
+}
+
+type ListFinalsBetweenRow struct {
+	Tour         string
+	EventSlug    *string
+	Name         string
+	Season       int16
+	Level        string
+	Tier         string
+	Surface      string
+	DrawSize     *int16
+	StartDate    time.Time
+	FinalScore   *string
+	ChampionSlug string
+	ChampionName string
+	FinalistSlug string
+	FinalistName string
+}
+
+// The finals of every tournament that began inside a span of days, at one
+// tier, both tours: what a week of tennis came to. The file carries one date
+// per tournament, its start, so a week's finals are the finals of the events
+// that began that week.
+func (q *Queries) ListFinalsBetween(ctx context.Context, arg ListFinalsBetweenParams) ([]ListFinalsBetweenRow, error) {
+	rows, err := q.db.Query(ctx, listFinalsBetween, arg.FromDate, arg.ToDate, arg.Tier)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListFinalsBetweenRow{}
+	for rows.Next() {
+		var i ListFinalsBetweenRow
+		if err := rows.Scan(
+			&i.Tour,
+			&i.EventSlug,
+			&i.Name,
+			&i.Season,
+			&i.Level,
+			&i.Tier,
+			&i.Surface,
+			&i.DrawSize,
+			&i.StartDate,
+			&i.FinalScore,
+			&i.ChampionSlug,
+			&i.ChampionName,
+			&i.FinalistSlug,
+			&i.FinalistName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listSeasonEvents = `-- name: ListSeasonEvents :many
 SELECT t.id, t.tour::text AS tour, e.slug AS event_slug, e.name AS event_name,
        t.name, t.level, t.tier::text AS tier, coalesce(t.surface::text, '')::text AS surface,

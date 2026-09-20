@@ -1,7 +1,13 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { CoverageResponse, DrawSimulation, RankingPage, Trajectories } from '../api/client'
+import type {
+  CoverageResponse,
+  DrawSimulation,
+  RankingPage,
+  RecentFinals,
+  Trajectories,
+} from '../api/client'
 import { Home } from './Home'
 
 const coverage: CoverageResponse = {
@@ -146,13 +152,38 @@ const draw: DrawSimulation = {
   champion: 'novak-djokovic',
 }
 
-function stub(lines: Trajectories = trajectories) {
+const recent: RecentFinals = {
+  through: { atp: '2026-09-07', wta: '2026-08-30' },
+  week: { from: '2026-08-31', to: '2026-09-06' },
+  requested: null,
+  tier: 'tour',
+  finals: [
+    {
+      tour: 'atp',
+      slug: 'us-open-atp',
+      name: 'US Open',
+      season: 2026,
+      level: 'G',
+      tier: 'tour',
+      surface: 'hard',
+      draw_size: 128,
+      start_date: '2026-08-31',
+      champion: { slug: 'jannik-sinner', name: 'Jannik Sinner' },
+      finalist: { slug: 'carlos-alcaraz', name: 'Carlos Alcaraz' },
+      final_score: '6-4 6-4 6-4',
+    },
+  ],
+  without: ['wta'],
+}
+
+function stub(lines: Trajectories = trajectories, finals: RecentFinals = recent) {
   vi.stubGlobal('fetch', (input: string) => {
     const path = new URL(String(input), 'http://localhost').pathname
     let body: unknown = coverage
     if (path.endsWith('/trajectory')) body = lines
     else if (path.endsWith('/rankings')) body = rankings
     else if (path.endsWith('/simulate/draw')) body = draw
+    else if (path.endsWith('/recent')) body = finals
     return Promise.resolve(
       new Response(JSON.stringify(body), {
         status: 200,
@@ -249,4 +280,25 @@ describe('Home', () => {
     expect(message).toHaveTextContent('Failed to fetch')
     expect(message).toHaveTextContent('make api')
   })
+
+  // The week that ended Sunday, as its finals, with the date the data is
+  // current to on it; a tour with no final that week says so.
+  it("shows last week's finals with the date they are current to", async () => {
+    stub()
+    renderHome()
+    expect(await screen.findByRole('heading', { name: "Last week's finals" })).toBeInTheDocument()
+    expect(screen.getByText(/The week of 2026-08-31 to 2026-09-06/)).toBeInTheDocument()
+    expect(screen.getByText(/Current ATP through 2026-09-07, WTA through 2026-08-30/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'US Open' })).toHaveAttribute('href', '/tournaments/us-open-atp/2026')
+    // The champion links to the player; he is also on the seeding sheet above.
+    expect(screen.getByRole('link', { name: 'Carlos Alcaraz' })).toHaveAttribute('href', '/players/carlos-alcaraz')
+    expect(screen.getByText('No WTA final that week.')).toBeInTheDocument()
+  })
+
+  it('names the week it is showing instead when the last one had no final', async () => {
+    stub(trajectories, { ...recent, requested: { from: '2026-12-07', to: '2026-12-13' } })
+    renderHome()
+    expect(await screen.findByText(/Nothing began in the week of 2026-12-07; the last week with a final was 2026-08-31 to 2026-09-06/)).toBeInTheDocument()
+  })
+
 })
