@@ -38,7 +38,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: refresh
-          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:0210541590d719815e354e6eeb351eb15c10ada9f1240ac5243afa50fa0aa99b
+          image: ghcr.io/sami0076/tennis-wiki/tools@sha256:370ca334e30fd8b34677694bf0f42a69143a97e60deb92640d1d4996a5594116
           command: ["ingest", "--stage", "refresh"]
           env:
             - name: DATABASE_URL
