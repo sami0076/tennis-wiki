@@ -20,6 +20,7 @@ import type {
   Trajectories,
 } from '../api/client'
 import { FEATURED_DRAW, roundsReached } from '../lib/featuredDraw'
+import { useJsonLd, website } from '../lib/jsonld'
 import { useUrlParam } from '../lib/useUrlParam'
 import styles from './Home.module.css'
 
@@ -68,6 +69,7 @@ export function Home() {
   )
   const draw = useResource((signal) => simulateDraw(FEATURED_DRAW, signal), [])
   const recent = useResource((signal) => getRecentFinals(signal), [])
+  useJsonLd('website', website())
 
   return (
     <>
