@@ -64,6 +64,18 @@ If the change carries a migration, run the migrate Job first, then apply. The Jo
 `kubectl wait` is in the README; an unmigrated database makes the new pods fail readiness
 and the rollout stalls rather than serving errors, which is the intended failure.
 
+If the change adds a derived column or a derived table -- migration 00018 added both,
+sets and games from every score and `player_totals` -- run the refresh Job after the
+migration, once. It is the last step of every full load, so a reload does it anyway; on
+its own it takes a few minutes and the leaderboards and the year-by-year read as empty
+until it has run:
+
+```sh
+kubectl -n deucepoint delete job refresh --ignore-not-found
+kubectl -n deucepoint apply -f /root/deploy/k8s/jobs/refresh.yaml
+kubectl -n deucepoint logs -f job/refresh
+```
+
 ## Deploying the frontend
 
 Nothing to do. Cloudflare Pages watches `main`, runs `npm run build` in `web/` with
