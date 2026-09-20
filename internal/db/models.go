@@ -339,6 +339,12 @@ type Match struct {
 	TiebreaksLoser *int16
 	// True when a finished match reached its deciding set. NULL when it did not finish: somebody advanced from a third-set retirement, but nobody won that set, and every rate here leaves incomplete matches out.
 	DecidingSet *bool
+	// Sets won by the match winner, a match tiebreak played in place of a final set counted as one. NULL where the score could not be read or the match did not finish.
+	SetsWinner *int16
+	SetsLoser  *int16
+	// Games won by the match winner; a match tiebreak is not games. NULL on the same terms as sets_winner.
+	GamesWinner *int16
+	GamesLoser  *int16
 }
 
 type MatchPlayer struct {
@@ -386,6 +392,46 @@ type PlayerAlias struct {
 	SourceID   string
 	PlayerID   int64
 	Confidence pgtype.Numeric
+}
+
+// Per player, season, tier and surface: every total a leaderboard or a year-by-year row is a rate over. Rebuilt by the ingest refresh step; stale between runs.
+type PlayerTotal struct {
+	PlayerID        int64
+	Tour            Tour
+	Season          int16
+	Tier            Tier
+	Surface         *Surface
+	Matches         int64
+	Wins            int64
+	Titles          int64
+	WithStats       int64
+	WithServe       int64
+	Aces            int64
+	DoubleFaults    int64
+	ServePoints     int64
+	FirstIn         int64
+	FirstWon        int64
+	SecondWon       int64
+	ServeGames      int64
+	BpSaved         int64
+	BpFaced         int64
+	WithReturn      int64
+	OpServePoints   int64
+	OpFirstIn       int64
+	OpFirstWon      int64
+	OpSecondWon     int64
+	OpServeGames    int64
+	OpBpSaved       int64
+	OpBpFaced       int64
+	Scored          int64
+	SetsWon         int64
+	SetsPlayed      int64
+	GamesWon        int64
+	GamesPlayed     int64
+	TiebreaksWon    int64
+	TiebreaksPlayed int64
+	DecidersWon     int64
+	DecidersPlayed  int64
 }
 
 type Ranking struct {
