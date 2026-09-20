@@ -76,11 +76,10 @@ func buildSplits(rows []db.ListPlayerOpponentRanksRow) *PlayerSplits {
 		if row.Won {
 			win = 1
 		}
-		switch {
-		case row.OpponentRank == nil:
+		if row.OpponentRank == nil {
 			unranked.Matches++
 			unranked.Wins += win
-		default:
+		} else {
 			s.Ranked++
 			placed := false
 			for i, b := range rankBands {
