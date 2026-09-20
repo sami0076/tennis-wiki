@@ -17,6 +17,7 @@ import type {
   RankingHistory,
   RankingPage,
   RatingSeries,
+  RecentFinals,
   SeasonEventsResponse,
   SeasonsResponse,
   Trajectories,
@@ -198,6 +199,11 @@ export function getEvent(slug: string, signal?: AbortSignal): Promise<Event> {
 /** One season of an event as its draw sheet: every match in bracket order. */
 export function getEdition(slug: string, season: number, signal?: AbortSignal): Promise<Edition> {
   return request<Edition>(`/tournaments/${encodeURIComponent(slug)}/${season}`, {}, signal)
+}
+
+/** The finals of the last complete week, both tours, with the data's edge. */
+export function getRecentFinals(signal?: AbortSignal): Promise<RecentFinals> {
+  return request<RecentFinals>('/recent', {}, signal)
 }
 
 /** The calendar: a row per year with both tours and the Slam finals. */
