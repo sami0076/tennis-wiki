@@ -151,6 +151,7 @@ GET /api/v1/players/:slug/matches         match history, filterable and cursor-p
 GET /api/v1/players/:slug/ratings         Elo trajectory, per surface
 GET /api/v1/players/:slug/rankings        published ATP/WTA ranking over time
 GET /api/v1/players/:slug/clutch          break points, tiebreaks, deciding sets
+GET /api/v1/players/:slug/seasons         a career a year at a time, every rate with its own count
 GET /api/v1/h2h/:slug/:opponent           head-to-head, either way round
 GET /api/v1/rankings?type=elo|official    leaderboards, as of the last week that exists
 GET /api/v1/rankings/trajectory           the leaders' rating lines, for a chart
@@ -285,6 +286,16 @@ a first-serve rate over two matches and one over two hundred are different claim
 that is not in the table can be looked up, and the page says which absence it is: below the
 floor, with the figure over the matches they do have, or without the figure at all. It sits
 beside `/rankings` rather than in the nav, because a leaderboard is a ranking.
+The player page cuts a career two more ways. By the opponent's ranking on the day -- the
+record vs No. 1, the top 5, 10, 20, 50 and 100, outside the top 100 and unranked, the bands
+nesting -- and by closeness, with the matches a final-set tiebreak decided; each is captioned
+with the matches it is a record over, since a ranking is known for some matches and not
+others. And year by year, one row per season with the record, titles, sets, games and
+tiebreaks won, and where serve lines exist the hold, break, ace and double-fault rates and the
+dominance ratio, every rate over its own count of matches: a season with four recorded matches
+and sixty played is the common case in the 1990s and reads as sixty played, four recorded.
+Both come from `player_totals`, rebuilt by the ingest, and were verified against a count
+straight from the match rows for a long ATP career and a short WTA one.
 
 `/h2h/:a/:b` is the comparison and `/h2h` the picker, which is the same page: the URL is the
 state, so a comparison is a link somebody can send, and asking the other way round is the same

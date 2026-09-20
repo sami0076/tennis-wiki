@@ -15,6 +15,7 @@ import {
   getPlayerMatches,
   getPlayerRankings,
   getPlayerRatingSeries,
+  getPlayerSeasons,
 } from '../api/endpoints'
 import { useResource, type Resource } from '../api/useResource'
 import {
@@ -43,6 +44,7 @@ import { absenceReason, hasStatistics } from '../lib/absence'
 import { ageOn, careerSpan, formatHand, formatPercent } from '../lib/format'
 import { tierLabel } from '../lib/tier'
 import { useUrlParam } from '../lib/useUrlParam'
+import { OpponentsSection, SeasonsSection } from './PlayerSplits'
 import styles from './Player.module.css'
 
 /**
@@ -71,6 +73,7 @@ export function Player() {
   const trajectory = useResource((signal) => getPlayerRatingSeries(slug, {}, signal), [slug])
   const rankings = useResource((signal) => getPlayerRankings(slug, signal), [slug])
   const clutch = useResource((signal) => getPlayerClutch(slug, signal), [slug])
+  const seasons = useResource((signal) => getPlayerSeasons(slug, signal), [slug])
   const matches = useResource(
     (signal) =>
       getPlayerMatches(slug, { surface, limit: 25, cursor: cursors.at(-1) ?? null }, signal),
@@ -148,6 +151,7 @@ export function Player() {
           <div className={styles.left}>
             <ClutchSection clutch={clutch} />
             <CareerSection career={player.career} />
+            {player.splits === null ? null : <OpponentsSection splits={player.splits} />}
             <RankingSection rankings={rankings} />
           </div>
           <div className={styles.right}>
@@ -156,6 +160,8 @@ export function Player() {
           </div>
         </div>
       )}
+
+      {player.career === null ? null : <SeasonsSection seasons={seasons} />}
 
       {player.career === null ? null : (
         <MatchesSection

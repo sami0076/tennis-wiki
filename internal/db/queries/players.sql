@@ -242,3 +242,54 @@ SELECT tier::text AS tier, surface::text AS surface, decade, serve_points, serve
   FROM serve_baselines
  WHERE tour = @tour::tour
  ORDER BY tier, surface, decade;
+
+-- name: ListPlayerOpponentRanks :many
+-- Every finished, non-team match of one player with the ranking each side
+-- held on the day, for the record by opponent rank, and the score and
+-- deciding-set flag for the matches decided by a final-set tiebreak. A few
+-- hundred rows for a long career, bucketed in Go.
+SELECT mp.won, mp.rank AS own_rank, op.rank AS opponent_rank, m.score, m.deciding_set
+  FROM match_players mp
+  JOIN matches m ON m.id = mp.match_id
+  JOIN match_players op ON op.match_id = m.id AND op.player_id <> mp.player_id
+ WHERE mp.player_id = @player_id
+   AND NOT m.incomplete AND NOT m.is_team_event;
+
+-- name: ListPlayerSeasonTotals :many
+-- One player's year-by-year, summed from player_totals across tier and
+-- surface. Totals, so the page computes every rate over its own count of
+-- matches: a season with four recorded matches and sixty played must not
+-- read as a season of four.
+SELECT season,
+       sum(matches)::bigint AS matches,
+       sum(wins)::bigint AS wins,
+       sum(titles)::bigint AS titles,
+       sum(with_serve)::bigint AS with_serve,
+       sum(aces)::bigint AS aces,
+       sum(double_faults)::bigint AS double_faults,
+       sum(serve_points)::bigint AS serve_points,
+       sum(first_won)::bigint AS first_won,
+       sum(second_won)::bigint AS second_won,
+       sum(serve_games)::bigint AS serve_games,
+       sum(bp_saved)::bigint AS bp_saved,
+       sum(bp_faced)::bigint AS bp_faced,
+       sum(with_return)::bigint AS with_return,
+       sum(op_serve_points)::bigint AS op_serve_points,
+       sum(op_first_won)::bigint AS op_first_won,
+       sum(op_second_won)::bigint AS op_second_won,
+       sum(op_serve_games)::bigint AS op_serve_games,
+       sum(op_bp_saved)::bigint AS op_bp_saved,
+       sum(op_bp_faced)::bigint AS op_bp_faced,
+       sum(scored)::bigint AS scored,
+       sum(sets_won)::bigint AS sets_won,
+       sum(sets_played)::bigint AS sets_played,
+       sum(games_won)::bigint AS games_won,
+       sum(games_played)::bigint AS games_played,
+       sum(tiebreaks_won)::bigint AS tiebreaks_won,
+       sum(tiebreaks_played)::bigint AS tiebreaks_played,
+       sum(deciders_won)::bigint AS deciders_won,
+       sum(deciders_played)::bigint AS deciders_played
+  FROM player_totals
+ WHERE player_id = @player_id
+ GROUP BY season
+ ORDER BY season;
