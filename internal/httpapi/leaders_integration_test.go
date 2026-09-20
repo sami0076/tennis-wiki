@@ -138,6 +138,17 @@ func TestLeadersFloorAndDirectionAndFamilies(t *testing.T) {
 		t.Errorf("return board = %+v", got.Data)
 	}
 
+	// A player named by ?player= comes back with their figure whether or not
+	// they cleared the floor, and as nothing when they have no figure at all.
+	got = decodeBoard(t, f.get("/api/v1/leaders/aces?player=ld-few"))
+	if got.Player == nil || got.Player.Sample != 2 || got.Player.Position != 0 || len(got.Data) != 2 {
+		t.Errorf("few's own row = %+v, board %d", got.Player, len(got.Data))
+	}
+	got = decodeBoard(t, f.get("/api/v1/leaders/aces?player=ld-none"))
+	if got.Player != nil {
+		t.Errorf("none's own row = %+v, want nothing", got.Player)
+	}
+
 	// The dominance ratio has no numerator to show.
 	got = decodeBoard(t, f.get("/api/v1/leaders/dominance"))
 	if got.Stat.Kind != "ratio" || len(got.Data) == 0 || got.Data[0].Numerator != nil {

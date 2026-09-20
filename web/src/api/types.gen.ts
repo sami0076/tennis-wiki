@@ -324,6 +324,12 @@ export interface Leaderboard {
   population: LeaderPopulation;
   data: LeaderRow[];
   stats: LeaderStat[];
+  /**
+   * Player is the row of the player named by ?player=, whether or not they
+   * cleared the floor, so a page can say why a name is not on the board:
+   * null when they have no figure at all under this filter. Position is 0.
+   */
+  player: LeaderRow | null;
 }
 /**
  * LeaderFilters echoes what was asked, defaults applied.

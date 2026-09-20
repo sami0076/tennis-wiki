@@ -83,6 +83,9 @@ export function Rankings() {
               {option.label}
             </button>
           ))}
+          <Link className={styles.type} to="/leaders">
+            Serve and return
+          </Link>
         </div>
         <TourFilter value={tour} onChange={(next) => ask(() => setTour(next))} />
         <label className={styles.dateLabel} htmlFor="rankings-date">

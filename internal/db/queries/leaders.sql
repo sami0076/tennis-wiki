@@ -10,6 +10,8 @@
 -- filter, the ranking and the denominators cannot drift between them. A
 -- player whose denominator is zero has no value and is not on the board.
 -- Ascending is for the one stat where less is better, double faults.
+-- `player` narrows the board to one player, so a page can say what an absent
+-- name's figure is and how many matches it stands on.
 WITH totals AS (
     SELECT pt.player_id,
            sum(pt.matches)::bigint AS matches,
@@ -46,6 +48,8 @@ WITH totals AS (
        AND (sqlc.narg(tier)::tier IS NULL OR pt.tier = sqlc.narg(tier)::tier)
        AND (sqlc.narg(surface)::surface IS NULL OR pt.surface = sqlc.narg(surface)::surface)
        AND (sqlc.narg(season)::smallint IS NULL OR pt.season = sqlc.narg(season)::smallint)
+       AND (sqlc.narg(player)::text IS NULL
+            OR pt.player_id = (SELECT id FROM players WHERE slug = sqlc.narg(player)::text))
      GROUP BY pt.player_id
 ),
 valued AS (

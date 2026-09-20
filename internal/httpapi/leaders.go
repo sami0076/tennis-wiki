@@ -36,6 +36,10 @@ type Leaderboard struct {
 	Population LeaderPopulation `json:"population"`
 	Data       []LeaderRow      `json:"data"`
 	Stats      []LeaderStat     `json:"stats"`
+	// Player is the row of the player named by ?player=, whether or not they
+	// cleared the floor, so a page can say why a name is not on the board:
+	// null when they have no figure at all under this filter. Position is 0.
+	Player *LeaderRow `json:"player"`
 }
 
 // LeaderFilters echoes what was asked, defaults applied.
@@ -181,6 +185,7 @@ func (a *API) handleLeaders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	params.RowLimit, filters.Limit = int32(limit), limit
+	player := query.Get("player")
 
 	rows, err := a.Queries.ListLeaders(ctx, params)
 	if err != nil {
@@ -201,15 +206,35 @@ func (a *API) handleLeaders(w http.ResponseWriter, r *http.Request) {
 	}
 	for i, row := range rows {
 		out.Population.Qualified = row.Qualified
-		lr := LeaderRow{
-			Position: i + 1, Slug: row.Slug, Name: row.Name, Tour: row.Tour, Country: row.Country,
-			Sample: row.Sample, Matches: row.Matches, Value: row.Value,
+		out.Data = append(out.Data, leaderRow(row, i+1, stat))
+	}
+
+	if player != "" {
+		// The one player's figure under the same filter, floor lowered to
+		// one so a sample below it still comes back with its count.
+		one := params
+		one.Player, one.MinMatches, one.RowLimit = &player, 1, 1
+		theirs, err := a.Queries.ListLeaders(ctx, one)
+		if err != nil {
+			Internal(w, r, err)
+			return
 		}
-		if stat.Kind == "rate" {
-			n, d := row.Numerator, row.Denominator
-			lr.Numerator, lr.Denominator = &n, &d
+		if len(theirs) == 1 {
+			row := leaderRow(theirs[0], 0, stat)
+			out.Player = &row
 		}
-		out.Data = append(out.Data, lr)
 	}
 	writeJSON(w, r, http.StatusOK, out)
+}
+
+func leaderRow(row db.ListLeadersRow, position int, stat *LeaderStat) LeaderRow {
+	lr := LeaderRow{
+		Position: position, Slug: row.Slug, Name: row.Name, Tour: row.Tour, Country: row.Country,
+		Sample: row.Sample, Matches: row.Matches, Value: row.Value,
+	}
+	if stat.Kind == "rate" {
+		n, d := row.Numerator, row.Denominator
+		lr.Numerator, lr.Denominator = &n, &d
+	}
+	return lr
 }

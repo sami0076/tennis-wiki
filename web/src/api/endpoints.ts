@@ -7,6 +7,7 @@ import type {
   Event,
   EventSummary,
   HeadToHead,
+  Leaderboard,
   MatchSimulation,
   Page,
   PlayerMatch,
@@ -188,6 +189,25 @@ export function getSeasonEvents(
   signal?: AbortSignal,
 ): Promise<SeasonEventsResponse> {
   return request<SeasonEventsResponse>(`/seasons/${year}`, { ...options }, signal)
+}
+
+export interface LeaderFilterParams {
+  tour?: string | null
+  tier?: string | null
+  surface?: string | null
+  season?: number | null
+  min_matches?: number | null
+  limit?: number | null
+  /** A player to report on whether or not they are on the board. */
+  player?: string | null
+}
+
+/**
+ * One board: a stat, filtered, ranked, with its population declared and
+ * every row's denominator on the row.
+ */
+export function getLeaders(stat: string, filters: LeaderFilterParams = {}, signal?: AbortSignal): Promise<Leaderboard> {
+  return request<Leaderboard>(`/leaders/${encodeURIComponent(stat)}`, { ...filters }, signal)
 }
 
 export function searchPlayers(
