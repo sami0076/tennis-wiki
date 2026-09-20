@@ -73,10 +73,10 @@ func (a *API) handleRecent(w http.ResponseWriter, r *http.Request) {
 	}
 	// The data's edge, not today: the week to show is the last complete one
 	// before the last match either tour has.
-	through := ""
+	var edge time.Time
 	for _, last := range current {
-		if last > through {
-			through = last
+		if parsed, err := time.Parse(time.DateOnly, last); err == nil && parsed.After(edge) {
+			edge = parsed
 		}
 	}
 	if raw := query.Get("through"); raw != "" {
@@ -85,13 +85,12 @@ func (a *API) handleRecent(w http.ResponseWriter, r *http.Request) {
 			BadRequest(w, r, "through must be a date, for example 2026-09-07.")
 			return
 		}
-		through = parsed.Format(time.DateOnly)
+		edge = parsed
 	}
-	if through == "" {
+	if edge.IsZero() {
 		writeJSON(w, r, http.StatusOK, RecentFinals{Through: current, Tier: string(tier), Finals: []RecentFinal{}, Without: []string{}})
 		return
 	}
-	edge, _ := time.Parse(time.DateOnly, through)
 
 	// The last complete Monday-to-Sunday week ending on or before the edge.
 	asked := weekEnding(lastSunday(edge))
@@ -104,22 +103,22 @@ func (a *API) handleRecent(w http.ResponseWriter, r *http.Request) {
 	out := RecentFinals{Through: current, Tier: string(tier), Finals: []RecentFinal{}, Without: []string{}}
 	if len(rows) == 0 {
 		// The off-season: the most recent week that had a final, said so.
-		monday, _ := time.Parse(time.DateOnly, asked.From)
-		latest, err := a.Queries.LatestFinalStart(ctx, db.LatestFinalStartParams{Through: monday.AddDate(0, 0, -1), Tier: tier})
+		latest, err := a.Queries.LatestFinalStart(ctx, db.LatestFinalStartParams{Through: asked.from.AddDate(0, 0, -1), Tier: tier})
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			Internal(w, r, err)
 			return
 		}
 		if err == nil {
 			shown = weekEnding(lastSunday(latest.AddDate(0, 0, 6)))
-			out.Requested = &asked
+			requested := asked.week()
+			out.Requested = &requested
 			if rows, err = a.finalsIn(ctx, shown, tier); err != nil {
 				Internal(w, r, err)
 				return
 			}
 		}
 	}
-	out.Week = shown
+	out.Week = shown.week()
 
 	seen := map[string]bool{}
 	for _, row := range rows {
@@ -140,10 +139,17 @@ func (a *API) handleRecent(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, r, http.StatusOK, out)
 }
 
-func (a *API) finalsIn(ctx context.Context, week Week, tier db.Tier) ([]db.ListFinalsBetweenRow, error) {
-	from, _ := time.Parse(time.DateOnly, week.From)
-	to, _ := time.Parse(time.DateOnly, week.To)
-	return a.Queries.ListFinalsBetween(ctx, db.ListFinalsBetweenParams{FromDate: from, ToDate: to, Tier: tier})
+func (a *API) finalsIn(ctx context.Context, span span, tier db.Tier) ([]db.ListFinalsBetweenRow, error) {
+	return a.Queries.ListFinalsBetween(ctx, db.ListFinalsBetweenParams{FromDate: span.from, ToDate: span.to, Tier: tier})
+}
+
+// span is a Monday-to-Sunday week as dates; Week is the same for the wire.
+type span struct {
+	from, to time.Time
+}
+
+func (s span) week() Week {
+	return Week{From: s.from.Format(time.DateOnly), To: s.to.Format(time.DateOnly)}
 }
 
 // lastSunday is the Sunday on or before a date.
@@ -152,6 +158,6 @@ func lastSunday(d time.Time) time.Time {
 }
 
 // weekEnding is the Monday-to-Sunday week that ends on a Sunday.
-func weekEnding(sunday time.Time) Week {
-	return Week{From: sunday.AddDate(0, 0, -6).Format(time.DateOnly), To: sunday.Format(time.DateOnly)}
+func weekEnding(sunday time.Time) span {
+	return span{from: sunday.AddDate(0, 0, -6), to: sunday}
 }
