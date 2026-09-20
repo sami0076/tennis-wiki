@@ -49,6 +49,9 @@ const meetings: Meeting[] = [
     score: '1-6 7-5 6-3 6-7 8-6',
     incomplete: false,
     charting_id: null,
+    best_of: 5,
+    deciding_set: false,
+    tiebreaks: [0, 0],
   },
   {
     date: '1981-01-18',
@@ -64,6 +67,9 @@ const meetings: Meeting[] = [
     score: '6-4 6-2 6-4',
     incomplete: false,
     charting_id: null,
+    best_of: 5,
+    deciding_set: false,
+    tiebreaks: [0, 0],
   },
   {
     date: '1981-09-09',
@@ -79,6 +85,9 @@ const meetings: Meeting[] = [
     score: '4-6 6-2 6-4 6-3',
     incomplete: false,
     charting_id: null,
+    best_of: 5,
+    deciding_set: false,
+    tiebreaks: [0, 0],
   },
 ]
 
@@ -93,6 +102,13 @@ const rivalry: Comparison = {
   tiers: [{ name: 'tour', matches: 3, wins: [1, 2] }],
   serve: [serve(3), serve(3)],
   meetings,
+  filters: { level: null, round: null, best_of: null, surface: null, deciders: false, tiebreaks: false, from: null, to: null },
+  total_meetings: 3,
+  closeness: {
+    deciders: { matches: 2, wins: [1, 1], incomplete: 0 },
+    scored: 3,
+    tiebreaks: { name: 'tiebreaks', matches: 3, wins: [2, 1] },
+  },
 }
 
 /** The same rivalry with the URL asking for it the other way round. */
@@ -107,7 +123,15 @@ function mirrored(comparison: Comparison): Comparison {
     meetings: comparison.meetings.map((meeting) => ({
       ...meeting,
       winner_index: meeting.winner_index === 0 ? 1 : 0,
+      tiebreaks: meeting.tiebreaks === null ? null : flip(meeting.tiebreaks),
     })),
+    filters: comparison.filters,
+    total_meetings: comparison.total_meetings,
+    closeness: {
+      ...comparison.closeness,
+      deciders: { ...comparison.closeness.deciders, wins: flip(comparison.closeness.deciders.wins) },
+      tiebreaks: { ...comparison.closeness.tiebreaks, wins: flip(comparison.closeness.tiebreaks.wins) },
+    },
   }
 }
 
@@ -144,8 +168,12 @@ const searchResults = {
 }
 
 /** Answers each endpoint the page asks for, and nothing else. */
+let requested: string[] = []
+
 function stub(comparison: Comparison, charted: unknown = null) {
+  requested = []
   vi.stubGlobal('fetch', (input: string) => {
+    requested.push(String(input))
     const path = new URL(String(input), 'http://localhost').pathname
     const body = path.startsWith('/api/v1/h2h/')
       ? comparison
@@ -242,13 +270,40 @@ describe('HeadToHead', () => {
 
   // The URL is the state, so the surface filter has to survive being pasted
   // into another browser.
-  it('round-trips the surface filter through the URL', async () => {
-    stub(rivalry)
-    renderAt('/h2h/bjorn-borg/john-mcenroe?surface=grass')
+  // The filters live in the URL and go to the API, which cuts the record,
+  // the strip and the serve figures; the page writes the cut in words.
+  it('round-trips the filters through the URL and writes the cut in words', async () => {
+    stub({
+      ...rivalry,
+      record: { matches: 1, wins: [1, 0], incomplete: 0 },
+      meetings: [meetings[0]!],
+      filters: { ...rivalry.filters, surface: 'grass', round: 'F', from: 1980, to: null },
+    })
+    renderAt('/h2h/bjorn-borg/john-mcenroe?surface=grass&round=F&from=1980')
 
     expect(await screen.findByText('1-0')).toBeInTheDocument()
+    expect(screen.getByText('in finals, on grass, since 1980, of 3 meetings')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Wimbledon' })).toBeInTheDocument()
-    expect(screen.queryByText('US Open F')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'US Open' })).not.toBeInTheDocument()
+    const url = new URL(requested.find((u) => u.includes('/h2h/')) as string, 'http://localhost')
+    expect(url.searchParams.get('surface')).toBe('grass')
+    expect(url.searchParams.get('round')).toBe('F')
+    expect(url.searchParams.get('from')).toBe('1980')
+    // The closeness summary is the rivalry's, not the cut's.
+    expect(screen.getByText(/2 of the 3 meetings whose score could be read went to a deciding set/)).toBeInTheDocument()
+  })
+
+  it('reads an empty cut as an answer naming the filter', async () => {
+    stub({
+      ...rivalry,
+      record: { matches: 0, wins: [0, 0], incomplete: 0 },
+      meetings: [],
+      filters: { ...rivalry.filters, level: 'challenger' },
+    })
+    renderAt('/h2h/bjorn-borg/john-mcenroe?level=challenger')
+    expect(await screen.findByText('They never met at Challenger level')).toBeInTheDocument()
+    // One on the controls and one on the empty state: both clear the cut.
+    expect(screen.getAllByRole('button', { name: 'Show every meeting' })).toHaveLength(2)
   })
 
   // Asking the other way round is the same rivalry read from the other end:
@@ -274,6 +329,8 @@ describe('HeadToHead', () => {
         { availability: AvailabilityNeverForTier, matches_with_data: 0, rates: null },
         { availability: AvailabilityNeverForTier, matches_with_data: 0, rates: null },
       ],
+      total_meetings: 0,
+      closeness: { deciders: { matches: 0, wins: [0, 0], incomplete: 0 }, scored: 0, tiebreaks: { name: 'tiebreaks', matches: 0, wins: [0, 0] } },
     })
     renderAt('/h2h/bjorn-borg/john-mcenroe')
 
