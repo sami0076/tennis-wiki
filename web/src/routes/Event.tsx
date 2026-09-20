@@ -143,15 +143,6 @@ function editionColumns(event: EventData): Column<EventEdition>[] {
       value: (row) => formatScore(row.final_score),
       render: (row) => <Score score={row.final_score} />,
     },
-    {
-      key: 'name',
-      header: 'Filed as',
-      wrap: true,
-      wide: true,
-      value: (row) => (row.name === event.name ? '' : row.name),
-      render: (row) => (row.name === event.name ? null : row.name),
-      sortable: false,
-    },
   ]
 }
 

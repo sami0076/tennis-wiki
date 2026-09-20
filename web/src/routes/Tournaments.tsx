@@ -143,13 +143,15 @@ function Index({ page, query, cursors, setCursors }: IndexProps) {
                 {event.name}
               </Link>
               <span className={styles.meta}>
-                {event.tour.toUpperCase()}
-                {'  '}
-                {event.first_season === event.last_season
-                  ? event.first_season
-                  : `${event.first_season}-${event.last_season}`}
-                {'  '}
-                {event.editions} {event.editions === 1 ? 'edition' : 'editions'}
+                <span>{event.tour.toUpperCase()}</span>
+                <span>
+                  {event.first_season === event.last_season
+                    ? event.first_season
+                    : `${event.first_season}-${event.last_season}`}
+                </span>
+                <span>
+                  {event.editions} {event.editions === 1 ? 'edition' : 'editions'}
+                </span>
               </span>
             </li>
           </Fragment>

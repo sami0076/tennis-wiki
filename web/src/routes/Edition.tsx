@@ -90,7 +90,7 @@ function Sheet({ edition, event }: { edition: EditionData; event: Resource<Event
           tour,
           levelLabel(edition.level, edition.tier, edition.event.tour),
           edition.surface === null ? null : <SurfaceDot surface={edition.surface} />,
-          edition.draw_size === null ? null : `${edition.draw_size} draw`,
+          edition.draw_size === null ? null : `${edition.draw_size}\u00a0draw`,
           edition.start_date,
         ]}
       />

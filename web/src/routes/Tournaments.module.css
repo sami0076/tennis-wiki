@@ -114,10 +114,15 @@
   border-bottom: var(--rule-ink);
 }
 
+/* Tour, seasons and count as three aligned columns, read down the list. */
 .meta {
+  display: grid;
+  grid-template-columns: 3ch 9ch 12ch;
+  gap: var(--s-3);
   margin-left: auto;
   color: var(--pencil);
-  white-space: pre;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .caption {
