@@ -13,6 +13,7 @@ import type {
   PlayerMatch,
   PlayerProfile,
   PlayerSearchResult,
+  PlayerSeasons,
   RankingHistory,
   RankingPage,
   RatingSeries,
@@ -74,6 +75,11 @@ export function getPlayerRatingSeries(
  */
 export function getPlayerClutch(slug: string, signal?: AbortSignal): Promise<Clutch> {
   return request<Clutch>(`/players/${encodeURIComponent(slug)}/clutch`, {}, signal)
+}
+
+/** A career a year at a time, every rate over its own count of matches. */
+export function getPlayerSeasons(slug: string, signal?: AbortSignal): Promise<PlayerSeasons> {
+  return request<PlayerSeasons>(`/players/${encodeURIComponent(slug)}/seasons`, {}, signal)
 }
 
 export function getPlayerRankings(slug: string, signal?: AbortSignal): Promise<RankingHistory> {
