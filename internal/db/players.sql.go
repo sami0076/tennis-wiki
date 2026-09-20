@@ -416,6 +416,53 @@ func (q *Queries) GetPlayerTierSplits(ctx context.Context, playerID int64) ([]Ge
 	return items, nil
 }
 
+const listPlayerOpponentRanks = `-- name: ListPlayerOpponentRanks :many
+SELECT mp.won, mp.rank AS own_rank, op.rank AS opponent_rank, m.score, m.deciding_set
+  FROM match_players mp
+  JOIN matches m ON m.id = mp.match_id
+  JOIN match_players op ON op.match_id = m.id AND op.player_id <> mp.player_id
+ WHERE mp.player_id = $1
+   AND NOT m.incomplete AND NOT m.is_team_event
+`
+
+type ListPlayerOpponentRanksRow struct {
+	Won          bool
+	OwnRank      *int32
+	OpponentRank *int32
+	Score        *string
+	DecidingSet  *bool
+}
+
+// Every finished, non-team match of one player with the ranking each side
+// held on the day, for the record by opponent rank, and the score and
+// deciding-set flag for the matches decided by a final-set tiebreak. A few
+// hundred rows for a long career, bucketed in Go.
+func (q *Queries) ListPlayerOpponentRanks(ctx context.Context, playerID int64) ([]ListPlayerOpponentRanksRow, error) {
+	rows, err := q.db.Query(ctx, listPlayerOpponentRanks, playerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListPlayerOpponentRanksRow{}
+	for rows.Next() {
+		var i ListPlayerOpponentRanksRow
+		if err := rows.Scan(
+			&i.Won,
+			&i.OwnRank,
+			&i.OpponentRank,
+			&i.Score,
+			&i.DecidingSet,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPlayerRankingHistory = `-- name: ListPlayerRankingHistory :many
 SELECT ranking_date, rank, points
   FROM rankings
@@ -499,6 +546,128 @@ func (q *Queries) ListPlayerRatingSeries(ctx context.Context, arg ListPlayerRati
 	for rows.Next() {
 		var i ListPlayerRatingSeriesRow
 		if err := rows.Scan(&i.AsOf, &i.Elo, &i.MatchesPlayed); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPlayerSeasonTotals = `-- name: ListPlayerSeasonTotals :many
+SELECT season,
+       sum(matches)::bigint AS matches,
+       sum(wins)::bigint AS wins,
+       sum(titles)::bigint AS titles,
+       sum(with_serve)::bigint AS with_serve,
+       sum(aces)::bigint AS aces,
+       sum(double_faults)::bigint AS double_faults,
+       sum(serve_points)::bigint AS serve_points,
+       sum(first_won)::bigint AS first_won,
+       sum(second_won)::bigint AS second_won,
+       sum(serve_games)::bigint AS serve_games,
+       sum(bp_saved)::bigint AS bp_saved,
+       sum(bp_faced)::bigint AS bp_faced,
+       sum(with_return)::bigint AS with_return,
+       sum(op_serve_points)::bigint AS op_serve_points,
+       sum(op_first_won)::bigint AS op_first_won,
+       sum(op_second_won)::bigint AS op_second_won,
+       sum(op_serve_games)::bigint AS op_serve_games,
+       sum(op_bp_saved)::bigint AS op_bp_saved,
+       sum(op_bp_faced)::bigint AS op_bp_faced,
+       sum(scored)::bigint AS scored,
+       sum(sets_won)::bigint AS sets_won,
+       sum(sets_played)::bigint AS sets_played,
+       sum(games_won)::bigint AS games_won,
+       sum(games_played)::bigint AS games_played,
+       sum(tiebreaks_won)::bigint AS tiebreaks_won,
+       sum(tiebreaks_played)::bigint AS tiebreaks_played,
+       sum(deciders_won)::bigint AS deciders_won,
+       sum(deciders_played)::bigint AS deciders_played
+  FROM player_totals
+ WHERE player_id = $1
+ GROUP BY season
+ ORDER BY season
+`
+
+type ListPlayerSeasonTotalsRow struct {
+	Season          int16
+	Matches         int64
+	Wins            int64
+	Titles          int64
+	WithServe       int64
+	Aces            int64
+	DoubleFaults    int64
+	ServePoints     int64
+	FirstWon        int64
+	SecondWon       int64
+	ServeGames      int64
+	BpSaved         int64
+	BpFaced         int64
+	WithReturn      int64
+	OpServePoints   int64
+	OpFirstWon      int64
+	OpSecondWon     int64
+	OpServeGames    int64
+	OpBpSaved       int64
+	OpBpFaced       int64
+	Scored          int64
+	SetsWon         int64
+	SetsPlayed      int64
+	GamesWon        int64
+	GamesPlayed     int64
+	TiebreaksWon    int64
+	TiebreaksPlayed int64
+	DecidersWon     int64
+	DecidersPlayed  int64
+}
+
+// One player's year-by-year, summed from player_totals across tier and
+// surface. Totals, so the page computes every rate over its own count of
+// matches: a season with four recorded matches and sixty played must not
+// read as a season of four.
+func (q *Queries) ListPlayerSeasonTotals(ctx context.Context, playerID int64) ([]ListPlayerSeasonTotalsRow, error) {
+	rows, err := q.db.Query(ctx, listPlayerSeasonTotals, playerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListPlayerSeasonTotalsRow{}
+	for rows.Next() {
+		var i ListPlayerSeasonTotalsRow
+		if err := rows.Scan(
+			&i.Season,
+			&i.Matches,
+			&i.Wins,
+			&i.Titles,
+			&i.WithServe,
+			&i.Aces,
+			&i.DoubleFaults,
+			&i.ServePoints,
+			&i.FirstWon,
+			&i.SecondWon,
+			&i.ServeGames,
+			&i.BpSaved,
+			&i.BpFaced,
+			&i.WithReturn,
+			&i.OpServePoints,
+			&i.OpFirstWon,
+			&i.OpSecondWon,
+			&i.OpServeGames,
+			&i.OpBpSaved,
+			&i.OpBpFaced,
+			&i.Scored,
+			&i.SetsWon,
+			&i.SetsPlayed,
+			&i.GamesWon,
+			&i.GamesPlayed,
+			&i.TiebreaksWon,
+			&i.TiebreaksPlayed,
+			&i.DecidersWon,
+			&i.DecidersPlayed,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
