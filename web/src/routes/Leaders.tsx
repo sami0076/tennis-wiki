@@ -8,6 +8,7 @@ import { formatPercent } from '../lib/format'
 import { tierLabel } from '../lib/tier'
 import { useUrlParam } from '../lib/useUrlParam'
 import styles from './Leaders.module.css'
+import { breadcrumbs, useJsonLd } from '../lib/jsonld'
 
 const DEFAULT_STAT = 'serve_points_won'
 const DEFAULT_FLOOR = 10
@@ -43,6 +44,7 @@ export function Leaders() {
   const [floor, setFloor] = useUrlParam('min')
   const [sought, setSought] = useState<PlayerSearchResult | null>(null)
   const [query, setQuery] = useState('')
+  useJsonLd('breadcrumbs', breadcrumbs([{ name: 'Leaders', path: '/leaders' }]))
 
   const key = stat ?? DEFAULT_STAT
   const minMatches = floor !== null && Number(floor) >= 1 ? Number(floor) : DEFAULT_FLOOR

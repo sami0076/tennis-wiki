@@ -38,6 +38,7 @@ import {
 } from '../components'
 import { absenceReason } from '../lib/absence'
 import { formatPercent, surname } from '../lib/format'
+import { breadcrumbs, useJsonLd } from '../lib/jsonld'
 import { surfaceLabel } from '../lib/surface'
 import { tierLabel } from '../lib/tier'
 import { useUrlParam } from '../lib/useUrlParam'
@@ -66,6 +67,17 @@ export function HeadToHead() {
     [a, b, filters.key],
   )
   const players = h2h.state === 'ready' && h2h.data !== null ? h2h.data.players : undefined
+  useJsonLd(
+    'breadcrumbs',
+    breadcrumbs(
+      players === undefined
+        ? [{ name: 'Head to head', path: '/h2h' }]
+        : [
+            { name: 'Head to head', path: '/h2h' },
+            { name: `${players[0].name} v ${players[1].name}`, path: `/h2h/${a}/${b}` },
+          ],
+    ),
+  )
 
   return (
     <>

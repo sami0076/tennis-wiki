@@ -27,6 +27,7 @@ import { prefersReducedMotion } from '../lib/useReducedMotion'
 import { useUrlParam } from '../lib/useUrlParam'
 import { FEATURED_DRAW } from '../lib/featuredDraw'
 import styles from './Simulator.module.css'
+import { breadcrumbs, useJsonLd } from '../lib/jsonld'
 
 
 const SURFACES = ['hard', 'clay', 'grass', 'carpet']
@@ -43,6 +44,7 @@ export function Simulator() {
   const [b, setB] = useUrlParam('b')
   const [surface, setSurface] = useUrlParam('surface')
   const [bestOf, setBestOf] = useUrlParam('best_of')
+  useJsonLd('breadcrumbs', breadcrumbs([{ name: 'Simulator', path: '/simulator' }]))
   // The draw to replay, as its sheet addresses it: ?event=<slug>&season=. The
   // featured draw stands in when the URL names none.
   const [eventSlug] = useUrlParam('event')

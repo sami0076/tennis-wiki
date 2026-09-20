@@ -187,4 +187,16 @@ describe('Edition', () => {
     expect(await screen.findByRole('heading', { level: 3, name: 'Serbia v Spain' })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Replay this draw' })).not.toBeInTheDocument()
   })
+
+  it('writes the edition as a SportsEvent into the document head, without a location', async () => {
+    stub(edition)
+    renderAt('/tournaments/testville-wta/2025')
+    await screen.findByRole('heading', { level: 1, name: 'Testville 2025' })
+    const scripts = Array.from(document.head.querySelectorAll('script[type="application/ld+json"]'))
+    const event = scripts.map((s) => JSON.parse(s.textContent ?? '{}')).find((ld) => ld['@type'] === 'SportsEvent')
+    expect(event).toMatchObject({ name: 'Testville 2025', startDate: '2025-05-01', description: 'WTA, clay, 4 draw' })
+    expect(event).not.toHaveProperty('location')
+    expect(event.competitor.map((c: { name: string }) => c.name)).toEqual(['Ann Ace', 'Bea Base'])
+  })
+
 })

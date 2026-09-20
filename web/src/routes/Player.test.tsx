@@ -492,4 +492,25 @@ describe('the player page', () => {
     expect(screen.getAllByText('n/r').length).toBeGreaterThanOrEqual(6)
   })
 
+
+  // The structured data a crawler reads: a Person built from the profile and
+  // nothing else, and the trail to the page.
+  it('writes the player as a Person into the document head', async () => {
+    routes({
+      '/coverage': coverage,
+      '/clutch': clutch(),
+      '/ratings': emptySeries,
+      '/rankings': emptyRankings,
+      '/matches': { data: [match()], next_cursor: '' },
+      '/players/itg-player': profile(),
+    })
+    show()
+    await screen.findByRole('heading', { name: 'Itg Player' })
+    const scripts = Array.from(document.head.querySelectorAll('script[type="application/ld+json"]'))
+    const person = scripts.map((s) => JSON.parse(s.textContent ?? '{}')).find((ld) => ld['@type'] === 'Person')
+    expect(person).toMatchObject({ name: 'Itg Player', nationality: 'ESP', birthDate: '2003-05-05' })
+    const trail = scripts.map((s) => JSON.parse(s.textContent ?? '{}')).find((ld) => ld['@type'] === 'BreadcrumbList')
+    expect(trail.itemListElement.map((i: { name: string }) => i.name)).toEqual(['Deucepoint', 'Players', 'Itg Player'])
+  })
+
 })

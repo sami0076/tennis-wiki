@@ -4,6 +4,7 @@ import { getSeasonEvents } from '../api/endpoints'
 import { useResource } from '../api/useResource'
 import { EmptyState, Meta, Score, Skeleton, StatTable, SurfaceDot, TourFilter, type Column } from '../components'
 import { formatScore } from '../lib/format'
+import { breadcrumbs, useJsonLd } from '../lib/jsonld'
 import { tierLabel } from '../lib/tier'
 import { useUrlParam } from '../lib/useUrlParam'
 import styles from './Season.module.css'
@@ -41,6 +42,14 @@ export function Season() {
   const [tour, setTour] = useUrlParam('tour')
   const [tier, setTier] = useUrlParam('tier')
   const events = useResource((signal) => getSeasonEvents(season, { tour, tier }, signal), [season, tour, tier])
+  useJsonLd(
+    'breadcrumbs',
+    breadcrumbs([
+      { name: 'Tournaments', path: '/tournaments' },
+      { name: 'Seasons', path: '/seasons' },
+      { name: year, path: `/seasons/${year}` },
+    ]),
+  )
 
   return (
     <>
