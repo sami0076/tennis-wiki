@@ -3,6 +3,7 @@ package httpapi
 import (
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -28,6 +29,37 @@ type HeadToHead struct {
 	Tiers    []HeadToHeadSplit `json:"tiers"`
 	Serve    [2]ServeStats     `json:"serve" tstype:"Pair<ServeStats>"`
 	Meetings []Meeting         `json:"meetings"`
+	// Filters echoes the cut the record, the splits, the serve figures and
+	// the meetings are under; TotalMeetings is the rivalry's whole count, so
+	// a page can write "3-1 in finals, of 40 meetings".
+	Filters       HeadToHeadFilters `json:"filters"`
+	TotalMeetings int               `json:"total_meetings"`
+	// Closeness is the rivalry's summary and is never filtered: the meetings
+	// that went the distance and the tiebreaks between them, and who won each.
+	Closeness HeadToHeadCloseness `json:"closeness"`
+}
+
+// HeadToHeadFilters is the cut a comparison was read under.
+type HeadToHeadFilters struct {
+	Level     *string `json:"level"`
+	Round     *string `json:"round"`
+	BestOf    *int    `json:"best_of"`
+	Surface   *string `json:"surface"`
+	Deciders  bool    `json:"deciders"`
+	Tiebreaks bool    `json:"tiebreaks"`
+	From      *int    `json:"from"`
+	To        *int    `json:"to"`
+}
+
+// HeadToHeadCloseness is how close the rivalry has been, from the scores.
+type HeadToHeadCloseness struct {
+	// Deciders is the meetings that reached a deciding set and who won them;
+	// Scored is the finished meetings whose score could be read, which is
+	// what it is a share of.
+	Deciders HeadToHeadRecord `json:"deciders"`
+	Scored   int              `json:"scored"`
+	// Tiebreaks is every set tiebreak between the two and who won it.
+	Tiebreaks HeadToHeadSplit `json:"tiebreaks"`
 }
 
 // HeadToHeadPlayer is enough of a player to head a column.
@@ -73,6 +105,138 @@ type Meeting struct {
 	// ChartingID is the Match Charting Project's id when this meeting was
 	// charted, and the key to /charted/{id}; null otherwise.
 	ChartingID *string `json:"charting_id"`
+	BestOf     int16   `json:"best_of"`
+	// DecidingSet is whether the meeting went the distance; null where the
+	// score could not be read or the match did not finish.
+	DecidingSet *bool `json:"deciding_set"`
+	// Tiebreaks is the set tiebreaks each side won in this meeting, in
+	// Players order; null on the same terms as DecidingSet.
+	Tiebreaks *[2]int `json:"tiebreaks" tstype:"Pair<number> | null"`
+}
+
+// meetingFilter is HeadToHeadFilters as a predicate over the rows.
+type meetingFilter struct {
+	HeadToHeadFilters
+	bestOf int16
+}
+
+// parseMeetingFilter reads the cut from the query, validated the way the
+// match history validates its own: a value outside the vocabulary is a 400,
+// never silently everything.
+func parseMeetingFilter(r *http.Request) (meetingFilter, string) {
+	q := r.URL.Query()
+	var f meetingFilter
+	if raw := q.Get("level"); raw != "" {
+		if !eventCategories[raw] {
+			return f, "level must be slam, masters, finals, olympics, team, tour, challenger, futures or itf."
+		}
+		f.Level = &raw
+	}
+	if raw := q.Get("round"); raw != "" {
+		switch raw {
+		case "F", "SF", "QF", "R16", "R32", "R64", "R128", "RR", "Q":
+			f.Round = &raw
+		default:
+			return f, "round must be F, SF, QF, R16, R32, R64, R128, RR or Q."
+		}
+	}
+	if raw := q.Get("best_of"); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || (n != 3 && n != 5) {
+			return f, "best_of must be 3 or 5."
+		}
+		f.BestOf, f.bestOf = &n, int16(n)
+	}
+	if raw := q.Get("surface"); raw != "" {
+		switch raw {
+		case string(db.SurfaceHard), string(db.SurfaceClay), string(db.SurfaceGrass), string(db.SurfaceCarpet):
+			f.Surface = &raw
+		default:
+			return f, "surface must be hard, clay, grass or carpet."
+		}
+	}
+	for _, flag := range []struct {
+		name string
+		into *bool
+	}{{"deciders", &f.Deciders}, {"tiebreaks", &f.Tiebreaks}} {
+		switch raw := q.Get(flag.name); raw {
+		case "", "false", "0":
+		case "true", "1":
+			*flag.into = true
+		default:
+			return f, flag.name + " must be true or false."
+		}
+	}
+	for _, bound := range []struct {
+		name string
+		into **int
+	}{{"from", &f.From}, {"to", &f.To}} {
+		if raw := q.Get(bound.name); raw != "" {
+			n, err := strconv.Atoi(raw)
+			if err != nil || n < firstSeason || n > lastSeason {
+				return f, bound.name + " must be a four-digit season."
+			}
+			*bound.into = &n
+		}
+	}
+	if f.From != nil && f.To != nil && *f.From > *f.To {
+		return f, "from must not be after to."
+	}
+	return f, ""
+}
+
+// keep says whether a meeting is inside the cut.
+func (f meetingFilter) keep(row db.ListHeadToHeadMeetingsRow) bool {
+	if f.Level != nil && categoryOf(row.Level, string(row.Tier)) != *f.Level {
+		return false
+	}
+	if f.Round != nil {
+		if *f.Round == "Q" {
+			if !row.IsQualifying {
+				return false
+			}
+		} else if row.Round != *f.Round || row.IsQualifying {
+			return false
+		}
+	}
+	if f.BestOf != nil && row.BestOf != f.bestOf {
+		return false
+	}
+	if f.Surface != nil && (row.Surface == nil || string(*row.Surface) != *f.Surface) {
+		return false
+	}
+	if f.Deciders && (row.DecidingSet == nil || !*row.DecidingSet) {
+		return false
+	}
+	if f.Tiebreaks && (row.TiebreaksWinner == nil || row.TiebreaksLoser == nil ||
+		*row.TiebreaksWinner+*row.TiebreaksLoser == 0) {
+		return false
+	}
+	if f.From != nil && int(row.Season) < *f.From {
+		return false
+	}
+	if f.To != nil && int(row.Season) > *f.To {
+		return false
+	}
+	return true
+}
+
+// categoryOf folds the two tours' level vocabularies into the index's list,
+// the same way ListEvents does in SQL.
+func categoryOf(level, tier string) string {
+	switch level {
+	case "D":
+		return "team"
+	case "G":
+		return "slam"
+	case "M", "PM", "1000":
+		return "masters"
+	case "F":
+		return "finals"
+	case "O":
+		return "olympics"
+	}
+	return tier
 }
 
 func (a *API) handleHeadToHead(w http.ResponseWriter, r *http.Request) {
@@ -103,6 +267,12 @@ func (a *API) handleHeadToHead(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	filter, problem := parseMeetingFilter(r)
+	if problem != "" {
+		BadRequest(w, r, problem)
+		return
+	}
+
 	rows, err := a.Queries.ListHeadToHeadMeetings(ctx, db.ListHeadToHeadMeetingsParams{
 		PlayerA: first.ID, PlayerB: second.ID,
 	})
@@ -111,7 +281,7 @@ func (a *API) handleHeadToHead(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, r, http.StatusOK, buildHeadToHead(first, second, rows))
+	writeJSON(w, r, http.StatusOK, buildHeadToHead(first, second, rows, filter))
 }
 
 func headToHeadPlayer(p db.GetPlayerBySlugRow) HeadToHeadPlayer {
@@ -204,11 +374,35 @@ func explainMeetings(tiers map[db.Tier]struct{}, lastSeason int) string {
 }
 
 func buildHeadToHead(
-	first, second db.GetPlayerBySlugRow, rows []db.ListHeadToHeadMeetingsRow,
+	first, second db.GetPlayerBySlugRow, rows []db.ListHeadToHeadMeetingsRow, filter meetingFilter,
 ) HeadToHead {
 	h := HeadToHead{
-		Players:  [2]HeadToHeadPlayer{headToHeadPlayer(first), headToHeadPlayer(second)},
-		Meetings: make([]Meeting, 0, len(rows)),
+		Players:       [2]HeadToHeadPlayer{headToHeadPlayer(first), headToHeadPlayer(second)},
+		Meetings:      make([]Meeting, 0, len(rows)),
+		Filters:       filter.HeadToHeadFilters,
+		TotalMeetings: len(rows),
+		Closeness:     HeadToHeadCloseness{Tiebreaks: HeadToHeadSplit{Name: "tiebreaks"}},
+	}
+
+	// The closeness summary is over every meeting, whatever the cut below.
+	for _, row := range rows {
+		side := 0
+		if row.WinnerID == second.ID {
+			side = 1
+		}
+		if row.DecidingSet != nil {
+			h.Closeness.Scored++
+			if *row.DecidingSet {
+				h.Closeness.Deciders.Matches++
+				h.Closeness.Deciders.Wins[side]++
+			}
+		}
+		if row.TiebreaksWinner != nil && row.TiebreaksLoser != nil {
+			won, lost := int(*row.TiebreaksWinner), int(*row.TiebreaksLoser)
+			h.Closeness.Tiebreaks.Matches += won + lost
+			h.Closeness.Tiebreaks.Wins[side] += won
+			h.Closeness.Tiebreaks.Wins[1-side] += lost
+		}
 	}
 
 	// Insertion order is kept so the splits come out oldest-surface-first
@@ -222,6 +416,9 @@ func buildHeadToHead(
 	lastSeason := 0
 
 	for _, row := range rows {
+		if !filter.keep(row) {
+			continue
+		}
 		side := 0
 		if row.WinnerID == second.ID {
 			side = 1
@@ -264,10 +461,17 @@ func buildHeadToHead(
 			Score:       row.Score,
 			Incomplete:  row.Incomplete,
 			ChartingID:  row.ChartingID,
+			BestOf:      row.BestOf,
+			DecidingSet: row.DecidingSet,
 		}
 		if row.Surface != nil {
 			value := string(*row.Surface)
 			meeting.Surface = &value
+		}
+		if row.TiebreaksWinner != nil && row.TiebreaksLoser != nil {
+			var pair [2]int
+			pair[side], pair[1-side] = int(*row.TiebreaksWinner), int(*row.TiebreaksLoser)
+			meeting.Tiebreaks = &pair
 		}
 		h.Meetings = append(h.Meetings, meeting)
 	}
