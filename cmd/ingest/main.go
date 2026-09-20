@@ -207,6 +207,13 @@ func run(ctx context.Context, cfg config) error {
 		slog.Info("refreshed serve baselines",
 			"took", time.Since(started).Round(time.Millisecond))
 
+		started = time.Now()
+		if err := store.RefreshPlayerTotals(ctx); err != nil {
+			return err
+		}
+		slog.Info("refreshed player totals",
+			"took", time.Since(started).Round(time.Millisecond))
+
 		flushReadCache(ctx)
 	}
 
