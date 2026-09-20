@@ -106,6 +106,9 @@ function match(overrides: Partial<PlayerMatch> = {}): PlayerMatch {
 
 /** routes stubs fetch by path, so each endpoint can answer differently. */
 function routes(handlers: Record<string, unknown>, notFound: string[] = []) {
+  // The year-by-year is its own request; a test that says nothing about it
+  // gets an empty career rather than the profile answering for it.
+  const all: Record<string, unknown> = { '/seasons': { slug: 'itg-player', name: 'Itg Player', seasons: [] }, ...handlers }
   vi.stubGlobal('fetch', (input: RequestInfo | URL) => {
     const url = String(input)
     if (notFound.some((path) => url.includes(path))) {
@@ -116,10 +119,12 @@ function routes(handlers: Record<string, unknown>, notFound: string[] = []) {
         ),
       )
     }
-    const key = Object.keys(handlers).find((path) => url.includes(path))
+    // First match in insertion order, with the sub-resources before the
+    // profile, so /players/x/seasons is not answered by the handler for /players/x.
+    const key = Object.keys(all).find((path) => url.includes(path))
     if (key === undefined) return Promise.reject(new Error(`unstubbed ${url}`))
     return Promise.resolve(
-      new Response(JSON.stringify(handlers[key]), {
+      new Response(JSON.stringify(all[key]), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       }),
@@ -265,7 +270,9 @@ describe('the player page', () => {
               ? emptySeries
               : url.includes('/rankings')
                 ? emptyRankings
-                : profile()
+                : url.includes('/seasons')
+                  ? { slug: 'itg-player', name: 'Itg Player', seasons: [] }
+                  : profile()
       return Promise.resolve(
         new Response(JSON.stringify(body), {
           status: 200,
@@ -424,4 +431,65 @@ describe('the player page', () => {
     expect(within(container).getAllByRole('generic').length).toBeGreaterThan(0)
     expect(container.textContent).toBe('')
   })
+
+  // The record by opponent rank and the year-by-year: each rate stands on its
+  // own count of matches, and a season with lines on four of sixty matches
+  // says so rather than reading as a season of four.
+  it('cuts the career by opponent rank and by year, each rate with its own denominator', async () => {
+    routes({
+      '/coverage': coverage,
+      '/clutch': clutch(),
+      '/ratings': emptySeries,
+      '/rankings': emptyRankings,
+      '/matches': { data: [match()], next_cursor: '' },
+      '/seasons': {
+        slug: 'itg-player',
+        name: 'Itg Player',
+        seasons: [
+          {
+            season: 1994, matches: 60, wins: 41, losses: 19, titles: 2, scored: 60,
+            sets_won: 90, sets_played: 130, games_won: 700, games_played: 1200, tiebreaks_won: 8, tiebreaks_played: 12,
+            sets_pct: 69.2, games_pct: 58.3, tiebreaks_pct: 66.7,
+            with_serve: 4, with_return: 4, hold_pct: 88.1, break_pct: 30.0, ace_pct: 9.5, df_pct: 2.1, dominance: 1.21,
+          },
+          {
+            season: 1995, matches: 10, wins: 3, losses: 7, titles: 0, scored: 10,
+            sets_won: 8, sets_played: 22, games_won: 100, games_played: 220, tiebreaks_won: 0, tiebreaks_played: 0,
+            sets_pct: 36.4, games_pct: 45.5, tiebreaks_pct: null,
+            with_serve: 0, with_return: 0, hold_pct: null, break_pct: null, ace_pct: null, df_pct: null, dominance: null,
+          },
+        ],
+      },
+      '/players/itg-player': profile({
+        splits: {
+          by_rank: [
+            { band: '1', matches: 4, wins: 1 }, { band: '5', matches: 9, wins: 3 }, { band: '10', matches: 20, wins: 8 },
+            { band: '20', matches: 40, wins: 20 }, { band: '50', matches: 90, wins: 50 }, { band: '100', matches: 150, wins: 95 },
+            { band: 'outside', matches: 30, wins: 25 }, { band: 'unranked', matches: 12, wins: 9 },
+          ],
+          ranked: 180,
+          higher: { matches: 70, wins: 25 },
+          lower: { matches: 100, wins: 88 },
+          final_set_tiebreaks: { matches: 9, wins: 5 },
+          scored: 190,
+        },
+      }),
+    })
+    show()
+
+    expect(await screen.findByRole('heading', { name: "By opponent's ranking" })).toBeInTheDocument()
+    expect(screen.getByText('vs No. 1')).toBeInTheDocument()
+    expect(screen.getByText('1-3')).toBeInTheDocument()
+    expect(screen.getByText(/Over the 180 matches where the opponent's ranking on the day is known; 12 more/)).toBeInTheDocument()
+    expect(screen.getByText('5-4')).toBeInTheDocument()
+
+    expect(await screen.findByRole('heading', { name: 'Year by year' })).toBeInTheDocument()
+    expect(screen.getByText('41-19')).toBeInTheDocument()
+    expect(screen.getByText('88.1%')).toBeInTheDocument()
+    expect(screen.getByText(/which is the Lines column: 4 of 70 matches/)).toBeInTheDocument()
+    // 1995 had no serve line: hold, break, ace, double faults and dominance are
+    // n/r, and so is a tiebreak rate over no tiebreaks.
+    expect(screen.getAllByText('n/r').length).toBeGreaterThanOrEqual(6)
+  })
+
 })
