@@ -19,6 +19,7 @@ packages:
       - "coverage.go"
       - "charted.go"
       - "tournaments.go"
+      - "seasons.go"
       - "problem.go"
       - "cursor.go"
     type_mappings:
