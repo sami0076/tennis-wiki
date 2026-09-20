@@ -117,6 +117,10 @@ export function Home() {
               rowKey={(row) => `${row.tour}-${row.tier}`}
               defaultSort={{ key: 'matches', direction: 'desc' }}
             />
+            <p className={styles.seasons}>
+              The same calendar a year at a time, both tours on every row:{' '}
+              <Link to="/seasons">Seasons</Link>.
+            </p>
           </>
         ) : null}
       </section>
