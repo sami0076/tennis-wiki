@@ -224,6 +224,47 @@ export interface HeadToHead {
   tiers: HeadToHeadSplit[];
   serve: Pair<ServeStats>;
   meetings: Meeting[];
+  /**
+   * Filters echoes the cut the record, the splits, the serve figures and
+   * the meetings are under; TotalMeetings is the rivalry's whole count, so
+   * a page can write "3-1 in finals, of 40 meetings".
+   */
+  filters: HeadToHeadFilters;
+  total_meetings: number /* int */;
+  /**
+   * Closeness is the rivalry's summary and is never filtered: the meetings
+   * that went the distance and the tiebreaks between them, and who won each.
+   */
+  closeness: HeadToHeadCloseness;
+}
+/**
+ * HeadToHeadFilters is the cut a comparison was read under.
+ */
+export interface HeadToHeadFilters {
+  level: string | null;
+  round: string | null;
+  best_of: number /* int */ | null;
+  surface: string | null;
+  deciders: boolean;
+  tiebreaks: boolean;
+  from: number /* int */ | null;
+  to: number /* int */ | null;
+}
+/**
+ * HeadToHeadCloseness is how close the rivalry has been, from the scores.
+ */
+export interface HeadToHeadCloseness {
+  /**
+   * Deciders is the meetings that reached a deciding set and who won them;
+   * Scored is the finished meetings whose score could be read, which is
+   * what it is a share of.
+   */
+  deciders: HeadToHeadRecord;
+  scored: number /* int */;
+  /**
+   * Tiebreaks is every set tiebreak between the two and who won it.
+   */
+  tiebreaks: HeadToHeadSplit;
 }
 /**
  * HeadToHeadPlayer is enough of a player to head a column.
@@ -279,6 +320,17 @@ export interface Meeting {
    * charted, and the key to /charted/{id}; null otherwise.
    */
   charting_id: string | null;
+  best_of: number /* int16 */;
+  /**
+   * DecidingSet is whether the meeting went the distance; null where the
+   * score could not be read or the match did not finish.
+   */
+  deciding_set: boolean | null;
+  /**
+   * Tiebreaks is the set tiebreaks each side won in this meeting, in
+   * Players order; null on the same terms as DecidingSet.
+   */
+  tiebreaks: Pair<number> | null;
 }
 
 //////////

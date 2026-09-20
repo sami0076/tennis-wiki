@@ -182,3 +182,100 @@ func TestHeadToHeadFlagsIncompleteMeetings(t *testing.T) {
 		t.Errorf("incomplete = %d, want the one retirement flagged", h.Record.Incomplete)
 	}
 }
+
+// derive writes the columns the score parser derives for a fixture match,
+// which historyMatch leaves alone: best of, the deciding set and tiebreaks.
+func (f *apiFixture) derive(tournamentID int64, num int, bestOf int, decider bool, tbWinner, tbLoser int) {
+	f.t.Helper()
+	if _, err := f.tx.Exec(f.ctx, `
+		UPDATE matches SET best_of = $3, deciding_set = $4, tiebreaks_winner = $5, tiebreaks_loser = $6
+		 WHERE tournament_id = $1 AND match_num = $2`, tournamentID, num, bestOf, decider, tbWinner, tbLoser); err != nil {
+		f.t.Fatal(err)
+	}
+}
+
+// A rivalry to cut every way the filters cut it.
+func (f *apiFixture) rivalry() {
+	f.t.Helper()
+	pts := int16(80)
+	ann := f.player("rv-ann", "Ann Ace", db.TourWta)
+	bea := f.player("rv-bea", "Bea Base", db.TourWta)
+	slam := f.tourTournament("2019-580-rv", db.TierTour, 2019, db.TourWta)
+	if _, err := f.tx.Exec(f.ctx, `UPDATE tournaments SET level = 'G' WHERE id = $1`, slam); err != nil {
+		f.t.Fatal(err)
+	}
+	minor := f.tourTournament("2021-rv-ch", db.TierChallenger, 2021, db.TourWta)
+
+	// 2019, a Slam final on grass, best of five to a deciding set with a tiebreak: Ann.
+	f.historyMatch(slam, ann, bea, 1, "F", "grass", "2019-07-13", "6-4 3-6 7-6(3) 4-6 6-3", &pts)
+	f.derive(slam, 1, 5, true, 1, 0)
+	// 2019, a Slam semi on grass, straight sets: Bea.
+	f.historyMatch(slam, bea, ann, 2, "SF", "grass", "2019-07-11", "6-4 6-4", &pts)
+	f.derive(slam, 2, 3, false, 0, 0)
+	// 2021, a Challenger final on clay, three sets with two tiebreaks: Bea.
+	f.historyMatch(minor, bea, ann, 1, "F", "clay", "2021-05-08", "7-6(5) 6-7(2) 6-4", nil)
+	f.derive(minor, 1, 3, true, 1, 1)
+}
+
+func TestHeadToHeadFiltersRecomputeTheRecord(t *testing.T) {
+	f := newAPIFixture(t)
+	f.rivalry()
+
+	whole := decodeH2H(t, f.get("/api/v1/h2h/rv-ann/rv-bea"))
+	if whole.Record.Matches != 3 || whole.TotalMeetings != 3 || whole.Record.Wins != [2]int{1, 2} {
+		t.Fatalf("record = %+v of %d", whole.Record, whole.TotalMeetings)
+	}
+	// Closeness over every meeting: two deciders, Ann one and Bea one; three
+	// tiebreaks, Ann two and Bea one.
+	if whole.Closeness.Scored != 3 || whole.Closeness.Deciders != (HeadToHeadRecord{Matches: 2, Wins: [2]int{1, 1}}) {
+		t.Errorf("deciders = %+v of %d scored", whole.Closeness.Deciders, whole.Closeness.Scored)
+	}
+	if whole.Closeness.Tiebreaks.Matches != 3 || whole.Closeness.Tiebreaks.Wins != [2]int{2, 1} {
+		t.Errorf("tiebreaks = %+v", whole.Closeness.Tiebreaks)
+	}
+	// Oldest first: the semi, then the final with Ann's tiebreak and its five sets.
+	final := whole.Meetings[1]
+	if final.Tiebreaks == nil || *final.Tiebreaks != [2]int{1, 0} || final.BestOf != 5 || final.DecidingSet == nil || !*final.DecidingSet {
+		t.Errorf("final = %+v", final)
+	}
+
+	cases := []struct {
+		query string
+		wins  [2]int
+	}{
+		{"round=F", [2]int{1, 1}},
+		{"level=slam", [2]int{1, 1}},
+		{"level=challenger", [2]int{0, 1}},
+		{"best_of=5", [2]int{1, 0}},
+		{"surface=clay", [2]int{0, 1}},
+		{"deciders=true", [2]int{1, 1}},
+		{"tiebreaks=true", [2]int{1, 1}},
+		{"from=2020", [2]int{0, 1}},
+		{"to=2019", [2]int{1, 1}},
+		{"from=2019&to=2019&round=SF", [2]int{0, 1}},
+	}
+	for _, tc := range cases {
+		h := decodeH2H(t, f.get("/api/v1/h2h/rv-ann/rv-bea?"+tc.query))
+		if h.Record.Wins != tc.wins {
+			t.Errorf("%s: record %+v, want %v", tc.query, h.Record.Wins, tc.wins)
+		}
+		if h.TotalMeetings != 3 || h.Closeness != whole.Closeness {
+			t.Errorf("%s: the summary moved: %d meetings, %+v", tc.query, h.TotalMeetings, h.Closeness)
+		}
+		if len(h.Meetings) != h.Record.Matches {
+			t.Errorf("%s: %d meetings for a record over %d", tc.query, len(h.Meetings), h.Record.Matches)
+		}
+	}
+
+	// A cut that leaves nothing is a record of 0-0 over the whole rivalry.
+	none := decodeH2H(t, f.get("/api/v1/h2h/rv-ann/rv-bea?surface=hard"))
+	if none.Record.Matches != 0 || none.TotalMeetings != 3 || none.Filters.Surface == nil {
+		t.Errorf("empty cut = %+v of %d, filters %+v", none.Record, none.TotalMeetings, none.Filters)
+	}
+
+	for _, query := range []string{"level=pro", "round=R2", "best_of=4", "surface=ice", "deciders=maybe", "from=abc", "from=2020&to=2019"} {
+		if res := f.get("/api/v1/h2h/rv-ann/rv-bea?" + query); res.StatusCode != http.StatusBadRequest {
+			t.Errorf("%s: %d, want 400", query, res.StatusCode)
+		}
+	}
+}

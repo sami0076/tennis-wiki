@@ -299,10 +299,14 @@ straight from the match rows for a long ATP career and a short WTA one.
 
 `/h2h/:a/:b` is the comparison and `/h2h` the picker, which is the same page: the URL is the
 state, so a comparison is a link somebody can send, and asking the other way round is the same
-rivalry read from the other end. The surface toggle filters the record, the rivalry strip and
-the meeting list from the meetings themselves; it cannot filter the serve figures, because the
-endpoint aggregates a rivalry once, and the caption says so rather than letting them look
-filtered. Two players who never met is a full page, not an error.
+rivalry read from the other end. A rivalry argument is usually about a narrower thing, so the
+cut is in the URL too: level, round, best of, surface, the meetings that went the distance,
+the ones with a tiebreak, and a season range. The endpoint recomputes the record, the strip,
+the serve figures and the meeting list under the cut, and the score line writes the whole
+sentence -- "3-6 in finals, at Slams, of 41 meetings" -- because 3-6 is a different claim.
+The deciding sets and tiebreaks between them are the rivalry's summary and are never cut. A
+cut that leaves nothing is an answer naming the filter; two players who never met is a full
+page, not an error.
 
 Search is in the header on every page: a combobox rather than a div that looks like one, so
 arrow keys and a screen reader reach the same results. It debounces and cancels superseded

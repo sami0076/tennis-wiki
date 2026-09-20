@@ -161,6 +161,10 @@ SELECT m.id,
        m.incomplete,
        m.score,
        m.winner_id,
+       m.best_of,
+       m.deciding_set,
+       m.tiebreaks_winner,
+       m.tiebreaks_loser,
        a.aces AS a_aces, a.double_faults AS a_double_faults, a.serve_points AS a_serve_points,
        a.first_in AS a_first_in, a.first_won AS a_first_won, a.second_won AS a_second_won,
        a.bp_saved AS a_bp_saved, a.bp_faced AS a_bp_faced,
@@ -185,36 +189,40 @@ type ListHeadToHeadMeetingsParams struct {
 }
 
 type ListHeadToHeadMeetingsRow struct {
-	ID            int64
-	PlayedOn      time.Time
-	Tournament    string
-	EventSlug     *string
-	Tier          Tier
-	Level         string
-	Season        int16
-	Surface       *Surface
-	Round         string
-	IsQualifying  bool
-	Incomplete    bool
-	Score         *string
-	WinnerID      int64
-	AAces         *int16
-	ADoubleFaults *int16
-	AServePoints  *int16
-	AFirstIn      *int16
-	AFirstWon     *int16
-	ASecondWon    *int16
-	ABpSaved      *int16
-	ABpFaced      *int16
-	BAces         *int16
-	BDoubleFaults *int16
-	BServePoints  *int16
-	BFirstIn      *int16
-	BFirstWon     *int16
-	BSecondWon    *int16
-	BBpSaved      *int16
-	BBpFaced      *int16
-	ChartingID    *string
+	ID              int64
+	PlayedOn        time.Time
+	Tournament      string
+	EventSlug       *string
+	Tier            Tier
+	Level           string
+	Season          int16
+	Surface         *Surface
+	Round           string
+	IsQualifying    bool
+	Incomplete      bool
+	Score           *string
+	WinnerID        int64
+	BestOf          int16
+	DecidingSet     *bool
+	TiebreaksWinner *int16
+	TiebreaksLoser  *int16
+	AAces           *int16
+	ADoubleFaults   *int16
+	AServePoints    *int16
+	AFirstIn        *int16
+	AFirstWon       *int16
+	ASecondWon      *int16
+	ABpSaved        *int16
+	ABpFaced        *int16
+	BAces           *int16
+	BDoubleFaults   *int16
+	BServePoints    *int16
+	BFirstIn        *int16
+	BFirstWon       *int16
+	BSecondWon      *int16
+	BBpSaved        *int16
+	BBpFaced        *int16
+	ChartingID      *string
 }
 
 // Every match the two have played, oldest first, with both serve lines.
@@ -247,6 +255,10 @@ func (q *Queries) ListHeadToHeadMeetings(ctx context.Context, arg ListHeadToHead
 			&i.Incomplete,
 			&i.Score,
 			&i.WinnerID,
+			&i.BestOf,
+			&i.DecidingSet,
+			&i.TiebreaksWinner,
+			&i.TiebreaksLoser,
 			&i.AAces,
 			&i.ADoubleFaults,
 			&i.AServePoints,
