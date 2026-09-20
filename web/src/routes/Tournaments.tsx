@@ -62,6 +62,9 @@ export function Tournaments() {
   return (
     <>
       <h1 className={styles.title}>Tournaments</h1>
+      <p className={styles.seasons}>
+        Or the calendar a year at a time: <Link to="/seasons">Seasons</Link>
+      </p>
 
       <div className={styles.controls}>
         <div className={styles.field}>

@@ -6,6 +6,16 @@
   padding: var(--s-2) 0 var(--s-4);
 }
 
+.seasons {
+  padding-bottom: var(--s-4);
+  font-size: var(--t-13);
+  color: var(--pencil);
+}
+
+.seasons a {
+  color: var(--ink);
+}
+
 .controls {
   display: grid;
   gap: var(--s-2);
