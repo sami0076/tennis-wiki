@@ -7,6 +7,7 @@ import { Button, EmptyState, Skeleton, TourFilter } from '../components'
 import { useDebounced } from '../lib/useDebounced'
 import { useUrlParam } from '../lib/useUrlParam'
 import styles from './Tournaments.module.css'
+import { breadcrumbs, useJsonLd } from '../lib/jsonld'
 
 const LEVELS = [
   { value: null, label: 'Every level' },
@@ -47,6 +48,7 @@ export function Tournaments() {
   const [level, setLevel] = useUrlParam('level')
   const [cursors, setCursors] = useState<string[]>([])
   const query = useDebounced(q?.trim() ?? '')
+  useJsonLd('breadcrumbs', breadcrumbs([{ name: 'Tournaments', path: '/tournaments' }]))
 
   const page = useResource(
     (signal) => getEvents({ q: query, tour, level, limit: PAGE, cursor: cursors.at(-1) ?? null }, signal),

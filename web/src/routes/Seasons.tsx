@@ -6,6 +6,7 @@ import { Skeleton } from '../components'
 import { surname } from '../lib/format'
 import { SURFACES, surfaceLabel, surfaceVar } from '../lib/surface'
 import styles from './Seasons.module.css'
+import { breadcrumbs, useJsonLd } from '../lib/jsonld'
 
 /**
  * The calendar: one row per year, both tours on it, since a season is the
@@ -16,6 +17,7 @@ import styles from './Seasons.module.css'
  */
 export function Seasons() {
   const seasons = useResource((signal) => getSeasons(signal), [])
+  useJsonLd('breadcrumbs', breadcrumbs([{ name: 'Seasons', path: '/seasons' }]))
 
   return (
     <>

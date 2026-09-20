@@ -4,6 +4,7 @@ import { MIN_QUERY, usePlayerSearch } from '../api/useSearch'
 import { Button, ButtonLink, EmptyState, PlayerSummary, Skeleton, TourFilter } from '../components'
 import { useUrlParam } from '../lib/useUrlParam'
 import styles from './Players.module.css'
+import { breadcrumbs, useJsonLd } from '../lib/jsonld'
 
 /**
  * The full result list, which is where the header typeahead sends anyone whose
@@ -16,6 +17,7 @@ export function Players() {
   const [query, setQuery] = useUrlParam('q')
   const [tour, setTour] = useUrlParam('tour')
   const [cursors, setCursors] = useState<string[]>([])
+  useJsonLd('breadcrumbs', breadcrumbs([{ name: 'Players', path: '/players' }]))
 
   const search = usePlayerSearch(query ?? '', {
     tour,

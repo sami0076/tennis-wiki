@@ -4,6 +4,7 @@ import { getEvent } from '../api/endpoints'
 import { useResource } from '../api/useResource'
 import { ButtonLink, EmptyState, Meta, Score, Skeleton, StatTable, SurfaceDot, type Column } from '../components'
 import { formatScore } from '../lib/format'
+import { breadcrumbs, useJsonLd } from '../lib/jsonld'
 import styles from './Event.module.css'
 
 /**
@@ -15,6 +16,15 @@ import styles from './Event.module.css'
 export function Event() {
   const { slug = '' } = useParams()
   const event = useResource((signal) => getEvent(slug, signal), [slug])
+  useJsonLd(
+    'breadcrumbs',
+    event.state === 'ready'
+      ? breadcrumbs([
+          { name: 'Tournaments', path: '/tournaments' },
+          { name: `${event.data.name}, ${event.data.tour.toUpperCase()}`, path: `/tournaments/${slug}` },
+        ])
+      : null,
+  )
 
   if (event.state === 'loading') {
     return (

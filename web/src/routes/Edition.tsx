@@ -17,6 +17,7 @@ import {
 } from '../components'
 import { absenceReason } from '../lib/absence'
 import { buildBracket, pageSheets, roundGroups, splitRounds, ROUND_WORDS, type SheetPage } from '../lib/bracket'
+import { breadcrumbs, sportsEvent, useJsonLd } from '../lib/jsonld'
 import { levelLabel } from '../lib/tier'
 import { useUrlParam } from '../lib/useUrlParam'
 import styles from './Edition.module.css'
@@ -33,6 +34,17 @@ export function Edition() {
   // The event's other seasons, for the editions line. Its own request so the
   // sheet does not wait on it, and the line is simply absent if it fails.
   const event = useResource((signal) => getEvent(slug, signal), [slug])
+  useJsonLd('event', edition.state === 'ready' ? sportsEvent(edition.data) : null)
+  useJsonLd(
+    'breadcrumbs',
+    edition.state === 'ready'
+      ? breadcrumbs([
+          { name: 'Tournaments', path: '/tournaments' },
+          { name: `${edition.data.event.name}, ${edition.data.event.tour.toUpperCase()}`, path: `/tournaments/${slug}` },
+          { name: `${edition.data.name} ${edition.data.season}`, path: `/tournaments/${slug}/${season}` },
+        ])
+      : null,
+  )
 
   if (edition.state === 'loading') {
     return (

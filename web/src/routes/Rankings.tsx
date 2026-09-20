@@ -19,6 +19,7 @@ import {
 import { surfaceVar } from '../lib/surface'
 import { useUrlParam } from '../lib/useUrlParam'
 import styles from './Rankings.module.css'
+import { breadcrumbs, useJsonLd } from '../lib/jsonld'
 
 const TYPES = [
   { value: 'elo', label: 'Elo' },
@@ -38,6 +39,7 @@ export function Rankings() {
   const [surface, setSurface] = useUrlParam('surface')
   const [date, setDate] = useUrlParam('date')
   const [cursors, setCursors] = useState<string[]>([])
+  useJsonLd('breadcrumbs', breadcrumbs([{ name: 'Rankings', path: '/rankings' }]))
 
   const kind = type === 'official' ? 'official' : 'elo'
   // The tours publish one list each, so a surface over the official type is a

@@ -1,6 +1,7 @@
 import { checks, headings, html, source } from '../generated/methodology'
 import { Meta } from '../components'
 import styles from './Methodology.module.css'
+import { breadcrumbs, useJsonLd } from '../lib/jsonld'
 
 const repo = 'https://github.com/sami0076/tennis-wiki/blob/main'
 
@@ -20,6 +21,7 @@ const body = cut === -1 ? '' : html.slice(cut)
  * from that run directly.
  */
 export function Methodology() {
+  useJsonLd('breadcrumbs', breadcrumbs([{ name: 'Methodology', path: '/methodology' }]))
   return (
     <div className={styles.layout}>
       <nav className={styles.contents} aria-label="Contents">

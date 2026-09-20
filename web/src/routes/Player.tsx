@@ -43,6 +43,7 @@ import {
 import { absenceReason, hasStatistics } from '../lib/absence'
 import { ageOn, careerSpan, formatHand, formatPercent } from '../lib/format'
 import { tierLabel } from '../lib/tier'
+import { breadcrumbs, person, useJsonLd } from '../lib/jsonld'
 import { useUrlParam } from '../lib/useUrlParam'
 import { OpponentsSection, SeasonsSection } from './PlayerSplits'
 import styles from './Player.module.css'
@@ -74,6 +75,13 @@ export function Player() {
   const rankings = useResource((signal) => getPlayerRankings(slug, signal), [slug])
   const clutch = useResource((signal) => getPlayerClutch(slug, signal), [slug])
   const seasons = useResource((signal) => getPlayerSeasons(slug, signal), [slug])
+  useJsonLd('person', profile.state === 'ready' ? person(profile.data) : null)
+  useJsonLd(
+    'breadcrumbs',
+    profile.state === 'ready'
+      ? breadcrumbs([{ name: 'Players', path: '/players' }, { name: profile.data.name, path: `/players/${slug}` }])
+      : null,
+  )
   const matches = useResource(
     (signal) =>
       getPlayerMatches(slug, { surface, limit: 25, cursor: cursors.at(-1) ?? null }, signal),
