@@ -109,6 +109,42 @@ zeroes.
   move two ratings on no evidence. A retirement is rated: it was played, and it has a
   winner.
 
+## Leaderboards, and what a row stands on
+
+`GET /api/v1/leaders/{stat}` ranks players on one figure at a time, filtered by tour,
+tier, surface and season. Every figure is a share of a count, and the response carries
+the count: a first-serve rate is first-serve points won over first serves in, and the
+row says how many matches those serves came from. The one exception is the **dominance
+ratio**, return points won divided by serve points lost:
+
+$$
+\text{dominance} = \frac{\text{return points won} / \text{return points}}{1 - \text{serve points won} / \text{serve points}}
+$$
+
+A ratio above 1 is a player who won a larger share of their return points than their
+opponents won of theirs, which is the figure that says whether a player won more points
+than they lost rather than more matches.
+
+Three families of figure have three different denominators, and a board says which it is
+using. Serve figures stand on the player's own serve lines, which the source recorded for
+about 17% of matches. Return figures stand on the opponents' lines, which is not the same
+set of matches. Figures read from the score -- matches, sets, games, tiebreaks and
+deciding sets won -- stand on every finished match whose score the parser could read,
+which is nearly all of them. A player's aces rate and their sets-won rate are therefore
+over different match counts, and each row carries its own.
+
+**The floor.** A board leaves off anyone with fewer than ten matches carrying the figure's
+inputs. Ten was measured rather than guessed: at a floor of five the all-time first-serve
+board is led by players with five matches and a season's board by players with two; at ten
+the leaders stand on 113 matches all-time and 15 in a season, and the top ten no longer
+changes as the floor rises. It is also the largest floor that leaves a season on one
+surface with a board at all -- 48 players had ten grass matches with statistics in 2019,
+and none had twenty. The floor is a parameter, and the page shows the one in use.
+
+Every board states its population: how many matches met the filter, how many of those
+carried statistics, and how many players cleared the floor. A name that is not on a board
+is either below the floor or without the figure, and those are different absences.
+
 ## How a rating is computed
 
 Every rating here is computed from scratch, in chronological order, over every match in the

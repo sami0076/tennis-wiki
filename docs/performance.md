@@ -591,6 +591,35 @@ would make it a 10,000-row scan; at 70ms behind a cache whose invalidation is th
 stage itself, it does not justify a schema change yet. Recorded here for whoever finds it
 does.
 
+## Leaderboards
+
+A leaderboard is an aggregate over a population, and the population is the whole
+database. The first version summed 3.3 million appearances per request -- every
+`match_players` row joined to its opponent's row for the return figures -- and the
+unfiltered board took **11 seconds**. Migration 00018 adds `player_totals`: the same sums
+kept per player, season, tier and surface, 498,425 rows, rebuilt by the ingest refresh
+step in 20 seconds alongside the clutch and serve baselines. A board is then a `GROUP BY
+player_id` over the rows that match the filter, and the worst case is a scan of the whole
+table rather than of every match.
+
+The same step derives sets and games won from every score string, which the year-by-year
+row on the player page reads from the same table. Deriving 1,596,133 scores took 51
+seconds, once.
+
+End to end over HTTP, without the read cache, warm; the population count is a second
+query over the same rows:
+
+| | Warm | Body |
+|---|---|---|
+| `/leaders/first_serve_won`, no filter: every player, every season | 515-680ms | 21KB |
+| `/leaders/matches_won`, no filter | 470ms | 20KB |
+| `/leaders/dominance?tier=tour` | 417ms | 21KB |
+| `/leaders/return_points_won?tour=atp&season=2019&surface=clay` | 115-128ms | 21KB |
+
+The unfiltered board is the worst combination, and it is the one that never changes
+between ingests, so the read cache holds it. A season on one surface reads 1-2% of the
+table through the `(season, tier)` index.
+
 ## The read cache
 
 Redis 7 has been in the compose stack since #2 and nothing used it. This data barely
