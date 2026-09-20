@@ -159,6 +159,8 @@ GET /api/v1/simulate/draw?event=&season=  a played draw, replayed ten thousand t
 GET /api/v1/tournaments?tour=&level=&q=   the index, grouped by level, searchable
 GET /api/v1/tournaments/:slug             an event across seasons, with how each got there
 GET /api/v1/tournaments/:slug/:season     one edition as a draw sheet
+GET /api/v1/seasons                       a row per year, both tours, with the Slam finals
+GET /api/v1/seasons/:year?tour=&tier=     every event of a year at one tier, with its final
 ```
 
 ```bash
@@ -264,6 +266,13 @@ with no first-round match sits above a typed `bye` and a row the file lacks read
 (ADR-0012), and `/tournaments` the index grouped by level with a search. Every tournament
 name on a match row links to its sheet, and the sheet's "Replay this draw" opens the
 simulator on the same edition.
+
+`/seasons` is the calendar a year at a time, both tours on every row since a season is the
+one place the two share one: the events on each surface as the site's squares with their
+counts, then the Slam champions in calendar order, and the women's rows reaching back to 1923
+rather than starting where the men's files do. A year in progress says the date each tour
+is complete to. `/seasons/:year` is every event of the year grouped by level, with a tier
+switch so a year at Challenger level is reachable rather than silently cut.
 
 `/h2h/:a/:b` is the comparison and `/h2h` the picker, which is the same page: the URL is the
 state, so a comparison is a link somebody can send, and asking the other way round is the same

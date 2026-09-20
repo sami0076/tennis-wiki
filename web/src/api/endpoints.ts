@@ -15,6 +15,8 @@ import type {
   RankingHistory,
   RankingPage,
   RatingSeries,
+  SeasonEventsResponse,
+  SeasonsResponse,
   Trajectories,
 } from './types.gen'
 
@@ -172,6 +174,20 @@ export function getEvent(slug: string, signal?: AbortSignal): Promise<Event> {
 /** One season of an event as its draw sheet: every match in bracket order. */
 export function getEdition(slug: string, season: number, signal?: AbortSignal): Promise<Edition> {
   return request<Edition>(`/tournaments/${encodeURIComponent(slug)}/${season}`, {}, signal)
+}
+
+/** The calendar: a row per year with both tours and the Slam finals. */
+export function getSeasons(signal?: AbortSignal): Promise<SeasonsResponse> {
+  return request<SeasonsResponse>('/seasons', {}, signal)
+}
+
+/** Every event of one year at one tier, with its final. */
+export function getSeasonEvents(
+  year: number,
+  options: { tour?: string | null; tier?: string | null } = {},
+  signal?: AbortSignal,
+): Promise<SeasonEventsResponse> {
+  return request<SeasonEventsResponse>(`/seasons/${year}`, { ...options }, signal)
 }
 
 export function searchPlayers(

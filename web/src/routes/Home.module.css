@@ -145,3 +145,14 @@
     padding-left: var(--s-2);
   }
 }
+
+/* The way to the calendar: seasons hang off this page rather than the nav. */
+.seasons {
+  margin-top: var(--s-3);
+  font-size: var(--t-13);
+  color: var(--pencil);
+}
+
+.seasons a {
+  color: var(--ink);
+}

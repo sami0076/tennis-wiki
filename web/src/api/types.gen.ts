@@ -664,6 +664,105 @@ export interface RankingHistory {
 }
 
 //////////
+// source: seasons.go
+
+/**
+ * SeasonsResponse is the calendar: one row per year, both tours on it.
+ */
+export interface SeasonsResponse {
+  data: SeasonRow[];
+  /**
+   * CurrentThrough is the last match per tour, the date the current
+   * season is complete to. A row marked partial is partial to here.
+   */
+  current_through: { [key: string]: string};
+}
+/**
+ * SeasonRow is one year. A tour that played nothing that year is null: the
+ * women's tour reaches back to 1923 and the men's files start in 1968.
+ */
+export interface SeasonRow {
+  season: number /* int16 */;
+  atp: SeasonTour | null;
+  wta: SeasonTour | null;
+}
+/**
+ * SeasonTour is one tour's year: the calendar's size and shape, and the
+ * four names that summarise it.
+ */
+export interface SeasonTour {
+  events: number /* int */;
+  ties: number /* int */;
+  surfaces: SurfaceCounts;
+  slams: SeasonSlam[];
+  /**
+   * Partial is true when this is the season the tour's coverage ends in,
+   * so the row is a year in progress rather than a small one.
+   */
+  partial: boolean;
+}
+/**
+ * SurfaceCounts is how many events a year's calendar held on each surface.
+ * Unknown is events whose surface the file did not record, kept apart
+ * rather than folded into any of the four.
+ */
+export interface SurfaceCounts {
+  hard: number /* int */;
+  clay: number /* int */;
+  grass: number /* int */;
+  carpet: number /* int */;
+  unknown: number /* int */;
+}
+/**
+ * SeasonSlam is one Grand Slam edition and its final.
+ */
+export interface SeasonSlam {
+  slug: string;
+  name: string;
+  start_date: string;
+  champion: Opponent | null;
+  finalist: Opponent | null;
+  final_score: string | null;
+}
+/**
+ * SeasonEventsResponse is one year's calendar at one tier.
+ */
+export interface SeasonEventsResponse {
+  season: number /* int16 */;
+  tour: string | null;
+  tier: string;
+  /**
+   * Partial names the tours whose coverage ends inside this season, with
+   * the date each is complete to.
+   */
+  partial: { [key: string]: string};
+  events: SeasonEvent[];
+}
+/**
+ * SeasonEvent is one tournament of the year. A team competition's ties are
+ * folded into one row with their count.
+ */
+export interface SeasonEvent {
+  /**
+   * Slug is the event's, and null for a row the events stage has not keyed.
+   */
+  slug: string | null;
+  name: string;
+  tour: string;
+  category: string;
+  level: string;
+  tier: string;
+  surface: string | null;
+  draw_size: number /* int16 */ | null;
+  start_date: string;
+  champion: Opponent | null;
+  finalist: Opponent | null;
+  final_score: string | null;
+  matches: number /* int */;
+  ties: number /* int */;
+}
+
+//////////
 // source: simulate.go
 
 /**

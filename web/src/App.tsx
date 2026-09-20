@@ -9,6 +9,8 @@ import { Methodology } from './routes/Methodology'
 import { Player } from './routes/Player'
 import { Players } from './routes/Players'
 import { Rankings } from './routes/Rankings'
+import { Season } from './routes/Season'
+import { Seasons } from './routes/Seasons'
 import { Simulator } from './routes/Simulator'
 import { Tournaments } from './routes/Tournaments'
 import { EmptyState, ButtonLink } from './components'
@@ -30,6 +32,8 @@ export function App() {
         <Route path="/tournaments" element={<Tournaments />} />
         <Route path="/tournaments/:slug" element={<Event />} />
         <Route path="/tournaments/:slug/:season" element={<Edition />} />
+        <Route path="/seasons" element={<Seasons />} />
+        <Route path="/seasons/:year" element={<Season />} />
         <Route path="/simulator" element={<Simulator />} />
         <Route path="/methodology" element={<Methodology />} />
         <Route path="/_components" element={<Gallery />} />
