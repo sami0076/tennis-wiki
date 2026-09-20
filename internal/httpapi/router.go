@@ -82,6 +82,7 @@ func (a *API) routes(r chi.Router) {
 	r.Get("/tournaments/{slug}/{season}", a.handleEdition)
 	r.Get("/seasons", a.handleSeasons)
 	r.Get("/seasons/{year}", a.handleSeasonEvents)
+	r.Get("/leaders/{stat}", a.handleLeaders)
 	r.Get("/rankings", a.handleRankings)
 	r.Get("/rankings/trajectory", a.handleTrajectories)
 	r.Get("/simulate/match", a.handleSimulateMatch)

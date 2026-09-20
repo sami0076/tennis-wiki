@@ -8,6 +8,66 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+// PlayerTotalsInsert is the one statement player_totals is built from.
+// Exported so a test can build the table inside its own transaction and
+// read the same rows the ingest would write.
+//
+// Finished matches only, team events out, the same exclusions every rate on
+// the site makes. A serve line counts when the source wrote the points
+// served; a score counts when the parser read it. Each figure carries the
+// count of matches it stands on, so a rate can name its denominator.
+const PlayerTotalsInsert = `
+INSERT INTO player_totals
+       (player_id, tour, season, tier, surface,
+        matches, wins, titles, with_stats,
+        with_serve, aces, double_faults, serve_points, first_in, first_won, second_won,
+        serve_games, bp_saved, bp_faced,
+        with_return, op_serve_points, op_first_in, op_first_won, op_second_won,
+        op_serve_games, op_bp_saved, op_bp_faced,
+        scored, sets_won, sets_played, games_won, games_played,
+        tiebreaks_won, tiebreaks_played, deciders_won, deciders_played)
+SELECT mp.player_id, t.tour, t.season, t.tier, m.surface,
+       count(*),
+       count(*) FILTER (WHERE mp.won),
+       count(*) FILTER (WHERE mp.won AND m.round = 'F' AND NOT m.is_qualifying),
+       count(*) FILTER (WHERE m.has_detailed_stats),
+
+       count(*) FILTER (WHERE mp.serve_points IS NOT NULL),
+       coalesce(sum(mp.aces), 0),
+       coalesce(sum(mp.double_faults), 0),
+       coalesce(sum(mp.serve_points), 0),
+       coalesce(sum(mp.first_in), 0),
+       coalesce(sum(mp.first_won), 0),
+       coalesce(sum(mp.second_won), 0),
+       coalesce(sum(mp.serve_games), 0),
+       coalesce(sum(mp.bp_saved), 0),
+       coalesce(sum(mp.bp_faced), 0),
+
+       count(*) FILTER (WHERE op.serve_points IS NOT NULL),
+       coalesce(sum(op.serve_points), 0),
+       coalesce(sum(op.first_in), 0),
+       coalesce(sum(op.first_won), 0),
+       coalesce(sum(op.second_won), 0),
+       coalesce(sum(op.serve_games), 0),
+       coalesce(sum(op.bp_saved), 0),
+       coalesce(sum(op.bp_faced), 0),
+
+       count(*) FILTER (WHERE m.sets_winner IS NOT NULL),
+       coalesce(sum(CASE WHEN mp.won THEN m.sets_winner ELSE m.sets_loser END), 0),
+       coalesce(sum(m.sets_winner + m.sets_loser), 0),
+       coalesce(sum(CASE WHEN mp.won THEN m.games_winner ELSE m.games_loser END), 0),
+       coalesce(sum(m.games_winner + m.games_loser), 0),
+       coalesce(sum(CASE WHEN mp.won THEN m.tiebreaks_winner ELSE m.tiebreaks_loser END), 0),
+       coalesce(sum(m.tiebreaks_winner + m.tiebreaks_loser), 0),
+       count(*) FILTER (WHERE m.deciding_set AND mp.won),
+       count(*) FILTER (WHERE m.deciding_set)
+  FROM match_players mp
+  JOIN matches m       ON m.id = mp.match_id
+  JOIN tournaments t   ON t.id = m.tournament_id
+  JOIN match_players op ON op.match_id = m.id AND op.player_id <> mp.player_id
+ WHERE NOT m.incomplete AND NOT m.is_team_event
+ GROUP BY mp.player_id, t.tour, t.season, t.tier, m.surface`
+
 // RefreshPlayerTotals rebuilds player_totals: every total a leaderboard or a
 // year-by-year row is a rate over, per player, season, tier and surface.
 //
@@ -32,61 +92,7 @@ func (s *Store) RefreshPlayerTotals(ctx context.Context) (err error) {
 		return fmt.Errorf("clear player totals: %w", err)
 	}
 
-	// Finished matches only, team events out, the same exclusions every rate
-	// on the site makes. A serve line counts when the source wrote the points
-	// served; a score counts when the parser read it. Each figure carries the
-	// count of matches it stands on, so a rate can name its denominator.
-	if _, err := tx.Exec(ctx, `
-		INSERT INTO player_totals
-		       (player_id, tour, season, tier, surface,
-		        matches, wins, titles, with_stats,
-		        with_serve, aces, double_faults, serve_points, first_in, first_won, second_won,
-		        serve_games, bp_saved, bp_faced,
-		        with_return, op_serve_points, op_first_in, op_first_won, op_second_won,
-		        op_serve_games, op_bp_saved, op_bp_faced,
-		        scored, sets_won, sets_played, games_won, games_played,
-		        tiebreaks_won, tiebreaks_played, deciders_won, deciders_played)
-		SELECT mp.player_id, t.tour, t.season, t.tier, m.surface,
-		       count(*),
-		       count(*) FILTER (WHERE mp.won),
-		       count(*) FILTER (WHERE mp.won AND m.round = 'F' AND NOT m.is_qualifying),
-		       count(*) FILTER (WHERE m.has_detailed_stats),
-
-		       count(*) FILTER (WHERE mp.serve_points IS NOT NULL),
-		       coalesce(sum(mp.aces), 0),
-		       coalesce(sum(mp.double_faults), 0),
-		       coalesce(sum(mp.serve_points), 0),
-		       coalesce(sum(mp.first_in), 0),
-		       coalesce(sum(mp.first_won), 0),
-		       coalesce(sum(mp.second_won), 0),
-		       coalesce(sum(mp.serve_games), 0),
-		       coalesce(sum(mp.bp_saved), 0),
-		       coalesce(sum(mp.bp_faced), 0),
-
-		       count(*) FILTER (WHERE op.serve_points IS NOT NULL),
-		       coalesce(sum(op.serve_points), 0),
-		       coalesce(sum(op.first_in), 0),
-		       coalesce(sum(op.first_won), 0),
-		       coalesce(sum(op.second_won), 0),
-		       coalesce(sum(op.serve_games), 0),
-		       coalesce(sum(op.bp_saved), 0),
-		       coalesce(sum(op.bp_faced), 0),
-
-		       count(*) FILTER (WHERE m.sets_winner IS NOT NULL),
-		       coalesce(sum(CASE WHEN mp.won THEN m.sets_winner ELSE m.sets_loser END), 0),
-		       coalesce(sum(m.sets_winner + m.sets_loser), 0),
-		       coalesce(sum(CASE WHEN mp.won THEN m.games_winner ELSE m.games_loser END), 0),
-		       coalesce(sum(m.games_winner + m.games_loser), 0),
-		       coalesce(sum(CASE WHEN mp.won THEN m.tiebreaks_winner ELSE m.tiebreaks_loser END), 0),
-		       coalesce(sum(m.tiebreaks_winner + m.tiebreaks_loser), 0),
-		       count(*) FILTER (WHERE m.deciding_set AND mp.won),
-		       count(*) FILTER (WHERE m.deciding_set)
-		  FROM match_players mp
-		  JOIN matches m       ON m.id = mp.match_id
-		  JOIN tournaments t   ON t.id = m.tournament_id
-		  JOIN match_players op ON op.match_id = m.id AND op.player_id <> mp.player_id
-		 WHERE NOT m.incomplete AND NOT m.is_team_event
-		 GROUP BY mp.player_id, t.tour, t.season, t.tier, m.surface`); err != nil {
+	if _, err := tx.Exec(ctx, PlayerTotalsInsert); err != nil {
 		return fmt.Errorf("rebuild player totals: %w", err)
 	}
 

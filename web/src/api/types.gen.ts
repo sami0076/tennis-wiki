@@ -282,6 +282,90 @@ export interface Meeting {
 }
 
 //////////
+// source: leaders.go
+
+/**
+ * LeaderStat describes one board: what the value is a share of, and which
+ * matches it stands on.
+ */
+export interface LeaderStat {
+  key: string;
+  label: string;
+  /**
+   * Family says where the inputs come from: serve (the player's own serve
+   * lines), return (the opponents'), points (both), or score (the score
+   * string, which nearly every finished match has).
+   */
+  family: string;
+  /**
+   * Kind is rate for a share of a count, shown as a percentage, and ratio
+   * for the dominance ratio, which is a quotient of two rates.
+   */
+  kind: string;
+  /**
+   * Sample names what the denominator counts, for the caption.
+   */
+  sample: string;
+  /**
+   * Ascending is true where less is better, and the board leads with the least.
+   */
+  ascending: boolean;
+}
+/**
+ * Leaderboard is one stat, filtered, with its population declared.
+ */
+export interface Leaderboard {
+  stat: LeaderStat;
+  filters: LeaderFilters;
+  /**
+   * Population is what the board is a board of, so the page can say "of
+   * 2,140 clay matches in 2019, 1,760 recorded serve statistics".
+   */
+  population: LeaderPopulation;
+  data: LeaderRow[];
+  stats: LeaderStat[];
+}
+/**
+ * LeaderFilters echoes what was asked, defaults applied.
+ */
+export interface LeaderFilters {
+  tour: string | null;
+  tier: string | null;
+  surface: string | null;
+  season: number /* int */ | null;
+  min_matches: number /* int */;
+  limit: number /* int */;
+}
+/**
+ * LeaderPopulation counts the matches under the filter, how many of them the
+ * source recorded statistics for, how many players played any, and how many
+ * cleared the minimum for this board.
+ */
+export interface LeaderPopulation {
+  matches: number /* int64 */;
+  with_stats: number /* int64 */;
+  players: number /* int64 */;
+  qualified: number /* int64 */;
+}
+/**
+ * LeaderRow is one player on the board. Sample is the matches the value was
+ * computed from, which is never optional; Numerator and Denominator are the
+ * counts behind a rate, null for the dominance ratio, which has none.
+ */
+export interface LeaderRow {
+  position: number /* int */;
+  slug: string;
+  name: string;
+  tour: string;
+  country: string | null;
+  sample: number /* int64 */;
+  matches: number /* int64 */;
+  numerator: number /* int64 */ | null;
+  denominator: number /* int64 */ | null;
+  value: number /* float64 */;
+}
+
+//////////
 // source: matches.go
 
 /**
