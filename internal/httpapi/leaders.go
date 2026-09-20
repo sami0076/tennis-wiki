@@ -39,7 +39,7 @@ type Leaderboard struct {
 	// Player is the row of the player named by ?player=, whether or not they
 	// cleared the floor, so a page can say why a name is not on the board:
 	// null when they have no figure at all under this filter. Position is 0.
-	Player *LeaderRow `json:"player,omitempty"`
+	Player *LeaderRow `json:"player"`
 }
 
 // LeaderFilters echoes what was asked, defaults applied.

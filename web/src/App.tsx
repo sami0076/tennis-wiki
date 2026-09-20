@@ -4,6 +4,7 @@ import { Edition } from './routes/Edition'
 import { Event } from './routes/Event'
 import { Gallery } from './routes/Gallery'
 import { HeadToHead } from './routes/HeadToHead'
+import { Leaders } from './routes/Leaders'
 import { Home } from './routes/Home'
 import { Methodology } from './routes/Methodology'
 import { Player } from './routes/Player'
@@ -29,6 +30,7 @@ export function App() {
         <Route path="/h2h" element={<HeadToHead />} />
         <Route path="/h2h/:a/:b" element={<HeadToHead />} />
         <Route path="/rankings" element={<Rankings />} />
+        <Route path="/leaders" element={<Leaders />} />
         <Route path="/tournaments" element={<Tournaments />} />
         <Route path="/tournaments/:slug" element={<Event />} />
         <Route path="/tournaments/:slug/:season" element={<Edition />} />
