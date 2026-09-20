@@ -235,7 +235,7 @@ function describeFilters(data: Leaderboard): string {
   const f = data.filters
   const parts = [
     f.tour === null ? 'on both tours' : `on the ${f.tour.toUpperCase()}`,
-    f.tier === null ? null : `at ${tierLabel(f.tier)?.toLowerCase() ?? f.tier} level`,
+    f.tier === null ? null : f.tier === 'tour' ? 'at tour level' : `at ${tierLabel(f.tier)?.toLowerCase() ?? f.tier} level`,
     f.surface === null ? null : `on ${f.surface}`,
     f.season === null ? 'in every season' : `in ${f.season}`,
   ]
