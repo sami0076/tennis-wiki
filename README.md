@@ -322,6 +322,13 @@ requests, and every row carries tour, country, career match count and best tier,
 115,000 players a name is not an identifier. `/players?q=` is the same search as a full list,
 and the query and tour filter live in the URL so a search can be sent to somebody.
 
+**Every page carries structured data** for the crawlers that execute scripts: `WebSite`
+with the player search as its search action on the root, `Person` on a player, `SportsEvent`
+on an edition with the finalists as competitors, and `BreadcrumbList` on every route below
+the root. Every value is copied from an API response and nothing is invented to fill a slot
+the schema offers -- `SportsEvent` has a location and the files carry none, so it stays
+absent -- and a test holds the `Person` to carrying no field the profile did not.
+
 **The TypeScript types are generated from the Go response structs**, not written by hand.
 `make web-types` runs [tygo](https://github.com/gzuidhof/tygo) over `internal/httpapi` into
 `web/src/api/types.gen.ts`, and CI regenerates and diffs it on every change, so altering a
