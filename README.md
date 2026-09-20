@@ -160,6 +160,7 @@ GET /api/v1/simulate/draw?event=&season=  a played draw, replayed ten thousand t
 GET /api/v1/tournaments?tour=&level=&q=   the index, grouped by level, searchable
 GET /api/v1/tournaments/:slug             an event across seasons, with how each got there
 GET /api/v1/tournaments/:slug/:season     one edition as a draw sheet
+GET /api/v1/recent?tier=&through=         the finals of the last complete week, both tours
 GET /api/v1/seasons                       a row per year, both tours, with the Slam finals
 GET /api/v1/seasons/:year?tour=&tier=     every event of a year at one tier, with its final
 GET /api/v1/leaders/:stat?tour=&tier=&surface=&season=&min_matches=
@@ -269,6 +270,13 @@ with no first-round match sits above a typed `bye` and a row the file lacks read
 (ADR-0012), and `/tournaments` the index grouped by level with a search. Every tournament
 name on a match row links to its sheet, and the sheet's "Replay this draw" opens the
 simulator on the same edition.
+
+The home page carries last week's finals: the week that ended Sunday, as the finals of the
+tour-level events that began it, both tours, each a link to the sheet and to both players,
+with the date each tour's data is current to written on it. The site does not do live, and
+this is the fastest way to show a visitor it is current without saying the word. An
+off-season week says which week it is showing instead rather than vanishing, and a tour with
+no final that week says so.
 
 `/seasons` is the calendar a year at a time, both tours on every row since a season is the
 one place the two share one: the events on each surface as the site's squares with their
