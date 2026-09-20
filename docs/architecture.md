@@ -87,6 +87,15 @@ short overrides file for the numbers a person has checked — and `tournaments.e
 records which of those placed each row, for the page to print. ADR-0012 carries the
 measurements; `configs/event_overrides.json` the decisions.
 
+**What a leaderboard ranks is summed once, not per request.** A board over the whole
+database is an aggregate of 3.3 million appearances, and summing them on demand took eleven
+seconds. `player_totals` holds the sums per player, season, tier and surface — matches,
+wins, titles, the serve line, the opponents' serve line, and what the score said — rebuilt
+by the ingest's refresh step in twenty seconds alongside the clutch and serve baselines.
+The same step derives sets and games from every score string, the way tiebreaks and the
+deciding set already were. The leaderboards and the player page's year-by-year read that
+table and nothing heavier; `docs/performance.md` carries the figures.
+
 **`matches` is not partitioned yet.** At ~1.63M rows it does not need to be, and
 partitioning by season would force the partition key into the primary key and every
 foreign key referencing it. Revisit under #20 with measurements rather than now on
