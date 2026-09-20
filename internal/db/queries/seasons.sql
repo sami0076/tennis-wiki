@@ -18,7 +18,9 @@ SELECT t.season, t.tour::text AS tour,
 -- name: ListSlamFinals :many
 -- Every Grand Slam edition with its final, in calendar order within a
 -- season: the four names a season row carries. The finals index makes each
--- one a lookup rather than a pass over the draw.
+-- one a lookup rather than a pass over the draw. A row filed at Slam level
+-- that holds only qualifying (the 2021 Australian Open's qualifying, played
+-- in Doha and Dubai) is not an edition and is left out.
 SELECT t.season, t.tour::text AS tour, e.slug, e.name, t.start_date,
        f.score AS final_score,
        w.slug AS champion_slug, w.full_name AS champion_name,
@@ -35,6 +37,7 @@ SELECT t.season, t.tour::text AS tour, e.slug, e.name, t.start_date,
   LEFT JOIN players w ON w.id = f.winner_id
   LEFT JOIN players l ON l.id = f.loser_id
  WHERE t.level = 'G'
+   AND EXISTS (SELECT 1 FROM matches m WHERE m.tournament_id = t.id AND NOT m.is_qualifying)
  ORDER BY t.season DESC, t.tour, t.start_date, t.id;
 
 -- name: ListSeasonEvents :many
