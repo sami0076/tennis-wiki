@@ -21,6 +21,7 @@ packages:
       - "charted.go"
       - "tournaments.go"
       - "seasons.go"
+      - "recent.go"
       - "leaders.go"
       - "problem.go"
       - "cursor.go"
