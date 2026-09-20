@@ -1,0 +1,9 @@
+/* The name keeps the colour of the line it sits on; the rule appears on hover. */
+.link {
+  color: inherit;
+  border-bottom: 0;
+}
+
+.link:hover {
+  border-bottom: var(--rule-ink);
+}

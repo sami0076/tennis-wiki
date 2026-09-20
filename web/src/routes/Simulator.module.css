@@ -199,3 +199,13 @@
 .inline:hover {
   border-bottom-color: var(--ink);
 }
+
+/* The draw is named as its sheet, and links to it. */
+.sheetLink {
+  color: inherit;
+  border-bottom: 0;
+}
+
+.sheetLink:hover {
+  border-bottom: var(--rule-ink);
+}

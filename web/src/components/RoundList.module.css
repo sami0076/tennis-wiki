@@ -1,0 +1,101 @@
+/* The stepper stays at the top while a long round scrolls under it. */
+.stepper {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  gap: var(--s-2);
+  overflow-x: auto;
+  padding: var(--s-2) 0;
+  background: var(--bond);
+  border-bottom: var(--rule-ink);
+  scrollbar-width: none;
+}
+
+/* The same typed cell as the tour filter, in ink: a round is not a surface. */
+.cell {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  background: none;
+  font: inherit;
+  font-size: var(--t-13);
+  font-weight: 500;
+  color: var(--pencil);
+  cursor: pointer;
+  transition:
+    color 120ms ease-out,
+    border-color 120ms ease-out;
+}
+
+.cell:hover {
+  color: var(--ink);
+}
+
+.active {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.gap {
+  flex: 0 0 var(--s-3);
+}
+
+.heading {
+  padding: var(--s-4) 0 var(--s-1);
+  border-bottom: var(--rule-ink);
+  font-size: var(--t-12);
+  font-weight: 500;
+  color: var(--pencil);
+}
+
+.match {
+  padding: 8px 0;
+  border-bottom: var(--rule);
+}
+
+/* The score rides the winner's line and drops to its own, right-aligned,
+   only when the two will not share one. */
+.line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 12px;
+  row-gap: 2px;
+}
+
+.name {
+  font-size: var(--t-13);
+  line-height: 1.5;
+  color: var(--pencil);
+  white-space: nowrap;
+}
+
+.won {
+  color: var(--ink);
+}
+
+.final .won .player {
+  font-weight: 700;
+}
+
+.pre,
+.country {
+  color: var(--pencil);
+}
+
+.player {
+  border-bottom: 0;
+}
+
+.player:hover {
+  border-bottom: var(--rule-ink);
+}
+
+.score {
+  margin-left: auto;
+  font-size: var(--t-12);
+  line-height: 1.5;
+  color: var(--pencil);
+  white-space: nowrap;
+}

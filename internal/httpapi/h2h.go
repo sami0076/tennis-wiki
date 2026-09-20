@@ -58,6 +58,7 @@ type HeadToHeadSplit struct {
 type Meeting struct {
 	Date       string  `json:"date"`
 	Tournament string  `json:"tournament"`
+	EventSlug  *string `json:"event_slug"`
 	Tier       string  `json:"tier"`
 	Level      string  `json:"level"`
 	Season     int16   `json:"season"`
@@ -253,6 +254,7 @@ func buildHeadToHead(
 		meeting := Meeting{
 			Date:        row.PlayedOn.Format(time.DateOnly),
 			Tournament:  row.Tournament,
+			EventSlug:   row.EventSlug,
 			Tier:        string(row.Tier),
 			Level:       row.Level,
 			Season:      row.Season,

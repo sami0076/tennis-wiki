@@ -1,5 +1,7 @@
 import { Route, Routes } from 'react-router-dom'
 import { Layout } from './layout/Layout'
+import { Edition } from './routes/Edition'
+import { Event } from './routes/Event'
 import { Gallery } from './routes/Gallery'
 import { HeadToHead } from './routes/HeadToHead'
 import { Home } from './routes/Home'
@@ -8,6 +10,7 @@ import { Player } from './routes/Player'
 import { Players } from './routes/Players'
 import { Rankings } from './routes/Rankings'
 import { Simulator } from './routes/Simulator'
+import { Tournaments } from './routes/Tournaments'
 import { EmptyState, ButtonLink } from './components'
 
 /**
@@ -24,6 +27,9 @@ export function App() {
         <Route path="/h2h" element={<HeadToHead />} />
         <Route path="/h2h/:a/:b" element={<HeadToHead />} />
         <Route path="/rankings" element={<Rankings />} />
+        <Route path="/tournaments" element={<Tournaments />} />
+        <Route path="/tournaments/:slug" element={<Event />} />
+        <Route path="/tournaments/:slug/:season" element={<Edition />} />
         <Route path="/simulator" element={<Simulator />} />
         <Route path="/methodology" element={<Methodology />} />
         <Route path="/_components" element={<Gallery />} />

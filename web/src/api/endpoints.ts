@@ -3,6 +3,9 @@ import type {
   Clutch,
   CoverageResponse,
   DrawSimulation,
+  Edition,
+  Event,
+  EventSummary,
   HeadToHead,
   MatchSimulation,
   Page,
@@ -146,6 +149,29 @@ export function simulateDraw(
   signal?: AbortSignal,
 ): Promise<DrawSimulation> {
   return request<DrawSimulation>('/simulate/draw', { ...event }, signal)
+}
+
+export interface EventFilters {
+  tour?: string | null
+  level?: string | null
+  q?: string | null
+  limit?: number
+  cursor?: string | null
+}
+
+/** The tournament index: every event on both tours, grouped by its level. */
+export function getEvents(filters: EventFilters = {}, signal?: AbortSignal): Promise<Page<EventSummary>> {
+  return request<Page<EventSummary>>('/tournaments', { ...filters }, signal)
+}
+
+/** One event across seasons, on ADR-0012's terms, with every edition's final. */
+export function getEvent(slug: string, signal?: AbortSignal): Promise<Event> {
+  return request<Event>(`/tournaments/${encodeURIComponent(slug)}`, {}, signal)
+}
+
+/** One season of an event as its draw sheet: every match in bracket order. */
+export function getEdition(slug: string, season: number, signal?: AbortSignal): Promise<Edition> {
+  return request<Edition>(`/tournaments/${encodeURIComponent(slug)}/${season}`, {}, signal)
 }
 
 export function searchPlayers(

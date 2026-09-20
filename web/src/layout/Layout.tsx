@@ -7,14 +7,14 @@ interface LayoutProps {
   children: ReactNode
 }
 
-// The nav in home.png, in its order, plus head-to-head. The mockup reaches that
-// page from a player; until a player page links to one, a headline feature with
-// no way in is worse than a fourth tab. Simulator is Phase 3 and leads to a
-// placeholder, because leaving it out would make every later page edit the nav.
+// The nav in home.png, in its order, plus head-to-head and tournaments. Six
+// items is the ceiling Phase 5 set; seasons hang off the tournaments page and
+// the home page rather than taking a tab of their own.
 const links = [
   { to: '/players', label: 'Players', short: 'Players' },
   { to: '/h2h', label: 'Head to head', short: 'H2H' },
   { to: '/rankings', label: 'Rankings', short: 'Rankings' },
+  { to: '/tournaments', label: 'Tournaments', short: 'Draws' },
   { to: '/simulator', label: 'Simulator', short: 'Simulator' },
 ]
 

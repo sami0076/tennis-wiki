@@ -246,3 +246,41 @@ func TestEditionIsASheet(t *testing.T) {
 		t.Errorf("a season that is not a year: %d", res.StatusCode)
 	}
 }
+
+// Every match row names the sheet it is on, so a tournament name anywhere on
+// the site can be a link; a row the events stage has not keyed carries null.
+func TestMatchRowsCarryTheEventSlug(t *testing.T) {
+	f := newAPIFixture(t)
+	f.draws()
+	unkeyed := f.tournament("2025-999", db.TierTour, 2025)
+	f.match(unkeyed, f.playerID("ev-a"), f.playerID("ev-d"), 1, "F", 2025, nil, false)
+
+	res := f.get("/api/v1/players/ev-a/matches")
+	var page Page[PlayerMatch]
+	if err := json.NewDecoder(res.Body).Decode(&page); err != nil {
+		t.Fatal(err)
+	}
+	keyed, blank := 0, 0
+	for _, m := range page.Data {
+		switch {
+		case m.EventSlug == nil:
+			blank++
+		case *m.EventSlug == "testville-wta":
+			keyed++
+		default:
+			t.Errorf("match at %s keyed to %s", m.Tournament, *m.EventSlug)
+		}
+	}
+	if keyed != 6 || blank != 1 {
+		t.Errorf("keyed %d and unkeyed %d of %d rows", keyed, blank, len(page.Data))
+	}
+
+	res = f.get("/api/v1/h2h/ev-a/ev-b")
+	var h2h HeadToHead
+	if err := json.NewDecoder(res.Body).Decode(&h2h); err != nil {
+		t.Fatal(err)
+	}
+	if len(h2h.Meetings) == 0 || h2h.Meetings[0].EventSlug == nil || *h2h.Meetings[0].EventSlug != "testville-wta" {
+		t.Errorf("meetings = %+v", h2h.Meetings)
+	}
+}

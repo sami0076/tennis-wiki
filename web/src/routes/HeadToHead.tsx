@@ -20,6 +20,7 @@ import {
   ChartedMark,
   ChartedSheet,
   EmptyState,
+  EventLink,
   Meta,
   PlayerSearch,
   RivalryStrip,
@@ -572,7 +573,7 @@ function MeetingsSection({
       value: (row) => row.tournament,
       render: (row) => (
         <>
-          {row.tournament} {row.round}
+          <EventLink name={row.tournament} slug={row.event_slug} season={row.season} /> {row.round}
           {row.qualifying ? ' Q' : ''}
           <div className={styles.event}>
             {/* The surface column steps aside on a phone; its square moves here. */}

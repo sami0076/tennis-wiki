@@ -252,6 +252,19 @@ where the inputs came from. The head-to-head page's "Simulate this matchup" butt
 here with both players. The page's layout and beats follow
 [`docs/design/prototypes/simulator.html`](docs/design/prototypes/simulator.html).
 
+`/tournaments/:slug/:season` is the page the design was built for: the edition as its draw
+sheet. From 880px the bracket is drawn and paged the way the printed sheet is -- a 128 draw as
+four quarters and then the last eight, a 56 draw as two halves and the last four, 32 and under
+on one sheet -- with a name written above its rule, the pair joined at the right, the winner's
+rule stepping in from the midpoint and the score under the name in the column it earned.
+Below 880px it is one round at a time behind a sticky stepper. The bracket is grown back from
+the results, since the files carry who beat whom and not which line anyone was on, so a seed
+with no first-round match sits above a typed `bye` and a row the file lacks reads `n/r`.
+`/tournaments/:slug` is every edition of an event as a row, printing how each one got there
+(ADR-0012), and `/tournaments` the index grouped by level with a search. Every tournament
+name on a match row links to its sheet, and the sheet's "Replay this draw" opens the
+simulator on the same edition.
+
 `/h2h/:a/:b` is the comparison and `/h2h` the picker, which is the same page: the URL is the
 state, so a comparison is a link somebody can send, and asking the other way round is the same
 rivalry read from the other end. The surface toggle filters the record, the rivalry strip and

@@ -11,6 +11,7 @@
 SELECT m.id,
        m.played_on,
        t.name                     AS tournament,
+       e.slug                     AS event_slug,
        t.tier,
        t.level,
        t.season,
@@ -37,6 +38,7 @@ SELECT m.id,
   JOIN matches m     ON m.id = mp.match_id
   LEFT JOIN charted_matches cm ON cm.match_id = m.id
   JOIN tournaments t ON t.id = m.tournament_id
+  LEFT JOIN events e ON e.id = t.event_id
   JOIN players op    ON op.id = CASE WHEN mp.won THEN m.loser_id ELSE m.winner_id END
  WHERE mp.player_id = @player_id
    AND (sqlc.narg(surface)::surface IS NULL OR m.surface = sqlc.narg(surface)::surface)
@@ -59,6 +61,7 @@ SELECT m.id,
 SELECT m.id,
        m.played_on,
        t.name  AS tournament,
+       e.slug  AS event_slug,
        t.tier,
        t.level,
        t.season,
@@ -77,6 +80,7 @@ SELECT m.id,
        cm.charting_id
   FROM matches m
   JOIN tournaments t   ON t.id = m.tournament_id
+  LEFT JOIN events e   ON e.id = t.event_id
   LEFT JOIN charted_matches cm ON cm.match_id = m.id
   JOIN match_players a ON a.match_id = m.id AND a.player_id = @player_a
   JOIN match_players b ON b.match_id = m.id AND b.player_id = @player_b
@@ -92,6 +96,7 @@ SELECT cm.charting_id,
        cm.played_on,
        cm.charted_by,
        t.name AS tournament,
+       e.slug AS event_slug,
        t.season,
        m.round,
        m.score,
@@ -101,6 +106,7 @@ SELECT cm.charting_id,
   FROM charted_matches cm
   JOIN matches m     ON m.id = cm.match_id
   JOIN tournaments t ON t.id = m.tournament_id
+  LEFT JOIN events e ON e.id = t.event_id
   JOIN players w     ON w.id = m.winner_id
   JOIN players l     ON l.id = m.loser_id
  WHERE cm.charting_id = @charting_id;
