@@ -251,6 +251,28 @@ var anomalyChecks = []Check{
 		Query:    `SELECT count(*) FROM matches WHERE score IS NULL OR score = ''`,
 	},
 	{
+		Name:     "scores_not_yet_derived",
+		Severity: Warning,
+		Why: "Finished matches with a score the ingest has not derived sets and games from: " +
+			"either the refresh step has not run since the columns were added, or the " +
+			"parser cannot read the score. Rows here are outside every rate a leaderboard " +
+			"or a year-by-year row computes.",
+		Query: `SELECT count(*) FROM matches
+		         WHERE sets_winner IS NULL AND NOT incomplete AND score IS NOT NULL`,
+		Sample: `SELECT id, score FROM matches
+		          WHERE sets_winner IS NULL AND NOT incomplete AND score IS NOT NULL
+		          LIMIT 5`,
+	},
+	{
+		Name:     "player_totals_stale",
+		Severity: Warning,
+		Why: "Finished matches the totals table does not account for, counted as the " +
+			"difference between the matches table and the totals: the refresh step has not " +
+			"run since the last load.",
+		Query: `SELECT abs((SELECT count(*) FROM matches WHERE NOT incomplete AND NOT is_team_event)
+		               - coalesce((SELECT sum(matches) / 2 FROM player_totals), 0))::bigint`,
+	},
+	{
 		Name:     "implausible_age",
 		Severity: Warning,
 		Why:      "Ages outside 12-60 suggest a bad date of birth in the source.",

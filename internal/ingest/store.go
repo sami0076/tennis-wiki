@@ -328,9 +328,10 @@ func (s *Store) upsertMatches(
 			`INSERT INTO matches (tournament_id, match_num, round, best_of, surface, score,
 			                      minutes, winner_id, loser_id, played_on, incomplete,
 			                      is_qualifying, is_team_event, has_detailed_stats, indoor, source,
-			                      tiebreaks_winner, tiebreaks_loser, deciding_set)
+			                      tiebreaks_winner, tiebreaks_loser, deciding_set,
+			                      sets_winner, sets_loser, games_winner, games_loser)
 			 VALUES ($1, $2, $3, $4, NULLIF($5, '')::surface, NULLIF($6, ''), $7, $8, $9,
-			         $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+			         $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
 			 ON CONFLICT (tournament_id, match_num, is_qualifying,
 			              least(winner_id, loser_id), greatest(winner_id, loser_id)) DO UPDATE
 			    SET round              = EXCLUDED.round,
@@ -349,12 +350,17 @@ func (s *Store) upsertMatches(
 			        source             = EXCLUDED.source,
 			        tiebreaks_winner   = EXCLUDED.tiebreaks_winner,
 			        tiebreaks_loser    = EXCLUDED.tiebreaks_loser,
-			        deciding_set       = EXCLUDED.deciding_set
+			        deciding_set       = EXCLUDED.deciding_set,
+			        sets_winner        = EXCLUDED.sets_winner,
+			        sets_loser         = EXCLUDED.sets_loser,
+			        games_winner       = EXCLUDED.games_winner,
+			        games_loser        = EXCLUDED.games_loser
 			 RETURNING id`,
 			tid, r.MatchNum, r.Round, r.BestOf, r.Surface, r.Score, r.Minutes,
 			winnerID, loserID, r.TourneyDate, parsed.incomplete, r.IsQualifying(),
 			isTeamEvent(r.Level), r.HasDetailedStats(), r.Indoor, src.Name,
-			parsed.tiebreaksWinner, parsed.tiebreaksLoser, parsed.decidingSet)
+			parsed.tiebreaksWinner, parsed.tiebreaksLoser, parsed.decidingSet,
+			parsed.setsWinner, parsed.setsLoser, parsed.gamesWinner, parsed.gamesLoser)
 
 		keys = append(keys, newMatchKey(tid, r.MatchNum, r.IsQualifying(), winnerID, loserID))
 		labels = append(labels, fmt.Sprintf("%s/%d", r.TourneyID, r.MatchNum))

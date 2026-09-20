@@ -18,6 +18,8 @@ type classified struct {
 	// are different facts, and the second one must not average as the first.
 	tiebreaksWinner, tiebreaksLoser *int16
 	decidingSet                     *bool
+	setsWinner, setsLoser           *int16
+	gamesWinner, gamesLoser         *int16
 }
 
 // classifyScore parses the score, tolerating anything the parser cannot read.
@@ -38,6 +40,10 @@ func classifyScore(raw string, bestOf int) classified {
 	decider := s.WentToDecider(bestOf)
 	w, l := int16(winner), int16(loser)
 	out.tiebreaksWinner, out.tiebreaksLoser, out.decidingSet = &w, &l, &decider
+	sw, sl := s.SetsDecided()
+	gw, gl := s.Games()
+	setsW, setsL, gamesW, gamesL := int16(sw), int16(sl), int16(gw), int16(gl)
+	out.setsWinner, out.setsLoser, out.gamesWinner, out.gamesLoser = &setsW, &setsL, &gamesW, &gamesL
 	return out
 }
 

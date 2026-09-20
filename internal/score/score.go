@@ -114,6 +114,32 @@ func (s Score) SetsWon() (winner, loser int) {
 	return winner, loser
 }
 
+// SetsDecided counts sets won by the match winner and by the loser, a match tiebreak
+// played in place of a final set counted as the winner's set: it decided the
+// match the way a set would have, and WentToDecider already treats it as one.
+func (s Score) SetsDecided() (winner, loser int) {
+	winner, loser = s.SetsWon()
+	for _, set := range s.Sets {
+		if set.SuperTiebreak {
+			winner++
+		}
+	}
+	return winner, loser
+}
+
+// Games counts games won by the match winner and by the loser. A match
+// tiebreak is not games and is left out; the 10-7 is a set, not ten games.
+func (s Score) Games() (winner, loser int) {
+	for _, set := range s.Sets {
+		if set.SuperTiebreak {
+			continue
+		}
+		winner += set.GamesWinner
+		loser += set.GamesLoser
+	}
+	return winner, loser
+}
+
 // Tiebreaks counts set tiebreaks won by the match winner and by the loser.
 //
 // Which side won one is read from the games, not from the tiebreak points: the

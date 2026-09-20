@@ -474,3 +474,30 @@ func TestWentToDecider(t *testing.T) {
 		})
 	}
 }
+
+func TestSetsAndGames(t *testing.T) {
+	cases := []struct {
+		in             string
+		setsW, setsL   int
+		gamesW, gamesL int
+	}{
+		{"6-3 3-6 6-4", 2, 1, 15, 13},
+		{"7-6(5) 6-7(3) [10-7]", 2, 1, 13, 13},
+		{"6-0 6-0", 2, 0, 12, 0},
+		// An unfinished set is still counted as written; the caller leaves
+		// incomplete matches out before it gets here.
+		{"6-7(6) 3-6 6-4 7-5 3-0 RET", 3, 2, 25, 22},
+	}
+	for _, tc := range cases {
+		s, err := Parse(tc.in)
+		if err != nil {
+			t.Fatalf("Parse(%q): %v", tc.in, err)
+		}
+		if w, l := s.SetsDecided(); w != tc.setsW || l != tc.setsL {
+			t.Errorf("Parse(%q).SetsDecided() = %d-%d, want %d-%d", tc.in, w, l, tc.setsW, tc.setsL)
+		}
+		if w, l := s.Games(); w != tc.gamesW || l != tc.gamesL {
+			t.Errorf("Parse(%q).Games() = %d-%d, want %d-%d", tc.in, w, l, tc.gamesW, tc.gamesL)
+		}
+	}
+}

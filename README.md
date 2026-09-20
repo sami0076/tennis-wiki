@@ -161,6 +161,8 @@ GET /api/v1/tournaments/:slug             an event across seasons, with how each
 GET /api/v1/tournaments/:slug/:season     one edition as a draw sheet
 GET /api/v1/seasons                       a row per year, both tours, with the Slam finals
 GET /api/v1/seasons/:year?tour=&tier=     every event of a year at one tier, with its final
+GET /api/v1/leaders/:stat?tour=&tier=&surface=&season=&min_matches=
+                                          a leaderboard, with its population and every row's denominator
 ```
 
 ```bash

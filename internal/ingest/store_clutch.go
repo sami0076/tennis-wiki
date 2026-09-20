@@ -38,8 +38,9 @@ func (s *Store) RefreshClutch(ctx context.Context, force bool) (int64, error) {
 	return derived, nil
 }
 
-// deriveClutchColumns fills tiebreaks_winner, tiebreaks_loser and deciding_set
-// for matches the ingest has not already written them for.
+// deriveClutchColumns fills the columns the score parser derives -- the
+// tiebreaks, the deciding set, the sets and the games -- for matches the
+// ingest has not already written them for.
 //
 // Paged by id rather than by "still NULL", because a score the parser cannot
 // read stays NULL: selecting on the condition it fails to clear would be an
@@ -48,7 +49,9 @@ func (s *Store) deriveClutchColumns(ctx context.Context, force bool) (int64, err
 	var after, total int64
 
 	// A row already derived is skipped, unless the derivation itself changed.
-	pending := "deciding_set IS NULL AND "
+	// Keyed on the newest column, so a database carrying the older ones
+	// derives the rest on its next refresh.
+	pending := "sets_winner IS NULL AND "
 	if force {
 		pending = ""
 	}
@@ -65,6 +68,10 @@ func (s *Store) deriveClutchColumns(ctx context.Context, force bool) (int64, err
 		winners := make([]int16, 0, clutchBatch)
 		losers := make([]int16, 0, clutchBatch)
 		deciders := make([]bool, 0, clutchBatch)
+		setsW := make([]int16, 0, clutchBatch)
+		setsL := make([]int16, 0, clutchBatch)
+		gamesW := make([]int16, 0, clutchBatch)
+		gamesL := make([]int16, 0, clutchBatch)
 		last := after
 
 		rows, err := s.pool.Query(ctx, query, after, clutchBatch)
@@ -91,10 +98,16 @@ func (s *Store) deriveClutchColumns(ctx context.Context, force bool) (int64, err
 				continue
 			}
 			winner, loser := parsed.Tiebreaks()
+			sw, sl := parsed.SetsDecided()
+			gw, gl := parsed.Games()
 			ids = append(ids, id)
 			winners = append(winners, int16(winner))
 			losers = append(losers, int16(loser))
 			deciders = append(deciders, parsed.WentToDecider(bestOf))
+			setsW = append(setsW, int16(sw))
+			setsL = append(setsL, int16(sl))
+			gamesW = append(gamesW, int16(gw))
+			gamesL = append(gamesL, int16(gl))
 		}
 		if err := rows.Err(); err != nil {
 			return total, fmt.Errorf("read matches to derive: %w", err)
@@ -106,14 +119,22 @@ func (s *Store) deriveClutchColumns(ctx context.Context, force bool) (int64, err
 				UPDATE matches m
 				   SET tiebreaks_winner = u.winner,
 				       tiebreaks_loser  = u.loser,
-				       deciding_set     = u.decider
+				       deciding_set     = u.decider,
+				       sets_winner      = u.sets_w,
+				       sets_loser       = u.sets_l,
+				       games_winner     = u.games_w,
+				       games_loser      = u.games_l
 				  FROM (
 				        SELECT unnest($1::bigint[])   AS id,
 				               unnest($2::smallint[]) AS winner,
 				               unnest($3::smallint[]) AS loser,
-				               unnest($4::boolean[])  AS decider
+				               unnest($4::boolean[])  AS decider,
+				               unnest($5::smallint[]) AS sets_w,
+				               unnest($6::smallint[]) AS sets_l,
+				               unnest($7::smallint[]) AS games_w,
+				               unnest($8::smallint[]) AS games_l
 				       ) u
-				 WHERE m.id = u.id`, ids, winners, losers, deciders)
+				 WHERE m.id = u.id`, ids, winners, losers, deciders, setsW, setsL, gamesW, gamesL)
 			if err != nil {
 				return total, fmt.Errorf("write derived clutch columns: %w", err)
 			}
