@@ -75,6 +75,7 @@ func (a *API) routes(r chi.Router) {
 	r.Get("/players/{slug}/ratings", a.handlePlayerRatingSeries)
 	r.Get("/players/{slug}/rankings", a.handlePlayerRankingHistory)
 	r.Get("/players/{slug}/clutch", a.handlePlayerClutch)
+	r.Get("/players/{slug}/seasons", a.handlePlayerSeasons)
 	r.Get("/h2h/{slug}/{opponent}", a.handleHeadToHead)
 	r.Get("/charted/{id}", a.handleChartedMatch)
 	r.Get("/tournaments", a.handleEvents)

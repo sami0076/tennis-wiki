@@ -27,6 +27,7 @@ function profile(overrides: Partial<PlayerProfile> = {}): PlayerProfile {
     height_cm: 183,
     birth_date: '2003-05-05',
     pro_since: 2018,
+    splits: null,
     career: {
       matches: 400,
       wins: 300,

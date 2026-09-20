@@ -476,6 +476,11 @@ export interface PlayerProfile {
   career: Career | null;
   serve: ServeStats;
   /**
+   * Splits cut the career by who was beaten and how close it was; null
+   * with no matches, like Career.
+   */
+  splits: PlayerSplits | null;
+  /**
    * Ratings is null for a player nothing rated -- everyone whose only matches
    * were team events or walkovers. A series they never played is absent from
    * the list rather than sitting at the base rating.
@@ -999,6 +1004,107 @@ export interface SimulatedEvent {
    * of the book.
    */
   ratings_as_of: string;
+}
+
+//////////
+// source: splits.go
+
+/**
+ * PlayerSplits cuts a career by who was beaten and how close it was. Every
+ * record names the matches it is a record over, because the opponent's
+ * ranking is known for some matches and not others, and a score can be read
+ * for nearly all of them but not every one.
+ */
+export interface PlayerSplits {
+  /**
+   * ByRank is the record against opponents ranked in each band on the day,
+   * in order from the top: No. 1, top 5, top 10, top 20, top 50, top 100,
+   * outside the top 100, and unranked. The bands nest: a win over No. 1 is
+   * in every band down to the top 100.
+   */
+  by_rank: RankBand[];
+  /**
+   * Ranked is how many matches the opponent's ranking is known for: the
+   * denominator every band is a share of.
+   */
+  ranked: number /* int64 */;
+  /**
+   * Higher and Lower are the record against opponents ranked above and
+   * below the player on the day, over the matches where both are known.
+   */
+  higher: Record;
+  lower: Record;
+  /**
+   * FinalSetTiebreaks is the record in matches decided by a tiebreak in the
+   * deciding set, a match tiebreak included; Scored is the matches whose
+   * score could be read, which is what it is a share of.
+   */
+  final_set_tiebreaks: Record;
+  scored: number /* int64 */;
+}
+/**
+ * RankBand is one band of opponent ranking.
+ */
+export interface RankBand {
+  /**
+   * Band is the label: "1", "5", "10", "20", "50", "100", "outside", "unranked".
+   */
+  band: string;
+  matches: number /* int64 */;
+  wins: number /* int64 */;
+}
+/**
+ * Record is wins over matches.
+ */
+export interface Record {
+  matches: number /* int64 */;
+  wins: number /* int64 */;
+}
+/**
+ * PlayerSeasons is a career a year at a time.
+ */
+export interface PlayerSeasons {
+  slug: string;
+  name: string;
+  seasons: PlayerSeason[];
+}
+/**
+ * PlayerSeason is one year. Every rate carries the count it is over: a
+ * season with four recorded matches and sixty played is the common case in
+ * the 1990s, and the four must not read as the sixty.
+ */
+export interface PlayerSeason {
+  season: number /* int16 */;
+  matches: number /* int64 */;
+  wins: number /* int64 */;
+  losses: number /* int64 */;
+  titles: number /* int64 */;
+  /**
+   * Scored is the matches whose score could be read; the set, game and
+   * tiebreak rates are over these.
+   */
+  scored: number /* int64 */;
+  sets_won: number /* int64 */;
+  sets_played: number /* int64 */;
+  games_won: number /* int64 */;
+  games_played: number /* int64 */;
+  tiebreaks_won: number /* int64 */;
+  tiebreaks_played: number /* int64 */;
+  sets_pct: number /* float64 */ | null;
+  games_pct: number /* float64 */ | null;
+  tiebreaks_pct: number /* float64 */ | null;
+  /**
+   * WithServe is the matches carrying the player's own serve line; the
+   * four serve rates are over these. WithReturn is the opponents' lines,
+   * which the break rate and the dominance ratio also need.
+   */
+  with_serve: number /* int64 */;
+  with_return: number /* int64 */;
+  hold_pct: number /* float64 */ | null;
+  break_pct: number /* float64 */ | null;
+  ace_pct: number /* float64 */ | null;
+  df_pct: number /* float64 */ | null;
+  dominance: number /* float64 */ | null;
 }
 
 //////////

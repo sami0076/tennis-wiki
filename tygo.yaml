@@ -9,6 +9,7 @@ packages:
     # is middleware, config and routing, none of which crosses the wire.
     include_files:
       - "players.go"
+      - "splits.go"
       - "matches.go"
       - "ratings.go"
       - "rankings.go"

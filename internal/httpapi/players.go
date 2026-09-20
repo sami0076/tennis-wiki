@@ -51,6 +51,9 @@ type PlayerProfile struct {
 	// same as a career of zeroes.
 	Career *Career    `json:"career"`
 	Serve  ServeStats `json:"serve"`
+	// Splits cut the career by who was beaten and how close it was; null
+	// with no matches, like Career.
+	Splits *PlayerSplits `json:"splits"`
 	// Ratings is null for a player nothing rated -- everyone whose only matches
 	// were team events or walkovers. A series they never played is absent from
 	// the list rather than sitting at the base rating.
@@ -271,8 +274,15 @@ func (a *API) handlePlayer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ranks, err := a.Queries.ListPlayerOpponentRanks(ctx, player.ID)
+	if err != nil {
+		Internal(w, r, err)
+		return
+	}
+
 	profile.Career = buildCareer(summary, surfaces, tiers)
 	profile.Serve = buildServe(summary, tiers)
+	profile.Splits = buildSplits(ranks)
 	writeJSON(w, r, http.StatusOK, profile)
 }
 
