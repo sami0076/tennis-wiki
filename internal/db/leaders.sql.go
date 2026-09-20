@@ -84,11 +84,13 @@ WITH totals AS (
        AND ($4::tier IS NULL OR pt.tier = $4::tier)
        AND ($5::surface IS NULL OR pt.surface = $5::surface)
        AND ($6::smallint IS NULL OR pt.season = $6::smallint)
+       AND ($7::text IS NULL
+            OR pt.player_id = (SELECT id FROM players WHERE slug = $7::text))
      GROUP BY pt.player_id
 ),
 valued AS (
     SELECT t.player_id,
-           CASE $7::text
+           CASE $8::text
                WHEN 'aces'                THEN t.aces
                WHEN 'double_faults'       THEN t.double_faults
                WHEN 'first_serve_in'      THEN t.first_in
@@ -110,7 +112,7 @@ valued AS (
                WHEN 'deciding_sets_won'   THEN t.deciders_won
                ELSE 0
            END::bigint AS numerator,
-           CASE $7::text
+           CASE $8::text
                WHEN 'aces'                THEN t.serve_points
                WHEN 'double_faults'       THEN t.serve_points
                WHEN 'first_serve_in'      THEN t.serve_points
@@ -134,13 +136,13 @@ valued AS (
            END::bigint AS denominator,
            -- The dominance ratio is the one figure that is not a share of a
            -- count: return points won over serve points lost.
-           CASE WHEN $7::text = 'dominance'
+           CASE WHEN $8::text = 'dominance'
                      AND t.op_serve_points > 0 AND t.serve_points > 0
                      AND t.serve_points - t.first_won - t.second_won > 0
                 THEN ((t.op_serve_points - t.op_first_won - t.op_second_won)::float8 / t.op_serve_points)
                      / ((t.serve_points - t.first_won - t.second_won)::float8 / t.serve_points)
            END::float8 AS ratio,
-           CASE $7::text
+           CASE $8::text
                WHEN 'return_points_won'  THEN t.with_return
                WHEN 'first_return_won'   THEN t.with_return
                WHEN 'second_return_won'  THEN t.with_return
@@ -160,11 +162,11 @@ valued AS (
 ),
 ranked AS (
     SELECT v.player_id, v.sample, v.matches, v.numerator, v.denominator,
-           CASE WHEN $7::text = 'dominance' THEN v.ratio
+           CASE WHEN $8::text = 'dominance' THEN v.ratio
                 ELSE v.numerator::float8 / nullif(v.denominator, 0)
            END::float8 AS value
       FROM valued v
-     WHERE v.sample >= $8::bigint
+     WHERE v.sample >= $9::bigint
 )
 SELECT p.slug, p.full_name AS name, p.tour::text AS tour, p.country,
        r.sample, r.matches, r.numerator, r.denominator, r.value,
@@ -185,6 +187,7 @@ type ListLeadersParams struct {
 	Tier       *Tier
 	Surface    *Surface
 	Season     *int16
+	Player     *string
 	Stat       string
 	MinMatches int64
 }
@@ -213,6 +216,8 @@ type ListLeadersRow struct {
 // filter, the ranking and the denominators cannot drift between them. A
 // player whose denominator is zero has no value and is not on the board.
 // Ascending is for the one stat where less is better, double faults.
+// `player` narrows the board to one player, so a page can say what an absent
+// name's figure is and how many matches it stands on.
 func (q *Queries) ListLeaders(ctx context.Context, arg ListLeadersParams) ([]ListLeadersRow, error) {
 	rows, err := q.db.Query(ctx, listLeaders,
 		arg.Ascending,
@@ -221,6 +226,7 @@ func (q *Queries) ListLeaders(ctx context.Context, arg ListLeadersParams) ([]Lis
 		arg.Tier,
 		arg.Surface,
 		arg.Season,
+		arg.Player,
 		arg.Stat,
 		arg.MinMatches,
 	)
