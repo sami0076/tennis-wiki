@@ -10,7 +10,8 @@ working shown.
 > engine, player pages, head-to-head, rankings, search, both simulators, the methodology
 > page and the Match Charting Project's per-set sheets are all deployed at
 > [deucepoint.net](https://deucepoint.net), which has been up since 14 September 2026.
-> Phase 5 — tournaments and seasons as pages — is next; see [Roadmap](#roadmap).
+> Phase 5 — tournaments and seasons as pages, the draw sheet rendered, serve and return
+> leaderboards, player and head-to-head splits — is built; see [Roadmap](#roadmap).
 
 <!-- SCREENSHOT: head-to-head page. Required by the build spec §13.2 — first thing after
      the title. To be taken from the live site, at deucepoint.net/h2h. -->
@@ -440,7 +441,7 @@ that split.
 | 2 | Elo engine, player pages, H2H, rankings, search, clutch, caching | Done |
 | 3 | Match simulator (closed form), draw simulator (Monte Carlo) | Done |
 | 4 | Methodology page, image builds, k3s, deployment, the Match Charting Project | Done |
-| 5 | Tournaments and seasons as pages, the draw sheet rendered, serve and return leaderboards, player and head-to-head splits | Next ([#131](https://github.com/sami0076/tennis-wiki/issues/131)) |
+| 5 | Tournaments and seasons as pages, the draw sheet rendered, serve and return leaderboards, player and head-to-head splits | Done ([#131](https://github.com/sami0076/tennis-wiki/issues/131)) |
 
 Clutch metrics were pulled forward into Phase 2 and shipped there. Phase 3's shape was
 checked against the data before it was planned, and two things moved: the point-win
