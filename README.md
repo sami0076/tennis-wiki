@@ -276,6 +276,16 @@ rather than starting where the men's files do. A year in progress says the date 
 is complete to. `/seasons/:year` is every event of the year grouped by level, with a tier
 switch so a year at Challenger level is reachable rather than silently cut.
 
+`/leaders` is the leaderboards: one figure at a time -- eight serve figures, five return
+figures, total points and the dominance ratio, and five read from the score -- filtered by
+tour, tier, surface and season, every filter in the URL. The population is written above the
+table (how many matches met the filter, how many had statistics, how many players clear the
+floor) and every row carries the matches it stands on and the counts behind its rate, because
+a first-serve rate over two matches and one over two hundred are different claims. A name
+that is not in the table can be looked up, and the page says which absence it is: below the
+floor, with the figure over the matches they do have, or without the figure at all. It sits
+beside `/rankings` rather than in the nav, because a leaderboard is a ranking.
+
 `/h2h/:a/:b` is the comparison and `/h2h` the picker, which is the same page: the URL is the
 state, so a comparison is a link somebody can send, and asking the other way round is the same
 rivalry read from the other end. The surface toggle filters the record, the rivalry strip and
