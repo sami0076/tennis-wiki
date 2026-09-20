@@ -86,15 +86,32 @@ export function getPlayerRankings(slug: string, signal?: AbortSignal): Promise<R
   return request<RankingHistory>(`/players/${encodeURIComponent(slug)}/rankings`, {}, signal)
 }
 
+export interface MeetingFilters {
+  level?: string | null
+  round?: string | null
+  best_of?: string | null
+  surface?: string | null
+  deciders?: string | null
+  tiebreaks?: string | null
+  from?: string | null
+  to?: string | null
+}
+
 /**
  * The comparison, in the order the URL asks for. /h2h/a/b and /h2h/b/a are the
  * same rivalry read from opposite ends, so the caller decides which player is
- * on the left and nothing downstream has to.
+ * on the left and nothing downstream has to. The filters cut the record, the
+ * strip, the serve figures and the meetings; the closeness summary is never cut.
  */
-export function getHeadToHead(a: string, b: string, signal?: AbortSignal): Promise<HeadToHead> {
+export function getHeadToHead(
+  a: string,
+  b: string,
+  filters: MeetingFilters = {},
+  signal?: AbortSignal,
+): Promise<HeadToHead> {
   return request<HeadToHead>(
     `/h2h/${encodeURIComponent(a)}/${encodeURIComponent(b)}`,
-    {},
+    { ...filters },
     signal,
   )
 }
