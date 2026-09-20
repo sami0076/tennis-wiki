@@ -28,3 +28,16 @@ SELECT t.tour,
   LEFT JOIN charted_stats p ON p.match_id = c.match_id AND p.set_no = 0
  GROUP BY t.tour
  ORDER BY t.tour;
+
+-- name: GetCurrentThrough :many
+-- The last match per tour, the date a season row is complete to. Walks the
+-- played_on index backwards to the first match of each tour rather than
+-- grouping every match, which is what GetCoverage has to do and this need not.
+SELECT tours.tour::text AS tour,
+       (SELECT m.played_on
+          FROM matches m
+          JOIN tournaments t ON t.id = m.tournament_id
+         WHERE t.tour = tours.tour
+         ORDER BY m.played_on DESC
+         LIMIT 1)::date AS last_match
+  FROM (VALUES ('atp'::tour), ('wta'::tour)) AS tours(tour);

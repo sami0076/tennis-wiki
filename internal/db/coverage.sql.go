@@ -112,3 +112,42 @@ func (q *Queries) GetCoverage(ctx context.Context) ([]GetCoverageRow, error) {
 	}
 	return items, nil
 }
+
+const getCurrentThrough = `-- name: GetCurrentThrough :many
+SELECT tours.tour::text AS tour,
+       (SELECT m.played_on
+          FROM matches m
+          JOIN tournaments t ON t.id = m.tournament_id
+         WHERE t.tour = tours.tour
+         ORDER BY m.played_on DESC
+         LIMIT 1)::date AS last_match
+  FROM (VALUES ('atp'::tour), ('wta'::tour)) AS tours(tour)
+`
+
+type GetCurrentThroughRow struct {
+	Tour      string
+	LastMatch time.Time
+}
+
+// The last match per tour, the date a season row is complete to. Walks the
+// played_on index backwards to the first match of each tour rather than
+// grouping every match, which is what GetCoverage has to do and this need not.
+func (q *Queries) GetCurrentThrough(ctx context.Context) ([]GetCurrentThroughRow, error) {
+	rows, err := q.db.Query(ctx, getCurrentThrough)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetCurrentThroughRow{}
+	for rows.Next() {
+		var i GetCurrentThroughRow
+		if err := rows.Scan(&i.Tour, &i.LastMatch); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
