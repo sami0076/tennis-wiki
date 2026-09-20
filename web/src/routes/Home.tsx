@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom'
-import { getCoverage, getRankings, getTrajectories, simulateDraw } from '../api/endpoints'
+import { getCoverage, getRankings, getRecentFinals, getTrajectories, simulateDraw } from '../api/endpoints'
 import { useResource, type Resource } from '../api/useResource'
 import {
   AbsentCell,
   ButtonLink,
+  RecentFinals,
   SeedingSheet,
   Skeleton,
   StatTable,
@@ -66,6 +67,7 @@ export function Home() {
     [tour],
   )
   const draw = useResource((signal) => simulateDraw(FEATURED_DRAW, signal), [])
+  const recent = useResource((signal) => getRecentFinals(signal), [])
 
   return (
     <>
@@ -86,6 +88,11 @@ export function Home() {
           </div>
         </div>
         <Seeding lines={lines} leaders={leaders} />
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Last week&apos;s finals</h2>
+        <RecentFinals recent={recent} />
       </section>
 
       <section className={styles.section}>
