@@ -202,8 +202,8 @@ specification asks for, and calibration is within 1.7 percentage points at every
 those two measures the weights are fine.
 
 The third measure is less comfortable. A player's rating should carry across a promotion
-from Challenger to tour without a step in it, and it does not: across 7,253 promotions,
-players won 34,227 of their first tour-level matches against 32,273 expected. Promoted
+from Challenger to tour without a step in it, and it does not: across 7,234 promotions,
+players won 34,158 of their first tour-level matches against 32,166 expected. Promoted
 players arrive underrated.
 
 **Raising the lower tiers is not the fix, and the numbers say so.** Moving Challenger to
@@ -240,10 +240,10 @@ Over 30,000 recent ATP matches, rated as of the day each was played:
 
 | Predicted chance of a deciding set | Matches | Expected | Observed | Gap |
 |---|---|---|---|---|
-| 0-20% | 302 | 15.2% | 13.9% | −1.3 |
-| 20-40% | 5,998 | 33.8% | 28.7% | −5.0 |
-| 40-60% | 23,700 | 47.3% | 36.6% | −10.7 |
-| **All** | **30,000** | **44.3%** | **34.8%** | **−9.5** |
+| 0-20% | 297 | 15.8% | 12.1% | −3.7 |
+| 20-40% | 5,887 | 33.8% | 28.2% | −5.6 |
+| 40-60% | 23,816 | 47.3% | 36.7% | −10.6 |
+| **All** | **30,000** | **44.4%** | **34.8%** | **−9.6** |
 
 The model expects nearly half of matches to go the distance and about a third do. The gap
 widens exactly where the model is least certain, which points at the assumption that
@@ -270,18 +270,18 @@ the top buckets are empty by arithmetic rather than for want of data.
 
 ### The draw simulation beats knowing nothing, and not by as much as it looks
 
-Over 298 reconstructed ATP draws, each replayed 2,000 times with the ratings as of the week
+Over 292 reconstructed ATP draws, each replayed 2,000 times with the ratings as of the week
 it began:
 
 | | |
 |---|---|
-| Brier score | **0.8328** |
-| Brier for a model that knows only the field size | 0.9693 |
-| Average probability given to the eventual champion | 14.9% |
-| How often its favourite actually won | 31.2% |
+| Brier score | **0.8413** |
+| Brier for a model that knows only the field size | 0.9705 |
+| Average probability given to the eventual champion | 15.0% |
+| How often its favourite actually won | 28.8% |
 
 Better than uninformed, which is the least a rating-driven simulation should manage. The
-absolute numbers are modest because most of these draws are 32 and 64-player events where
+absolute numbers are modest because most of these draws are 28 and 32-player events where
 the favourite genuinely wins about a quarter of the time — a tennis draw is not a
 predictable object, and a model claiming otherwise would be the suspicious one.
 
