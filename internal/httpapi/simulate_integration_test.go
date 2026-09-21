@@ -244,7 +244,49 @@ func TestSimulateDrawReplaysTheBracket(t *testing.T) {
 	}
 }
 
-// A draw that is not a complete bracket is refused with the reason, not a 500.
+// A draw with byes is the standard 250 shape: 28 in a tree of 32. Six in a
+// tree of eight here, with the two seeds sitting out the quarter-finals.
+func TestSimulateDrawReplaysADrawWithByes(t *testing.T) {
+	f := newAPIFixture(t)
+	event := f.tournament("Itg Bye Open", db.TierTour, 2019)
+
+	ids := map[string]int64{}
+	for i, slug := range []string{"a", "b", "c", "d", "e", "g"} {
+		id := f.player("itg-bye-"+slug, "Itg Bye"+slug, db.TourAtp)
+		ids[slug] = id
+		f.rated(id, db.RatingSurfaceOverall, float64(2100-100*i), 100)
+	}
+	f.baselineCell(db.TourAtp, db.TierTour, "clay", 2010, 1_000_000, 610_000)
+
+	pts := int16(100)
+	f.match(event, ids["c"], ids["d"], 1, "QF", 2019, &pts, false)
+	f.match(event, ids["e"], ids["g"], 2, "QF", 2019, &pts, false)
+	f.match(event, ids["a"], ids["c"], 3, "SF", 2019, &pts, false)
+	f.match(event, ids["b"], ids["e"], 4, "SF", 2019, &pts, false)
+	f.match(event, ids["a"], ids["b"], 5, "F", 2019, &pts, false)
+
+	res := f.get("/api/v1/simulate/draw?tour=atp&season=2019&event=Itg+Bye+Open&runs=2000&seed=5")
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d, want 200", res.StatusCode)
+	}
+	var sim DrawSimulation
+	if err := json.NewDecoder(res.Body).Decode(&sim); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if sim.Entered != 6 || sim.Byes != 2 || len(sim.Odds) != 6 {
+		t.Fatalf("entered %d, byes %d, %d rows; want 6, 2, 6", sim.Entered, sim.Byes, len(sim.Odds))
+	}
+	if len(sim.Rounds) != 3 {
+		t.Errorf("rounds = %v, want the quarter-finals counted", sim.Rounds)
+	}
+	for _, o := range sim.Odds {
+		if (o.Slug == "itg-bye-a" || o.Slug == "itg-bye-b") && o.Reached[0] != 1 {
+			t.Errorf("%s had a bye and won the first round %.3f of the time", o.Slug, o.Reached[0])
+		}
+	}
+}
+
+// A draw that is not a bracket is refused with the reason, not a 500.
 func TestSimulateDrawRefusesAnIncompleteBracket(t *testing.T) {
 	f := newAPIFixture(t)
 	event := f.tournament("Itg Group Finals", db.TierTour, 2019)

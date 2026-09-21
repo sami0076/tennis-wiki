@@ -181,7 +181,9 @@ SELECT t.id, t.name, t.season, t.tour::text AS tour, t.tier::text AS tier,
    AND ($1::tour IS NULL OR t.tour = $1::tour)
    AND ($2::smallint IS NULL OR t.season = $2::smallint)
  GROUP BY t.id
-HAVING count(*) IN (7, 15, 31, 63, 127)
+HAVING bool_and(m.round IN ('R128', 'R64', 'R32', 'R16', 'QF', 'SF', 'F'))
+   AND count(*) FILTER (WHERE m.round = 'F') = 1
+   AND count(DISTINCT m.round) >= 2
  ORDER BY t.season DESC, count(*) DESC, t.name
  LIMIT $3
 `
@@ -203,10 +205,10 @@ type ListSimulatableEventsRow struct {
 	Matches   int64
 }
 
-// Events whose main draw is a complete power-of-two bracket, which is the only
-// shape that reconstructs. Byes and round-robin groups leave a round with the
-// wrong number of matches and are excluded here rather than failing one at a
-// time in the reconstruction.
+// Events whose main draw is knockout rounds ending in one final. That is a
+// first cut: byes are found by the reconstruction, and a round the source
+// recorded in part fails there, one event at a time. A round-robin group is
+// excluded here, since no reconstruction reads one.
 func (q *Queries) ListSimulatableEvents(ctx context.Context, arg ListSimulatableEventsParams) ([]ListSimulatableEventsRow, error) {
 	rows, err := q.db.Query(ctx, listSimulatableEvents, arg.Tour, arg.Season, arg.RowLimit)
 	if err != nil {
