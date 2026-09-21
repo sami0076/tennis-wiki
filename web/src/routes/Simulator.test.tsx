@@ -71,6 +71,7 @@ const draw: DrawSimulation = {
     achieved: null,
   },
   entered: 128,
+  byes: 0,
   champion: 'novak-djokovic',
 }
 
@@ -256,7 +257,18 @@ describe('Simulator', () => {
     expect(sheet).toHaveAttribute('href', '/tournaments/wimbledon-atp/2019')
     const meta = sheet.closest('p')
     expect(meta).toHaveTextContent('128 draw')
+    expect(meta).not.toHaveTextContent('byes')
     expect(meta).toHaveTextContent('10,000 runs')
+  })
+
+  // A 28 draw is a tree of 32 with four byes, and the line says so.
+  it('counts the byes a draw had', async () => {
+    stub(null, { draw: { ...draw, entered: 28, byes: 4 } })
+    renderAt('/simulator')
+
+    const sheet = await screen.findByRole('link', { name: 'Wimbledon 2019' })
+    expect(sheet.closest('p')).toHaveTextContent('28 draw')
+    expect(sheet.closest('p')).toHaveTextContent('4 byes')
   })
 
   // The edition page's "Replay this draw" lands here with the sheet's address.
@@ -269,18 +281,18 @@ describe('Simulator', () => {
     expect(asked).toContain('season=2025')
   })
 
-  // Byes and round robins are draws the endpoint declines with a reason, and
-  // the reason is the answer, with the sheet as the way on.
+  // A round robin is a draw the endpoint declines with a reason, and the
+  // reason is the answer, with the sheet as the way on.
   it('reads a declined draw as an answer', async () => {
     stub(null, {
       draw: {
         status: 422,
-        body: { type: '/problems/bad-request', title: 'Invalid request', status: 422, detail: 'That draw has byes.', instance: '/api/v1/simulate/draw', request_id: 'x' },
+        body: { type: '/problems/bad-request', title: 'Invalid request', status: 422, detail: 'That draw is a round robin.', instance: '/api/v1/simulate/draw', request_id: 'x' },
       },
     })
     renderAt('/simulator?event=monte-carlo-masters-atp&season=2023')
     expect(await screen.findByText('This draw cannot be replayed')).toBeInTheDocument()
-    expect(screen.getByText('That draw has byes.')).toBeInTheDocument()
+    expect(screen.getByText('That draw is a round robin.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'See the sheet instead' })).toHaveAttribute(
       'href',
       '/tournaments/monte-carlo-masters-atp/2023',

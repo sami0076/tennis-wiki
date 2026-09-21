@@ -379,9 +379,9 @@ function DrawPanel({ draw, chosen }: { draw: Resource<DrawSimulation>; chosen: {
     )
   }
   if (draw.state === 'error') {
-    // 422 is the endpoint declining a draw it cannot rebuild -- byes, a round
-    // robin -- and 404 a season not played: both are answers about the draw
-    // that was asked for, not failures of the page.
+    // 422 is the endpoint declining a draw it cannot rebuild -- a round robin,
+    // a round the file lacks -- and 404 a season not played: both are answers
+    // about the draw that was asked for, not failures of the page.
     const declined = draw.error instanceof ApiError && (draw.error.status === 422 || draw.error.status === 404)
     return (
       <section className={styles.section}>
@@ -417,6 +417,7 @@ function DrawPanel({ draw, chosen }: { draw: Resource<DrawSimulation>; chosen: {
             {sim.event.name} {sim.event.season}
           </Link>,
           `${sim.entered} draw`,
+          sim.byes > 0 && `${sim.byes} byes`,
           `${sim.runs.toLocaleString('en-GB')} runs`,
         ]}
       />

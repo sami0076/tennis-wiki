@@ -268,7 +268,7 @@ func (r *SimulationReport) checkDraws(
 
 		anchor, scope, _ := simulate.Anchor(cells, e.Tier, e.Surface, (int(e.Season)/10)*10)
 		format := simulate.Format{BestOf: 3}
-		if e.Tier == "tour" && bracket.Size() >= 128 {
+		if e.Tier == "tour" && bracket.Entered() >= 128 {
 			format.BestOf = 5
 		}
 
@@ -378,9 +378,11 @@ func reconstruct(ctx context.Context, q *db.Queries, e db.ListSimulatableEventsR
 		return simulate.Bracket{}, nil, err
 	}
 
-	ids := make([]int64, 0, bracket.Size())
+	ids := make([]int64, 0, bracket.Entered())
 	for _, en := range bracket.Entrants {
-		ids = append(ids, en.PlayerID)
+		if !en.Bye() {
+			ids = append(ids, en.PlayerID)
+		}
 	}
 	ratings, err := q.CurrentEloAsOf(ctx, db.CurrentEloAsOfParams{
 		Surface: db.RatingSurfaceOverall, OnDate: e.StartDate, PlayerIds: ids,

@@ -289,13 +289,16 @@ type DrawOdds struct {
 
 // DrawSimulation is a whole event, played many times.
 type DrawSimulation struct {
-	Event   SimulatedEvent   `json:"event"`
-	Rounds  []string         `json:"rounds"`
-	Odds    []DrawOdds       `json:"odds"`
-	Runs    int              `json:"runs"`
-	Seed    uint64           `json:"seed"`
-	Inputs  SimulationInputs `json:"inputs"`
-	Entered int              `json:"entered"`
+	Event  SimulatedEvent   `json:"event"`
+	Rounds []string         `json:"rounds"`
+	Odds   []DrawOdds       `json:"odds"`
+	Runs   int              `json:"runs"`
+	Seed   uint64           `json:"seed"`
+	Inputs SimulationInputs `json:"inputs"`
+	// Entered is how many players were in the draw, and Byes how many of
+	// them sat out the first round: a 28 draw is a tree of 32 with four.
+	Entered int `json:"entered"`
+	Byes    int `json:"byes"`
 	// Champion is who actually won it, so a simulation can be read against what
 	// happened rather than only admired.
 	Champion *string `json:"champion"`
@@ -386,7 +389,7 @@ func (a *API) handleSimulateDraw(w http.ResponseWriter, r *http.Request) {
 		errors.Is(err, simulate.ErrNoMatches) {
 		WriteProblem(w, r, http.StatusUnprocessableEntity, TypeBadRequest,
 			"That event's draw cannot be reconstructed: "+err.Error()+
-				". Round-robin finals and draws with byes have no complete bracket.")
+				". A round-robin final has no bracket, and a draw the source recorded in part does not link up.")
 		return
 	}
 	if err != nil {
@@ -431,9 +434,11 @@ func (a *API) simulateDraw(
 	// As of the week it started. The ratings table is sparse, so this is each
 	// player's last row at or before that date.
 	asOf := event.StartDate
-	ids := make([]int64, 0, bracket.Size())
+	ids := make([]int64, 0, bracket.Entered())
 	for _, e := range bracket.Entrants {
-		ids = append(ids, e.PlayerID)
+		if !e.Bye() {
+			ids = append(ids, e.PlayerID)
+		}
 	}
 
 	series := db.RatingSurfaceOverall
@@ -505,7 +510,8 @@ func (a *API) simulateDraw(
 		Rounds:  bracket.Rounds,
 		Runs:    result.Runs,
 		Seed:    result.Seed,
-		Entered: bracket.Size(),
+		Entered: bracket.Entered(),
+		Byes:    bracket.Byes,
 		Inputs: SimulationInputs{
 			Source: SimulationDerived, AnchorScope: string(scope), AnchorPoints: points,
 			Surface: event.Surface, Tier: event.Tier, Decade: decade,

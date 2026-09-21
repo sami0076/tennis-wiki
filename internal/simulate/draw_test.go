@@ -78,18 +78,17 @@ func TestBuildBracketIgnoresInputOrder(t *testing.T) {
 	}
 }
 
-// A draw with a bye has a first round too small for the tree above it, which is
-// the shape 15,660 of this database's events have. Rejected with a reason,
-// rather than reconstructed into something plausible and wrong.
-func TestBuildBracketRejectsAnIncompleteDraw(t *testing.T) {
+// A player in the second round with no first-round match had a bye. The line
+// under them stays empty, so the tree keeps its shape and the pairs above it
+// still fall out of the index arithmetic.
+func TestBuildBracketPlacesByes(t *testing.T) {
 	t.Parallel()
 
 	players := map[int64]Entrant{}
 	for id := int64(1); id <= 6; id++ {
 		players[id] = Entrant{PlayerID: id}
 	}
-	// Six players: two first-round matches, then a semi-final round of two that
-	// includes a player who never played a first round.
+	// Six in a draw of eight: 5 and 6 sat out the quarter-finals.
 	matches := []BracketMatch{
 		{Round: "QF", RoundIdx: 0, WinnerID: 1, LoserID: 2},
 		{Round: "QF", RoundIdx: 0, WinnerID: 3, LoserID: 4},
@@ -97,9 +96,73 @@ func TestBuildBracketRejectsAnIncompleteDraw(t *testing.T) {
 		{Round: "SF", RoundIdx: 1, WinnerID: 3, LoserID: 6},
 		{Round: "F", RoundIdx: 2, WinnerID: 1, LoserID: 3},
 	}
-	_, err := BuildBracket(matches, players)
-	if !errors.Is(err, ErrNotPowerOfTwo) && !errors.Is(err, ErrBrokenTree) {
-		t.Errorf("error = %v, want a draw shape rejection", err)
+	b, err := BuildBracket(matches, players)
+	if err != nil {
+		t.Fatalf("BuildBracket: %v", err)
+	}
+	if b.Size() != 8 || b.Byes != 2 || b.Entered() != 6 {
+		t.Fatalf("size %d, byes %d, entered %d; want 8, 2, 6", b.Size(), b.Byes, b.Entered())
+	}
+	want := []int64{1, 2, 5, 0, 3, 4, 6, 0}
+	for i, e := range b.Entrants {
+		if e.PlayerID != want[i] {
+			t.Fatalf("entrant %d = %d, want %d: a bye sits next to the player who had it",
+				i, e.PlayerID, want[i])
+		}
+		if e.Bye() != (want[i] == 0) {
+			t.Errorf("entrant %d: Bye() = %v", i, e.Bye())
+		}
+	}
+}
+
+// Above the first round a missing match is not a bye: a semi-finalist who won
+// no quarter-final is a hole in the source, and the draw is refused.
+func TestBuildBracketRejectsAHoleAboveTheFirstRound(t *testing.T) {
+	t.Parallel()
+
+	players := map[int64]Entrant{}
+	for id := int64(1); id <= 17; id++ {
+		players[id] = Entrant{PlayerID: id}
+	}
+	var matches []BracketMatch
+	for id := int64(1); id <= 16; id += 2 {
+		matches = append(matches, BracketMatch{Round: "R16", RoundIdx: 0, WinnerID: id, LoserID: id + 1})
+	}
+	for id := int64(1); id <= 16; id += 4 {
+		matches = append(matches, BracketMatch{Round: "QF", RoundIdx: 1, WinnerID: id, LoserID: id + 2})
+	}
+	matches = append(matches,
+		BracketMatch{Round: "SF", RoundIdx: 2, WinnerID: 1, LoserID: 5},
+		BracketMatch{Round: "SF", RoundIdx: 2, WinnerID: 9, LoserID: 17}, // 17 won no QF; 13 vanished
+		BracketMatch{Round: "F", RoundIdx: 3, WinnerID: 1, LoserID: 9},
+	)
+	if _, err := BuildBracket(matches, players); !errors.Is(err, ErrBrokenTree) {
+		t.Errorf("error = %v, want ErrBrokenTree", err)
+	}
+}
+
+// A first round that is the right size but does not feed the round above --
+// two of its winners never play again, two semi-finalists never played it --
+// is not two byes. Every match eliminates one player, so the count gives it
+// away.
+func TestBuildBracketRejectsAFirstRoundThatDoesNotLinkUp(t *testing.T) {
+	t.Parallel()
+
+	players := map[int64]Entrant{}
+	for id := int64(1); id <= 10; id++ {
+		players[id] = Entrant{PlayerID: id}
+	}
+	matches := []BracketMatch{
+		{Round: "QF", RoundIdx: 0, WinnerID: 1, LoserID: 2},
+		{Round: "QF", RoundIdx: 0, WinnerID: 3, LoserID: 4},
+		{Round: "QF", RoundIdx: 0, WinnerID: 7, LoserID: 8},
+		{Round: "QF", RoundIdx: 0, WinnerID: 9, LoserID: 10},
+		{Round: "SF", RoundIdx: 1, WinnerID: 1, LoserID: 5},
+		{Round: "SF", RoundIdx: 1, WinnerID: 3, LoserID: 6},
+		{Round: "F", RoundIdx: 2, WinnerID: 1, LoserID: 3},
+	}
+	if _, err := BuildBracket(matches, players); !errors.Is(err, ErrBrokenTree) {
+		t.Errorf("error = %v, want ErrBrokenTree", err)
 	}
 }
 

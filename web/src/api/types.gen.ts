@@ -1083,7 +1083,12 @@ export interface DrawSimulation {
   runs: number /* int */;
   seed: number /* uint64 */;
   inputs: SimulationInputs;
+  /**
+   * Entered is how many players were in the draw, and Byes how many of
+   * them sat out the first round: a 28 draw is a tree of 32 with four.
+   */
   entered: number /* int */;
+  byes: number /* int */;
   /**
    * Champion is who actually won it, so a simulation can be read against what
    * happened rather than only admired.
