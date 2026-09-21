@@ -104,19 +104,22 @@ func RunDraw(b Bracket, win WinFunc, runs int, seed uint64) DrawResult {
 		}
 	}
 
-	result := DrawResult{Odds: make([]Odds, size), Runs: runs, Seed: seed, Champion: b.Champion}
-	for i := range b.Entrants {
+	result := DrawResult{Odds: make([]Odds, 0, b.Entered()), Runs: runs, Seed: seed, Champion: b.Champion}
+	for i, e := range b.Entrants {
+		if e.Bye() {
+			continue
+		}
 		reached := make([]float64, rounds)
 		for r := 0; r < rounds; r++ {
 			reached[r] = float64(total[i*rounds+r]) / float64(runs)
 		}
 		title := reached[rounds-1]
-		result.Odds[i] = Odds{
-			Entrant:       b.Entrants[i],
+		result.Odds = append(result.Odds, Odds{
+			Entrant:       e,
 			Title:         title,
 			TitleInterval: interval(title, runs),
 			Reached:       reached,
-		}
+		})
 	}
 	return result
 }
@@ -152,7 +155,9 @@ func interval(p float64, runs int) float64 {
 	return 1.96 * math.Sqrt(p*(1-p)/float64(runs))
 }
 
-// pairOdds remembers the probability for each pairing, computed once.
+// pairOdds remembers the probability for each pairing, computed once. A bye
+// loses to anyone, so a first round against one is a walkover and the WinFunc
+// is never asked about it.
 type pairOdds struct {
 	size int
 	p    []float64
@@ -163,7 +168,14 @@ func newPairOdds(b Bracket, win WinFunc) pairOdds {
 	o := pairOdds{size: size, p: make([]float64, size*size)}
 	for i := 0; i < size; i++ {
 		for j := i + 1; j < size; j++ {
-			v := win(b.Entrants[i], b.Entrants[j])
+			v := 1.0
+			switch {
+			case b.Entrants[i].Bye():
+				v = 0
+			case b.Entrants[j].Bye():
+			default:
+				v = win(b.Entrants[i], b.Entrants[j])
+			}
 			o.p[i*size+j] = v
 			// The mirror is stored rather than recomputed, so a WinFunc that is
 			// not perfectly symmetric cannot make the bracket disagree with

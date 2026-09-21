@@ -17,6 +17,39 @@ func evenBracket(size int) Bracket {
 	return Bracket{Entrants: entrants, Rounds: rounds, Champion: 1}
 }
 
+// A bye is a walkover: the player above it always reaches the second round, is
+// never asked about in the WinFunc, and gets no row of odds.
+func TestAByeIsAWalkover(t *testing.T) {
+	t.Parallel()
+
+	b := evenBracket(8)
+	b.Entrants[1] = Entrant{}
+	b.Entrants[7] = Entrant{}
+	b.Byes = 2
+	coin := func(a, c Entrant) float64 {
+		if a.Bye() || c.Bye() {
+			t.Errorf("asked about a bye: %d against %d", a.PlayerID, c.PlayerID)
+		}
+		return 0.5
+	}
+	res := RunDraw(b, coin, 2000, 3)
+
+	if len(res.Odds) != 6 {
+		t.Fatalf("%d rows of odds, want one per player entered", len(res.Odds))
+	}
+	var sum float64
+	for _, o := range res.Odds {
+		sum += o.Title
+		if (o.Entrant.PlayerID == 1 || o.Entrant.PlayerID == 7) && o.Reached[0] != 1 {
+			t.Errorf("%d had a bye and reached the second round %.3f of the time",
+				o.Entrant.PlayerID, o.Reached[0])
+		}
+	}
+	if math.Abs(sum-1) > 1e-9 {
+		t.Errorf("title odds sum to %.6f, want 1", sum)
+	}
+}
+
 // A coin-flip field: every entrant must have the same title odds, and they must
 // sum to one.
 func TestEvenFieldIsEven(t *testing.T) {
