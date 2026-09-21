@@ -1,8 +1,9 @@
 # The events stage on its own: what a tournament is across seasons, derived
 # from every tournaments row already loaded (ADR-0012). For after a change to
-# the rule or to configs/event_overrides.json, and once after the migration
-# that added the table; a full load runs the same stage anyway. Nothing the
-# ratings read changes, so there is no rate step here.
+# the rule or to configs/event_overrides.json, and once after a migration that
+# adds the table or clears part of it (00016, 00019); a full load runs the
+# same stage anyway. Nothing the ratings read changes, so there is no rate
+# step here.
 #
 #   kubectl -n deucepoint delete job events --ignore-not-found
 #   kubectl -n deucepoint apply -f deploy/k8s/jobs/events.yaml

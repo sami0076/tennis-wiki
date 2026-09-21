@@ -146,8 +146,10 @@ kubectl -n deucepoint apply -f deploy/k8s/jobs/events.yaml
 kubectl -n deucepoint logs -f job/events
 ```
 
-The log names every override that filed no row, which is how a renumbering a source has
-since undone gets noticed. A full load runs the same stage after the matches, so on an
+Migration 00019 clears the name-keyed events for the stage to mint again, so a deploy
+that applies it runs this Job right after `migrate`; until it does, those events' pages
+answer 404. The log names every override that filed no row, which is how a renumbering
+a source has since undone gets noticed. A full load runs the same stage after the matches, so on an
 empty cluster this Job is never needed.
 
 **From empty** (a new node, a lost volume): the README's first-time sequence — secrets,
