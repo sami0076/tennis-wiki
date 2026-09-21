@@ -1,6 +1,6 @@
 # ADR-0012: An event is keyed by the tour's number where there is one, and by its name where there is not
 
-- **Status:** Accepted
+- **Status:** Accepted; amended 2026-09-21 (the same name within a season, below)
 - **Date:** 2026-09-16
 - **Context:** issue #121, the first of Phase 5 (#131); three page issues (#122, #123,
   #128) and the structured data (#130) address an edition and depend on this
@@ -141,7 +141,8 @@ For each `tournaments` row, in this order, the first that applies:
    ATP row, and WTA rows from 2016. The key is `(tour, N)` with leading zeros dropped, so
    `2018-0451` and `2019-451` are one event.
 3. **The name**, normalised, within the tour and the tier: everything else — the women's
-   tour before 2016, Futures, ITF, the M-codes, the 1968 T-codes. A name-keyed run
+   tour before 2016, Futures, ITF, the M-codes, the 1968 T-codes. The same name more than
+   once in a season is a run per ordinal (amended below). A name-keyed run
    **bridges** to a numbered event when exactly one numbered event of the same tour and
    tier has an edition under that normalised name; if none has, the run is an event of
    its own; if more than one has, it stays its own rather than guess. As implemented,
@@ -286,3 +287,43 @@ of a few hundred rows, is its own issue, and the bare slug is left free for it.
   their competition's season, whose page is #122's to decide.
 - Out of scope, and left for their own issues: pairing the men's and women's editions of
   a combined event; linking an event to the tour's official page by its number.
+
+## Amendment, 2026-09-21: the same name within a season
+
+The name key as written above has no notion of a name recurring *within* a season, and
+on the ITF circuits that is the normal case: a venue runs a $10K or a W15 most weeks of
+the year under one name. `antalya-10k-wta/2016` answered with 1,084 matches and 35
+finals, because the rule had folded 35 draws into one edition. Measured on the same load
+as above: 2,170 event-seasons held more than one row, 8,174 rows in all — 902 Futures
+event-seasons (3,915 rows), 714 women's ITF (2,883), 358 on the women's tour before 2016
+(746), the worst a W15 Monastir and an M15 Monastir with 50 rows each in 2021.
+
+The sources already have a convention for it. Where a season has two events of one name
+they write an edition number on the second — `Adelaide 1` and `Adelaide 2` in 1972,
+`Australian Open 2` for the December 1977 Slam — and 4,559 name-keyed rows carry one.
+The ATP files the December 1977 Australian Open under its own number (581), a separate
+event; the women's row bridged onto the January one.
+
+**The rule now numbers the rows that share a name, tour, tier and season, in calendar
+order.** The first keeps the bare key and is the run that may bridge; the second and
+later are runs of their own, `name:itf:w15-monastir:2`, the second W15 Monastir of each
+season. Calendar order rather than the source's own number because the source's number
+agrees with the calendar in 4,289 of the 4,559 rows that carry one and counts backwards
+in the rest, and because most of the rows carry none. The display name carries the
+ordinal the way the sources write one — `W15 Monastir 2` — and drops the number a source
+wrote, so `Scarborough 1` and `Scarborough 2` are `Scarborough` and `Scarborough 2`
+whichever way a year spelled them.
+
+On the same load the rule yields 12,984 events, 2,522 of them numbered runs, and 5,980
+rows sit on one. What it leaves: 23 event-seasons still hold two rows, and every one is
+two *different* names bridged onto one numbered event — Montreal and Toronto onto the
+Canadian Open in five seasons, Lausanne and Gstaad onto Lausanne in sixteen — or two
+overrides filed under one number, the two Virginia Slims Championships of 1986. Those
+are bridge decisions, not the name key's, and `cmd/dataqual` lists them as a warning.
+
+Consequences: migration 00019 clears the name-keyed events so the stage mints them
+again, because the runs are different runs and 278 of the kept slugs had been minted from
+a source's edition number (`australia-1-3-atp` for the first Australia 1 of the year);
+505 slugs change, none of an event played since 2012, and every numbered and team event
+keeps its slug. The stage reports `numbered_within_season`; `dataqual` counts the
+numbered runs and the seasons still shared.

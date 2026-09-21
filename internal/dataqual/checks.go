@@ -348,6 +348,32 @@ var anomalyChecks = []Check{
 		          GROUP BY e.slug ORDER BY count(*) DESC LIMIT 5`,
 	},
 	{
+		Name:     "events_numbered_within_season",
+		Severity: Info,
+		Why: "Events that are the second or later of their name in a season, one per " +
+			"ordinal (ADR-0012): the weekly ITF events of one venue, the December " +
+			"Adelaide of 1972. The first of the season keeps the bare name.",
+		Query: `SELECT count(*) FROM events WHERE key ~ '^name:.*:\d+$'`,
+		Sample: `SELECT slug || ' (' || first_season || '-' || last_season || ')' FROM events
+		          WHERE key ~ '^name:.*:\d+$' ORDER BY last_season DESC, slug LIMIT 5`,
+	},
+	{
+		Name:     "editions_sharing_a_season",
+		Severity: Warning,
+		Why: "An edition is an event in a season, so two rows in one season are two " +
+			"events on one page: two names bridged to one number, Montreal and Toronto " +
+			"onto the Canadian Open, or two overrides. The same name twice is numbered " +
+			"by the events stage; this is what that leaves.",
+		Query: `SELECT count(*) FROM (
+		          SELECT event_id, season FROM tournaments WHERE level <> 'D'
+		          GROUP BY event_id, season HAVING count(*) > 1) x`,
+		Sample: `SELECT e.slug || ' ' || t.season || ': ' || string_agg(t.name, ', ' ORDER BY t.start_date)
+		           FROM tournaments t JOIN events e ON e.id = t.event_id
+		          WHERE t.level <> 'D'
+		          GROUP BY e.slug, t.season HAVING count(*) > 1
+		          ORDER BY t.season DESC LIMIT 5`,
+	},
+	{
 		Name:     "events_named_after_a_serial",
 		Severity: Info,
 		Why: "Events whose slug carries a serial because another of the tour shares the " +

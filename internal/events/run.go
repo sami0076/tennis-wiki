@@ -23,7 +23,7 @@ func Run(ctx context.Context, store *Store, overrides *Overrides, log *slog.Logg
 		"rows", stats.Rows, "events", stats.Events, "created", stats.Created, "removed", stats.Removed,
 		"by_number", res.ByLink[LinkNumber], "by_override", res.ByLink[LinkOverride],
 		"bridged", res.ByLink[LinkBridged], "by_name", res.ByLink[LinkName], "team_ties", res.ByLink[LinkTeam],
-		"names_under_several_numbers", len(res.Ambiguous))
+		"numbered_within_season", res.Numbered, "names_under_several_numbers", len(res.Ambiguous))
 	// Both are decisions a person should look at: an override a source has
 	// since undone, and a name the rule declined to bridge.
 	for _, ov := range res.Unmatched {

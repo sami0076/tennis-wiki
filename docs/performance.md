@@ -535,10 +535,10 @@ cheap endpoint rather than the expensive one it was expected to be.
 ## Tournaments as events
 
 The events stage of `cmd/ingest` derives what a tournament is across seasons from every
-`tournaments` row (ADR-0012): **8.8s over 64,624 rows**, yielding 10,462 events, in one
+`tournaments` row (ADR-0012): **11.4s over 64,624 rows**, yielding 12,984 events, in one
 transaction. It is a pure function of the rows and `configs/event_overrides.json`, so a
 second run over the same data creates nothing and removes nothing, and runs in the same
-time; there is no incremental path, and at nine seconds there is no need for one.
+time; there is no incremental path, and at eleven seconds there is no need for one.
 
 The three endpoints, end to end over HTTP against the full database, without the read
 cache; cold is the first request after a Postgres restart, warm the median of five after it:

@@ -82,8 +82,9 @@ Migrations 00007 and 00011 carry the measurements.
 sources carry a row per event per season and no identity across seasons that holds for
 both tours: the ATP's number does, the WTA's is a sequence within the year until 1987 and
 the ITF circuit's to 1995. So `events` is written by a stage of the ingest from a rule —
-the tour's number where it is real, the name within tour and tier where it is not, a
-short overrides file for the numbers a person has checked — and `tournaments.event_link`
+the tour's number where it is real, the name within tour and tier where it is not, numbered
+in calendar order when a name recurs within a season, a short overrides file for the
+numbers a person has checked — and `tournaments.event_link`
 records which of those placed each row, for the page to print. ADR-0012 carries the
 measurements; `configs/event_overrides.json` the decisions.
 

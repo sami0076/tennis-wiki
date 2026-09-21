@@ -58,6 +58,22 @@ func TestNormalise(t *testing.T) {
 	}
 }
 
+// A name-keyed event drops the number a source wrote on it, and carries its
+// own ordinal instead; a numbered event keeps its name as written.
+func TestDisplayNameCarriesTheOrdinal(t *testing.T) {
+	res := Resolve([]Row{
+		row("wta", "1934-1077", "Scarborough 1", "tour", 1934),
+		row("atp", "2025-2222", "Oeiras 2 CH", "challenger", 2025),
+	}, nil)
+	keys := byKey(t, res)
+	if got := keys["wta name:tour:scarborough"].Name; got != "Scarborough" {
+		t.Errorf("name-keyed first of its season: %q, want the bare name", got)
+	}
+	if got := keys["atp number:2222"].Name; got != "Oeiras 2" {
+		t.Errorf("numbered event: %q, want the source's name", got)
+	}
+}
+
 func TestCompetition(t *testing.T) {
 	cases := map[string]string{
 		"Davis Cup WG R1: ESP vs CZE":                     "davis-cup",
@@ -188,6 +204,67 @@ func TestAmbiguousNameStaysApart(t *testing.T) {
 	}
 	if len(res.Ambiguous) != 1 || res.Ambiguous[0] != "wta tour chicago" {
 		t.Errorf("Ambiguous = %v", res.Ambiguous)
+	}
+}
+
+// The same name more than once in a season is an event per ordinal: the
+// weekly ITF events of one venue, three in 2016 and two in 2017, are three
+// runs, the first bare and the rest numbered in calendar order.
+func TestSameNameWithinASeasonIsNumbered(t *testing.T) {
+	dated := func(sourceID, name string, season int, month time.Month) Row {
+		r := row("wta", sourceID, name, "itf", season)
+		r.StartDate = time.Date(season, month, 1, 0, 0, 0, 0, time.UTC)
+		return r
+	}
+	res := Resolve([]Row{
+		dated("2016-W-ITF-TUR-09A-2016", "Antalya $10K", 2016, time.March),
+		dated("2016-W-ITF-TUR-02A-2016", "Antalya $10K", 2016, time.January),
+		dated("2016-W-ITF-TUR-05A-2016", "Antalya $10K", 2016, time.February),
+		dated("2017-W-ITF-TUR-01A-2017", "Antalya 10K", 2017, time.January),
+		dated("2017-W-ITF-TUR-03A-2017", "Antalya 10K", 2017, time.February),
+	}, nil)
+	keys := byKey(t, res)
+	first, ok := keys["wta name:itf:antalya-10k"]
+	if !ok || len(first.Editions) != 2 || first.Name != "Antalya 10K" || first.Ordinal != 0 {
+		t.Fatalf("first of the season: %+v", first)
+	}
+	if first.Editions[0].Row.SourceID != "2016-W-ITF-TUR-02A-2016" {
+		t.Errorf("the January event should be the first, got %s", first.Editions[0].Row.SourceID)
+	}
+	second, ok := keys["wta name:itf:antalya-10k:2"]
+	if !ok || len(second.Editions) != 2 || second.Name != "Antalya 10K 2" || second.Ordinal != 2 {
+		t.Fatalf("second of the season: %+v", second)
+	}
+	third, ok := keys["wta name:itf:antalya-10k:3"]
+	if !ok || len(third.Editions) != 1 || third.FirstSeason != 2016 || third.Name != "Antalya $10K 3" {
+		t.Fatalf("third of the season: %+v", third)
+	}
+	if res.Numbered != 3 || res.ByLink[LinkName] != 5 {
+		t.Errorf("Numbered = %d, ByLink = %v", res.Numbered, res.ByLink)
+	}
+}
+
+// Only the first of a name in a season bridges. The source's own "Adelaide 1"
+// and "Adelaide 2" of 1972 normalise alike; the second is an event of its
+// own, named as the source names it, rather than a second row of the numbered
+// Adelaide's 1972.
+func TestOnlyTheFirstOfASeasonBridges(t *testing.T) {
+	jan := row("wta", "1972-1004", "Adelaide 1", "tour", 1972)
+	jan.StartDate = time.Date(1972, time.January, 19, 0, 0, 0, 0, time.UTC)
+	dec := row("wta", "1972-1176", "Adelaide 2", "tour", 1972)
+	dec.StartDate = time.Date(1972, time.December, 11, 0, 0, 0, 0, time.UTC)
+	res := Resolve([]Row{dec, jan, row("wta", "2024-2014", "Adelaide", "tour", 2024)}, nil)
+	keys := byKey(t, res)
+	numbered := keys["wta number:2014"]
+	if len(numbered.Editions) != 2 || links(numbered)[LinkBridged] != 1 {
+		t.Errorf("the numbered Adelaide should hold 1972's first and 2024: %+v", numbered)
+	}
+	if numbered.Editions[0].Row.SourceID != "1972-1004" {
+		t.Errorf("the January event bridges, got %s", numbered.Editions[0].Row.SourceID)
+	}
+	second, ok := keys["wta name:tour:adelaide:2"]
+	if !ok || second.Name != "Adelaide 2" || len(second.Editions) != 1 {
+		t.Errorf("the December event: %+v", second)
 	}
 }
 
