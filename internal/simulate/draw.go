@@ -3,7 +3,6 @@ package simulate
 import (
 	"errors"
 	"fmt"
-	"math/bits"
 	"sort"
 )
 
@@ -16,7 +15,8 @@ type BracketMatch struct {
 	LoserID  int64
 }
 
-// Entrant is one player in a draw.
+// Entrant is one player in a draw. The zero Entrant is a bye: the empty line
+// under a seed who skipped the first round.
 type Entrant struct {
 	PlayerID int64
 	Slug     string
@@ -24,14 +24,19 @@ type Entrant struct {
 	Seed     *int
 }
 
+// Bye reports whether this line of the draw is empty.
+func (e Entrant) Bye() bool { return e.PlayerID == 0 }
+
 // Bracket is a draw as a flat binary tree.
 //
 // Entrants is a power of two in bracket order: 0 plays 1, and the winner meets
 // the winner of 2 against 3. That single slice is the whole tree, and it is
 // what lets a simulation play the draw forward with an index shift instead of
-// pointer chasing.
+// pointer chasing. A bye is a zero Entrant next to the player who had it.
 type Bracket struct {
 	Entrants []Entrant
+	// Byes is how many of the Entrants are empty lines.
+	Byes int
 	// Rounds are the round codes from the first to the final, so a result can
 	// name the round a player reached rather than counting them.
 	Rounds []string
@@ -40,17 +45,20 @@ type Bracket struct {
 	Champion int64
 }
 
-// Size is how many players entered.
+// Size is the tree: the number of lines, byes included.
 func (b Bracket) Size() int { return len(b.Entrants) }
+
+// Entered is how many players were in the draw.
+func (b Bracket) Entered() int { return len(b.Entrants) - b.Byes }
 
 // Errors a draw can fail to reconstruct with. Each is a real shape in the data
 // rather than a defect, so they are reported and skipped rather than fixed.
 var (
-	// ErrNotPowerOfTwo covers byes and round-robin groups, which both leave a
-	// round with the wrong number of matches for a clean tree.
-	ErrNotPowerOfTwo = errors.New("the draw is not a complete power-of-two bracket")
-	// ErrBrokenTree means a player appeared in a round without having won one
-	// in the round below, which is what a bye looks like from inside the tree.
+	// ErrNotPowerOfTwo covers round-robin groups and rounds the source recorded
+	// partially, either of which leaves a round the wrong size for the tree.
+	ErrNotPowerOfTwo = errors.New("the draw is not a power-of-two bracket")
+	// ErrBrokenTree means a player appeared in a round above the first without
+	// having won one in the round below.
 	ErrBrokenTree = errors.New("a round does not link to the one below it")
 	ErrNoMatches  = errors.New("no main-draw matches")
 )
@@ -64,9 +72,12 @@ var (
 // matches feed which second-round slot, and the source does not record draw
 // positions.
 //
-// The verification that this works is that it must: every round has to link to
-// the one below it, and a draw where it does not is rejected rather than
-// patched.
+// A player in the second round with no first-round match had a bye, which no
+// source records as a row; the sheet reads it the same way. Higher up, a
+// missing match is a hole in the data, and the draw is rejected rather than
+// patched. Every match eliminates one player, so a draw that reconstructs has
+// exactly one more entrant than matches -- which is what catches a round that
+// is present but does not feed the one above it.
 func BuildBracket(matches []BracketMatch, players map[int64]Entrant) (Bracket, error) {
 	if len(matches) == 0 {
 		return Bracket{}, ErrNoMatches
@@ -83,24 +94,19 @@ func BuildBracket(matches []BracketMatch, players map[int64]Entrant) (Bracket, e
 	}
 	sort.Ints(order)
 
-	// A complete bracket halves every round and ends with one match.
+	// The tree is as deep as there are rounds. Every round above the first is
+	// full; the first may be short, by the number of byes.
 	total := len(matches)
-	if total < 1 || bits.OnesCount(uint(total+1)) != 1 {
-		return Bracket{}, fmt.Errorf("%w: %d matches", ErrNotPowerOfTwo, total)
-	}
 	rounds := make([]string, 0, len(order))
-	want := (total + 1) / 2
-	for _, idx := range order {
-		if len(byRound[idx]) != want {
+	want := 1 << (len(order) - 1)
+	for i, idx := range order {
+		n := len(byRound[idx])
+		if n > want || (i > 0 && n != want) {
 			return Bracket{}, fmt.Errorf("%w: round %q has %d matches, want %d",
-				ErrNotPowerOfTwo, byRound[idx][0].Round, len(byRound[idx]), want)
+				ErrNotPowerOfTwo, byRound[idx][0].Round, n, want)
 		}
 		rounds = append(rounds, byRound[idx][0].Round)
 		want /= 2
-	}
-	if want != 0 {
-		return Bracket{}, fmt.Errorf("%w: %d rounds do not consume %d matches",
-			ErrNotPowerOfTwo, len(order), total)
 	}
 
 	// wonBy[round][player] is the match that player won in that round.
@@ -113,13 +119,19 @@ func BuildBracket(matches []BracketMatch, players map[int64]Entrant) (Bracket, e
 	}
 
 	final := byRound[order[len(order)-1]][0]
-	entrants := make([]Entrant, 0, total+1)
+	entrants := make([]Entrant, 0, 1<<len(order))
+	byes := 0
 
 	// walk appends the leaves under the match `winner` won in `round`, left to
 	// right, which is the bracket order the flat slice needs.
 	var walk func(depth int, winner int64) error
 	walk = func(depth int, winner int64) error {
 		m, ok := wonBy[order[depth]][winner]
+		if !ok && depth == 0 {
+			entrants = append(entrants, players[winner], Entrant{})
+			byes++
+			return nil
+		}
 		if !ok {
 			return fmt.Errorf("%w: nobody won a %s that %d played above",
 				ErrBrokenTree, rounds[depth], winner)
@@ -137,10 +149,10 @@ func BuildBracket(matches []BracketMatch, players map[int64]Entrant) (Bracket, e
 	if err := walk(len(order)-1, final.WinnerID); err != nil {
 		return Bracket{}, err
 	}
-	if len(entrants) != total+1 {
+	if len(entrants)-byes != total+1 {
 		return Bracket{}, fmt.Errorf("%w: reached %d of %d entrants",
-			ErrBrokenTree, len(entrants), total+1)
+			ErrBrokenTree, len(entrants)-byes, total+1)
 	}
 
-	return Bracket{Entrants: entrants, Rounds: rounds, Champion: final.WinnerID}, nil
+	return Bracket{Entrants: entrants, Byes: byes, Rounds: rounds, Champion: final.WinnerID}, nil
 }
