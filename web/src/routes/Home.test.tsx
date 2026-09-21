@@ -149,6 +149,7 @@ const draw: DrawSimulation = {
     decade: 2010,
   } as DrawSimulation['inputs'],
   entered: 128,
+  byes: 0,
   champion: 'novak-djokovic',
 }
 
