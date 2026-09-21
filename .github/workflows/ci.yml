@@ -10,10 +10,12 @@ on:
   # checking too, and filtering on main silently gave those no checks at all.
   pull_request:
 
-# A newer push makes the previous run's verdict worthless.
+# A newer push to a pull request makes the previous run's verdict worthless.
+# A push to main or a tag is different: its images job publishes the digests
+# a deploy pins, and cancelling it skips that build with nothing going red.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
