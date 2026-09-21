@@ -338,7 +338,10 @@ func ordinalOf(key string) int {
 	if parts[0] != "name" || len(parts) < 4 {
 		return 0
 	}
-	n, _ := strconv.Atoi(parts[3])
+	n, err := strconv.Atoi(parts[3])
+	if err != nil {
+		return 0
+	}
 	return n
 }
 
