@@ -9,6 +9,7 @@ package events
 import (
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -45,9 +46,13 @@ type Row struct {
 type Event struct {
 	Tour string
 	// Key is what the run is keyed on: number:404, name:tour:wimbledon,
-	// team:davis-cup. Unique within a tour.
+	// name:itf:w15-monastir:2, team:davis-cup. Unique within a tour.
 	Key  string
 	Name string
+	// Ordinal is which of its name the run is within a season: 2 for the
+	// second W15 Monastir of each year. Zero for a numbered or team event and
+	// for the first of a name.
+	Ordinal int
 	// Slug is left empty by Resolve; the store mints it, because the slugs
 	// already in the database have to be kept.
 	Slug        string
@@ -74,8 +79,9 @@ var (
 	mCodeID  = regexp.MustCompile(`^\d{4}-(M\d{3})$`)
 	// Sackmann's Challenger suffix and an edition number within a season:
 	// "Oeiras 2 CH" and "Oeiras" are one name.
-	nameSuffix = regexp.MustCompile(`(?i)\s+(CH|Challenger|\d+)$`)
-	chSuffix   = regexp.MustCompile(`(?i)\s+CH$`)
+	nameSuffix    = regexp.MustCompile(`(?i)\s+(CH|Challenger|\d+)$`)
+	chSuffix      = regexp.MustCompile(`(?i)\s+CH$`)
+	editionNumber = regexp.MustCompile(`\s+\d+$`)
 	// A competition is the words up to and including "Cup": "Davis Cup WG R1:
 	// ESP vs CZE" is a Davis Cup tie.
 	competition = regexp.MustCompile(`(?i)^(.*?\bCup)\b`)
@@ -137,11 +143,25 @@ func rawKeyOf(r Row) rawKey {
 // NumberKey is the event key for a tour's number.
 func NumberKey(n string) string { return "number:" + n }
 
-// nameKey is the event key for a run joined by name alone.
-func nameKey(tier, norm string) string { return "name:" + tier + ":" + norm }
+// nameKey is the event key for a run joined by name alone. The same name
+// more than once in a season -- the weekly ITF events, "Adelaide 1" and
+// "Adelaide 2" -- is a run per ordinal, the first bare.
+func nameKey(tier, norm string, ordinal int) string {
+	key := "name:" + tier + ":" + norm
+	if ordinal > 1 {
+		key += ":" + strconv.Itoa(ordinal)
+	}
+	return key
+}
 
 // teamKey is the event key for a team competition.
 func teamKey(comp string) string { return "team:" + comp }
+
+// pending is a row waiting on the name rule.
+type pending struct {
+	row  Row
+	norm string
+}
 
 // Result is what Resolve derived, with the figures the run reports.
 type Result struct {
@@ -151,6 +171,9 @@ type Result struct {
 	// Ambiguous are the name-keyed runs that stayed apart because the name
 	// sits under more than one number in the same tour and tier.
 	Ambiguous []string
+	// Numbered counts the rows that are the second or later of their name in
+	// a season.
+	Numbered int
 	// Unmatched are the overrides that filed no row.
 	Unmatched []Override
 }
@@ -158,7 +181,8 @@ type Result struct {
 // Resolve derives the events from every tournaments row. The rule per row, in
 // order: an override; the tour's number; the name within tour and tier,
 // bridged to a numbered event when exactly one carries that name; and a team
-// tie to its competition.
+// tie to its competition. A name that recurs within a season is numbered in
+// calendar order, and only the first of it bridges.
 func Resolve(rows []Row, overrides *Overrides) Result {
 	if overrides == nil {
 		overrides = &Overrides{}
@@ -166,10 +190,6 @@ func Resolve(rows []Row, overrides *Overrides) Result {
 	index := overrides.index()
 	res := Result{ByLink: map[Link]int{}}
 
-	type pending struct {
-		row  Row
-		norm string
-	}
 	// Numbered events first, so the name-keyed runs can see which numbers
 	// carry which names.
 	assigned := map[int64]Edition{}
@@ -218,9 +238,16 @@ func Resolve(rows []Row, overrides *Overrides) Result {
 		named = append(named, pending{row: r, norm: Normalise(r.Name)})
 	}
 
+	ordinals := ordinalsWithinSeason(named)
 	ambiguous := map[string]struct{}{}
-	for _, p := range named {
+	for i, p := range named {
 		r := p.row
+		if ordinals[i] > 1 {
+			res.Numbered++
+			keyOf[r.ID] = nameKey(r.Tier, p.norm, ordinals[i])
+			assigned[r.ID] = Edition{Row: r, Link: LinkName}
+			continue
+		}
 		candidates := namesUnder[r.Tour][r.Tier][p.norm]
 		if len(candidates) == 1 {
 			for k := range candidates {
@@ -232,7 +259,7 @@ func Resolve(rows []Row, overrides *Overrides) Result {
 		if len(candidates) > 1 {
 			ambiguous[r.Tour+" "+r.Tier+" "+p.norm] = struct{}{}
 		}
-		keyOf[r.ID] = nameKey(r.Tier, p.norm)
+		keyOf[r.ID] = nameKey(r.Tier, p.norm, 1)
 		assigned[r.ID] = Edition{Row: r, Link: LinkName}
 	}
 	for k := range ambiguous {
@@ -266,9 +293,10 @@ func Resolve(rows []Row, overrides *Overrides) Result {
 		})
 		ev.FirstSeason = ev.Editions[0].Row.Season
 		ev.LastSeason = ev.Editions[len(ev.Editions)-1].Row.Season
+		ev.Ordinal = ordinalOf(ev.Key)
 		ev.Name = index.pinnedName(ev.Tour, ev.Key)
 		if ev.Name == "" {
-			ev.Name = displayName(ev.Editions)
+			ev.Name = displayName(ev.Editions, ev.Ordinal)
 		}
 		events = append(events, *ev)
 	}
@@ -285,13 +313,66 @@ func Resolve(rows []Row, overrides *Overrides) Result {
 
 // displayName is the most recent edition's name, with the Challenger suffix
 // Sackmann added and Tennismylife does not, so the switch of source is not a
-// rename. Team ties name the tie; the event is the competition.
-func displayName(editions []Edition) string {
+// rename. Team ties name the tie; the event is the competition. A run keyed
+// by name carries its ordinal the way the sources write one -- "Adelaide 2"
+// -- whether or not the row did.
+func displayName(editions []Edition, ordinal int) string {
 	last := editions[len(editions)-1]
 	if last.Link == LinkTeam {
 		return titleCompetition(last.Row.Name)
 	}
-	return strings.TrimSpace(chSuffix.ReplaceAllString(strings.TrimSpace(last.Row.Name), ""))
+	n := strings.TrimSpace(chSuffix.ReplaceAllString(strings.TrimSpace(last.Row.Name), ""))
+	if last.Link != LinkName {
+		return n
+	}
+	n = strings.TrimSpace(editionNumber.ReplaceAllString(n, ""))
+	if ordinal > 1 {
+		n += " " + strconv.Itoa(ordinal)
+	}
+	return n
+}
+
+// ordinalOf reads the ordinal back off a name key.
+func ordinalOf(key string) int {
+	parts := strings.Split(key, ":")
+	if parts[0] != "name" || len(parts) < 4 {
+		return 0
+	}
+	n, _ := strconv.Atoi(parts[3])
+	return n
+}
+
+// ordinalsWithinSeason numbers the rows that share a name, tour, tier and
+// season, in the order they were played. Calendar order rather than the
+// source's own number, which agrees 94% of the time and otherwise counts
+// backwards.
+func ordinalsWithinSeason(named []pending) []int {
+	type group struct {
+		tour, tier, norm string
+		season           int
+	}
+	byGroup := map[group][]int{}
+	for i, p := range named {
+		g := group{p.row.Tour, p.row.Tier, p.norm, p.row.Season}
+		byGroup[g] = append(byGroup[g], i)
+	}
+	ordinals := make([]int, len(named))
+	for _, idx := range byGroup {
+		sort.Slice(idx, func(a, b int) bool {
+			x, y := named[idx[a]].row, named[idx[b]].row
+			if !x.StartDate.Equal(y.StartDate) {
+				return x.StartDate.Before(y.StartDate)
+			}
+			if x.SourceID != y.SourceID {
+				return x.SourceID < y.SourceID
+			}
+			return x.ID < y.ID
+		})
+		for k, i := range idx {
+			ordinals[i] = k + 1
+		}
+	}
+	return ordinals
 }
 
 // titleCompetition is the competition as the source spells it, before any
