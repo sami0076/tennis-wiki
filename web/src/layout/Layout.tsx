@@ -26,9 +26,10 @@ const links = [
 export function Layout({ children }: LayoutProps) {
   return (
     <div className={styles.shell}>
-      <header>
+      <header className={styles.header}>
         <nav className={styles.nav}>
           <Link to="/" className={styles.brand}>
+            <span className={styles.ball} aria-hidden="true" />
             Deucepoint
           </Link>
           <div className={styles.links}>
@@ -58,6 +59,10 @@ export function Layout({ children }: LayoutProps) {
       <main className={styles.main}>{children}</main>
 
       <footer className={styles.footer}>
+        <p className={styles.footerBrand}>
+          <span className={styles.ball} aria-hidden="true" />
+          Deucepoint
+        </p>
         <p>
           <Link className={styles.footerLink} to="/methodology">
             How these numbers are produced
@@ -85,6 +90,7 @@ function HeaderSearch() {
   return (
     <PlayerSearch
       label="Player"
+      hideLabel
       placeholder="Search 115,000 players"
       value={query}
       onChange={setQuery}

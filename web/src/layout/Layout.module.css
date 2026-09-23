@@ -4,22 +4,54 @@
   padding: 0 var(--s-4);
 }
 
-/* The sheet head. On a phone the search takes the row under the brand and the
-   tabs; with room it sits between them. */
+/* Sticky and frosted, so the brand and the search are never a scroll away. */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin: 0 calc(-1 * var(--s-4));
+  padding: 0 var(--s-4);
+  background: rgb(246 246 242 / 0.86);
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  border-bottom: 1px solid var(--card-line);
+}
+
 .nav {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s-3) var(--s-4);
-  padding: var(--s-4) 0;
-  border-bottom: var(--rule-ink);
+  padding: var(--s-3) 0;
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-size: var(--t-20);
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   border-bottom: 0;
+}
+
+.ball {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #e8ff7a, var(--lime) 55%, var(--lime-deep));
+  animation: dp-pulse 2.6s ease-in-out infinite;
+}
+
+.brand:hover .ball {
+  animation: hop 520ms var(--ease-spring);
+}
+
+@keyframes hop {
+  40% {
+    transform: translateY(-7px);
+  }
 }
 
 .links {
@@ -48,25 +80,49 @@
 }
 
 .link {
+  position: relative;
+  padding: 6px 0;
   border-bottom: 0;
   color: var(--pencil);
   white-space: nowrap;
-  transition: color 120ms ease-out;
+  transition: color 160ms ease-out;
+}
+
+.link::after {
+  content: '';
+  position: absolute;
+  right: 1ch;
+  bottom: 0;
+  left: 1ch;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--player-a);
+  transform: scaleX(0);
+  transition: transform 260ms var(--ease-out);
 }
 
 .link:hover {
   color: var(--ink);
 }
 
-/* The active tab is set in brackets, like a seed. The inactive tabs keep a
-   space where the bracket would be, so nothing moves when the page changes. */
+.link:hover::after {
+  transform: scaleX(1);
+}
+
+/* The active tab is set in brackets. Inactive tabs keep a space where the
+   bracket would be, so nothing moves when the page changes. */
 .bracket::before {
   content: '\00a0';
 }
 
 .active {
   color: var(--ink);
-  font-weight: 600;
+  font-weight: 700;
+}
+
+.active::after {
+  background: var(--lime-deep);
+  transform: scaleX(1);
 }
 
 .active .bracket:first-child::before {
@@ -82,33 +138,52 @@
 }
 
 .main {
-  padding: var(--s-5) 0 var(--s-8);
+  padding: var(--s-4) 0 var(--s-8);
 }
 
 .footer {
-  padding: var(--s-5) 0 var(--s-6);
-  border-top: var(--rule-ink);
+  display: grid;
+  gap: var(--s-2);
+  margin-top: var(--s-6);
+  padding: var(--s-6) 0 var(--s-7);
+  border-top: 1px solid var(--card-line);
   font-size: var(--t-12);
   line-height: 1.55;
   color: var(--pencil);
 }
 
 .footer p {
-  margin-bottom: var(--s-2);
   max-width: 72ch;
+}
+
+.footerBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--s-2);
+  font-size: var(--t-14);
+  font-weight: 700;
+  color: var(--ink);
 }
 
 .footerLink {
   color: var(--ink);
+  border-bottom-color: var(--lime-deep);
 }
 
 @media (min-width: 880px) {
   .shell {
-    padding: 0 var(--s-5);
+    padding: 0 var(--s-6);
+  }
+
+  .header {
+    margin: 0 calc(-1 * var(--s-6));
+    padding: 0 var(--s-6);
   }
 
   .nav {
     gap: var(--s-6);
+    padding: var(--s-4) 0;
   }
 
   .brand {
@@ -117,8 +192,9 @@
 
   .links {
     order: 2;
-    flex: 0 1 auto;
-    gap: var(--s-4);
+    flex: 1 1 auto;
+    justify-content: center;
+    gap: var(--s-5);
     font-size: var(--t-13);
     overflow: visible;
   }
@@ -137,7 +213,6 @@
 
   .search {
     order: 3;
-    flex: 0 1 320px;
-    margin-left: auto;
+    flex: 0 1 260px;
   }
 }
