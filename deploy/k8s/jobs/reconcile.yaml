@@ -81,6 +81,14 @@ spec:
                 secretKeyRef:
                   name: postgres
                   key: DATABASE_URL
+            # So the finished ratings clear the read cache too. The ingest's
+            # flush runs before these are written, so without this a rerun
+            # leaves every /rankings answer stale until the 24-hour TTL.
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: api
+                  key: REDIS_URL
           resources:
             requests:
               cpu: 500m

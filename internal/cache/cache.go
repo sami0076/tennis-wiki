@@ -1,10 +1,10 @@
 // Package cache is the read-path cache that sits in front of Postgres.
 //
-// This data barely changes: it moves when an ingest runs, which is deliberate
-// and infrequent. That is what makes it worth caching at all, and it is why
-// nothing here expires on a schedule -- the ingest clears the cache when it has
-// finished changing things, and the TTL below is a backstop rather than a
-// freshness policy.
+// This data barely changes: it moves when an ingest or a rating run finishes,
+// which is deliberate and infrequent. That is what makes it worth caching at
+// all, and it is why nothing here expires on a schedule -- those jobs clear the
+// cache when they have finished changing things (FlushFromEnv), and the TTL
+// below is a backstop rather than a freshness policy.
 //
 // Every operation tolerates Redis being absent, unreachable or slow. A cache
 // that is down costs time and nothing else: the answer to every question
@@ -223,4 +223,42 @@ func (c *Cache) TTLFor() time.Duration {
 		return 0
 	}
 	return c.ttl
+}
+
+// FlushFromEnv opens the cache from the environment, clears it and closes it.
+//
+// It is what a batch command calls when it has finished changing the data, and
+// it is the whole invalidation strategy: nothing expires on a schedule, so the
+// cached answers stop being right at exactly the moment one of these finishes.
+//
+// Never fatal. A cache that cannot be cleared serves stale answers until its
+// TTL expires, which is worth a loud warning and not worth failing a job that
+// has already written everything correctly.
+func FlushFromEnv(ctx context.Context, log *slog.Logger) {
+	if log == nil {
+		log = slog.Default()
+	}
+	c, err := FromEnv(log)
+	if err != nil {
+		log.Warn("read cache not cleared: bad configuration", "error", err)
+		return
+	}
+	defer func() {
+		if cerr := c.Close(); cerr != nil {
+			log.Warn("closing the read cache failed", "error", cerr)
+		}
+	}()
+
+	if !c.Enabled() {
+		return
+	}
+	started := time.Now()
+	removed, err := c.Flush(ctx)
+	if err != nil {
+		log.Warn("read cache not cleared; it will serve stale answers until its TTL",
+			"error", err, "ttl", c.TTLFor())
+		return
+	}
+	log.Info("cleared the read cache", "keys", removed,
+		"took", time.Since(started).Round(time.Millisecond))
 }

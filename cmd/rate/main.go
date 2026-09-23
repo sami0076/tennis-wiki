@@ -15,6 +15,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/sami0076/tennis-wiki/internal/cache"
 	"github.com/sami0076/tennis-wiki/internal/db"
 	"github.com/sami0076/tennis-wiki/internal/rating"
 )
@@ -63,6 +64,11 @@ func run(ctx context.Context, dsn string, cfg rating.Config) error {
 	if err != nil {
 		return err
 	}
+
+	// The ratings every /rankings answer is built from have just changed, and
+	// nothing else clears the cache -- a rerun on a live site left them stale
+	// until the TTL.
+	cache.FlushFromEnv(ctx, slog.Default())
 
 	slog.InfoContext(ctx, "rate finished",
 		"matches", rep.Matches,
