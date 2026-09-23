@@ -56,7 +56,7 @@ spec:
               type: RuntimeDefault
           initContainers:
             - name: ingest
-              image: ghcr.io/sami0076/tennis-wiki/tools@sha256:370ca334e30fd8b34677694bf0f42a69143a97e60deb92640d1d4996a5594116
+              image: ghcr.io/sami0076/tennis-wiki/tools@sha256:49349d72dfc72442f4efb473b3e670f5a043be146b566f962acb60d0d29dfeda
               command: ["ingest", "--workers", "2", "--batch", "500"]
               env:
                 - name: DATABASE_URL
@@ -86,7 +86,7 @@ spec:
                   drop: ["ALL"]
           containers:
             - name: rate
-              image: ghcr.io/sami0076/tennis-wiki/tools@sha256:370ca334e30fd8b34677694bf0f42a69143a97e60deb92640d1d4996a5594116
+              image: ghcr.io/sami0076/tennis-wiki/tools@sha256:49349d72dfc72442f4efb473b3e670f5a043be146b566f962acb60d0d29dfeda
               command: ["rate"]
               env:
                 - name: DATABASE_URL
