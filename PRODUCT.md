@@ -60,8 +60,10 @@ Seed fixture of ~4,100 real matches covers every data regime. Served as a static
 
 - Read-only API. No accounts, comments, or social features. No live scores. No betting
   odds, tipping, or predictions framed as picks; the simulator reports probabilities.
-- Data through 2026-01-17 (ATP) and 2024-12-31 (WTA); the gap is disclosed, not filled.
-  `/api/v1/coverage` reports the real dates from the database.
+- Full-schema data reaches the current season on both tours since the live source was
+  added (ADR-0002, amended), and a weekly CronJob keeps it there. What remains thin is
+  the share of rows carrying serve statistics, which is disclosed, not filled.
+  `/api/v1/coverage` reports the real dates from the database; nothing hardcodes them.
 - A ranking is always as of the last week that exists, never today, and says which week.
 - Product rules the redesign keeps (confirmed 2026-09-11): hue means surface and is
   never decorative; the two sides of any comparison are orange (A) and turquoise (B), never named by
