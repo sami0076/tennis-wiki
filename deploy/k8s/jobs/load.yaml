@@ -1,6 +1,7 @@
-# The first load of an empty cluster, and the way to refresh it afterwards.
-# Applied by hand, never on a schedule: ADR-0006's whole point is that the
-# sources have stopped moving, so there is nothing for a CronJob to catch.
+# The first load of an empty cluster, and the way to reload it by hand.
+# base/60-load-weekly.yaml is this same work on a schedule, which is what
+# catches the season as it is played; this is what to run when a reload should
+# happen now, or when there is no cluster state to schedule against yet.
 #
 #   kubectl -n deucepoint delete job load --ignore-not-found
 #   kubectl -n deucepoint apply -f deploy/k8s/jobs/load.yaml

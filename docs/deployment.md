@@ -48,7 +48,8 @@ CI builds and pushes an image for every push to `main` that touches Go, the migr
 the Dockerfiles. Nothing deploys it. Deploying is:
 
 1. Take the digest from the CI log or the registry (`deploy/k8s/README.md` says how).
-2. Put it in `base/40-api.yaml`, and in both Jobs if `tools` moved. Commit.
+2. Put it in `base/40-api.yaml`, and in the Jobs and `base/60-load-weekly.yaml` if
+   `tools` moved. Commit.
 3. Copy and apply:
 
 ```sh
@@ -119,8 +120,23 @@ round trip, and a killed run picks up where it stopped. Ratings are recomputed f
 scratch every time and never patched, so there is nothing to carry over.
 
 **A partial refresh** — the current season from the live source — is the same Job. The
-sources that changed are re-read; the 340 that did not are skipped. Run it whenever the
-site should catch up; nothing schedules it yet.
+sources that changed are re-read; the 340 that did not are skipped.
+
+This is what runs on a schedule. `base/60-load-weekly.yaml` is a CronJob of the same two
+containers at 06:00 UTC on Mondays, after the tour week it catches up on has finished,
+with `concurrencyPolicy: Forbid` so two can never overlap. Nothing is incremental, so a
+missed week costs nothing and the next run catches both. To see it, or to make it run
+now:
+
+```sh
+kubectl -n deucepoint get cronjob load-weekly
+kubectl -n deucepoint create job --from=cronjob/load-weekly catchup-now
+kubectl -n deucepoint logs -f job/catchup-now -c ingest
+```
+
+Failed runs are kept — three of them — and successful ones are not, so `get jobs` after a
+quiet week should be empty. Nothing alerts on a failure: the uptime check watches the
+site, and data a week behind is not an outage.
 
 **After a change to identity scoring or to `configs/player_overrides.json`** — the
 reconcile stage on its own, then the ratings, which a merge invalidates:

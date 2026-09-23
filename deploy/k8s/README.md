@@ -14,7 +14,9 @@ secrets.example.yaml   copied to secrets.yaml and filled in; never committed
 ```
 
 `base/` is its own directory so `kubectl apply -f` over it cannot pick up the
-placeholder Secret or start an hour-long ingest by accident.
+placeholder Secret or start an hour-long ingest by accident. The one scheduled
+thing, `base/60-load-weekly.yaml`, is in there because a CronJob is state the
+cluster should hold, not a run to start.
 
 ## Before anything
 
@@ -70,8 +72,9 @@ docker buildx imagetools inspect ghcr.io/sami0076/tennis-wiki/api:<short-sha> \
   --format '{{.Manifest.Digest}}'
 ```
 
-Then edit `base/40-api.yaml`, and the Jobs if the tools image moved. Rolling
-back is putting the previous digest back and applying again.
+Then edit `base/40-api.yaml`, and the Jobs plus `base/60-load-weekly.yaml` if
+the tools image moved. Rolling back is putting the previous digest back and
+applying again.
 
 ## Re-running things
 
@@ -83,10 +86,13 @@ kubectl -n deucepoint delete job migrate --ignore-not-found
 kubectl -n deucepoint apply -f deploy/k8s/jobs/migrate.yaml
 ```
 
-All four Jobs clean themselves up 24 hours after finishing. `jobs/reconcile.yaml` is
+All five Jobs clean themselves up 24 hours after finishing. `jobs/reconcile.yaml` is
 identity reconciliation and the ratings without the load in front of them, for after a
 scoring change; its header says how to dry-run it first. `jobs/events.yaml` is the
 events stage on its own, for after a change to `configs/event_overrides.json`.
+
+The weekly CronJob needs none of this -- it mints a new Job each Monday. To run it
+off-schedule: `kubectl -n deucepoint create job --from=cronjob/load-weekly catchup-now`.
 
 ## What the probes mean
 
