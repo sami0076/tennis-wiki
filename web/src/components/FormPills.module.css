@@ -1,0 +1,43 @@
+.row {
+  display: flex;
+  gap: 3px;
+}
+
+.lg {
+  gap: 5px;
+}
+
+.pill {
+  width: 8px;
+  height: 20px;
+  border-radius: 3px;
+  background: var(--highlight);
+}
+
+.lg .pill {
+  flex: 1 1 0;
+  width: auto;
+  max-width: 36px;
+  height: 28px;
+  border-radius: 4px;
+}
+
+.a .won {
+  background: var(--player-a);
+}
+
+.b .won {
+  background: var(--player-b);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pill {
+    opacity: 0;
+  }
+
+  .seen .pill {
+    opacity: 1;
+    animation: dp-pop 420ms var(--ease-spring) both;
+    animation-delay: calc(var(--i) * 55ms + 150ms);
+  }
+}

@@ -1,0 +1,68 @@
+.card {
+  position: relative;
+  min-width: 0;
+  padding: var(--s-5);
+  background: var(--card);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition:
+    box-shadow 240ms var(--ease-out),
+    transform 240ms var(--ease-out);
+}
+
+.a {
+  background: var(--player-a-wash);
+  border-color: var(--player-a-line);
+}
+
+.b {
+  background: var(--player-b-wash);
+  border-color: var(--player-b-line);
+}
+
+.lime {
+  background: var(--lime-wash);
+  border-color: var(--lime-deep);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-bottom: var(--s-4);
+}
+
+.title {
+  font-size: var(--t-16);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.aside {
+  font-size: var(--t-11);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pencil);
+  white-space: nowrap;
+}
+
+.kicker {
+  font-size: var(--t-11);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pencil);
+}
+
+@media (min-width: 880px) {
+  .card {
+    padding: var(--s-5) var(--s-6);
+  }
+
+  .title {
+    font-size: var(--t-20);
+  }
+}
