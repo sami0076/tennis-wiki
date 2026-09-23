@@ -1,39 +1,60 @@
-/* The draw sheet: bond paper, one ink, one pencil, and colour only where a
-   value is surface-scoped. Nothing here is decorative. */
+/* Court colour: the cream ground stays, white cards sit on it, and colour does
+   the talking. Violet and magenta are the two sides of any comparison, lime is
+   the ball, and each surface has an ink and a wash. */
 :root {
   /* ground */
   --bond: #f6f6f2;
   --highlight: #ecece6;
+  --card: #ffffff;
+  --card-line: #e8e7e0;
 
-  /* ink and pencil. Pencil is the second player in every comparison and the
-     voice of every caption; pencil-mid is the third line of a chart;
-     pencil-light is the ruling. */
+  /* ink and pencil */
   --ink: #17181a;
   --pencil: #66655f;
   --pencil-mid: #8a8881;
   --pencil-light: #cfcdc5;
 
-  /* surface semantics. Dark enough to be text on bond at 4.5:1. */
+  /* the ball */
+  --lime: #d4f53c;
+  --lime-deep: #b9dc1c;
+  --lime-wash: #f3fbd0;
+
+  /* surfaces: ink for text and bars, wash for badges */
   --clay: #a84f1f;
+  --clay-wash: #f8e7dd;
   --hard: #2e6fa8;
-  --grass: #4a7a3f;
-  --indoor: #6b5b95;
-  --carpet: #6b5b95;
+  --hard-wash: #e2ecf7;
+  --grass: #3f6b35;
+  --grass-wash: #e2eddc;
+  --indoor: #4f6f7a;
+  --carpet: #4f6f7a;
+  --carpet-wash: #e3ecee;
 
-  /* outcomes: W/L marks and rank deltas only */
-  --win: #4a7a3f;
-  --loss: #b0483a;
+  /* outcomes */
+  --win: #3f6b35;
+  --loss: #c23a2b;
 
-  /* the two sides of any comparison: orange and turquoise, both past 4.5:1
-     on bond. Orange sits near clay, so the clay square always has its word. */
-  --player-a: #c2410c;
-  --player-b: #0b7a80;
+  /* the two sides of any comparison */
+  --player-a: #5b3ae6;
+  --player-a-wash: #ece8f8;
+  --player-a-line: #c9bff3;
+  --player-b: #d0186b;
+  --player-b-wash: #f5e6ec;
+  --player-b-line: #efbcd1;
 
-  /* rules. Row rules are pencil; section and total rules are ink. */
   --rule: 1px solid var(--pencil-light);
   --rule-ink: 1px solid var(--ink);
+  --rule-card: 1px solid var(--card-line);
 
-  /* type. One family for everything typed on the sheet. */
+  --radius: 8px;
+  --radius-sm: 4px;
+  --shadow: 0 1px 2px rgb(23 24 26 / 0.04);
+  --shadow-lift: 0 10px 30px -12px rgb(23 24 26 / 0.18);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* type */
   --font: 'Martian Mono Variable', 'Martian Mono', ui-monospace, 'SF Mono', Menlo, Consolas,
     monospace;
   --t-11: 11px;
@@ -44,6 +65,8 @@
   --t-20: 20px;
   --t-28: 28px;
   --t-32: 32px;
+  --t-display: clamp(40px, 7vw, 76px);
+  --t-figure: clamp(40px, 6vw, 64px);
 
   /* spacing */
   --s-1: 4px;
@@ -55,6 +78,5 @@
   --s-7: 48px;
   --s-8: 64px;
 
-  /* The one breakpoint. Below it the sheet is one column. */
   --wide: 880px;
 }

@@ -1,5 +1,4 @@
-/* The sheet is typed on bond. Structure is ruled lines; there are no cards,
-   no shadows, no radii. */
+/* Cream ground, white cards, colour where it carries a side or a surface. */
 *,
 *::before,
 *::after {
@@ -25,8 +24,8 @@ body {
 }
 
 ::selection {
-  background: var(--ink);
-  color: var(--bond);
+  background: var(--lime);
+  color: var(--ink);
 }
 
 h1,
@@ -51,7 +50,6 @@ ol {
   list-style: none;
 }
 
-/* A link is underlined by a rule, the way a typed sheet underlines. */
 a {
   color: inherit;
   text-decoration: none;
@@ -63,10 +61,10 @@ a:hover {
   border-bottom-color: var(--ink);
 }
 
-/* Focus is drawn, on bond, as a box the same weight as every other rule. */
 :focus-visible {
-  outline: 2px solid var(--ink);
+  outline: 2px solid var(--player-a);
   outline-offset: 2px;
+  border-radius: 2px;
 }
 
 button {
@@ -95,8 +93,55 @@ table,
   font-variant-numeric: tabular-nums;
 }
 
-/* The sheet's one motion is the rules drawing in. Anyone who asked for less
-   gets the finished sheet. */
+@keyframes dp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes dp-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes dp-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes dp-grow-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes dp-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+@keyframes dp-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes dp-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(212 245 60 / 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgb(212 245 60 / 0);
+  }
+}
+
+/* Anyone who asked for less motion gets the finished page. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
