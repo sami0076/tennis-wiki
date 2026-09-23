@@ -9,12 +9,6 @@
 # Expect roughly 40 minutes for the match stage and 23 for the reference stage
 # on the full dataset, then 1m 36s for the ratings -- the figures in
 # docs/performance.md. Run it after jobs/migrate.yaml, not before.
-#
-# KNOWN GAP, worth reading before a refresh on a live site: cmd/ingest flushes
-# the read cache when it finishes, and cmd/rate does not. So a rerun leaves
-# the ratings changed and the cached /rankings answers up to 24 hours stale
-# (the TTL is the only thing that clears them). On an empty cluster there is
-# nothing cached and it does not arise.
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -98,6 +92,14 @@ spec:
                 secretKeyRef:
                   name: postgres
                   key: DATABASE_URL
+            # So the finished ratings clear the read cache too. The ingest's
+            # flush runs before these are written, so without this a rerun
+            # leaves every /rankings answer stale until the 24-hour TTL.
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: api
+                  key: REDIS_URL
           resources:
             requests:
               cpu: 500m
