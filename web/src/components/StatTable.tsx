@@ -205,7 +205,7 @@ function cellClass<Row>(column: Column<Row>, base: string | undefined) {
     base,
     column.align === 'right' ? styles.right : null,
     column.wide ? styles.wide : null,
-    column.wrap ? styles.wrap : null,
+    column.wrap ? styles.wraps : null,
   ]
     .filter((name) => name !== null && name !== undefined)
     .join(' ')

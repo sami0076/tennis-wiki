@@ -7,7 +7,7 @@
   align-items: center;
   gap: 4px var(--s-3);
   padding: 7px 0;
-  border-bottom: var(--rule);
+  border-bottom: 1px solid var(--card-line);
   font-size: var(--t-13);
 }
 
@@ -31,7 +31,7 @@
 }
 
 .row:last-of-type {
-  border-bottom: var(--rule-ink);
+  border-bottom: 0;
 }
 
 .name {
@@ -47,9 +47,17 @@
 
 .fill {
   position: absolute;
-  top: 2px;
-  height: 6px;
+  top: 1px;
+  height: 8px;
   left: 0;
+  border-radius: 4px;
+  transform-origin: left;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fill {
+    animation: dp-grow-x 900ms var(--ease-out) both 150ms;
+  }
 }
 
 /* The interval, drawn where it belongs: around the end of the bar. A sampled

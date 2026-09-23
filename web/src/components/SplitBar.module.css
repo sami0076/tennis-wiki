@@ -1,10 +1,10 @@
 .split {
   padding: var(--s-3) 0;
-  border-bottom: var(--rule);
+  border-bottom: 1px solid var(--card-line);
 }
 
 .split:last-of-type {
-  border-bottom: var(--rule-ink);
+  border-bottom: 0;
 }
 
 .numbers {
@@ -12,7 +12,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--s-3);
-  font-size: var(--t-13);
+  font-size: var(--t-16);
 }
 
 .label {
@@ -33,7 +33,7 @@
 
 .track {
   display: flex;
-  height: 6px;
+  height: 12px;
   margin-top: var(--s-2);
 }
 
@@ -43,31 +43,39 @@
   display: flex;
   flex: 1 1 50%;
   min-width: 0;
+  border-radius: 6px;
+  background: var(--highlight);
 }
 
 .halfLeft {
   justify-content: flex-end;
 }
 
-/* Each fill is its whole half, scaled from the centre by the value: a
-   transform, so a moving tally never lays the row out again. */
 .fillLeft,
 .fillRight {
   width: 100%;
-  transition: transform 500ms cubic-bezier(0.25, 0.7, 0.25, 1);
+  transition: transform 500ms var(--ease-out);
 }
 
 .fillLeft {
   background: var(--player-a);
+  border-radius: 6px 2px 2px 6px;
   transform-origin: right;
 }
 
 .fillRight {
   background: var(--player-b);
+  border-radius: 2px 6px 6px 2px;
   transform-origin: left;
 }
 
 .gap {
-  flex: 0 0 2px;
-  background: var(--bond);
+  flex: 0 0 4px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fillLeft,
+  .fillRight {
+    animation: dp-grow-x 1s var(--ease-out) both 200ms;
+  }
 }
