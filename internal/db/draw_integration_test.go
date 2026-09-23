@@ -113,3 +113,62 @@ func TestDrawMatchesExcludeQualifyingAndTeamEvents(t *testing.T) {
 		t.Errorf("got %d matches, want only the main draw", len(rows))
 	}
 }
+
+// A bronze match is a ninth row on an eight-player draw: the two semi-final
+// losers playing off for third. It belongs to no round of the tree, and
+// counting it made the reconstruction read the draw as a round deeper than it
+// was.
+func TestDrawMatchesExcludeTheBronzeMatch(t *testing.T) {
+	h := newHarness(t)
+	event := h.tournament("itg-draw-bronze", TierTour, 2019)
+
+	ids := map[string]int64{}
+	for _, slug := range []string{"a", "b", "c", "d", "e", "f", "g", "h"} {
+		ids[slug] = h.player("itg-bronze-"+slug, "Itg Bronze"+slug, TourAtp)
+	}
+
+	type played struct {
+		winner, loser string
+		round         string
+	}
+	for i, m := range []played{
+		{"a", "b", "QF"}, {"c", "d", "QF"}, {"e", "f", "QF"}, {"g", "h", "QF"},
+		{"a", "c", "SF"}, {"e", "g", "SF"},
+		{"c", "g", "BR"},
+		{"a", "e", "F"},
+	} {
+		h.match(event, ids[m.winner], ids[m.loser], i+1, m.round, nil, false)
+	}
+
+	rows, err := h.ListDrawMatches(h.ctx, event)
+	if err != nil {
+		t.Fatalf("ListDrawMatches: %v", err)
+	}
+	if len(rows) != 7 {
+		t.Fatalf("got %d matches, want the seven of the tree", len(rows))
+	}
+
+	matches := make([]simulate.BracketMatch, 0, len(rows))
+	entrants := map[int64]simulate.Entrant{}
+	for _, r := range rows {
+		matches = append(matches, simulate.BracketMatch{
+			Round:    r.Round,
+			RoundIdx: rating.RoundRank(r.Round),
+			WinnerID: r.WinnerID,
+			LoserID:  r.LoserID,
+		})
+		entrants[r.WinnerID] = simulate.Entrant{PlayerID: r.WinnerID, Slug: r.WinnerSlug, Name: r.WinnerName}
+		entrants[r.LoserID] = simulate.Entrant{PlayerID: r.LoserID, Slug: r.LoserSlug, Name: r.LoserName}
+	}
+
+	bracket, err := simulate.BuildBracket(matches, entrants)
+	if err != nil {
+		t.Fatalf("BuildBracket: %v", err)
+	}
+	if bracket.Size() != 8 || bracket.Byes != 0 {
+		t.Errorf("bracket = %d lines, %d byes, want 8 and 0", bracket.Size(), bracket.Byes)
+	}
+	if bracket.Champion != ids["a"] {
+		t.Errorf("champion = %d, want a", bracket.Champion)
+	}
+}

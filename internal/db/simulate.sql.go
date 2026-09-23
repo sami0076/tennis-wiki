@@ -120,6 +120,7 @@ SELECT m.round,
  WHERE m.tournament_id = $1
    AND NOT m.is_qualifying
    AND NOT m.is_team_event
+   AND m.round <> 'BR'
  ORDER BY m.match_num
 `
 
@@ -141,6 +142,10 @@ type ListDrawMatchesRow struct {
 // Qualifying is a separate draw and team events are not a draw at all -- 341 ATP
 // "tour" events with a stated draw size of 4 are Davis Cup ties, and every one
 // of their matches carries the team flag.
+//
+// A bronze match is played off the semi-final losers, so it hangs beside the
+// tree rather than in it: 306 events carry one, and counting it made every one
+// of them a round too deep.
 func (q *Queries) ListDrawMatches(ctx context.Context, tournamentID int64) ([]ListDrawMatchesRow, error) {
 	rows, err := q.db.Query(ctx, listDrawMatches, tournamentID)
 	if err != nil {
@@ -177,7 +182,7 @@ SELECT t.id, t.name, t.season, t.tour::text AS tour, t.tier::text AS tier,
        t.start_date, count(*)::bigint AS matches
   FROM tournaments t
   JOIN matches m ON m.tournament_id = t.id
- WHERE NOT m.is_qualifying AND NOT m.is_team_event
+ WHERE NOT m.is_qualifying AND NOT m.is_team_event AND m.round <> 'BR'
    AND ($1::tour IS NULL OR t.tour = $1::tour)
    AND ($2::smallint IS NULL OR t.season = $2::smallint)
  GROUP BY t.id
