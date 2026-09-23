@@ -1,0 +1,119 @@
+# The weekly catch-up: the same ingest and ratings as jobs/load.yaml, on a
+# schedule, because layer D is the maintainer's live website and it keeps
+# moving (ADR-0002, amended). The Sackmann mirrors it sits on top of do not,
+# which is why this is a refresh and not a rebuild: every file's ETag is in
+# ingest_files, so an unchanged source costs one round trip and the run is
+# minutes rather than the hour a first load takes.
+#
+# Mondays, after the tour week it is catching up on has finished. A run that
+# fails is left in the namespace to be read; the next Monday tries again, and
+# nothing here is incremental, so missing a week costs nothing.
+#
+#   kubectl -n deucepoint get cronjob load-weekly
+#   kubectl -n deucepoint create job --from=cronjob/load-weekly catchup-now
+#
+# jobs/load.yaml stays the way to reload by hand, and is still what an empty
+# cluster needs first.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: load-weekly
+  namespace: deucepoint
+  labels:
+    app.kubernetes.io/name: load-weekly
+    app.kubernetes.io/part-of: deucepoint
+spec:
+  schedule: "0 6 * * 1"
+  # The node runs UTC, but the schedule should not depend on that staying true.
+  timeZone: Etc/UTC
+  # One load at a time, always. Two ingests against one database is not a
+  # scenario worth reasoning about, and a run that overran a week is stuck.
+  concurrencyPolicy: Forbid
+  # If the node was down at 06:00, still start within the hour; later than that
+  # and the next Monday is soon enough.
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 1
+  # Failures are kept to be read. There is no alerting on this: the uptime
+  # check watches the site, and stale data is not an outage.
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 14400
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: load-weekly
+            app.kubernetes.io/part-of: deucepoint
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+            - name: ingest
+              image: ghcr.io/sami0076/tennis-wiki/tools@sha256:370ca334e30fd8b34677694bf0f42a69143a97e60deb92640d1d4996a5594116
+              command: ["ingest", "--workers", "2", "--batch", "500"]
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres
+                      key: DATABASE_URL
+                - name: REDIS_URL
+                  valueFrom:
+                    configMapKeyRef:
+                      name: api
+                      key: REDIS_URL
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 512Mi
+                limits:
+                  cpu: "2"
+                  memory: 1Gi
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+          containers:
+            - name: rate
+              image: ghcr.io/sami0076/tennis-wiki/tools@sha256:370ca334e30fd8b34677694bf0f42a69143a97e60deb92640d1d4996a5594116
+              command: ["rate"]
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres
+                      key: DATABASE_URL
+                - name: REDIS_URL
+                  valueFrom:
+                    configMapKeyRef:
+                      name: api
+                      key: REDIS_URL
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 512Mi
+                limits:
+                  cpu: "2"
+                  memory: 1Gi
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+          volumes:
+            - name: tmp
+              emptyDir: {}
