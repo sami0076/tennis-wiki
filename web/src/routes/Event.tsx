@@ -99,13 +99,12 @@ export function Event() {
 
       <Card className={styles.block} title={team ? 'Every season' : 'Every edition'}>
         <StatTable
-          caption={team ? 'Every season, as the ties the file carries.' : 'Every edition, most recent first; a season opens its sheet.'}
+          caption={provenance(data)}
           columns={team ? teamColumns(data) : editionColumns(data)}
           rows={data.editions}
           rowKey={(row) => `${row.season}-${row.start_date}`}
           defaultSort={{ key: 'season', direction: 'desc' }}
         />
-        <p className={styles.caption}>{provenance(data)}</p>
       </Card>
     </>
   )

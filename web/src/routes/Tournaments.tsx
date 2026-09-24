@@ -170,10 +170,6 @@ function Index({ page, query, cursors, setCursors }: IndexProps) {
           </Fragment>
         ))}
       </ol>
-      <p className={styles.caption}>
-        Grouped by the level of the latest edition. A name is an event across seasons: keyed by
-        the tour&apos;s number where the tour keeps one, and by name where it does not.
-      </p>
       <div className={styles.more}>
         {page.data.next_cursor ? (
           <Button onClick={() => setCursors((current) => [...current, page.data.next_cursor as string])}>

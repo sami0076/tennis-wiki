@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import type { SeasonRow, SeasonTour } from '../api/client'
 import { getSeasons } from '../api/endpoints'
 import { useResource } from '../api/useResource'
-import { PageHeader, Skeleton } from '../components'
+import { Note, PageHeader, Skeleton } from '../components'
 import { surname } from '../lib/format'
 import { SURFACES, surfaceLabel, surfaceVar, surfaceWash } from '../lib/surface'
 import styles from './Seasons.module.css'
@@ -50,12 +50,11 @@ export function Seasons() {
               <Year key={row.season} row={row} through={seasons.data.current_through} />
             ))}
           </ol>
-          <p className={styles.caption}>
+          <Note>
             Events on each surface, then the Slam champions of the year in calendar order. A
             row marked in progress is complete to the tour&apos;s last match, not to the end
-            of the year. The squares are the site&apos;s surface squares; a surface the file did
-            not record is counted in pencil.
-          </p>
+            of the year. A surface the file did not record is counted in pencil.
+          </Note>
         </>
       )}
     </>

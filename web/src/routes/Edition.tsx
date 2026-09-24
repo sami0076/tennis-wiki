@@ -11,6 +11,7 @@ import {
   EmptyState,
   MatchList,
   Meta,
+  Note,
   RoundList,
   PageHeader,
   RoundStepper,
@@ -161,7 +162,7 @@ function Sheet({ edition, event }: { edition: EditionData; event: Resource<Event
         </section>
       ) : null}
 
-      <p className={styles.caption}>{caption(edition, event)}</p>
+      <Note>{caption(edition, event)}</Note>
     </>
   )
 }
