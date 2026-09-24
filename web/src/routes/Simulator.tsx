@@ -16,6 +16,7 @@ import {
   EmptyState,
   PageHeader,
   Meta,
+  Note,
   OddsBar,
   Playback,
   PlayerSearch,
@@ -244,9 +245,9 @@ function MatchPanel({
             nameA={surname(playerA.name)}
             nameB={surname(playerB.name)}
             animate={revealing}
+            note={<Inputs sim={sim} />}
           />
           <Amplification chain={sim.chain} />
-          <Inputs sim={sim} />
         </Card>
       </div>
       <section className={styles.playback}>
@@ -447,7 +448,7 @@ function DrawPanel({ draw, chosen }: { draw: Resource<DrawSimulation>; chosen: {
       {rest > 0 ? (
         <OddsBar name="The field" probability={rest} max={max} surface={null} />
       ) : null}
-      <p className={styles.caption}>
+      <Note>
         This draw was played. The ratings are as of {sim.event.ratings_as_of}, the week it
         began, so the simulation knows only what was known then
         {sim.champion === null ? '.' : (
@@ -457,7 +458,7 @@ function DrawPanel({ draw, chosen }: { draw: Resource<DrawSimulation>; chosen: {
           </>
         )}{' '}
         Every figure is one sample of ten thousand, so each carries the interval it earned.
-      </p>
+      </Note>
     </section>
   )
 }
