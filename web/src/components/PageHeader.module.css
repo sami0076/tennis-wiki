@@ -1,11 +1,13 @@
 .header {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s-5);
   padding: var(--s-5) 0 var(--s-6);
 }
 
 .text {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s-4);
   align-content: start;
   min-width: 0;
@@ -63,6 +65,10 @@
 
 .art {
   min-width: 0;
+  max-width: 460px;
+  width: 100%;
+  justify-self: center;
+  overflow: hidden;
 }
 
 @media (prefers-reduced-motion: no-preference) {
