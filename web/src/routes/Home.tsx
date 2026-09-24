@@ -16,6 +16,7 @@ import {
   CountUp,
   CourtArt,
   Note,
+  Odometer,
   PageHeader,
   PlayerSearch,
   RankDelta,
@@ -25,10 +26,13 @@ import {
   Skeleton,
   StatTable,
   SurfaceDot,
+  Ticker,
   TourFilter,
   type Column,
+  type TickerItem,
 } from '../components'
 import type {
+  RecentFinals as RecentFinalsData,
   CoverageEntry,
   CoverageResponse,
   DrawOdds,
@@ -96,12 +100,15 @@ export function Home() {
       <PageHeader
         kicker={<Kicker coverage={coverage} />}
         title="Every match, and every gap between them."
+        mark="gap"
         lede="1.6 million matches across both tours, back to 1922, rated on one Elo scale. Where a statistic was never recorded, this site explains which kind of never."
         art={<CourtArt cycle />}
       >
         <HeroSearch />
         <TryChips top={top} />
       </PageHeader>
+
+      <Ticker label="Elo leaders and last week's finals" items={tickerItems(top, recent)} />
 
       <div className={styles.trio}>
         <section className={styles.column}>
@@ -119,6 +126,7 @@ export function Home() {
       </div>
 
       <Card
+        tint="ink"
         className={styles.block}
         title={
           <>Elo leaders{leaders.state === 'ready' ? `, as of ${leaders.data.as_of}` : null}</>
@@ -169,6 +177,25 @@ export function Home() {
       </Card>
     </>
   )
+}
+
+function tickerItems(top: ReadonlyArray<RankingRow>, recent: Resource<RecentFinalsData>): TickerItem[] {
+  const leaders: TickerItem[] = top.map((row, index) => ({
+    key: `elo-${row.slug}`,
+    label: `#${row.position} ${surname(row.name)}`,
+    value: row.elo === null ? 'n/r' : formatElo(row.elo),
+    tone: index === 0 ? 'lime' : index === 1 ? 'a' : index === 2 ? 'b' : undefined,
+  }))
+  const finals: TickerItem[] =
+    recent.state === 'ready'
+      ? recent.data.finals.map((final) => ({
+          key: `final-${final.tour}-${final.name}`,
+          label: `${final.name} final · ${surname(final.champion.name)} d. ${surname(final.finalist.name)}`,
+          value: final.final_score ?? '',
+          tone: 'lime' as const,
+        }))
+      : []
+  return [...leaders, ...finals]
 }
 
 function Kicker({ coverage }: { coverage: Resource<CoverageResponse> }) {
@@ -298,7 +325,7 @@ function TopRivalry({ top }: { top: ReadonlyArray<RankingRow> }) {
   const eloB = top[1]?.elo
 
   return (
-    <Card className={styles.rivalry}>
+    <Card tint="ink" tilt className={styles.rivalry}>
       <div className={styles.rivalryNames}>
         <div>
           <span className={`${styles.dash} ${styles.dashA}`} aria-hidden="true" />
@@ -320,9 +347,9 @@ function TopRivalry({ top }: { top: ReadonlyArray<RankingRow> }) {
         </div>
       </div>
       <div className={styles.tally} aria-label={`${winsA} to ${winsB}`}>
-        <CountUp className={styles.tallyA} value={winsA} />
+        <Odometer className={styles.tallyA} value={winsA} />
         <span className={styles.tallyDash} aria-hidden="true" />
-        <CountUp className={styles.tallyB} value={winsB} />
+        <Odometer className={styles.tallyB} value={winsB} />
       </div>
       <div className={styles.tallyBar} aria-hidden="true">
         <span style={{ flexGrow: total === 0 ? 1 : winsA }} />

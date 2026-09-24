@@ -72,6 +72,7 @@ export function Leaders() {
       <PageHeader
         kicker="Serve · return · score"
         title="Leaders"
+        mark="Leaders"
         accent="b"
         lede={
           <>

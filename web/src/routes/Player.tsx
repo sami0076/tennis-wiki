@@ -27,7 +27,7 @@ import {
   Button,
   Card,
   ChartedMark,
-  CountUp,
+  Odometer,
   FormPills,
   Kicker,
   Note,
@@ -259,7 +259,7 @@ function PlayerHero({
         <Card tint="a" className={styles.eloCard} delay={100}>
           <Kicker>{active ? 'Elo rating' : 'Peak Elo'}</Kicker>
           <div className={styles.eloRow}>
-            <CountUp className={styles.elo} value={Math.round(active ? overall.current.elo : overall.peak.elo)} />
+            <Odometer className={styles.elo} value={Math.round(active ? overall.current.elo : overall.peak.elo)} />
             <div className={styles.eloAside}>
               <Kicker>{active ? 'Peak' : 'Last rated'}</Kicker>
               <div className={styles.eloAsideValue}>
@@ -284,16 +284,16 @@ function CareerTiles({ career }: { career: Career }) {
   const tiles = [
     { label: 'Career record', value: `${career.wins}-${career.losses}` },
     { label: 'Win rate', value: formatPercent(career.win_percentage) },
-    { label: 'Titles', value: String(career.titles) },
-    { label: 'Majors', value: String(career.majors), accent: true },
+    { label: 'Titles', value: String(career.titles), count: career.titles },
+    { label: 'Majors', value: String(career.majors), count: career.majors, accent: true },
   ]
   return (
     <div className={styles.tiles}>
       {tiles.map((tile, index) => (
-        <Card key={tile.label} className={styles.tile} delay={index * 80}>
+        <Card key={tile.label} tilt className={styles.tile} delay={index * 80}>
           <Kicker>{tile.label}</Kicker>
           <div className={tile.accent ? `${styles.tileValue} ${styles.tileAccent}` : styles.tileValue}>
-            {tile.value}
+            {'count' in tile && tile.count !== undefined ? <Odometer value={tile.count} /> : tile.value}
           </div>
         </Card>
       ))}

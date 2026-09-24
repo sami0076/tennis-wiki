@@ -66,6 +66,7 @@ export function Tournaments() {
       <PageHeader
         kicker="Every event · both tours"
         title="Tournaments"
+        mark="Tournaments"
         lede={
           <>
             Every draw on both tours, grouped by level. Or the calendar a year at a time:{' '}

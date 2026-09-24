@@ -75,6 +75,7 @@ export function Rankings() {
       <PageHeader
         kicker="Elo · the published list"
         title="Rankings"
+        mark="Rankings"
         lede="Every player on one Elo scale, next to the rank the tour published, and how far apart the two are."
         accent="a"
       />

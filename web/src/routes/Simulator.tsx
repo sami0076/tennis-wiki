@@ -76,6 +76,7 @@ export function Simulator() {
       <PageHeader
         kicker="Point · game · set · match"
         title="Simulator"
+        mark="Simulator"
         lede="A probability per service point, compounded by the scoring system into a probability per match, every step shown."
         art={<CourtArt surface={chosen === 'clay' || chosen === 'grass' ? chosen : 'hard'} />}
         accent="a"

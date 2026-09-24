@@ -29,6 +29,7 @@ import {
   Button,
   Card,
   CountUp,
+  Odometer,
   FormPills,
   Kicker,
   Note,
@@ -258,9 +259,9 @@ function Rivalry({
         <div className={styles.tally}>
           <Kicker>Head-to-head</Kicker>
           <div className={styles.tallyFigures} aria-hidden="true">
-            <CountUp className={styles.tallyA} value={winsA} />
+            <Odometer className={styles.tallyA} value={winsA} />
             <span className={styles.tallyDash} />
-            <CountUp className={styles.tallyB} value={winsB} />
+            <Odometer className={styles.tallyB} value={winsB} />
           </div>
           <span className="sr-only">{`${winsA}-${winsB}`}</span>
           {record.matches > 0 ? <span className={styles.leads}>{leader}</span> : null}
@@ -364,7 +365,7 @@ function PlayerPanel({
         {elo === null ? null : (
           <div>
             <Kicker>{surface === null ? 'Elo' : `${surfaceLabel(surface)} Elo`}</Kicker>
-            <CountUp className={styles.panelElo} value={Math.round(elo)} />
+            <Odometer className={styles.panelElo} value={Math.round(elo)} />
           </div>
         )}
         {recent.length > 0 ? (
@@ -398,6 +399,7 @@ function SimulatorCard({
 
   return (
     <Card
+      tint="ink"
       title="Match simulator"
       aside={`${surface === null ? 'All surfaces' : surfaceLabel(surface)} · Bo${bestOf}`}
     >
@@ -503,7 +505,7 @@ function MeetingTiles({ comparison }: { comparison: Comparison }) {
   return (
     <div className={styles.tiles}>
       {tiles.map((tile, index) => (
-        <Card key={tile.label} className={styles.tile} delay={index * 70}>
+        <Card key={tile.label} tilt className={styles.tile} delay={index * 70}>
           <Kicker>{tile.label}</Kicker>
           {tile.wins === null || tile.wins[0] + tile.wins[1] === 0 ? (
             <span className={styles.tileNone}>none</span>
