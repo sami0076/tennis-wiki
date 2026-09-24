@@ -1,23 +1,20 @@
 .path {
-  font-size: var(--t-13);
-  color: var(--pencil);
   white-space: pre-wrap;
 }
 
 .path a {
-  border-bottom: 0;
+  color: var(--ink);
+  border-bottom: 1.5px solid var(--lime-deep);
 }
 
 .path a:hover {
-  border-bottom: var(--rule-ink);
+  border-bottom-color: var(--player-a);
 }
 
-.title {
-  font-size: var(--t-28);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  padding: var(--s-2) 0;
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .actions {
@@ -25,7 +22,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s-3) var(--s-5);
-  padding: var(--s-4) 0 var(--s-2);
 }
 
 .editions {
@@ -35,34 +31,43 @@
 }
 
 .editions a {
+  font-weight: 600;
+  color: var(--ink);
   border-bottom: 0;
 }
 
 .editions a:hover {
-  border-bottom: var(--rule-ink);
+  color: var(--player-a);
 }
 
-/* This season in brackets, the way the active tab is. */
+/* This season in brackets, lit like the active tab. */
 .current {
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--lime);
   color: var(--ink);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .block {
-  padding: var(--s-6) 0;
-  border-bottom: var(--rule-ink);
+  margin-bottom: var(--s-5);
+  padding: var(--s-5);
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
 .heading {
-  font-size: var(--t-16);
-  font-weight: 600;
+  font-size: var(--t-20);
+  font-weight: 700;
   line-height: 1.3;
-  margin-bottom: var(--s-2);
+  letter-spacing: -0.01em;
+  margin-bottom: var(--s-3);
 }
 
 .subheading {
   font-size: var(--t-13);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--pencil);
   padding-top: var(--s-4);
 }
@@ -72,8 +77,8 @@
 }
 
 .roundTitle {
-  font-size: var(--t-16);
-  font-weight: 600;
+  font-size: var(--t-20);
+  font-weight: 700;
   line-height: 1.3;
   padding: var(--s-5) 0 var(--s-2);
 }
@@ -97,8 +102,8 @@
   display: flex;
   align-items: baseline;
   gap: var(--s-2);
-  padding: 9px 0;
-  border-bottom: var(--rule);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--card-line);
   font-size: var(--t-13);
   break-inside: avoid;
 }
@@ -109,29 +114,35 @@
 }
 
 .player {
+  font-weight: 600;
   border-bottom: 0;
 }
 
 .player:hover {
-  border-bottom: var(--rule-ink);
+  color: var(--player-a);
 }
 
 /* The dotted leader from the name to where they went out. */
 .lead {
   flex: 1;
-  border-bottom: 1px dotted var(--pencil-mid);
+  border-bottom: 1px dotted var(--pencil-light);
   transform: translateY(-4px);
 }
 
 .exit {
-  width: 4ch;
+  min-width: 4ch;
   text-align: right;
+  font-weight: 600;
   color: var(--pencil);
 }
 
 .won {
-  color: var(--win);
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--lime);
+  color: var(--ink);
   font-weight: 700;
+  text-align: center;
 }
 
 .caption {
@@ -154,5 +165,14 @@
   .seeds {
     columns: 2;
     column-gap: var(--s-7);
+  }
+
+  .block {
+    padding: var(--s-5) var(--s-6);
+  }
+
+  /* The sheet needs every column it can get. */
+  .desk .block {
+    padding-inline: var(--s-4);
   }
 }
