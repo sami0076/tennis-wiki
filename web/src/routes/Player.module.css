@@ -27,7 +27,7 @@
   width: 34px;
   height: 4px;
   border-radius: 2px;
-  background: var(--player-a);
+  background: var(--ink);
   transform-origin: left;
   animation: dp-grow-x 700ms var(--ease-out) both 150ms;
 }
@@ -62,14 +62,14 @@
 }
 
 a.chip:hover {
-  border-color: var(--player-a);
-  background: var(--player-a-wash);
+  border-color: var(--ink);
+  background: var(--card);
   transform: translateY(-2px);
 }
 
 .chipTour {
-  border-color: var(--player-a);
-  background: var(--player-a);
+  border-color: var(--ink);
+  background: var(--ink);
   color: var(--card);
 }
 
@@ -90,7 +90,6 @@ a.chip:hover {
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.05em;
-  color: var(--player-a);
 }
 
 .eloAside {
@@ -137,10 +136,6 @@ a.chip:hover {
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.03em;
-}
-
-.tileAccent {
-  color: var(--player-a);
 }
 
 .charts {
@@ -191,7 +186,7 @@ a.chip:hover {
 }
 
 .opponent:hover {
-  color: var(--player-a);
+  color: var(--pencil);
 }
 
 .event {

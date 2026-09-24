@@ -1,4 +1,4 @@
-/* The hero search: a tall white field and the lime ball of a button. */
+/* The hero search: a tall white field and an ink button. */
 .search {
   display: flex;
   gap: var(--s-2);
@@ -22,7 +22,7 @@
   border: 0;
   border-radius: var(--radius);
   background: var(--lime);
-  color: var(--ink);
+  color: var(--card);
   font-size: var(--t-14);
   font-weight: 700;
   cursor: pointer;
@@ -70,8 +70,8 @@
 }
 
 .chip:hover {
-  border-color: var(--player-a);
-  background: var(--player-a-wash);
+  border-color: var(--ink);
+  background: var(--card);
   transform: translateY(-2px);
 }
 
@@ -136,12 +136,12 @@
 
 .topRow:hover {
   transform: translateX(4px);
-  box-shadow: inset 3px 0 0 var(--player-a), var(--shadow-lift);
+  box-shadow: inset 3px 0 0 var(--ink), var(--shadow-lift);
 }
 
 .topRow:first-child .topPosition {
-  background: var(--lime);
-  color: var(--ink);
+  background: var(--ink);
+  color: var(--card);
 }
 
 .topPosition {
@@ -171,7 +171,7 @@
 }
 
 .topName a:hover {
-  color: var(--player-a);
+  color: var(--pencil);
 }
 
 .topCountry {
@@ -339,8 +339,8 @@
 .throughChip {
   padding: 5px 10px;
   border-radius: 999px;
-  background: var(--lime-wash);
-  box-shadow: inset 0 0 0 1px var(--lime-deep);
+  background: var(--card);
+  box-shadow: inset 0 0 0 1px var(--card-line);
 }
 
 .throughLabel {
@@ -383,12 +383,11 @@
 }
 
 .player:hover {
-  color: var(--player-a);
+  color: var(--pencil);
 }
 
 .title2 {
   font-weight: 700;
-  color: var(--player-a);
 }
 
 .interval {
@@ -400,7 +399,8 @@
 .won {
   padding: 2px 8px;
   border-radius: 999px;
-  background: var(--lime);
+  background: var(--ink);
+  color: var(--card);
   font-size: var(--t-11);
   font-weight: 700;
 }

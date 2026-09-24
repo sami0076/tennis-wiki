@@ -126,7 +126,6 @@ export function Home() {
       </div>
 
       <Card
-        tint="ink"
         className={styles.block}
         title={
           <>Elo leaders{leaders.state === 'ready' ? `, as of ${leaders.data.as_of}` : null}</>
@@ -180,11 +179,10 @@ export function Home() {
 }
 
 function tickerItems(top: ReadonlyArray<RankingRow>, recent: Resource<RecentFinalsData>): TickerItem[] {
-  const leaders: TickerItem[] = top.map((row, index) => ({
+  const leaders: TickerItem[] = top.map((row) => ({
     key: `elo-${row.slug}`,
     label: `#${row.position} ${surname(row.name)}`,
     value: row.elo === null ? 'n/r' : formatElo(row.elo),
-    tone: index === 0 ? 'lime' : index === 1 ? 'a' : index === 2 ? 'b' : undefined,
   }))
   const finals: TickerItem[] =
     recent.state === 'ready'
@@ -192,7 +190,6 @@ function tickerItems(top: ReadonlyArray<RankingRow>, recent: Resource<RecentFina
           key: `final-${final.tour}-${final.name}`,
           label: `${final.name} final · ${surname(final.champion.name)} d. ${surname(final.finalist.name)}`,
           value: final.final_score ?? '',
-          tone: 'lime' as const,
         }))
       : []
   return [...leaders, ...finals]
@@ -325,7 +322,7 @@ function TopRivalry({ top }: { top: ReadonlyArray<RankingRow> }) {
   const eloB = top[1]?.elo
 
   return (
-    <Card tint="ink" tilt className={styles.rivalry}>
+    <Card tilt className={styles.rivalry}>
       <div className={styles.rivalryNames}>
         <div>
           <span className={`${styles.dash} ${styles.dashA}`} aria-hidden="true" />

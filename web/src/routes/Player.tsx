@@ -256,7 +256,7 @@ function PlayerHero({
       </div>
 
       {overall === null ? null : (
-        <Card tint="a" className={styles.eloCard} delay={100}>
+        <Card className={styles.eloCard} delay={100}>
           <Kicker>{active ? 'Elo rating' : 'Peak Elo'}</Kicker>
           <div className={styles.eloRow}>
             <Odometer className={styles.elo} value={Math.round(active ? overall.current.elo : overall.peak.elo)} />
@@ -285,14 +285,14 @@ function CareerTiles({ career }: { career: Career }) {
     { label: 'Career record', value: `${career.wins}-${career.losses}` },
     { label: 'Win rate', value: formatPercent(career.win_percentage) },
     { label: 'Titles', value: String(career.titles), count: career.titles },
-    { label: 'Majors', value: String(career.majors), count: career.majors, accent: true },
+    { label: 'Majors', value: String(career.majors), count: career.majors },
   ]
   return (
     <div className={styles.tiles}>
       {tiles.map((tile, index) => (
         <Card key={tile.label} tilt className={styles.tile} delay={index * 80}>
           <Kicker>{tile.label}</Kicker>
-          <div className={tile.accent ? `${styles.tileValue} ${styles.tileAccent}` : styles.tileValue}>
+          <div className={styles.tileValue}>
             {'count' in tile && tile.count !== undefined ? <Odometer value={tile.count} /> : tile.value}
           </div>
         </Card>
