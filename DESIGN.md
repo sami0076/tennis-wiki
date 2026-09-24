@@ -52,7 +52,7 @@ Reasoning is in [ADR-0014](docs/decisions/0014-court-colour.md), which supersede
 
 **Key characteristics**
 - Cream `--bond` ground; white cards (8px radius, faint shadow) hold every section.
-- Violet against magenta in every comparison, each with a wash for tinted panels.
+- Violet against magenta in every comparison, on names, figures, bars and lines; panels stay white.
 - No decorative colour: accents, badges, buttons and hovers are ink on cream or white.
 - Surfaces keep their ink and gain a wash for badges (`HARD`, `CLAY`, `GRASS`).
 - Martian Mono for everything, with fluid display and figure sizes for names and headline numbers.
@@ -64,10 +64,10 @@ Every colour is a custom property in `web/src/styles/tokens.css`.
 
 - **Ground:** `--bond` for the page, `--card` for panels, `--card-line` for rules inside a card, `--highlight` for empty tracks and quiet chips.
 - **Ink and pencils:** ink for entries and figures; pencil for captions, kickers and meta; pencil-mid and pencil-light for fields and ruling.
-- **Sides:** `--player-a` (violet) and `--player-b` (magenta) for names, tallies, bars, chart lines, form pills and tinted panels (`--player-*-wash`, `--player-*-line`). In a ranked chart, the top three lines are violet, magenta and `--third` (amber).
+- **Sides:** `--player-a` (violet) and `--player-b` (magenta) for names, tallies, bars, chart lines and form pills in a comparison. A single player's chart and form are ink. In a ranked chart, the top three lines are violet, magenta and `--third` (amber).
 - **Accent:** ink. The `--lime*` token names survive but point at ink, dark grey and white; `--ball` (real lime) is kept for the scoreboard's serve light only.
 - **Surfaces:** ink for text, bars and courts; wash for badge grounds (`surfaceVar`, `surfaceWash` in `lib/surface.ts`).
-- **Outcomes:** win and loss on rank deltas; W/L marks are violet (won) and grey (lost) squares.
+- **Outcomes:** win and loss on rank deltas; W/L marks are ink (won) and grey (lost) squares.
 
 **The name-beside-colour rule.** Colour is never the only encoding: a side's colour always sits beside its name or figure, a surface colour beside its word, a W/L colour inside its letter.
 
@@ -81,8 +81,8 @@ A single column up to 1248px, padded 16px on a phone and 32px from 880px, with o
 
 - **Page opener:** `PageHeader`: a kicker with an accent dash (or a pulsing ink dot), the display title, a standfirst, and optional art on the right (`CourtArt`).
 - **Home:** hero with the black-and-white court, a large search with an ink button and "Try" chips; then three columns (Elo top 5, the rivalry at the top, last week's finals); then the leaders chart, the coverage table and the replayed draw as cards.
-- **Player:** name at the left, a violet Elo card at the right (count-up rating, peak, last-10 form pills); four career tiles; rating history (2fr) beside Elo by surface (1fr); the remaining sections as cards.
-- **Head to head:** two tinted player panels around a large counting tally, the split bar under all three; the filters in one card; the match simulator beside the by-surface splits; finals, slam finals, deciding sets and tiebreak tiles; recent meetings as two-column cards; the full sheet below.
+- **Player:** name at the left, a white Elo card at the right (count-up rating, peak, last-10 form pills); four career tiles; rating history (2fr) beside Elo by surface (1fr); the remaining sections as cards.
+- **Head to head:** two white player panels, each with its colour dash, around a large counting tally, the split bar under all three; the filters in one card; the match simulator beside the by-surface splits; finals, slam finals, deciding sets and tiebreak tiles; recent meetings as two-column cards; the full sheet below.
 - Everything is one column below 880px, and a table wider than a phone scrolls inside its card.
 
 ## Shapes & Depth
@@ -94,6 +94,7 @@ Cards have an 8px radius and `--shadow`. On hover a card lifts to `--shadow-lift
 All motion lives in `base.css` keyframes (`dp-rise`, `dp-fade`, `dp-grow-x`, `dp-pop`, `dp-draw`, `dp-pulse`) and a few components:
 
 - **Reveal / Card:** rise 14px and fade in over 700ms, staggered by `delay`, the first time the element is in view (`lib/useInView.ts`). Anything already on screen when it mounts reveals at once.
+- **Odometer:** big whole figures roll up digit by digit like a scoreboard.
 - **CountUp:** runs a figure up from zero over about 1.1s with an ease-out; screen readers get only the final value, and a timer guarantees it lands.
 - **Bars:** split bars, surface bars, odds bars and tally bars grow from their origin.
 - **Charts:** lines draw in (`stroke-dasharray` with `pathLength=1`); area washes fade in after them; peak and end markers pop.
