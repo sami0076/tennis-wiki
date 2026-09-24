@@ -1,4 +1,5 @@
 import { surfaceLabel, surfaceVar } from '../lib/surface'
+import { Note } from './Note'
 import styles from './RivalryStrip.module.css'
 
 export interface RivalryResult {
@@ -13,6 +14,8 @@ interface RivalryStripProps {
   results: ReadonlyArray<RivalryResult>
   nameA: string
   nameB: string
+  /** Off where the page folds the legend into its own note. */
+  legend?: boolean
 }
 
 /**
@@ -23,7 +26,7 @@ interface RivalryStripProps {
  * legend underneath is not optional -- a strip of squares means nothing without
  * it, and the caption belongs directly under the thing it explains.
  */
-export function RivalryStrip({ results, nameA, nameB }: RivalryStripProps) {
+export function RivalryStrip({ results, nameA, nameB, legend = true }: RivalryStripProps) {
   return (
     <div>
       <div className={styles.strip}>
@@ -46,10 +49,12 @@ export function RivalryStrip({ results, nameA, nameB }: RivalryStripProps) {
           )
         })}
       </div>
-      <p className={styles.caption}>
-        Filled squares are wins for {nameA}, outlined are wins for {nameB}. Colour is the
-        surface.
-      </p>
+      {legend ? (
+        <Note label="How to read this">
+          Filled squares are wins for {nameA}, outlined are wins for {nameB}. Colour is the
+          surface.
+        </Note>
+      ) : null}
     </div>
   )
 }

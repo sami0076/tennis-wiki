@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { scorelines } from '../lib/playback'
 import { prefersReducedMotion } from '../lib/useReducedMotion'
+import { Note } from './Note'
 import styles from './Scorelines.module.css'
 
 interface ScorelinesProps {
@@ -11,6 +12,8 @@ interface ScorelinesProps {
   nameB: string
   /** Grow the bars in when the result lands, after the split and the rungs. */
   animate?: boolean
+  /** More for the same note, so a card carries one. */
+  note?: ReactNode
 }
 
 /** The bars start growing this long after the result arrives, as the prototype has it. */
@@ -21,7 +24,7 @@ const GROW_DELAY_MS = 300
  * written first the way the split above reads. A score A wins is ink, one B
  * wins is pencil: the same pair as everywhere else.
  */
-export function Scorelines({ setShare, bestOf, nameA, nameB, animate = false }: ScorelinesProps) {
+export function Scorelines({ setShare, bestOf, nameA, nameB, animate = false, note }: ScorelinesProps) {
   const rows = scorelines(setShare, bestOf)
   const max = rows[0]?.p ?? 1
   const grown = useGrown(animate)
@@ -50,9 +53,10 @@ export function Scorelines({ setShare, bestOf, nameA, nameB, animate = false }: 
           )
         })}
       </ol>
-      <p className={styles.caption}>
-        {nameA} first. Sets modelled as independent.
-      </p>
+      <Note>
+        <p>{nameA} first. Sets modelled as independent.</p>
+        {note}
+      </Note>
     </div>
   )
 }

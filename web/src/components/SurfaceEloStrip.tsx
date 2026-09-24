@@ -50,6 +50,7 @@ export function SurfaceEloStrip({ series, mode, overall = true }: SurfaceEloStri
           <div
             key={s.surface}
             className={styles.row}
+            title={`${s.matches.toLocaleString()} ${s.matches === 1 ? 'match' : 'matches'}`}
             style={{ '--tone': colour, '--i': index } as CSSProperties}
           >
             <div className={styles.label}>
@@ -62,9 +63,6 @@ export function SurfaceEloStrip({ series, mode, overall = true }: SurfaceEloStri
             <div className={styles.value}>{formatElo(value(s))}</div>
             <div className={styles.track}>
               <div className={styles.fill} style={{ transform: `scaleX(${share(value(s))})` }} />
-            </div>
-            <div className={styles.matches}>
-              {s.matches.toLocaleString()} {s.matches === 1 ? 'match' : 'matches'}
             </div>
           </div>
         )

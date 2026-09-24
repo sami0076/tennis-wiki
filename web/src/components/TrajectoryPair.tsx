@@ -115,10 +115,6 @@ export function TrajectoryPair({ a, b, width = 320, height = 120 }: TrajectoryPa
           )
         })}
       </div>
-      <figcaption className={styles.caption}>
-        {Math.round(min)} to {Math.round(max)} Elo, {new Date(from).getUTCFullYear()} to{' '}
-        {new Date(to).getUTCFullYear()}. Rated only in the weeks they played.
-      </figcaption>
     </figure>
   )
 }

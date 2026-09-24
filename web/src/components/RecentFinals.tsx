@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import type { RecentFinals as RecentFinalsData } from '../api/client'
 import type { Resource } from '../api/useResource'
+import { Note } from './Note'
 import { Score } from './Score'
 import { Skeleton } from './Skeleton'
 import { SurfaceBadge } from './SurfaceBadge'
@@ -30,7 +31,8 @@ export function RecentFinals({ recent }: RecentFinalsProps) {
 
   return (
     <div>
-      <p className={styles.week}>
+      <Note label="About this week">
+      <p>
         {data.requested !== null ? (
           <>
             Nothing began in the week of {data.requested.from}; the last week with a final was{' '}
@@ -44,6 +46,7 @@ export function RecentFinals({ recent }: RecentFinalsProps) {
         )}{' '}
         Current {through}.
       </p>
+      </Note>
       {data.finals.length > 0 ? (
         <ol className={styles.finals}>
           {data.finals.map((final, index) => (
