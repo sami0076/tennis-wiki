@@ -1,18 +1,18 @@
 .scorelines {
-  padding: var(--s-5) 0 var(--s-2);
+  padding: 0 0 var(--s-2);
 }
 
 .title {
-  font-size: var(--t-16);
-  font-weight: 600;
-  margin-bottom: var(--s-2);
+  font-size: var(--t-20);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: var(--s-3);
 }
 
 .rows {
   list-style: none;
   margin: 0;
   padding: 0;
-  border-top: var(--rule-ink);
 }
 
 /* One ruled row per score: the score, a bar scaled to the likeliest, the figure. */
@@ -21,13 +21,14 @@
   grid-template-columns: 4ch minmax(0, 1fr) 6ch;
   align-items: center;
   gap: var(--s-3);
-  padding: 7px 0;
-  border-bottom: var(--rule);
+  padding: 9px 0;
+  border-bottom: 1px solid var(--card-line);
   font-size: var(--t-13);
+  font-weight: 600;
 }
 
 .row:last-child {
-  border-bottom: var(--rule-ink);
+  border-bottom: 0;
 }
 
 .scoreA,
@@ -48,13 +49,17 @@
 
 .track {
   display: block;
-  height: 6px;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: var(--highlight);
 }
 
 .fillA,
 .fillB {
   display: block;
   height: 100%;
+  border-radius: 5px;
   transform-origin: left;
 }
 
