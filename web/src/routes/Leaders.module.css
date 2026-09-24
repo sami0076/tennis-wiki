@@ -1,6 +1,6 @@
 .kin {
   color: var(--ink);
-  border-bottom: 1.5px solid var(--player-b);
+  border-bottom: 1.5px solid var(--ink);
 }
 
 .controls {
@@ -30,7 +30,7 @@
 }
 
 .field:focus-within {
-  border-color: var(--player-b);
+  border-color: var(--ink);
 }
 
 .label {
@@ -118,7 +118,7 @@
 .active,
 .active:hover {
   color: var(--card);
-  background: var(--player-b);
+  background: var(--ink);
 }
 
 .population {
@@ -140,8 +140,8 @@
 }
 
 .leader {
-  background: var(--lime);
-  color: var(--ink);
+  background: var(--ink);
+  color: var(--card);
 }
 
 .player {
@@ -150,7 +150,7 @@
 }
 
 .player:hover {
-  color: var(--player-b);
+  color: var(--ink);
 }
 
 .country {
@@ -160,7 +160,7 @@
 
 .value {
   font-weight: 700;
-  color: var(--player-b);
+  color: var(--ink);
 }
 
 .caption,

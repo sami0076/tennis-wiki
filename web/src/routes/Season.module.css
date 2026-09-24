@@ -8,7 +8,7 @@
 }
 
 .path a:hover {
-  border-bottom-color: var(--player-a);
+  border-bottom-color: var(--ink);
 }
 
 .controls {
@@ -103,7 +103,7 @@
 }
 
 .champion {
-  color: var(--player-a);
+  color: var(--ink);
 }
 
 .event:hover,

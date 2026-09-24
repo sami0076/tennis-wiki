@@ -19,8 +19,8 @@
 }
 
 .field:focus-within {
-  border-color: var(--player-a);
-  box-shadow: 0 0 0 3px var(--player-a-wash);
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgb(23 24 26 / 0.08);
 }
 
 .label {
@@ -84,7 +84,7 @@
 .row:hover {
   transform: translateX(4px);
   box-shadow:
-    inset 3px 0 0 var(--player-a),
+    inset 3px 0 0 var(--ink),
     var(--shadow-lift);
 }
 

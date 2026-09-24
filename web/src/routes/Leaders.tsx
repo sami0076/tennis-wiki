@@ -73,7 +73,6 @@ export function Leaders() {
         kicker="Serve · return · score"
         title="Leaders"
         mark="Leaders"
-        accent="b"
         lede={
           <>
             A ranking by what a player did with a serve, a return or a score. The ratings are on{' '}

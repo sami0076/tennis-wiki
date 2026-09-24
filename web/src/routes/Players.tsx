@@ -47,7 +47,6 @@ export function Players() {
         title="Players"
         mark="Players"
         lede="Anyone who ever played a match the sources recorded, from a 1922 amateur to this week's qualifier."
-        accent="a"
         art={<CourtArt surface="grass" className={styles.court} />}
       >
         <div className={styles.controls}>

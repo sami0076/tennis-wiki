@@ -38,7 +38,7 @@
 
 .row:hover {
   transform: translateX(4px);
-  box-shadow: inset 3px 0 0 var(--player-a), var(--shadow-lift);
+  box-shadow: inset 3px 0 0 var(--ink), var(--shadow-lift);
 }
 
 .year {
@@ -50,7 +50,7 @@
 }
 
 .year:hover {
-  color: var(--player-a);
+  color: var(--ink);
 }
 
 .head .year {
@@ -140,7 +140,7 @@
 
 .champion {
   font-weight: 700;
-  color: var(--player-a);
+  color: var(--ink);
   border-bottom: 0;
 }
 

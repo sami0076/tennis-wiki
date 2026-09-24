@@ -41,7 +41,7 @@
 .active,
 .active:hover {
   color: var(--card);
-  background: var(--player-a);
+  background: var(--ink);
 }
 
 .dateLabel {
@@ -59,7 +59,7 @@
 }
 
 .dateLabel:focus-within {
-  border-color: var(--player-a);
+  border-color: var(--ink);
 }
 
 .date {
@@ -106,14 +106,14 @@
 }
 
 .leader {
-  background: var(--lime);
-  color: var(--ink);
+  background: var(--ink);
+  color: var(--card);
   animation: dp-pulse 2.6s ease-in-out infinite;
 }
 
 .elo {
   font-weight: 700;
-  color: var(--player-a);
+  color: var(--ink);
 }
 
 .player {
@@ -122,7 +122,7 @@
 }
 
 .player:hover {
-  color: var(--player-a);
+  color: var(--ink);
 }
 
 .best {
