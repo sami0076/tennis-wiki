@@ -58,10 +58,6 @@
 
 .wordWrap {
   display: inline-block;
-  overflow: hidden;
-  padding-bottom: 0.08em;
-  margin-bottom: -0.08em;
-  vertical-align: top;
 }
 
 .word {
@@ -78,7 +74,7 @@
   content: '';
   position: absolute;
   right: -0.06em;
-  bottom: 0.02em;
+  bottom: -0.1em;
   left: -0.02em;
   z-index: -1;
   height: 0.09em;
@@ -144,6 +140,8 @@
 
 @keyframes word-up {
   from {
-    transform: translateY(105%) rotate(4deg);
+    opacity: 0;
+    transform: translateY(0.45em) rotate(3deg);
+    filter: blur(4px);
   }
 }
