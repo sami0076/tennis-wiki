@@ -1,67 +1,91 @@
-.title {
-  font-size: var(--t-28);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  padding: var(--s-2) 0 var(--s-4);
-}
-
 .controls {
   display: grid;
   gap: var(--s-2);
-  padding-bottom: var(--s-4);
-  border-bottom: var(--rule-ink);
+  max-width: 560px;
 }
 
-/* The typed field: prompt and entry over one rule. */
 .field {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--s-2);
-  max-width: 480px;
-  border-bottom: var(--rule-ink);
+  padding: 0 var(--s-4);
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition:
+    border-color 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+.field:focus-within {
+  border-color: var(--player-a);
+  box-shadow: 0 0 0 3px var(--player-a-wash);
 }
 
 .label {
   flex: 0 0 auto;
-  font-size: var(--t-14);
-  font-weight: 500;
-}
-
-.label::after {
-  content: ':';
+  font-size: var(--t-12);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pencil);
 }
 
 .input {
   flex: 1 1 auto;
   min-width: 0;
-  padding: 5px 0;
+  padding: 15px 0;
   border: 0;
   background: transparent;
   font: inherit;
-  font-size: var(--t-14);
+  font-size: var(--t-16);
   color: var(--ink);
 }
 
 .input:focus-visible {
   outline: 0;
-  box-shadow: 0 1px 0 var(--ink);
+}
+
+.controls > [role='group'] {
+  justify-self: start;
+}
+
+.court {
+  max-width: 420px;
+  margin-inline: auto;
 }
 
 .results {
+  display: grid;
+  gap: var(--s-2);
   margin: 0;
 }
 
 .row {
   display: block;
-  padding: var(--s-3) 0 var(--s-3) var(--s-2);
-  border-bottom: var(--rule);
-  transition: background-color 120ms ease-out;
+  padding: var(--s-3) var(--s-4);
+  background: var(--card);
+  border-bottom: 0;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition:
+    transform 220ms var(--ease-out),
+    box-shadow 220ms ease-out;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .row {
+    animation: dp-rise 500ms var(--ease-out) both;
+    animation-delay: calc(var(--i) * 40ms);
+  }
 }
 
 .row:hover {
-  background: var(--highlight);
-  border-bottom-color: var(--ink);
+  transform: translateX(4px);
+  box-shadow:
+    inset 3px 0 0 var(--player-a),
+    var(--shadow-lift);
 }
 
 .hint,
@@ -72,6 +96,10 @@
   font-size: var(--t-13);
   line-height: 1.6;
   color: var(--pencil);
+}
+
+.error {
+  color: var(--loss);
 }
 
 .caption {
@@ -85,8 +113,7 @@
 }
 
 @media (min-width: 880px) {
-  .title {
-    font-size: var(--t-32);
-    padding-top: var(--s-4);
+  .results {
+    grid-template-columns: 1fr 1fr;
   }
 }

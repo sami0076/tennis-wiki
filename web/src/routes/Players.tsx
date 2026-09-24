@@ -1,7 +1,16 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { MIN_QUERY, usePlayerSearch } from '../api/useSearch'
-import { Button, ButtonLink, EmptyState, PlayerSummary, Skeleton, TourFilter } from '../components'
+import {
+  Button,
+  ButtonLink,
+  CourtArt,
+  EmptyState,
+  PageHeader,
+  PlayerSummary,
+  Skeleton,
+  TourFilter,
+} from '../components'
 import { useUrlParam } from '../lib/useUrlParam'
 import styles from './Players.module.css'
 import { breadcrumbs, useJsonLd } from '../lib/jsonld'
@@ -33,25 +42,31 @@ export function Players() {
 
   return (
     <>
-      <h1 className={styles.title}>Players</h1>
-
-      <div className={styles.controls}>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="player-search">
-            Name
-          </label>
-          <input
-            id="player-search"
-            className={styles.input}
-            type="search"
-            autoComplete="off"
-            placeholder="Surname, or any part of a name"
-            value={query ?? ''}
-            onChange={(event) => ask(() => setQuery(event.target.value))}
-          />
+      <PageHeader
+        kicker="115,000 players · both tours"
+        title="Players"
+        lede="Anyone who ever played a match the sources recorded, from a 1922 amateur to this week's qualifier."
+        accent="a"
+        art={<CourtArt surface="grass" className={styles.court} />}
+      >
+        <div className={styles.controls}>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="player-search">
+              Name
+            </label>
+            <input
+              id="player-search"
+              className={styles.input}
+              type="search"
+              autoComplete="off"
+              placeholder="Surname, or any part of a name"
+              value={query ?? ''}
+              onChange={(event) => ask(() => setQuery(event.target.value))}
+            />
+          </div>
+          <TourFilter value={tour} onChange={(next) => ask(() => setTour(next))} />
         </div>
-        <TourFilter value={tour} onChange={(next) => ask(() => setTour(next))} />
-      </div>
+      </PageHeader>
 
       <Results search={search} cursors={cursors} setCursors={setCursors} />
     </>
@@ -101,8 +116,8 @@ function Results({ search, cursors, setCursors }: ResultsProps) {
   return (
     <>
       <ul className={styles.results}>
-        {search.results.map((player) => (
-          <li key={player.slug}>
+        {search.results.map((player, index) => (
+          <li key={player.slug} style={{ '--i': Math.min(index, 12) } as CSSProperties}>
             <Link className={styles.row} to={`/players/${player.slug}`}>
               <PlayerSummary player={player} />
             </Link>
