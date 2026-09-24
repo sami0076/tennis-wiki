@@ -5,18 +5,19 @@ import { getRankings, getTrajectories } from '../api/endpoints'
 import { useResource, type Resource } from '../api/useResource'
 import {
   Button,
+  CountUp,
   EmptyState,
+  PageHeader,
   Meta,
   RankDelta,
   Skeleton,
   StatTable,
-  SurfaceDot,
+  SurfaceBadge,
   SurfaceToggle,
   TourFilter,
   TrajectoryChart,
   type Column,
 } from '../components'
-import { surfaceVar } from '../lib/surface'
 import { useUrlParam } from '../lib/useUrlParam'
 import styles from './Rankings.module.css'
 import { breadcrumbs, useJsonLd } from '../lib/jsonld'
@@ -70,7 +71,12 @@ export function Rankings() {
 
   return (
     <>
-      <h1 className={styles.title}>Rankings</h1>
+      <PageHeader
+        kicker="Elo · the published list"
+        title="Rankings"
+        lede="Every player on one Elo scale, next to the rank the tour published, and how far apart the two are."
+        accent="a"
+      />
 
       <div className={styles.controls}>
         <div className={styles.types} role="group" aria-label="Ranking type">
@@ -130,7 +136,7 @@ function Leaders({ lines }: { lines: Resource<Trajectories | null> }) {
   if (drawable.length < 2) return null
 
   return (
-    <section className={styles.chart}>
+    <section className={styles.card}>
       <TrajectoryChart
         lines={drawable.map((line) => ({
           name: line.name,
@@ -188,6 +194,7 @@ function Board({ page, elo, surface, cursors, setCursors, clearDate }: BoardProp
   return (
     <>
       <Meta
+        className={styles.meta}
         parts={[
           elo ? 'Elo' : 'Published',
           data.tour === null ? 'Both tours' : data.tour.toUpperCase(),
@@ -253,6 +260,11 @@ const position: Column<RankingRow> = {
   header: '#',
   align: 'right',
   value: (row) => row.position,
+  render: (row) => (
+    <span className={row.position === 1 ? `${styles.position} ${styles.leader}` : styles.position}>
+      {row.position}
+    </span>
+  ),
 }
 
 const player: Column<RankingRow> = {
@@ -275,7 +287,7 @@ const rating: Column<RankingRow> = {
   header: 'Elo',
   align: 'right',
   value: (row) => row.elo,
-  render: (row) => Math.round(row.elo ?? 0),
+  render: (row) => <CountUp className={styles.elo} value={Math.round(row.elo ?? 0)} />,
 }
 
 const peak: Column<RankingRow> = {
@@ -329,8 +341,7 @@ const points: Column<RankingRow> = {
   value: (row) => row.points,
 }
 
-// The surface they are best on, in its hue: the one coloured cell in the
-// table, because it is the one surface-scoped value. Steps aside on a phone.
+// The surface they are best on, as its badge. Steps aside on a phone.
 const bestSurface: Column<RankingRow> = {
   key: 'best',
   header: 'Best surface',
@@ -338,8 +349,8 @@ const bestSurface: Column<RankingRow> = {
   value: (row) => row.best_surface_elo,
   render: (row) =>
     row.best_surface === null || row.best_surface_elo === null ? null : (
-      <span className={styles.best} style={{ color: surfaceVar(row.best_surface) }}>
-        <SurfaceDot surface={row.best_surface} /> {Math.round(row.best_surface_elo)}
+      <span className={styles.best}>
+        <SurfaceBadge surface={row.best_surface} /> {Math.round(row.best_surface_elo)}
       </span>
     ),
 }

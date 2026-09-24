@@ -1,64 +1,70 @@
-.title {
-  font-size: var(--t-28);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  padding: var(--s-2) 0 var(--s-4);
-}
-
 .controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--s-2) var(--s-5);
-  padding-bottom: var(--s-2);
+  gap: var(--s-2) var(--s-4);
+  margin-bottom: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
 .types {
-  display: flex;
-  gap: var(--s-2);
-  padding: var(--s-2) 0;
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--card-line);
+  border-radius: 999px;
 }
 
-/* The same typed cell the filters are, in ink: the type is not a surface and
-   may not borrow its hue. */
 .type {
-  padding: 4px 10px;
-  border: 1px solid transparent;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 999px;
   background: none;
   font: inherit;
-  font-size: var(--t-13);
-  font-weight: 500;
+  font-size: var(--t-12);
+  font-weight: 600;
   color: var(--pencil);
   cursor: pointer;
   transition:
-    color 120ms ease-out,
-    border-color 120ms ease-out;
+    color 180ms ease-out,
+    background-color 180ms ease-out;
 }
 
 .type:hover {
   color: var(--ink);
+  background: var(--highlight);
 }
 
-.active {
-  color: var(--ink);
-  border-color: var(--ink);
+.active,
+.active:hover {
+  color: var(--card);
+  background: var(--player-a);
 }
 
-/* The date is a typed field like the search: a prompt, the entry, one rule. */
 .dateLabel {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--s-2);
-  font-size: var(--t-13);
-  color: var(--ink);
-  font-weight: 500;
-  border-bottom: var(--rule-ink);
+  margin-left: auto;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm);
+  font-size: var(--t-12);
+  font-weight: 600;
+  color: var(--pencil);
+  transition: border-color 160ms ease-out;
+}
+
+.dateLabel:focus-within {
+  border-color: var(--player-a);
 }
 
 .date {
   border: 0;
-  padding: 5px 0;
+  padding: 7px 0;
   font: inherit;
   font-size: var(--t-13);
   background: none;
@@ -67,11 +73,47 @@
 
 .date:focus-visible {
   outline: 0;
-  box-shadow: 0 1px 0 var(--ink);
 }
 
-.chart {
-  padding: var(--s-2) 0 var(--s-4);
+.card {
+  margin: var(--s-4) 0 var(--s-5);
+  padding: var(--s-4) var(--s-5);
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  animation: dp-rise 700ms var(--ease-out) both;
+}
+
+.meta {
+  margin: var(--s-4) 0 var(--s-3);
+  font-size: var(--t-12);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.position {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 4px;
+  border-radius: 13px;
+  background: var(--highlight);
+  font-size: var(--t-12);
+  font-weight: 700;
+  color: var(--pencil);
+}
+
+.leader {
+  background: var(--lime);
+  color: var(--ink);
+  animation: dp-pulse 2.6s ease-in-out infinite;
+}
+
+.elo {
+  font-weight: 700;
+  color: var(--player-a);
 }
 
 .player {
@@ -80,16 +122,20 @@
 }
 
 .player:hover {
-  border-bottom: var(--rule-ink);
+  color: var(--player-a);
 }
 
 .best {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .country {
   margin-left: var(--s-2);
-  font-size: var(--t-12);
+  font-size: var(--t-11);
   color: var(--pencil);
 }
 
@@ -114,9 +160,15 @@
   max-width: 56ch;
 }
 
-@media (min-width: 880px) {
-  .title {
-    font-size: var(--t-32);
-    padding-top: var(--s-4);
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .leader {
+    animation: none;
+  }
+}
+
+@media (max-width: 879px) {
+  .dateLabel {
+    margin-left: 0;
   }
 }
