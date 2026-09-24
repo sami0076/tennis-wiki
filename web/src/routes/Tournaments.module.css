@@ -1,41 +1,43 @@
-.title {
-  font-size: var(--t-28);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  padding: var(--s-2) 0 var(--s-4);
-}
-
-.seasons {
-  padding-bottom: var(--s-4);
-  font-size: var(--t-13);
-  color: var(--pencil);
-}
-
-.seasons a {
+.seasonsLink {
   color: var(--ink);
+  font-weight: 700;
+  border-bottom: 1.5px solid var(--lime-deep);
 }
 
 .controls {
   display: grid;
-  gap: var(--s-2);
-  padding-bottom: var(--s-4);
-  border-bottom: var(--rule-ink);
+  justify-items: start;
+  gap: var(--s-3);
+  margin-bottom: var(--s-5);
+  padding: var(--s-4) var(--s-5);
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
-/* The typed field: prompt and entry over one rule. */
 .field {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--s-2);
   max-width: 480px;
-  border-bottom: var(--rule-ink);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius);
+  transition:
+    border-color 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+.field:focus-within {
+  border-color: var(--player-a);
+  box-shadow: 0 0 0 3px var(--player-a-wash);
 }
 
 .label {
   flex: 0 0 auto;
-  font-size: var(--t-14);
-  font-weight: 500;
+  font-size: var(--t-12);
+  font-weight: 600;
+  color: var(--pencil);
 }
 
 .label::after {
@@ -45,7 +47,7 @@
 .input {
   flex: 1 1 auto;
   min-width: 0;
-  padding: 5px 0;
+  padding: 10px 0;
   border: 0;
   background: transparent;
   font: inherit;
@@ -55,53 +57,71 @@
 
 .input:focus-visible {
   outline: 0;
-  box-shadow: 0 1px 0 var(--ink);
 }
 
 .levels {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s-2);
-  padding: var(--s-2) 0;
+  gap: 4px;
 }
 
-/* The same typed cell as the tour filter, in ink: a level is not a surface. */
 .level {
-  padding: 4px 10px;
-  border: 1px solid transparent;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 999px;
   background: none;
   font: inherit;
-  font-size: var(--t-13);
-  font-weight: 500;
+  font-size: var(--t-12);
+  font-weight: 600;
   color: var(--pencil);
   cursor: pointer;
   transition:
-    color 120ms ease-out,
-    border-color 120ms ease-out;
+    color 160ms ease-out,
+    background-color 160ms ease-out;
 }
 
 .level:hover {
   color: var(--ink);
+  background: var(--highlight);
 }
 
-.active {
-  color: var(--ink);
-  border-color: var(--ink);
+.active,
+.active:hover {
+  color: var(--card);
+  background: var(--ink);
 }
 
 .index {
+  display: grid;
+  gap: var(--s-2);
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-/* A level's heading is a table head: pencil under an ink rule. */
+/* A level's heading: small caps with the ball beside it. */
 .group {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
   padding: var(--s-5) 0 var(--s-1);
-  border-bottom: var(--rule-ink);
   font-size: var(--t-12);
-  font-weight: 500;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--pencil);
+}
+
+.group::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--lime-deep);
+}
+
+.group:first-child {
+  padding-top: 0;
 }
 
 .row {
@@ -110,9 +130,25 @@
   align-items: baseline;
   column-gap: var(--s-4);
   row-gap: 2px;
-  padding: 9px 0;
-  border-bottom: var(--rule);
+  padding: 13px var(--s-4);
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
   font-size: var(--t-13);
+  transition:
+    transform 200ms var(--ease-out),
+    box-shadow 200ms ease-out;
+}
+
+.row:hover {
+  transform: translateX(4px);
+  box-shadow: inset 3px 0 0 var(--player-a), var(--shadow-lift);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .row {
+    animation: dp-rise 500ms var(--ease-out) both;
+  }
 }
 
 .name {
@@ -121,7 +157,7 @@
 }
 
 .name:hover {
-  border-bottom: var(--rule-ink);
+  color: var(--player-a);
 }
 
 /* Tour, seasons and count as three aligned columns, read down the list. */
@@ -155,10 +191,4 @@
   flex-wrap: wrap;
   gap: var(--s-3);
   padding-bottom: var(--s-4);
-}
-
-@media (min-width: 880px) {
-  .title {
-    font-size: var(--t-32);
-  }
 }

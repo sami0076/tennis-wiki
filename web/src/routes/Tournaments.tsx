@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import type { EventSummary, Page } from '../api/client'
 import { getEvents } from '../api/endpoints'
 import { useResource, type Resource } from '../api/useResource'
-import { Button, EmptyState, Skeleton, TourFilter } from '../components'
+import { Button, EmptyState, PageHeader, Skeleton, TourFilter } from '../components'
 import { useDebounced } from '../lib/useDebounced'
 import { useUrlParam } from '../lib/useUrlParam'
 import styles from './Tournaments.module.css'
@@ -63,10 +63,18 @@ export function Tournaments() {
 
   return (
     <>
-      <h1 className={styles.title}>Tournaments</h1>
-      <p className={styles.seasons}>
-        Or the calendar a year at a time: <Link to="/seasons">Seasons</Link>
-      </p>
+      <PageHeader
+        kicker="Every event · both tours"
+        title="Tournaments"
+        lede={
+          <>
+            Every draw on both tours, grouped by level. Or the calendar a year at a time:{' '}
+            <Link className={styles.seasonsLink} to="/seasons">
+              Seasons
+            </Link>
+          </>
+        }
+      />
 
       <div className={styles.controls}>
         <div className={styles.field}>
@@ -143,7 +151,7 @@ function Index({ page, query, cursors, setCursors }: IndexProps) {
                 {CATEGORY_WORDS[event.category] ?? event.category}
               </li>
             ) : null}
-            <li className={styles.row}>
+            <li className={styles.row} style={{ animationDelay: `${Math.min(i, 20) * 25}ms` }}>
               <Link className={styles.name} to={`/tournaments/${event.slug}`}>
                 {event.name}
               </Link>
