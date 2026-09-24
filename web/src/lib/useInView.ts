@@ -11,6 +11,12 @@ export function useInView<T extends Element>(margin = '0px 0px -10% 0px') {
 
   useEffect(() => {
     if (seen || ref.current === null) return
+    // Already on screen when it mounts: no need to wait for the first callback.
+    const box = ref.current.getBoundingClientRect()
+    if (box.top < window.innerHeight && box.bottom > 0) {
+      setSeen(true)
+      return
+    }
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
