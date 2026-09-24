@@ -15,6 +15,7 @@ import {
   Card,
   CountUp,
   CourtArt,
+  Note,
   PageHeader,
   PlayerSearch,
   RankDelta,
@@ -155,8 +156,9 @@ export function Home() {
               defaultSort={{ key: 'matches', direction: 'desc' }}
             />
             <p className={styles.seasons}>
-              The same calendar a year at a time, both tours on every row:{' '}
-              <Link to="/seasons">Seasons</Link>.
+              <Link className={styles.columnLink} to="/seasons">
+                Browse by season →
+              </Link>
             </p>
           </>
         ) : null}
@@ -386,18 +388,13 @@ function Seeding({
         animate
       />
       <div className={styles.foot}>
-        <p className={styles.caption}>
-          The {rows.length} highest-rated players to {lines.data.to}, on one shared scale,
-          each line stepping across to its seed. Rated only in the weeks they played, which
-          is why a line can stop before the edge.
-        </p>
-        <div className={styles.seedingFoot}>
-          <p className={styles.caption}>
+        <Note>
+          <p>
             Elo as of {leaders.data.as_of}, the last week that exists rather than today. The
             signed figure is how far the model puts a player from their published rank.
           </p>
-          <ButtonLink to="/rankings">See the full rankings</ButtonLink>
-        </div>
+        </Note>
+        <ButtonLink to="/rankings">See the full rankings</ButtonLink>
       </div>
     </>
   )
@@ -482,13 +479,8 @@ function Replay({ draw }: { draw: Resource<DrawSimulation> }) {
         <SurfaceDot surface={sim.event.surface} label={false} /> {sim.event.name}{' '}
         {sim.event.season}, replayed {sim.runs.toLocaleString()} times
       </h2>
-      <p className={styles.standfirst}>
-        This draw was played. The ratings are as of {sim.event.ratings_as_of}, the week it
-        began, and every figure is the share of runs in which that player was still in the
-        draw at that round, with a 95% interval on the title.
-      </p>
       <StatTable
-        caption={`The columns read like a draw sheet: a row can only fall from left to right. The ${sim.entered - shown.length} players not listed share ${(rest * 100).toFixed(1)}% of the title between them. Seeded, so the same query gives the same answer.`}
+        caption={`This draw was played. Ratings are as of ${sim.event.ratings_as_of}, the week it began; each figure is the share of runs in which that player was still in the draw at that round, with a 95% interval on the title. The ${sim.entered - shown.length} players not listed share ${(rest * 100).toFixed(1)}% of the title between them.`}
         columns={columns}
         rows={shown}
         rowKey={(row) => row.slug}
