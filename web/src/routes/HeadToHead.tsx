@@ -31,6 +31,7 @@ import {
   CountUp,
   FormPills,
   Kicker,
+  Note,
   Reveal,
   SurfaceBadge,
   ButtonLink,
@@ -328,9 +329,6 @@ function Rivalry({
         <ButtonLink to={`/simulator?a=${playerA.slug}&b=${playerB.slug}`}>
           Simulate this matchup
         </ButtonLink>
-        <p className={styles.caption}>
-          Every rung from a service point up to the match, derived from both ratings.
-        </p>
       </div>
     </>
   )
@@ -428,10 +426,6 @@ function SimulatorCard({
           <div className={styles.oddsBar} aria-hidden="true">
             <span style={{ width: `${pa * 100}%` }} />
           </div>
-          <p className={styles.caption}>
-            Closed-form Markov chain from a service point up to the match, derived from both
-            ratings.
-          </p>
         </>
       ) : null}
       <div className={styles.simActions}>
@@ -632,14 +626,7 @@ function RivalrySection({
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>The rivalry, oldest to newest</h2>
-      <RivalryStrip results={results} nameA={playerA.name} nameB={playerB.name} />
-      {record.incomplete > 0 ? (
-        <p className={styles.caption}>
-          {record.incomplete} of these {record.matches} ended in a retirement or a walkover.
-          They count in the record, because somebody advanced, and are left out of every rate
-          below.
-        </p>
-      ) : null}
+      <RivalryStrip results={results} nameA={playerA.name} nameB={playerB.name} legend={false} />
       {closeness.deciders.matches > 0 ? (
         <SplitBar
           label="Deciding sets won"
@@ -656,13 +643,25 @@ function RivalrySection({
           max={closeness.tiebreaks.matches}
         />
       ) : null}
-      <p className={styles.caption}>
+      <Note>
+        <p>
+          Filled squares are wins for {playerA.name}, outlined are wins for {playerB.name}. Colour
+          is the surface.
+        </p>
+        {record.incomplete > 0 ? (
+          <p>
+            {record.incomplete} of these {record.matches} ended in a retirement or a walkover.
+            They count in the record and are left out of every rate.
+          </p>
+        ) : null}
+        <p>
         {closeness.deciders.matches} of the {closeness.scored} meetings whose score could be read went
         to a deciding set, and {closeness.tiebreaks.matches}{' '}
         {closeness.tiebreaks.matches === 1 ? 'tiebreak was' : 'tiebreaks were'} played between them.
         Both are over all {total} meetings whatever the cut above; the record and the strip are
         the cut.
-      </p>
+        </p>
+      </Note>
     </section>
   )
 }
@@ -709,10 +708,10 @@ function ServeSection({
       {compare(serveA.rates, serveB.rates).map((row) => (
         <CompareRow key={row.label} row={row} nameA={playerA.name} nameB={playerB.name} />
       ))}
-      <p className={styles.caption}>
+      <Note>
         Over the {Number(serveA.matches_with_data)} of {filtered ? 'these' : 'their'} meetings
         that recorded a serve line{filtered ? ', under the cut above' : ''}.
-      </p>
+      </Note>
     </section>
   )
 }
@@ -829,11 +828,11 @@ function RatingsSection({
         />
       ) : null}
 
-      <p className={styles.caption}>
+      <Note>
         A rating a player never earned is absent rather than 1500: an unplayed surface is not a
         rating of average. A career that ended keeps its last rating, which is a real number
         and the wrong one to read as form.
-      </p>
+      </Note>
     </section>
   )
 }
