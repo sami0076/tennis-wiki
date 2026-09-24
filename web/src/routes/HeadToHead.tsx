@@ -352,7 +352,7 @@ function PlayerPanel({
   const recent = form.state === 'ready' ? form.data.data.slice(0, 10) : []
   const hand = profile.state === 'ready' ? formatHand(profile.data.hand) : null
   return (
-    <Card tint={side} className={side === 'a' ? styles.panel : `${styles.panel} ${styles.panelB}`}>
+    <Card className={side === 'a' ? styles.panel : `${styles.panel} ${styles.panelB}`}>
       <span className={side === 'a' ? styles.dashA : styles.dashB} aria-hidden="true" />
       <Link className={side === 'a' ? styles.nameA : styles.nameB} to={`/players/${player.slug}`}>
         {player.name}
@@ -399,7 +399,6 @@ function SimulatorCard({
 
   return (
     <Card
-      tint="ink"
       title="Match simulator"
       aside={`${surface === null ? 'All surfaces' : surfaceLabel(surface)} · Bo${bestOf}`}
     >

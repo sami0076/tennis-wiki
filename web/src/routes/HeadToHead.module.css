@@ -1,4 +1,4 @@
-/* Two tinted panels around the tally, and the split under all three. */
+/* Two panels around the tally, and the split under all three. */
 .score {
   display: grid;
   gap: var(--s-3);
@@ -477,8 +477,8 @@
   gap: var(--s-3) var(--s-5);
   padding: var(--s-5);
   border-radius: var(--radius);
-  background: var(--lime-wash);
-  box-shadow: inset 0 0 0 1px var(--lime-deep);
+  background: var(--card);
+  box-shadow: var(--shadow);
 }
 
 .simulate .caption {
@@ -551,7 +551,7 @@
 }
 
 .field:focus-within {
-  border-color: var(--player-a);
+  border-color: var(--ink);
 }
 
 .fieldLabel {
