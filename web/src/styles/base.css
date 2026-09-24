@@ -25,8 +25,8 @@ body {
 }
 
 ::selection {
-  background: var(--lime);
-  color: var(--ink);
+  background: var(--ink);
+  color: var(--bond);
 }
 
 h1,
@@ -63,7 +63,7 @@ a:hover {
 }
 
 :focus-visible {
-  outline: 2px solid var(--player-a);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
   border-radius: 2px;
 }
@@ -135,10 +135,10 @@ table,
 @keyframes dp-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgb(212 245 60 / 0.7);
+    box-shadow: 0 0 0 0 rgb(23 24 26 / 0.35);
   }
   50% {
-    box-shadow: 0 0 0 6px rgb(212 245 60 / 0);
+    box-shadow: 0 0 0 6px rgb(23 24 26 / 0);
   }
 }
 

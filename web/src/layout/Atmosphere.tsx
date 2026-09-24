@@ -1,19 +1,7 @@
 import { useEffect, useRef } from 'react'
 import styles from './Atmosphere.module.css'
 
-/** Soft coloured light drifting behind every page. Decorative only. */
-export function Backdrop() {
-  return (
-    <div className={styles.backdrop} aria-hidden="true">
-      <span className={`${styles.orb} ${styles.violet}`} />
-      <span className={`${styles.orb} ${styles.magenta}`} />
-      <span className={`${styles.orb} ${styles.lime}`} />
-      <span className={styles.grain} />
-    </div>
-  )
-}
-
-/** A lime bar across the top that fills as the page scrolls. */
+/** A bar across the top that fills as the page scrolls. */
 export function ScrollProgress() {
   const bar = useRef<HTMLDivElement>(null)
   useEffect(() => {

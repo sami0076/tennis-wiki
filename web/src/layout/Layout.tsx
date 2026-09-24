@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom'
 import { PlayerSearch } from '../components'
-import { Backdrop, ScrollProgress } from './Atmosphere'
+import { ScrollProgress } from './Atmosphere'
 import styles from './Layout.module.css'
 
 interface LayoutProps {
@@ -28,7 +28,6 @@ export function Layout({ children }: LayoutProps) {
   const { pathname } = useLocation()
   return (
     <div className={styles.shell}>
-      <Backdrop />
       <ScrollProgress />
       <header className={styles.header}>
         <nav className={styles.nav}>

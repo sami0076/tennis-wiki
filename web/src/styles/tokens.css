@@ -14,10 +14,16 @@
   --pencil-mid: #8a8881;
   --pencil-light: #cfcdc5;
 
-  /* the ball */
-  --lime: #d4f53c;
-  --lime-deep: #b9dc1c;
-  --lime-wash: #f3fbd0;
+  /* the ball, kept for the court and the scoreboard only */
+  --ball: #d4f53c;
+  --ball-deep: #b9dc1c;
+
+  /* the accent is ink: the site is cream, black and white, and colour is
+     spent only where it tells two players or four surfaces apart */
+  --lime: #17181a;
+  --lime-deep: #3a3b40;
+  --lime-wash: #ffffff;
+  --on-accent: #ffffff;
 
   /* surfaces: ink for text and bars, wash for badges */
   --clay: #a84f1f;
