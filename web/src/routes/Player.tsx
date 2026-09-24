@@ -5,8 +5,10 @@ import {
   type Career,
   type Clutch,
   type ClutchMetric,
+  type Page,
   type PlayerMatch,
   type PlayerProfile,
+  type RankingHistory,
 } from '../api/client'
 import {
   getCoverage,
@@ -20,9 +22,15 @@ import {
 import { useResource, type Resource } from '../api/useResource'
 import {
   AbsentCell,
+  AreaChart,
   ButtonLink,
   Button,
+  Card,
   ChartedMark,
+  Odometer,
+  FormPills,
+  Kicker,
+  Note,
   ChartedSheet,
   EmptyState,
   EventLink,
@@ -31,7 +39,6 @@ import {
   RankDelta,
   Score,
   Skeleton,
-  Sparkline,
   StatRow,
   StatTable,
   SurfaceDot,
@@ -41,7 +48,7 @@ import {
   type Column,
 } from '../components'
 import { absenceReason, hasStatistics } from '../lib/absence'
-import { ageOn, careerSpan, formatHand, formatPercent } from '../lib/format'
+import { ageOn, careerSpan, formatElo, formatHand, formatPercent, surname } from '../lib/format'
 import { tierLabel } from '../lib/tier'
 import { breadcrumbs, person, useJsonLd } from '../lib/jsonld'
 import { useUrlParam } from '../lib/useUrlParam'
@@ -87,6 +94,7 @@ export function Player() {
       getPlayerMatches(slug, { surface, limit: 25, cursor: cursors.at(-1) ?? null }, signal),
     [slug, surface, cursors.length],
   )
+  const form = useResource((signal) => getPlayerMatches(slug, { limit: 10 }, signal), [slug])
 
   if (profile.state === 'loading') {
     return (
@@ -121,26 +129,28 @@ export function Player() {
 
   return (
     <>
-      <IdentityHeader player={player} active={active} />
+      <PlayerHero player={player} active={active} rankings={rankings} form={form} />
 
-      {player.ratings === null ? null : (
-        <SurfaceEloStrip series={player.ratings} mode={active ? 'current' : 'peak'} />
-      )}
+      {player.career === null ? null : <CareerTiles career={player.career} />}
 
-      {trajectory.state === 'ready' && trajectory.data.points.length > 1 ? (
-        <figure className={styles.trajectory}>
-          <Sparkline
-            points={trajectory.data.points.map((p) => ({ date: p.as_of, elo: p.elo }))}
-            label={`Overall Elo from ${trajectory.data.from} to ${trajectory.data.to}`}
-          />
-          <figcaption className={styles.caption}>
-            Overall Elo, {trajectory.data.from} to {trajectory.data.to}, between{' '}
-            {Math.round(Math.min(...trajectory.data.points.map((p) => p.elo)))} and{' '}
-            {Math.round(Math.max(...trajectory.data.points.map((p) => p.elo)))}. Rated only in
-            the weeks they played.
-          </figcaption>
-        </figure>
-      ) : null}
+      <div className={styles.charts}>
+        {trajectory.state === 'ready' && trajectory.data.points.length > 1 ? (
+          <Card
+            title="Rating history"
+            aside={`Weekly · ${trajectory.data.from.slice(0, 4)} – ${trajectory.data.to.slice(0, 4)}`}
+          >
+            <AreaChart
+              points={trajectory.data.points.map((p) => ({ date: p.as_of, elo: p.elo }))}
+              label={`Overall Elo from ${trajectory.data.from} to ${trajectory.data.to}`}
+            />
+          </Card>
+        ) : null}
+        {player.ratings === null || player.ratings.every((s) => s.surface === 'overall') ? null : (
+          <Card title="Elo by surface" delay={120}>
+            <SurfaceEloStrip series={player.ratings} mode={active ? 'current' : 'peak'} overall={false} />
+          </Card>
+        )}
+      </div>
 
       {player.career === null ? (
         <EmptyState
@@ -189,7 +199,17 @@ export function Player() {
   )
 }
 
-function IdentityHeader({ player, active }: { player: PlayerProfile; active: boolean }) {
+function PlayerHero({
+  player,
+  active,
+  rankings,
+  form,
+}: {
+  player: PlayerProfile
+  active: boolean
+  rankings: Resource<RankingHistory>
+  form: Resource<Page<PlayerMatch>>
+}) {
   const career = player.career
   // An age while the career is running, its span once it is over. Both answer
   // "when was this player" and only one of them is right at a time.
@@ -198,19 +218,85 @@ function IdentityHeader({ player, active }: { player: PlayerProfile; active: boo
       ? ageOn(player.birth_date, career.last_match)
       : null
   const span = career !== null && !active ? careerSpan(career.first_match, career.last_match) : null
+  const overall = player.ratings?.find((s) => s.surface === 'overall') ?? null
+  const latest =
+    rankings.state === 'ready' && active ? rankings.data.points[rankings.data.points.length - 1] : undefined
+  const recent = form.state === 'ready' ? form.data.data.slice(0, 10) : []
+  const rival = recent[0]?.opponent
 
   return (
-    <div className={styles.identity}>
-      <h1 className={styles.name}>{player.name}</h1>
-      <Meta
-        parts={[
-          player.country,
-          formatHand(player.hand),
-          when,
-          span,
-          player.pro_since !== null ? `turned pro ${player.pro_since}` : null,
-        ]}
-      />
+    <div className={styles.hero}>
+      <div className={styles.identity}>
+        <div className={styles.kicker}>
+          <span className={styles.dash} aria-hidden="true" />
+          <Meta
+            parts={[
+              player.country,
+              formatHand(player.hand),
+              when,
+              span,
+              player.pro_since !== null ? `turned pro ${player.pro_since}` : null,
+            ]}
+          />
+        </div>
+        <h1 className={styles.name}>{player.name}</h1>
+        <div className={styles.chips}>
+          <span className={`${styles.chip} ${styles.chipTour}`}>{player.tour.toUpperCase()}</span>
+          {latest !== undefined ? (
+            <span className={styles.chip}>
+              Ranked #{latest.rank}
+            </span>
+          ) : null}
+          {rival !== undefined ? (
+            <Link className={styles.chip} to={`/h2h/${player.slug}/${rival.slug}`}>
+              Compare with {surname(rival.name)} →
+            </Link>
+          ) : null}
+        </div>
+      </div>
+
+      {overall === null ? null : (
+        <Card className={styles.eloCard} delay={100}>
+          <Kicker>{active ? 'Elo rating' : 'Peak Elo'}</Kicker>
+          <div className={styles.eloRow}>
+            <Odometer className={styles.elo} value={Math.round(active ? overall.current.elo : overall.peak.elo)} />
+            <div className={styles.eloAside}>
+              <Kicker>{active ? 'Peak' : 'Last rated'}</Kicker>
+              <div className={styles.eloAsideValue}>
+                {formatElo(active ? overall.peak.elo : overall.current.elo)}
+              </div>
+              <div className={styles.eloAsideDate}>{active ? overall.peak.as_of : overall.current.as_of}</div>
+            </div>
+          </div>
+          {recent.length > 0 ? (
+            <>
+              <Kicker className={styles.formLabel}>Last {recent.length}</Kicker>
+              <FormPills results={recent.map((m) => m.won).reverse()} size="lg" />
+            </>
+          ) : null}
+        </Card>
+      )}
+    </div>
+  )
+}
+
+function CareerTiles({ career }: { career: Career }) {
+  const tiles = [
+    { label: 'Career record', value: `${career.wins}-${career.losses}` },
+    { label: 'Win rate', value: formatPercent(career.win_percentage) },
+    { label: 'Titles', value: String(career.titles), count: career.titles },
+    { label: 'Majors', value: String(career.majors), count: career.majors },
+  ]
+  return (
+    <div className={styles.tiles}>
+      {tiles.map((tile, index) => (
+        <Card key={tile.label} tilt className={styles.tile} delay={index * 80}>
+          <Kicker>{tile.label}</Kicker>
+          <div className={styles.tileValue}>
+            {'count' in tile && tile.count !== undefined ? <Odometer value={tile.count} /> : tile.value}
+          </div>
+        </Card>
+      ))}
     </div>
   )
 }
@@ -261,7 +347,8 @@ function ClutchSection({ clutch }: { clutch: Resource<Clutch> }) {
       <ClutchRow label="Break points saved" metric={data.break_points_saved} />
       <ClutchRow label="Tiebreaks won" metric={data.tiebreaks_won} />
       <ClutchRow label="Deciding sets won" metric={data.deciding_sets_won} />
-      <p className={styles.caption}>
+      <Note>
+      <p>
         Against every {(data.baseline.tiers ?? []).map(tierName).join(' and ')} match from the{' '}
         {decade(data.baseline.from_decade)} to the {decade(data.baseline.to_decade)}, weighted
         by where this player&apos;s own matches fell.{' '}
@@ -271,7 +358,7 @@ function ClutchSection({ clutch }: { clutch: Resource<Clutch> }) {
         Tiebreaks and deciding sets cover the {data.baseline.scored_matches} of{' '}
         {data.baseline.matches} matches with a readable, completed score.
       </p>
-      <p className={styles.caption}>
+      <p>
         Every tiebreak is won by somebody, so those two averages sit at 50% by construction
         and the figure above is the margin over a coin toss. Break points saved is a real
         aggregate and is not 50%.{' '}
@@ -280,6 +367,7 @@ function ClutchSection({ clutch }: { clutch: Resource<Clutch> }) {
         </Link>
         .
       </p>
+      </Note>
     </section>
   )
 }
@@ -320,16 +408,9 @@ function CareerSection({ career }: { career: Career }) {
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>Career</h2>
-      <StatRow label="Record">
-        {career.wins}-{career.losses}
-      </StatRow>
-      <StatRow label="Win percentage">{formatPercent(career.win_percentage)}</StatRow>
-      <StatRow label="Titles">{career.titles}</StatRow>
-      <StatRow label="Majors">{career.majors}</StatRow>
+      <StatRow label="Matches">{career.matches.toLocaleString()}</StatRow>
       <StatRow label="Retirements and walkovers">{career.incomplete_matches}</StatRow>
-      <p className={styles.caption}>
-        Retirements and walkovers count in the record and are excluded from every rate.
-      </p>
+      <Note>Retirements and walkovers count in the record and are excluded from every rate.</Note>
     </section>
   )
 }
@@ -372,10 +453,6 @@ function RankingSection({
       {latest !== undefined ? (
         <StatRow label={`Last published, ${latest.date}`}>{latest.rank}</StatRow>
       ) : null}
-      <p className={styles.caption}>
-        The tour&apos;s own list, {history.from} to {history.to}. A different claim from the
-        Elo above, which this project computes from results.
-      </p>
     </section>
   )
 }

@@ -1,0 +1,119 @@
+.card {
+  --mx: 50%;
+  --my: 0%;
+  --rx: 0deg;
+  --ry: 0deg;
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  padding: var(--s-5);
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid rgb(23 24 26 / 0.05);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition:
+    box-shadow 300ms var(--ease-out),
+    transform 300ms var(--ease-out);
+}
+
+/* The pointer carries a soft light across the card. */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(
+    420px circle at var(--mx) var(--my),
+    rgb(23 24 26 / 0.05),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 300ms ease-out;
+  pointer-events: none;
+}
+
+/* And an ink edge draws along the top. */
+.card::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: 16px;
+  left: 16px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--ink);
+  transform: scaleX(0);
+  transition: transform 500ms var(--ease-out);
+  pointer-events: none;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lift);
+}
+
+.card:hover::before {
+  opacity: 1;
+}
+
+.card:hover::after {
+  transform: scaleX(1);
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .tilt:hover {
+    transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(-3px);
+  }
+}
+
+/* Tints are kept as names so pages can still ask for them, but the site is
+   cream, black and white: a tinted card is a plain white one. */
+.a,
+.b,
+.lime,
+.ink {
+  background: var(--card);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-bottom: var(--s-4);
+}
+
+.title {
+  font-size: var(--t-16);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.aside {
+  font-size: var(--t-11);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pencil);
+  white-space: nowrap;
+}
+
+.kicker {
+  font-size: var(--t-11);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pencil);
+}
+
+@media (min-width: 880px) {
+  .card {
+    padding: var(--s-5) var(--s-6);
+  }
+
+  .title {
+    font-size: var(--t-20);
+  }
+}

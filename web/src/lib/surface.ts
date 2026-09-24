@@ -26,6 +26,22 @@ export function surfaceVar(surface: string | null): string {
   }
 }
 
+/** surfaceWash is the pale ground a surface badge sits on. */
+export function surfaceWash(surface: string | null): string {
+  switch (surface) {
+    case 'hard':
+      return 'var(--hard-wash)'
+    case 'clay':
+      return 'var(--clay-wash)'
+    case 'grass':
+      return 'var(--grass-wash)'
+    case 'carpet':
+      return 'var(--carpet-wash)'
+    default:
+      return 'var(--highlight)'
+  }
+}
+
 /** surfaceLabel is the text that must accompany every surface colour. */
 export function surfaceLabel(surface: string | null): string {
   switch (surface) {

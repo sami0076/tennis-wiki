@@ -5,18 +5,20 @@ import { getRankings, getTrajectories } from '../api/endpoints'
 import { useResource, type Resource } from '../api/useResource'
 import {
   Button,
+  CountUp,
   EmptyState,
+  PageHeader,
   Meta,
+  Note,
   RankDelta,
   Skeleton,
   StatTable,
-  SurfaceDot,
+  SurfaceBadge,
   SurfaceToggle,
   TourFilter,
   TrajectoryChart,
   type Column,
 } from '../components'
-import { surfaceVar } from '../lib/surface'
 import { useUrlParam } from '../lib/useUrlParam'
 import styles from './Rankings.module.css'
 import { breadcrumbs, useJsonLd } from '../lib/jsonld'
@@ -70,7 +72,12 @@ export function Rankings() {
 
   return (
     <>
-      <h1 className={styles.title}>Rankings</h1>
+      <PageHeader
+        kicker="Elo · the published list"
+        title="Rankings"
+        mark="Rankings"
+        lede="Every player on one Elo scale, next to the rank the tour published, and how far apart the two are."
+      />
 
       <div className={styles.controls}>
         <div className={styles.types} role="group" aria-label="Ranking type">
@@ -105,9 +112,7 @@ export function Rankings() {
       {kind === 'elo' ? (
         <SurfaceToggle value={surface} onChange={(next) => ask(() => setSurface(next))} />
       ) : (
-        <p className={styles.caption}>
-          The tours publish one list, so this one has no surface split. The Elo list does.
-        </p>
+        <Note>The tours publish one list, so this one has no surface split. The Elo list does.</Note>
       )}
 
       {kind === 'elo' && date === null ? <Leaders lines={lines} /> : null}
@@ -130,7 +135,7 @@ function Leaders({ lines }: { lines: Resource<Trajectories | null> }) {
   if (drawable.length < 2) return null
 
   return (
-    <section className={styles.chart}>
+    <section className={styles.card}>
       <TrajectoryChart
         lines={drawable.map((line) => ({
           name: line.name,
@@ -140,10 +145,6 @@ function Leaders({ lines }: { lines: Resource<Trajectories | null> }) {
         }))}
         animate
       />
-      <p className={styles.caption}>
-        The top eight to {lines.data.to}, on one shared scale, so a line crossing another is
-        a lead changing hands rather than two charts drawn at different sizes.
-      </p>
     </section>
   )
 }
@@ -188,6 +189,7 @@ function Board({ page, elo, surface, cursors, setCursors, clearDate }: BoardProp
   return (
     <>
       <Meta
+        className={styles.meta}
         parts={[
           elo ? 'Elo' : 'Published',
           data.tour === null ? 'Both tours' : data.tour.toUpperCase(),
@@ -195,34 +197,24 @@ function Board({ page, elo, surface, cursors, setCursors, clearDate }: BoardProp
           `as of ${data.as_of}`,
         ]}
       />
-      {/* omitempty on the API side: absent, not null, when no date was asked for */}
-      {data.requested ? (
-        <p className={styles.caption}>
-          You asked for {data.requested}. This is the nearest week at or before it that
-          exists, which is what every ranking here is: as of a week that happened, never as
-          of today.
-        </p>
-      ) : null}
-
       <StatTable
-        caption={
+        caption={[
+          // omitempty on the API side: absent, not null, when no date was asked for
+          data.requested
+            ? `You asked for ${data.requested}. This is the nearest week at or before it that exists: every ranking here is as of a week that happened, never as of today.`
+            : '',
           elo
-            ? 'Elo against the published rank, and the distance between them.'
-            : 'The published list, with the rating this site gives the same players.'
-        }
+            ? 'A rating more than a year old drops out of this list. Without that rule it would be a list of the retired, led by players who stopped in 2005.'
+            : '',
+          `Sorting reorders the ${data.data.length} rows on this page rather than the list behind them.`,
+        ]
+          .filter(Boolean)
+          .join(' ')}
         columns={elo ? eloColumns : officialColumns}
         rows={data.data}
         rowKey={(row) => row.slug}
         defaultSort={{ key: 'position', direction: 'asc' }}
       />
-
-      <p className={styles.caption}>
-        {elo
-          ? 'A rating more than a year old drops out of this list. Without that rule it would be a list of the retired, led by players who stopped in 2005. '
-          : ''}
-        Sorting reorders the {data.data.length} rows on this page rather than the list behind
-        them.
-      </p>
 
       <div className={styles.more}>
         {data.next_cursor !== null && data.next_cursor !== '' ? (
@@ -253,6 +245,11 @@ const position: Column<RankingRow> = {
   header: '#',
   align: 'right',
   value: (row) => row.position,
+  render: (row) => (
+    <span className={row.position === 1 ? `${styles.position} ${styles.leader}` : styles.position}>
+      {row.position}
+    </span>
+  ),
 }
 
 const player: Column<RankingRow> = {
@@ -275,7 +272,7 @@ const rating: Column<RankingRow> = {
   header: 'Elo',
   align: 'right',
   value: (row) => row.elo,
-  render: (row) => Math.round(row.elo ?? 0),
+  render: (row) => <CountUp className={styles.elo} value={Math.round(row.elo ?? 0)} />,
 }
 
 const peak: Column<RankingRow> = {
@@ -329,8 +326,7 @@ const points: Column<RankingRow> = {
   value: (row) => row.points,
 }
 
-// The surface they are best on, in its hue: the one coloured cell in the
-// table, because it is the one surface-scoped value. Steps aside on a phone.
+// The surface they are best on, as its badge. Steps aside on a phone.
 const bestSurface: Column<RankingRow> = {
   key: 'best',
   header: 'Best surface',
@@ -338,8 +334,8 @@ const bestSurface: Column<RankingRow> = {
   value: (row) => row.best_surface_elo,
   render: (row) =>
     row.best_surface === null || row.best_surface_elo === null ? null : (
-      <span className={styles.best} style={{ color: surfaceVar(row.best_surface) }}>
-        <SurfaceDot surface={row.best_surface} /> {Math.round(row.best_surface_elo)}
+      <span className={styles.best}>
+        <SurfaceBadge surface={row.best_surface} /> {Math.round(row.best_surface_elo)}
       </span>
     ),
 }

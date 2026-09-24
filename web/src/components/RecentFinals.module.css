@@ -6,45 +6,72 @@
 }
 
 .finals {
+  display: grid;
+  gap: var(--s-2);
   list-style: none;
   margin: var(--s-3) 0 0;
   padding: 0;
-  border-top: var(--rule-ink);
 }
 
-/* One ruled line per final: tour, the event on its sheet, the result, the score. */
+/* One card per final: the event and its surface, then who beat whom and how. */
 .final {
   display: grid;
-  grid-template-columns: 4ch 1fr;
-  gap: 2px var(--s-3);
-  padding: 9px 0;
-  border-bottom: var(--rule);
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s-2) var(--s-3);
+  padding: 14px var(--s-4);
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
   font-size: var(--t-13);
+  transition:
+    transform 220ms var(--ease-out),
+    box-shadow 220ms ease-out;
 }
 
-.tour {
-  color: var(--pencil);
+.final:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .final {
+    animation: dp-rise 600ms var(--ease-out) both;
+    animation-delay: calc(var(--i) * 80ms + 100ms);
+  }
 }
 
 .event {
-  white-space: nowrap;
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  min-width: 0;
+  font-size: var(--t-12);
+  font-weight: 600;
+}
+
+.tour {
+  font-size: var(--t-11);
+  font-weight: 500;
+  color: var(--pencil);
 }
 
 .sheet {
-  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   border-bottom: 0;
 }
 
 .sheet:hover {
-  border-bottom: var(--rule-ink);
+  color: var(--ink);
 }
 
-.surface {
-  margin-left: 2px;
+.badge {
+  justify-self: end;
 }
 
 .result {
-  grid-column: 2;
+  min-width: 0;
 }
 
 .champion {
@@ -59,18 +86,20 @@
 
 .champion:hover,
 .finalist:hover {
-  border-bottom: var(--rule-ink);
+  color: var(--ink);
 }
 
 .score {
-  grid-column: 2;
-  font-size: var(--t-12);
-  color: var(--pencil);
+  justify-self: end;
+  align-self: end;
+  font-size: var(--t-13);
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .without,
 .error {
-  padding-top: var(--s-2);
+  padding-top: var(--s-3);
   font-size: var(--t-12);
   color: var(--pencil);
 }
@@ -78,20 +107,4 @@
 .error {
   font-size: var(--t-13);
   color: var(--loss);
-}
-
-@media (min-width: 880px) {
-  .final {
-    grid-template-columns: 4ch minmax(14ch, 3fr) 5fr 4fr;
-    align-items: baseline;
-  }
-
-  .result,
-  .score {
-    grid-column: auto;
-  }
-
-  .score {
-    text-align: right;
-  }
 }

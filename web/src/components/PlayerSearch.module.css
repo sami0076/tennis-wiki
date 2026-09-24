@@ -2,17 +2,34 @@
   position: relative;
 }
 
-/* The typed field: a prompt, the entry, one rule under both. */
+/* A white box with a magnifier, lit violet when it has focus. */
 .field {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--s-2);
-  border-bottom: var(--rule-ink);
-  transition: box-shadow 120ms ease-out;
+  padding: 0 var(--s-3);
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition:
+    border-color 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+.field::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  background: var(--pencil);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='7' cy='7' r='5' fill='none' stroke='black' stroke-width='1.8'/%3E%3Cpath d='M11 11l3.5 3.5' stroke='black' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
 }
 
 .field:focus-within {
-  box-shadow: 0 1px 0 var(--ink);
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgb(23 24 26 / 0.08);
 }
 
 .label {
@@ -29,10 +46,10 @@
 .input {
   flex: 1 1 auto;
   min-width: 0;
-  padding: 5px 0;
+  padding: 9px 0;
   border: 0;
   background: transparent;
-  font-size: var(--t-14);
+  font-size: var(--t-13);
   color: var(--ink);
 }
 
@@ -40,8 +57,6 @@
   outline: 0;
 }
 
-/* The list is the one thing that sits above the sheet, and it is boxed in ink
-   like everything else that is selected. */
 .panel {
   position: absolute;
   z-index: 10;
@@ -49,10 +64,13 @@
   right: 0;
   left: 0;
   max-height: 320px;
-  margin-top: var(--s-1);
+  margin-top: 6px;
   overflow-y: auto;
-  border: var(--rule-ink);
-  background: var(--bond);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-lift);
+  animation: dp-rise 220ms var(--ease-out) both;
 }
 
 .hidden {
@@ -61,8 +79,9 @@
 
 .option {
   padding: var(--s-2) var(--s-3);
-  border-bottom: var(--rule);
+  border-bottom: var(--rule-card);
   cursor: pointer;
+  transition: background-color 100ms ease-out;
 }
 
 .option:last-child {
@@ -71,6 +90,7 @@
 
 .on {
   background: var(--highlight);
+  box-shadow: inset 3px 0 0 var(--ink);
 }
 
 .message {

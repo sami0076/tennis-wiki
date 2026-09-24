@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
-import { NavLink, Link, useNavigate } from 'react-router-dom'
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom'
 import { PlayerSearch } from '../components'
+import { ScrollProgress } from './Atmosphere'
 import styles from './Layout.module.css'
 
 interface LayoutProps {
@@ -24,11 +25,14 @@ const links = [
  * licence requires in the foot of every page.
  */
 export function Layout({ children }: LayoutProps) {
+  const { pathname } = useLocation()
   return (
     <div className={styles.shell}>
-      <header>
+      <ScrollProgress />
+      <header className={styles.header}>
         <nav className={styles.nav}>
           <Link to="/" className={styles.brand}>
+            <span className={styles.ball} aria-hidden="true" />
             Deucepoint
           </Link>
           <div className={styles.links}>
@@ -55,9 +59,15 @@ export function Layout({ children }: LayoutProps) {
         </nav>
       </header>
 
-      <main className={styles.main}>{children}</main>
+      <main key={pathname} className={styles.main}>
+        {children}
+      </main>
 
       <footer className={styles.footer}>
+        <p className={styles.footerBrand}>
+          <span className={styles.ball} aria-hidden="true" />
+          Deucepoint
+        </p>
         <p>
           <Link className={styles.footerLink} to="/methodology">
             How these numbers are produced
@@ -85,6 +95,7 @@ function HeaderSearch() {
   return (
     <PlayerSearch
       label="Player"
+      hideLabel
       placeholder="Search 115,000 players"
       value={query}
       onChange={setQuery}

@@ -6,14 +6,17 @@ import { useResource, type Resource } from '../api/useResource'
 import {
   Button,
   ButtonLink,
+  CourtArt,
   DrawSheet,
   EmptyState,
   MatchList,
   Meta,
+  Note,
   RoundList,
+  PageHeader,
   RoundStepper,
   Skeleton,
-  SurfaceDot,
+  SurfaceBadge,
 } from '../components'
 import { absenceReason } from '../lib/absence'
 import { buildBracket, pageSheets, roundGroups, splitRounds, ROUND_WORDS, type SheetPage } from '../lib/bracket'
@@ -74,6 +77,8 @@ export function Edition() {
 function Sheet({ edition, event }: { edition: EditionData; event: Resource<Event> }) {
   const tour = edition.event.tour.toUpperCase()
   const team = edition.link === 'team'
+  const court =
+    edition.surface === 'hard' || edition.surface === 'clay' || edition.surface === 'grass' ? edition.surface : null
   const bracket = useMemo(() => {
     const rounds = splitRounds(edition.matches)
     const main = buildBracket(edition.matches, rounds.main)
@@ -87,33 +92,42 @@ function Sheet({ edition, event }: { edition: EditionData; event: Resource<Event
 
   return (
     <>
-      <p className={styles.path}>
-        <Link to="/tournaments">Tournaments</Link>
-        {'  /  '}
-        <Link to={`/tournaments/${edition.event.slug}`}>
-          {edition.event.name}, {tour}
-        </Link>
-      </p>
-      <h1 className={styles.title}>
-        {edition.name} {edition.season}
-      </h1>
-      <Meta
-        parts={[
-          tour,
-          levelLabel(edition.level, edition.tier, edition.event.tour),
-          edition.surface === null ? null : <SurfaceDot surface={edition.surface} />,
-          edition.draw_size === null ? null : `${edition.draw_size}\u00a0draw`,
-          edition.start_date,
-        ]}
-      />
-      <div className={styles.actions}>
-        {!team && bracket.rounds.main.length > 0 ? (
-          <ButtonLink to={`/simulator?event=${edition.event.slug}&season=${edition.season}`}>
-            Replay this draw
-          </ButtonLink>
-        ) : null}
-        <Editions edition={edition} event={event} />
-      </div>
+      <PageHeader
+        kicker={
+          <span className={styles.path}>
+            <Link to="/tournaments">Tournaments</Link>
+            {'  /  '}
+            <Link to={`/tournaments/${edition.event.slug}`}>
+              {edition.event.name}, {tour}
+            </Link>
+          </span>
+        }
+        title={
+          <>
+            {edition.name} {edition.season}
+          </>
+        }
+        art={court === null ? undefined : <CourtArt surface={court} />}
+      >
+        <Meta
+          className={styles.meta}
+          parts={[
+            tour,
+            levelLabel(edition.level, edition.tier, edition.event.tour),
+            edition.surface === null ? null : <SurfaceBadge surface={edition.surface} />,
+            edition.draw_size === null ? null : `${edition.draw_size}\u00a0draw`,
+            edition.start_date,
+          ]}
+        />
+        <div className={styles.actions}>
+          {!team && bracket.rounds.main.length > 0 ? (
+            <ButtonLink to={`/simulator?event=${edition.event.slug}&season=${edition.season}`}>
+              Replay this draw
+            </ButtonLink>
+          ) : null}
+          <Editions edition={edition} event={event} />
+        </div>
+      </PageHeader>
 
       {team ? (
         <section className={styles.block}>
@@ -148,7 +162,7 @@ function Sheet({ edition, event }: { edition: EditionData; event: Resource<Event
         </section>
       ) : null}
 
-      <p className={styles.caption}>{caption(edition, event)}</p>
+      <Note>{caption(edition, event)}</Note>
     </>
   )
 }

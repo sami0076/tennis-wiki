@@ -1,30 +1,55 @@
-import { Link } from 'react-router-dom'
-import { getCoverage, getRankings, getRecentFinals, getTrajectories, simulateDraw } from '../api/endpoints'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import {
+  getCoverage,
+  getHeadToHead,
+  getRankings,
+  getRecentFinals,
+  getTrajectories,
+  simulateDraw,
+} from '../api/endpoints'
 import { useResource, type Resource } from '../api/useResource'
 import {
   AbsentCell,
   ButtonLink,
+  Card,
+  CountUp,
+  CourtArt,
+  Note,
+  Odometer,
+  PageHeader,
+  PlayerSearch,
+  RankDelta,
   RecentFinals,
+  Reveal,
   SeedingSheet,
   Skeleton,
   StatTable,
   SurfaceDot,
+  Ticker,
   TourFilter,
   type Column,
+  type TickerItem,
 } from '../components'
 import type {
+  RecentFinals as RecentFinalsData,
   CoverageEntry,
+  CoverageResponse,
   DrawOdds,
   DrawSimulation,
+  HeadToHead,
   RankingPage,
+  RankingRow,
   Trajectories,
 } from '../api/client'
 import { FEATURED_DRAW, roundsReached } from '../lib/featuredDraw'
+import { formatElo, surname } from '../lib/format'
 import { useJsonLd, website } from '../lib/jsonld'
 import { useUrlParam } from '../lib/useUrlParam'
 import styles from './Home.module.css'
 
 const SEEDS = 8
+const TOP = 5
 
 const columns: ReadonlyArray<Column<CoverageEntry>> = [
   { key: 'tour', header: 'Tour', value: (row) => row.tour.toUpperCase() },
@@ -49,12 +74,9 @@ const columns: ReadonlyArray<Column<CoverageEntry>> = [
 ]
 
 /**
- * Home is the front of the sheet: the seeding, what the database holds, and a
- * draw the model replayed and can be checked against.
- *
- * The seeding sheet is the site's one piece of ambient motion, and the coverage
- * table below it is the argument the whole project makes, so neither is
- * decoration.
+ * Home: the search, the top of the ratings, the rivalry between the two at the
+ * top, the week's finals, then the leaders' lines, what the database holds and
+ * a draw the model replayed.
  */
 export function Home() {
   const [tour, setTour] = useUrlParam('tour')
@@ -71,35 +93,49 @@ export function Home() {
   const recent = useResource((signal) => getRecentFinals(signal), [])
   useJsonLd('website', website())
 
+  const top = leaders.state === 'ready' ? leaders.data.data : []
+
   return (
     <>
-      <section className={styles.hero}>
-        <div className={styles.head}>
-          <div className={styles.headline}>
-            <h1 className={styles.title}>Every match, and every gap between them.</h1>
-            <p className={styles.standfirst}>
-              1.6 million matches across both tours, back to 1922, rated on one Elo scale.
-              Where a statistic was never recorded, this site explains which kind of never.
-            </p>
-          </div>
-          <div className={styles.seeding}>
-            <TourFilter value={tour} onChange={setTour} />
-            <h2 className={styles.sectionTitle}>
-              Elo leaders{leaders.state === 'ready' ? `, as of ${leaders.data.as_of}` : null}
-            </h2>
-          </div>
-        </div>
+      <PageHeader
+        kicker={<Kicker coverage={coverage} />}
+        title="Every match, and every gap between them."
+        mark="gap"
+        lede="1.6 million matches across both tours, back to 1922, rated on one Elo scale. Where a statistic was never recorded, this site explains which kind of never."
+        art={<CourtArt cycle />}
+      >
+        <HeroSearch />
+        <TryChips top={top} />
+      </PageHeader>
+
+      <Ticker label="Elo leaders and last week's finals" items={tickerItems(top, recent)} />
+
+      <div className={styles.trio}>
+        <section className={styles.column}>
+          <ColumnHead title="Elo top 5" to="/rankings" link="All rankings" />
+          <TopFive leaders={leaders} />
+        </section>
+        <section className={styles.column}>
+          <ColumnHead title="The rivalry at the top" />
+          <TopRivalry top={top} />
+        </section>
+        <section className={styles.column}>
+          <ColumnHead title="Last week's finals" />
+          <RecentFinals recent={recent} />
+        </section>
+      </div>
+
+      <Card
+        className={styles.block}
+        title={
+          <>Elo leaders{leaders.state === 'ready' ? `, as of ${leaders.data.as_of}` : null}</>
+        }
+        aside={<TourFilter value={tour} onChange={setTour} />}
+      >
         <Seeding lines={lines} leaders={leaders} />
-      </section>
+      </Card>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Last week&apos;s finals</h2>
-        <RecentFinals recent={recent} />
-      </section>
-
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>What is actually in the database</h2>
-
+      <Card className={styles.block} title="What is actually in the database">
         {coverage.state === 'loading' ? <Skeleton lines={6} /> : null}
 
         {coverage.state === 'error' ? (
@@ -113,7 +149,7 @@ export function Home() {
           <>
             <div className={styles.through}>
               {Object.entries(coverage.data.current_through).map(([tourName, date]) => (
-                <span key={tourName}>
+                <span key={tourName} className={styles.throughChip}>
                   <span className={styles.throughLabel}>{tourName.toUpperCase()} through </span>
                   {date}
                 </span>
@@ -127,17 +163,205 @@ export function Home() {
               defaultSort={{ key: 'matches', direction: 'desc' }}
             />
             <p className={styles.seasons}>
-              The same calendar a year at a time, both tours on every row:{' '}
-              <Link to="/seasons">Seasons</Link>.
+              <Link className={styles.columnLink} to="/seasons">
+                Browse by season →
+              </Link>
             </p>
           </>
         ) : null}
-      </section>
+      </Card>
 
-      <section className={styles.section}>
+      <Card className={styles.block}>
         <Replay draw={draw} />
-      </section>
+      </Card>
     </>
+  )
+}
+
+function tickerItems(top: ReadonlyArray<RankingRow>, recent: Resource<RecentFinalsData>): TickerItem[] {
+  const leaders: TickerItem[] = top.map((row) => ({
+    key: `elo-${row.slug}`,
+    label: `#${row.position} ${surname(row.name)}`,
+    value: row.elo === null ? 'n/r' : formatElo(row.elo),
+  }))
+  const finals: TickerItem[] =
+    recent.state === 'ready'
+      ? recent.data.finals.map((final) => ({
+          key: `final-${final.tour}-${final.name}`,
+          label: `${final.name} final · ${surname(final.champion.name)} d. ${surname(final.finalist.name)}`,
+          value: final.final_score ?? '',
+        }))
+      : []
+  return [...leaders, ...finals]
+}
+
+function Kicker({ coverage }: { coverage: Resource<CoverageResponse> }) {
+  if (coverage.state !== 'ready') return <>Both tours · every level</>
+  const tiers = coverage.data.tiers
+  const matches = tiers.reduce((sum, tier) => sum + tier.matches, 0)
+  const first = tiers.reduce((min, tier) => (tier.first_match < min ? tier.first_match : min), '9999')
+  return (
+    <>
+      {matches.toLocaleString('en-US')} matches · {first.slice(0, 4)} – today
+    </>
+  )
+}
+
+function HeroSearch() {
+  const navigate = useNavigate()
+  const [query, setQuery] = useState('')
+  const submit = (value: string) => {
+    if (value.trim() === '') return
+    navigate(`/players?q=${encodeURIComponent(value.trim())}`)
+  }
+  return (
+    <form
+      className={styles.search}
+      role="search"
+      onSubmit={(event) => {
+        event.preventDefault()
+        submit(query)
+      }}
+    >
+      <div className={styles.searchField}>
+        <PlayerSearch
+          label="Find a player"
+          hideLabel
+          placeholder="Find a player or a rivalry"
+          value={query}
+          onChange={setQuery}
+          onSelect={(player) => navigate(`/players/${player.slug}`)}
+          onSubmit={submit}
+        />
+      </div>
+      <button type="submit" className={styles.searchButton}>
+        Search
+      </button>
+    </form>
+  )
+}
+
+function TryChips({ top }: { top: ReadonlyArray<RankingRow> }) {
+  if (top.length < 2) return null
+  const [first, second] = top as [RankingRow, RankingRow]
+  const chips = [
+    { to: `/h2h/${first.slug}/${second.slug}`, label: `${surname(first.name)} vs ${surname(second.name)}` },
+    ...top.slice(2, 5).map((row) => ({ to: `/players/${row.slug}`, label: surname(row.name) })),
+  ]
+  return (
+    <div className={styles.chips}>
+      <span className={styles.try}>Try</span>
+      {chips.map((chip) => (
+        <Link key={chip.to} className={styles.chip} to={chip.to}>
+          {chip.label}
+        </Link>
+      ))}
+    </div>
+  )
+}
+
+function ColumnHead({ title, to, link }: { title: string; to?: string; link?: string }) {
+  return (
+    <div className={styles.columnHead}>
+      <h2 className={styles.columnTitle}>{title}</h2>
+      {to !== undefined ? (
+        <Link className={styles.columnLink} to={to}>
+          {link} →
+        </Link>
+      ) : null}
+    </div>
+  )
+}
+
+function TopFive({ leaders }: { leaders: Resource<RankingPage> }) {
+  if (leaders.state === 'loading') return <Skeleton lines={5} />
+  if (leaders.state === 'error') return null
+  return (
+    <ol className={styles.top}>
+      {leaders.data.data.slice(0, TOP).map((row, index) => (
+        <Reveal as="li" key={row.slug} delay={index * 70} className={styles.topRow}>
+          <span className={styles.topPosition}>{row.position}</span>
+          <span className={styles.topName}>
+            <Link to={`/players/${row.slug}`}>{row.name}</Link>
+            <span className={styles.topCountry}>{row.country ?? row.tour.toUpperCase()}</span>
+          </span>
+          <span className={styles.topElo}>
+            {row.elo === null ? '–' : <CountUp value={row.elo} format={formatElo} />}
+          </span>
+          <span className={styles.topDelta}>
+            {row.delta === null ? null : <RankDelta delta={row.delta} label="places against the official ranking" />}
+          </span>
+        </Reveal>
+      ))}
+    </ol>
+  )
+}
+
+/** The two highest-rated players, and what happened when they met. */
+function TopRivalry({ top }: { top: ReadonlyArray<RankingRow> }) {
+  const a = top[0]?.slug
+  const b = top[1]?.slug
+  const h2h = useResource<HeadToHead | null>(
+    (signal) => (a === undefined || b === undefined ? Promise.resolve(null) : getHeadToHead(a, b, {}, signal)),
+    [a, b],
+  )
+  if (a === undefined || b === undefined || h2h.state === 'loading') {
+    return (
+      <div className={styles.rivalry}>
+        <Skeleton lines={5} />
+      </div>
+    )
+  }
+  if (h2h.state === 'error' || h2h.data === null) return null
+
+  const [playerA, playerB] = h2h.data.players
+  const [winsA, winsB] = h2h.data.record.wins
+  const total = winsA + winsB
+  const finals = h2h.data.meetings.filter((m) => m.round === 'F').length
+  const eloA = top[0]?.elo
+  const eloB = top[1]?.elo
+
+  return (
+    <Card tilt className={styles.rivalry}>
+      <div className={styles.rivalryNames}>
+        <div>
+          <span className={`${styles.dash} ${styles.dashA}`} aria-hidden="true" />
+          <Link className={styles.rivalA} to={`/players/${playerA.slug}`}>
+            {surname(playerA.name)}
+          </Link>
+          <div className={styles.rivalMeta}>
+            {[playerA.country, eloA != null ? `Elo ${formatElo(eloA)}` : null].filter(Boolean).join(' · ')}
+          </div>
+        </div>
+        <div className={styles.rivalRight}>
+          <span className={`${styles.dash} ${styles.dashB}`} aria-hidden="true" />
+          <Link className={styles.rivalB} to={`/players/${playerB.slug}`}>
+            {surname(playerB.name)}
+          </Link>
+          <div className={styles.rivalMeta}>
+            {[playerB.country, eloB != null ? `Elo ${formatElo(eloB)}` : null].filter(Boolean).join(' · ')}
+          </div>
+        </div>
+      </div>
+      <div className={styles.tally} aria-label={`${winsA} to ${winsB}`}>
+        <Odometer className={styles.tallyA} value={winsA} />
+        <span className={styles.tallyDash} aria-hidden="true" />
+        <Odometer className={styles.tallyB} value={winsB} />
+      </div>
+      <div className={styles.tallyBar} aria-hidden="true">
+        <span style={{ flexGrow: total === 0 ? 1 : winsA }} />
+        <span style={{ flexGrow: total === 0 ? 1 : winsB }} />
+      </div>
+      <div className={styles.rivalryFoot}>
+        <span>
+          {h2h.data.record.matches} {h2h.data.record.matches === 1 ? 'meeting' : 'meetings'}
+          {finals > 0 ? ` · ${finals} ${finals === 1 ? 'final' : 'finals'}` : null}
+        </span>
+        <Link className={styles.columnLink} to={`/h2h/${playerA.slug}/${playerB.slug}`}>
+          Compare →
+        </Link>
+      </div>
+    </Card>
   )
 }
 
@@ -188,27 +412,21 @@ function Seeding({
         animate
       />
       <div className={styles.foot}>
-        <p className={styles.caption}>
-          The {rows.length} highest-rated players to {lines.data.to}, on one shared scale,
-          each line stepping across to its seed. Rated only in the weeks they played, which
-          is why a line can stop before the edge.
-        </p>
-        <div className={styles.seedingFoot}>
-          <p className={styles.caption}>
+        <Note>
+          <p>
             Elo as of {leaders.data.as_of}, the last week that exists rather than today. The
             signed figure is how far the model puts a player from their published rank.
           </p>
-          <ButtonLink to="/rankings">See the full rankings</ButtonLink>
-        </div>
+        </Note>
+        <ButtonLink to="/rankings">See the full rankings</ButtonLink>
       </div>
     </>
   )
 }
 
 /**
- * The replayed draw, set out as a draw sheet: one column per round, the chance
- * of still being in it written where the score would go, and who actually won
- * marked in the margin.
+ * The replayed draw: one column per round, the chance of still being in it
+ * written where the score would go, and who actually won marked in the margin.
  */
 function Replay({ draw }: { draw: Resource<DrawSimulation> }) {
   if (draw.state === 'loading') {
@@ -285,13 +503,8 @@ function Replay({ draw }: { draw: Resource<DrawSimulation> }) {
         <SurfaceDot surface={sim.event.surface} label={false} /> {sim.event.name}{' '}
         {sim.event.season}, replayed {sim.runs.toLocaleString()} times
       </h2>
-      <p className={styles.standfirst}>
-        This draw was played. The ratings are as of {sim.event.ratings_as_of}, the week it
-        began, and every figure is the share of runs in which that player was still in the
-        draw at that round, with a 95% interval on the title.
-      </p>
       <StatTable
-        caption={`The columns read like a draw sheet: a row can only fall from left to right. The ${sim.entered - shown.length} players not listed share ${(rest * 100).toFixed(1)}% of the title between them. Seeded, so the same query gives the same answer.`}
+        caption={`This draw was played. Ratings are as of ${sim.event.ratings_as_of}, the week it began; each figure is the share of runs in which that player was still in the draw at that round, with a 95% interval on the title. The ${sim.entered - shown.length} players not listed share ${(rest * 100).toFixed(1)}% of the title between them.`}
         columns={columns}
         rows={shown}
         rowKey={(row) => row.slug}

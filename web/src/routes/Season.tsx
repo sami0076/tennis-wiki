@@ -2,7 +2,17 @@ import { Link, useParams } from 'react-router-dom'
 import type { SeasonEvent, SeasonEventsResponse } from '../api/client'
 import { getSeasonEvents } from '../api/endpoints'
 import { useResource } from '../api/useResource'
-import { EmptyState, Meta, Score, Skeleton, StatTable, SurfaceDot, TourFilter, type Column } from '../components'
+import {
+  EmptyState,
+  Meta,
+  PageHeader,
+  Score,
+  Skeleton,
+  StatTable,
+  SurfaceBadge,
+  TourFilter,
+  type Column,
+} from '../components'
 import { formatScore } from '../lib/format'
 import { breadcrumbs, useJsonLd } from '../lib/jsonld'
 import { tierLabel } from '../lib/tier'
@@ -53,28 +63,33 @@ export function Season() {
 
   return (
     <>
-      <p className={styles.path}>
-        <Link to="/tournaments">Tournaments</Link>
-        {'  /  '}
-        <Link to="/seasons">Seasons</Link>
-      </p>
-      <h1 className={styles.title}>{year}</h1>
-      <div className={styles.controls}>
-        <TourFilter value={tour} onChange={setTour} />
-        <div className={styles.tiers} role="group" aria-label="Filter by tier">
-          {TIERS.map((option) => (
-            <button
-              key={option.label}
-              type="button"
-              className={tier === option.value ? `${styles.tier} ${styles.active}` : styles.tier}
-              aria-pressed={tier === option.value}
-              onClick={() => setTier(option.value)}
-            >
-              {option.label}
-            </button>
-          ))}
+      <PageHeader
+        kicker={
+          <span className={styles.path}>
+            <Link to="/tournaments">Tournaments</Link>
+            {'  /  '}
+            <Link to="/seasons">Seasons</Link>
+          </span>
+        }
+        title={year}
+      >
+        <div className={styles.controls}>
+          <TourFilter value={tour} onChange={setTour} />
+          <div className={styles.tiers} role="group" aria-label="Filter by tier">
+            {TIERS.map((option) => (
+              <button
+                key={option.label}
+                type="button"
+                className={tier === option.value ? `${styles.tier} ${styles.active}` : styles.tier}
+                aria-pressed={tier === option.value}
+                onClick={() => setTier(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      </PageHeader>
 
       {events.state === 'loading' ? (
         <Skeleton lines={12} />
@@ -169,7 +184,7 @@ const surface: Column<SeasonEvent> = {
   header: 'Surface',
   wide: true,
   value: (row) => row.surface,
-  render: (row) => <SurfaceDot surface={row.surface} />,
+  render: (row) => <SurfaceBadge surface={row.surface} />,
 }
 
 const draw: Column<SeasonEvent> = { key: 'draw', header: 'Draw', align: 'right', wide: true, value: (row) => row.draw_size }
@@ -181,7 +196,7 @@ const champion: Column<SeasonEvent> = {
   value: (row) => row.champion?.name ?? null,
   render: (row) =>
     row.champion === null ? null : (
-      <Link className={styles.player} to={`/players/${row.champion.slug}`}>
+      <Link className={`${styles.player} ${styles.champion}`} to={`/players/${row.champion.slug}`}>
         {row.champion.name}
       </Link>
     ),

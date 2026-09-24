@@ -1,5 +1,4 @@
-/* The sheet is typed on bond. Structure is ruled lines; there are no cards,
-   no shadows, no radii. */
+/* Cream ground, white cards, colour where it carries a side or a surface. */
 *,
 *::before,
 *::after {
@@ -14,6 +13,7 @@ html {
 
 body {
   margin: 0;
+  overflow-x: clip;
   background: var(--bond);
   color: var(--ink);
   font-family: var(--font);
@@ -51,7 +51,6 @@ ol {
   list-style: none;
 }
 
-/* A link is underlined by a rule, the way a typed sheet underlines. */
 a {
   color: inherit;
   text-decoration: none;
@@ -63,10 +62,10 @@ a:hover {
   border-bottom-color: var(--ink);
 }
 
-/* Focus is drawn, on bond, as a box the same weight as every other rule. */
 :focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 2px;
+  border-radius: 2px;
 }
 
 button {
@@ -95,8 +94,87 @@ table,
   font-variant-numeric: tabular-nums;
 }
 
-/* The sheet's one motion is the rules drawing in. Anyone who asked for less
-   gets the finished sheet. */
+@keyframes dp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes dp-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes dp-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes dp-grow-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes dp-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+@keyframes dp-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes dp-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(23 24 26 / 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgb(23 24 26 / 0);
+  }
+}
+
+/* A light that sweeps across a filled bar every few seconds. Put it on the
+   fill itself; the fill clips it. */
+.dp-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.dp-shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 25%, rgb(255 255 255 / 0.55) 50%, transparent 75%);
+  transform: translateX(-110%);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dp-shine::after {
+    animation: dp-shine 6s ease-in-out 1.6s infinite;
+  }
+}
+
+@keyframes dp-shine {
+  0% {
+    transform: translateX(-110%);
+  }
+  22%,
+  100% {
+    transform: translateX(110%);
+  }
+}
+
+/* Anyone who asked for less motion gets the finished page. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

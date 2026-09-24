@@ -1,0 +1,11 @@
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+  }
+
+  .seen {
+    opacity: 1;
+    animation: dp-rise 700ms var(--ease-out) both;
+    animation-delay: var(--delay, 0ms);
+  }
+}

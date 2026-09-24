@@ -17,14 +17,17 @@
 }
 
 .block {
-  padding: var(--s-5) 0;
-  border-bottom: var(--rule);
+  margin-bottom: var(--s-4);
+  padding: var(--s-5);
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
 .name {
-  font-size: var(--t-14);
+  font-size: var(--t-16);
   font-weight: 700;
-  margin-bottom: var(--s-1);
+  margin-bottom: var(--s-2);
 }
 
 .note {
@@ -47,4 +50,37 @@
   font-size: var(--t-13);
   font-weight: 500;
   color: var(--pencil);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--s-3);
+}
+
+.figure {
+  display: block;
+  margin-top: var(--s-3);
+  font-size: var(--t-32);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.figureA {
+  color: var(--player-a);
+}
+
+.figureB {
+  color: var(--player-b);
+}
+
+.pillsWide {
+  max-width: 360px;
+  padding-top: var(--s-4);
+}
+
+.courts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--s-5);
 }

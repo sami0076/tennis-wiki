@@ -2,9 +2,9 @@ import { Link } from 'react-router-dom'
 import type { SeasonRow, SeasonTour } from '../api/client'
 import { getSeasons } from '../api/endpoints'
 import { useResource } from '../api/useResource'
-import { Skeleton } from '../components'
+import { Note, PageHeader, Skeleton } from '../components'
 import { surname } from '../lib/format'
-import { SURFACES, surfaceLabel, surfaceVar } from '../lib/surface'
+import { SURFACES, surfaceLabel, surfaceVar, surfaceWash } from '../lib/surface'
 import styles from './Seasons.module.css'
 import { breadcrumbs, useJsonLd } from '../lib/jsonld'
 
@@ -21,10 +21,16 @@ export function Seasons() {
 
   return (
     <>
-      <p className={styles.path}>
-        <Link to="/tournaments">Tournaments</Link>
-      </p>
-      <h1 className={styles.title}>Seasons</h1>
+      <PageHeader
+        kicker={
+          <Link className={styles.path} to="/tournaments">
+            Tournaments
+          </Link>
+        }
+        title="Seasons"
+        mark="Seasons"
+        lede="The calendar a year at a time, both tours on every row: events on each surface, then the year's Slam champions."
+      />
 
       {seasons.state === 'loading' ? (
         <Skeleton lines={14} />
@@ -45,12 +51,11 @@ export function Seasons() {
               <Year key={row.season} row={row} through={seasons.data.current_through} />
             ))}
           </ol>
-          <p className={styles.caption}>
+          <Note>
             Events on each surface, then the Slam champions of the year in calendar order. A
             row marked in progress is complete to the tour&apos;s last match, not to the end
-            of the year. The squares are the site&apos;s surface squares; a surface the file did
-            not record is counted in pencil.
-          </p>
+            of the year. A surface the file did not record is counted in pencil.
+          </Note>
         </>
       )}
     </>
@@ -91,7 +96,12 @@ function Half({ tour, season, data, through }: HalfProps) {
       <div className={styles.surfaces}>
         {SURFACES.map((surface) =>
           data.surfaces[surface] > 0 ? (
-            <span key={surface} className={styles.count} title={surfaceLabel(surface)}>
+            <span
+              key={surface}
+              className={styles.count}
+              title={surfaceLabel(surface)}
+              style={{ color: surfaceVar(surface), background: surfaceWash(surface) }}
+            >
               <span className={styles.square} style={{ background: surfaceVar(surface) }} aria-hidden="true" />
               <span className="sr-only">{surfaceLabel(surface)} </span>
               {data.surfaces[surface]}
@@ -99,7 +109,11 @@ function Half({ tour, season, data, through }: HalfProps) {
           ) : null,
         )}
         {data.surfaces.unknown > 0 ? (
-          <span className={styles.count} title="Surface not recorded">
+          <span
+            className={styles.count}
+            title="Surface not recorded"
+            style={{ color: surfaceVar(null), background: surfaceWash(null) }}
+          >
             <span className={styles.square} style={{ background: surfaceVar(null) }} aria-hidden="true" />
             <span className="sr-only">Surface not recorded </span>
             {data.surfaces.unknown}

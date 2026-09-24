@@ -7,16 +7,16 @@
   gap: var(--s-2);
   overflow-x: auto;
   padding: var(--s-2) 0;
-  background: var(--bond);
-  border-bottom: var(--rule-ink);
+  background: rgb(246 246 242 / 0.92);
+  backdrop-filter: blur(8px);
   scrollbar-width: none;
 }
 
-/* The same typed cell as the tour filter, in ink: a round is not a surface. */
 .cell {
   flex: 0 0 auto;
-  padding: 4px 10px;
-  border: 1px solid transparent;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 999px;
   background: none;
   font: inherit;
   font-size: var(--t-13);
@@ -24,17 +24,20 @@
   color: var(--pencil);
   cursor: pointer;
   transition:
-    color 120ms ease-out,
-    border-color 120ms ease-out;
+    color 160ms ease-out,
+    background-color 160ms ease-out;
 }
 
 .cell:hover {
   color: var(--ink);
+  background: var(--highlight);
 }
 
-.active {
-  color: var(--ink);
-  border-color: var(--ink);
+.active,
+.active:hover {
+  color: var(--card);
+  background: var(--ink);
+  font-weight: 700;
 }
 
 .gap {
@@ -42,16 +45,20 @@
 }
 
 .heading {
-  padding: var(--s-4) 0 var(--s-1);
-  border-bottom: var(--rule-ink);
-  font-size: var(--t-12);
-  font-weight: 500;
+  padding: var(--s-4) 0 var(--s-2);
+  font-size: var(--t-11);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--pencil);
 }
 
 .match {
-  padding: 8px 0;
-  border-bottom: var(--rule);
+  margin-bottom: 6px;
+  padding: 10px var(--s-3);
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
 /* The score rides the winner's line and drops to its own, right-aligned,
@@ -77,6 +84,7 @@
 
 .final .won .player {
   font-weight: 700;
+  color: var(--ink);
 }
 
 .pre,
@@ -89,7 +97,7 @@
 }
 
 .player:hover {
-  border-bottom: var(--rule-ink);
+  color: var(--ink);
 }
 
 .score {

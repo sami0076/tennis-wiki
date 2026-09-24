@@ -11,8 +11,12 @@ import { simulateDraw, simulateMatch } from '../api/endpoints'
 import { useResource, type Resource } from '../api/useResource'
 import {
   ButtonLink,
+  Card,
+  CourtArt,
   EmptyState,
+  PageHeader,
   Meta,
+  Note,
   OddsBar,
   Playback,
   PlayerSearch,
@@ -69,28 +73,33 @@ export function Simulator() {
 
   return (
     <>
-      <h1 className={styles.title}>Simulator</h1>
-      <p className={styles.standfirst}>
-        A probability per service point, compounded by the scoring system into a probability
-        per match, every step shown.
-      </p>
+      <PageHeader
+        kicker="Point · game · set · match"
+        title="Simulator"
+        mark="Simulator"
+        lede="A probability per service point, compounded by the scoring system into a probability per match, every step shown."
+        art={<CourtArt surface={chosen === 'clay' || chosen === 'grass' ? chosen : 'hard'} />}
+        accent="a"
+      />
 
-      <Pickers a={a} b={b} onA={setA} onB={setB} match={match} />
+      <div className={styles.setup}>
+        <Pickers a={a} b={b} onA={setA} onB={setB} match={match} />
 
-      <div className={styles.controls}>
-        <SurfaceToggle value={chosen} onChange={setSurface} options={SURFACES} all={false} />
-        <div className={styles.format} role="group" aria-label="Match length">
-          {[3, 5].map((n) => (
-            <button
-              key={n}
-              type="button"
-              className={sets === n ? `${styles.option} ${styles.active}` : styles.option}
-              aria-pressed={sets === n}
-              onClick={() => setBestOf(n === 3 ? null : '5')}
-            >
-              Best of {n}
-            </button>
-          ))}
+        <div className={styles.controls}>
+          <SurfaceToggle value={chosen} onChange={setSurface} options={SURFACES} all={false} />
+          <div className={styles.format} role="group" aria-label="Match length">
+            {[3, 5].map((n) => (
+              <button
+                key={n}
+                type="button"
+                className={sets === n ? `${styles.option} ${styles.active}` : styles.option}
+                aria-pressed={sets === n}
+                onClick={() => setBestOf(n === 3 ? null : '5')}
+              >
+                Best of {n}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -212,31 +221,37 @@ function MatchPanel({
   }
 
   return (
-    <section className={styles.section}>
-      <Meta
-        parts={[
-          'Match simulator',
-          surfaceLabel(surface).toLowerCase(),
-          sets === 5 ? 'best of five' : 'best of three',
-        ]}
-      />
-      <WinSplit
-        nameA={playerA.name}
-        nameB={playerB.name}
-        share={sim.chain.match[0]}
-        animate={revealing}
-      />
-      <Chain chain={sim.chain} nameA={playerA.name} nameB={playerB.name} animate={revealing} />
-      <Scorelines
-        setShare={sim.chain.set[0]}
-        bestOf={sim.best_of}
-        nameA={surname(playerA.name)}
-        nameB={surname(playerB.name)}
-        animate={revealing}
-      />
-      <Amplification chain={sim.chain} />
-      <Inputs sim={sim} />
-      <section className={styles.section}>
+    <section className={styles.match}>
+      <div className={styles.matchGrid}>
+        <Card className={styles.odds}>
+          <Meta
+            parts={[
+              'Match simulator',
+              surfaceLabel(surface).toLowerCase(),
+              sets === 5 ? 'best of five' : 'best of three',
+            ]}
+          />
+          <WinSplit
+            nameA={playerA.name}
+            nameB={playerB.name}
+            share={sim.chain.match[0]}
+            animate={revealing}
+          />
+          <Chain chain={sim.chain} nameA={playerA.name} nameB={playerB.name} animate={revealing} />
+        </Card>
+        <Card delay={120}>
+          <Scorelines
+            setShare={sim.chain.set[0]}
+            bestOf={sim.best_of}
+            nameA={surname(playerA.name)}
+            nameB={surname(playerB.name)}
+            animate={revealing}
+            note={<Inputs sim={sim} />}
+          />
+          <Amplification chain={sim.chain} />
+        </Card>
+      </div>
+      <section className={styles.playback}>
         <Playback
           key={`${playerA.slug}/${playerB.slug}/${sim.surface}/${sim.best_of}`}
           chain={sim.chain}
@@ -434,7 +449,7 @@ function DrawPanel({ draw, chosen }: { draw: Resource<DrawSimulation>; chosen: {
       {rest > 0 ? (
         <OddsBar name="The field" probability={rest} max={max} surface={null} />
       ) : null}
-      <p className={styles.caption}>
+      <Note>
         This draw was played. The ratings are as of {sim.event.ratings_as_of}, the week it
         began, so the simulation knows only what was known then
         {sim.champion === null ? '.' : (
@@ -444,7 +459,7 @@ function DrawPanel({ draw, chosen }: { draw: Resource<DrawSimulation>; chosen: {
           </>
         )}{' '}
         Every figure is one sample of ten thousand, so each carries the interval it earned.
-      </p>
+      </Note>
     </section>
   )
 }

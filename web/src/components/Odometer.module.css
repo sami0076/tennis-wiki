@@ -1,0 +1,49 @@
+.odometer {
+  --h: 1.18em;
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.slot {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  clip-path: inset(0);
+  contain: paint;
+  height: var(--h);
+  line-height: var(--h);
+  vertical-align: bottom;
+}
+
+/* Holds the width and baseline of the final digit. */
+.sizer {
+  visibility: hidden;
+}
+
+.reel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(calc(var(--to) * -1 * var(--h)));
+}
+
+.reel span {
+  display: block;
+  height: var(--h);
+  line-height: var(--h);
+}
+
+.odometer:not(.seen) .reel {
+  transform: translateY(0);
+}
+
+.seen .reel {
+  transition: transform 1.5s cubic-bezier(0.2, 0.9, 0.25, 1.06);
+  transition-delay: calc(var(--i) * 90ms);
+}
+
+.static {
+  display: inline-block;
+}

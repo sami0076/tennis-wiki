@@ -16,8 +16,9 @@
 }
 
 .title {
-  font-size: var(--t-16);
-  font-weight: 600;
+  font-size: var(--t-20);
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .lede {
@@ -31,7 +32,7 @@
    so the board never jumps. */
 .line {
   min-height: 20px;
-  font-size: var(--t-13);
+  font-size: var(--t-14);
   line-height: 1.55;
   color: var(--pencil);
   transition: opacity 220ms ease;

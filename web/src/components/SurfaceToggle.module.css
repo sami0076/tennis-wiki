@@ -1,29 +1,35 @@
 .row {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
-  gap: var(--s-2);
-  padding: var(--s-2) 0;
+  gap: 2px;
+  margin: var(--s-2) 0;
+  padding: 3px;
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: 999px;
 }
 
-/* A typed cell. The selected one is boxed in one rule, in its own hue. */
 .option {
-  padding: 4px 10px;
-  border: 1px solid transparent;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 999px;
   background: none;
-  font-size: var(--t-13);
-  font-weight: 500;
+  font-size: var(--t-12);
+  font-weight: 600;
   color: var(--pencil);
   cursor: pointer;
   transition:
-    color 120ms ease-out,
-    border-color 120ms ease-out;
+    color 180ms ease-out,
+    background-color 180ms ease-out;
 }
 
 .option:hover {
   color: var(--ink);
+  background: var(--highlight);
 }
 
-.active {
-  color: var(--ink);
-  border-color: var(--ink);
+.active,
+.active:hover {
+  color: var(--card);
+  background: var(--ink);
 }

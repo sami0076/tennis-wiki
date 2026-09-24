@@ -39,7 +39,7 @@ export function SurfaceToggle({ value, onChange, options = SURFACES, all = true 
             key={surface}
             type="button"
             className={[styles.option, active ? styles.active : ''].join(' ')}
-            style={active ? { color: surfaceVar(surface), borderColor: surfaceVar(surface) } : undefined}
+            style={active ? { color: 'var(--card)', background: surfaceVar(surface) } : undefined}
             aria-pressed={active}
             onClick={() => onChange(surface)}
           >

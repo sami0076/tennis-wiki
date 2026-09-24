@@ -1,6 +1,7 @@
 import type { SparkPoint } from './Sparkline'
 import { surname } from '../lib/format'
 import { spread } from '../lib/spread'
+import { Note } from './Note'
 import styles from './TrajectoryChart.module.css'
 
 export interface TrajectoryLineData {
@@ -141,10 +142,9 @@ export function TrajectoryChart({
           <span>{Math.round(min)}</span>
         </span>
       </div>
-      <figcaption className={styles.caption}>
-        {field.length > 0 ? `${field.length} more drawn as the field. ` : null}
-        {Math.round(min)} to {Math.round(max)} Elo. Rated only in the weeks they played.
-      </figcaption>
+      {field.length > 0 ? (
+        <Note>{`${field.length} more drawn as the field, in grey. Rated only in the weeks they played.`}</Note>
+      ) : null}
     </figure>
   )
 }

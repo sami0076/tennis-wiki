@@ -1,31 +1,166 @@
+/* Name at the left, the Elo card at the right. */
+.hero {
+  display: grid;
+  gap: var(--s-5);
+  align-items: center;
+  padding: var(--s-5) 0 var(--s-5);
+}
+
 .identity {
-  padding: var(--s-2) 0 var(--s-4);
+  display: grid;
+  gap: var(--s-4);
+  min-width: 0;
+}
+
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  animation: dp-fade 500ms ease-out both;
+}
+
+.dash {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--ink);
+  transform-origin: left;
+  animation: dp-grow-x 700ms var(--ease-out) both 150ms;
 }
 
 .name {
-  font-size: var(--t-28);
+  font-size: var(--t-display);
   font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  margin-bottom: var(--s-2);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+  animation: dp-rise 800ms var(--ease-out) both 80ms;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  animation: dp-rise 800ms var(--ease-out) both 200ms;
+}
+
+.chip {
+  padding: 7px 12px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  font-size: var(--t-12);
+  font-weight: 700;
+  transition:
+    border-color 160ms ease-out,
+    background-color 160ms ease-out,
+    transform 200ms var(--ease-out);
+}
+
+a.chip:hover {
+  border-color: var(--ink);
+  background: var(--card);
+  transform: translateY(-2px);
+}
+
+.chipTour {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--card);
+}
+
+.eloCard {
+  display: grid;
+  gap: var(--s-2);
+}
+
+.eloRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+
+.elo {
+  font-size: clamp(56px, 8vw, 88px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.eloAside {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  padding-bottom: var(--s-2);
+}
+
+.eloAsideValue {
+  font-size: var(--t-20);
+  font-weight: 700;
+}
+
+.eloAsideDate {
+  font-size: var(--t-11);
+  color: var(--pencil);
+}
+
+.formLabel {
+  margin-top: var(--s-3);
+}
+
+/* Four figures in a row: record, rate, titles, majors. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-3);
+  margin-bottom: var(--s-5);
+}
+
+.tile {
+  display: grid;
+  gap: var(--s-3);
+}
+
+.tile:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lift);
+}
+
+.tileValue {
+  font-size: clamp(32px, 4vw, 44px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.charts {
+  display: grid;
+  gap: var(--s-5);
+  margin-bottom: var(--s-5);
 }
 
 .section {
-  padding: var(--s-5) 0;
+  margin-bottom: var(--s-5);
+  padding: var(--s-5);
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
 .sectionTitle {
-  font-size: var(--t-16);
-  font-weight: 600;
-  margin-bottom: var(--s-2);
-}
-
-.trajectory {
-  padding: var(--s-4) 0 var(--s-2);
+  font-size: var(--t-20);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: var(--s-3);
 }
 
 .caption {
-  margin-top: var(--s-2);
+  margin-top: var(--s-3);
   max-width: 72ch;
   font-size: var(--t-12);
   line-height: 1.55;
@@ -51,7 +186,7 @@
 }
 
 .opponent:hover {
-  border-bottom: var(--rule-ink);
+  color: var(--pencil);
 }
 
 .event {
@@ -65,28 +200,40 @@
   display: inline;
 }
 
-/* The phone is one column. At 880px the figures take the narrow column and the
-   serve and splits the wide one; the match log, the widest object on the sheet,
-   runs the full width under both. */
+@media (prefers-reduced-motion: reduce) {
+  .kicker,
+  .dash,
+  .name,
+  .chips {
+    animation: none;
+  }
+}
+
 @media (min-width: 880px) {
-  .identity {
-    padding-top: var(--s-4);
+  .hero {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
+    gap: var(--s-7);
+    padding: var(--s-7) 0 var(--s-6);
   }
 
-  .name {
-    font-size: var(--t-32);
+  .tiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .charts {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .section {
+    padding: var(--s-5) var(--s-6);
   }
 
   .columns {
     display: grid;
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    gap: 0 var(--s-7);
+    gap: 0 var(--s-5);
     align-items: start;
-  }
-
-  .left > .section:first-child,
-  .right > .section:first-child {
-    padding-top: var(--s-4);
   }
 
   .eventSurface {
@@ -94,8 +241,7 @@
   }
 }
 
-/* A caption that points at the paragraph explaining it. Underlined like every
-   other link, and no louder than the caption it sits in. */
+/* A caption that points at the paragraph explaining it. */
 .inline {
   color: inherit;
   border-bottom: var(--rule);

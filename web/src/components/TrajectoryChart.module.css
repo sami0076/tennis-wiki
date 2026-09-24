@@ -30,7 +30,7 @@
 }
 
 .named {
-  stroke-width: 1.5;
+  stroke-width: 2.25;
 }
 
 /* The field is one weight lighter and the last step of the ramp: present, and
@@ -41,18 +41,18 @@
 }
 
 .first {
-  stroke: var(--ink);
-  color: var(--ink);
+  stroke: var(--player-a);
+  color: var(--player-a);
 }
 
 .second {
-  stroke: var(--pencil);
-  color: var(--pencil);
+  stroke: var(--player-b);
+  color: var(--player-b);
 }
 
 .third {
-  stroke: var(--pencil-mid);
-  color: var(--pencil);
+  stroke: var(--third);
+  color: var(--third);
 }
 
 /* The name sits at the end of its line, never in a legend. */

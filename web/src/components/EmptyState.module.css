@@ -1,14 +1,16 @@
 /* A section with nothing to show reads as a note on the sheet: what is
    absent, why, and where the sheet does have it. */
 .empty {
-  padding: var(--s-4) 0 var(--s-5);
-  border-top: var(--rule-ink);
+  padding: var(--s-5);
+  border: 1.5px dashed var(--pencil-light);
+  border-radius: var(--radius);
+  background: rgb(255 255 255 / 0.55);
 }
 
 .heading {
   margin: 0 0 var(--s-2);
-  font-size: var(--t-14);
-  font-weight: 600;
+  font-size: var(--t-16);
+  font-weight: 700;
   color: var(--ink);
 }
 

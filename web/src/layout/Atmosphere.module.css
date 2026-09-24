@@ -1,0 +1,13 @@
+.progress {
+  --progress: 0;
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 40;
+  height: 3px;
+  background: var(--ink);
+  transform: scaleX(var(--progress));
+  transform-origin: left;
+  pointer-events: none;
+}

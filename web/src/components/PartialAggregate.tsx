@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import styles from './PartialAggregate.module.css'
+import { Note } from './Note'
 
 interface PartialAggregateProps {
   /** The aggregate itself: a row, a figure, whatever is being summarised. */
@@ -36,12 +36,14 @@ export function PartialAggregate({
   return (
     <>
       {children}
-      <p className={styles.caption}>
-        {complete ? null : `n/r means ${dashMeans}. `}
-        {complete
-          ? `${noun} cover all ${total} matches.`
-          : `${noun} cover the ${recorded} of ${total} matches that did.`}
-      </p>
+      <Note>
+        <p>
+          {complete ? null : `n/r means ${dashMeans}. `}
+          {complete
+            ? `${noun} cover all ${total} matches.`
+            : `${noun} cover the ${recorded} of ${total} matches that did.`}
+        </p>
+      </Note>
     </>
   )
 }

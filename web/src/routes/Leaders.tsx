@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import type { LeaderRow, LeaderStat, Leaderboard, PlayerSearchResult } from '../api/client'
 import { getLeaders } from '../api/endpoints'
 import { useResource, type Resource } from '../api/useResource'
-import { EmptyState, Meta, PlayerSearch, Skeleton, StatTable, SurfaceToggle, TourFilter, type Column } from '../components'
+import { EmptyState, Meta, PageHeader, PlayerSearch, Skeleton, StatTable, SurfaceToggle, TourFilter, type Column } from '../components'
 import { formatPercent } from '../lib/format'
 import { tierLabel } from '../lib/tier'
 import { useUrlParam } from '../lib/useUrlParam'
@@ -69,11 +69,20 @@ export function Leaders() {
 
   return (
     <>
-      <h1 className={styles.title}>Leaders</h1>
-      <p className={styles.kin}>
-        A ranking by what a player did with a serve, a return or a score. The ratings are on{' '}
-        <Link to="/rankings">Rankings</Link>.
-      </p>
+      <PageHeader
+        kicker="Serve · return · score"
+        title="Leaders"
+        mark="Leaders"
+        lede={
+          <>
+            A ranking by what a player did with a serve, a return or a score. The ratings are on{' '}
+            <Link className={styles.kin} to="/rankings">
+              Rankings
+            </Link>
+            .
+          </>
+        }
+      />
 
       <div className={styles.controls}>
         <label className={styles.field} htmlFor="leaders-stat">
@@ -207,10 +216,6 @@ function Board({ board, minMatches }: { board: Resource<Leaderboard>; minMatches
         rowKey={(row) => row.slug}
         defaultSort={{ key: 'position', direction: 'asc' }}
       />
-      <p className={styles.caption}>
-        The top {data.data.length} of {data.population.qualified.toLocaleString('en-GB')} who clear the
-        floor. Sorting reorders the rows on this page rather than the board behind them.
-      </p>
     </>
   )
 }
@@ -225,6 +230,7 @@ function Population({ data, minMatches }: { data: Leaderboard; minMatches: numbe
       : `Of ${p.matches.toLocaleString('en-GB')} matches ${words}, ${p.with_stats.toLocaleString('en-GB')} recorded serve statistics`
   return (
     <Meta
+      className={styles.population}
       parts={[
         stats,
         `${p.qualified.toLocaleString('en-GB')} ${p.qualified === 1 ? 'player clears' : 'players clear'} ${minMatches} matches`,
@@ -318,7 +324,17 @@ function formatValue(stat: LeaderStat, row: LeaderRow): string {
 
 function columns(stat: LeaderStat): ReadonlyArray<Column<LeaderRow>> {
   return [
-    { key: 'position', header: '#', align: 'right', value: (row) => row.position },
+    {
+      key: 'position',
+      header: '#',
+      align: 'right',
+      value: (row) => row.position,
+      render: (row) => (
+        <span className={row.position === 1 ? `${styles.position} ${styles.leader}` : styles.position}>
+          {row.position}
+        </span>
+      ),
+    },
     {
       key: 'player',
       header: 'Player',

@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type {
   CoverageResponse,
   DrawSimulation,
+  HeadToHead,
   RankingPage,
   RecentFinals,
   Trajectories,
@@ -177,6 +178,15 @@ const recent: RecentFinals = {
   without: ['wta'],
 }
 
+const rivalry = {
+  players: [
+    { slug: 'jannik-sinner', name: 'Jannik Sinner', tour: 'atp', country: 'ITA' },
+    { slug: 'novak-djokovic', name: 'Novak Djokovic', tour: 'atp', country: 'SRB' },
+  ],
+  record: { matches: 10, wins: [6, 4], incomplete: 0 },
+  meetings: [],
+} as unknown as HeadToHead
+
 function stub(lines: Trajectories = trajectories, finals: RecentFinals = recent) {
   vi.stubGlobal('fetch', (input: string) => {
     const path = new URL(String(input), 'http://localhost').pathname
@@ -185,6 +195,7 @@ function stub(lines: Trajectories = trajectories, finals: RecentFinals = recent)
     else if (path.endsWith('/rankings')) body = rankings
     else if (path.endsWith('/simulate/draw')) body = draw
     else if (path.endsWith('/recent')) body = finals
+    else if (path.includes('/h2h/')) body = rivalry
     return Promise.resolve(
       new Response(JSON.stringify(body), {
         status: 200,

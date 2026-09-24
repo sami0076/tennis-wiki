@@ -1,0 +1,112 @@
+.court {
+  --court: var(--ink);
+  --apron: var(--highlight);
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.apron {
+  fill: var(--apron);
+  transition: fill 900ms ease;
+}
+
+.surface {
+  fill: var(--court);
+  transition: fill 900ms ease;
+}
+
+.marking {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.net line {
+  stroke: var(--ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.net .tape {
+  stroke: var(--card);
+  stroke-width: 3;
+}
+
+.mesh {
+  fill: rgb(23 24 26 / 0.18);
+}
+
+.flight {
+  fill: none;
+  stroke: var(--pencil-mid);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 7;
+}
+
+.bounce {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  opacity: 0;
+}
+
+.ball circle {
+  fill: var(--card);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+.ball path {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.4;
+  opacity: 0.9;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .marking {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: dp-draw 900ms var(--ease-out) forwards;
+  }
+
+  .surface,
+  .apron {
+    animation: dp-fade 600ms ease-out both;
+  }
+
+  .flight {
+    animation: flight 1.2s linear infinite;
+  }
+
+  .bounce {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: bounce 2.8s linear infinite;
+  }
+}
+
+@keyframes flight {
+  to {
+    stroke-dashoffset: -26;
+  }
+}
+
+@keyframes bounce {
+  0%,
+  66% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  70% {
+    opacity: 1;
+  }
+  85%,
+  100% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}

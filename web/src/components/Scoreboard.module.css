@@ -1,15 +1,19 @@
-/* The board sits on the bond between two ink rules: no panel. */
+/* A stadium board: ink panel, light type, the server lit in the ball colour. */
 .board {
   width: 100%;
   /* Fixed so the set columns keep their width and the name takes the rest. */
   table-layout: fixed;
-  border-collapse: collapse;
-  border-top: var(--rule-ink);
-  border-bottom: var(--rule-ink);
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--card);
+  box-shadow: var(--shadow-lift);
 }
 
 .corner {
-  padding: 2px 0;
+  padding: 6px 0 2px;
 }
 
 .setHead,
@@ -18,8 +22,9 @@
   padding: 3px 0;
   text-align: center;
   font-size: var(--t-11);
-  font-weight: 500;
-  color: var(--pencil);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--pencil-mid);
   border: 1px solid transparent;
   border-bottom: 0;
 }
@@ -27,6 +32,8 @@
 /* The set in progress is boxed in the surface's hue: the sheet's active cell. */
 .setHeadCurrent {
   border-color: currentColor;
+  color: var(--ball) !important;
+  border-color: var(--ball) !important;
 }
 
 .row {
@@ -34,7 +41,7 @@
 }
 
 .name {
-  padding: 7px 0;
+  padding: 12px 0 12px var(--s-4);
   text-align: left;
   font-size: var(--t-14);
   font-weight: 700;
@@ -44,31 +51,37 @@
 }
 
 /* Each row in its side's hue: the name, the sets it won, the set in play. */
+/* The sides' hues, lifted to read on ink. */
 .sideA {
-  color: var(--player-a);
+  color: #b7a7ff;
 }
 
 .sideB {
-  color: var(--player-b);
+  color: #ff82b6;
 }
 
 /* The serve square: an 8px square in the surface hue before the server. */
 .serve,
 .serveGap {
   display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: 8px;
-  border-radius: 1px;
+  width: 9px;
+  height: 9px;
+  margin-right: 10px;
+  border-radius: 50%;
   vertical-align: 1px;
+}
+
+.serve {
+  background: var(--ball) !important;
+  box-shadow: 0 0 8px var(--ball);
 }
 
 .setWon,
 .setLost,
 .currentCell {
-  padding: 7px 0;
+  padding: 12px 0;
   text-align: center;
-  font-size: var(--t-16);
+  font-size: var(--t-20);
   font-weight: 700;
   border: 1px solid transparent;
   border-top: 0;
@@ -80,11 +93,13 @@
 }
 
 .setLost {
-  color: var(--pencil);
+  color: var(--pencil-mid);
 }
 
 .currentCell {
-  color: inherit;
+  color: var(--ink);
+  background: var(--ball);
+  border-color: var(--ball) !important;
 }
 
 .board tbody tr:last-child .currentCell {
@@ -136,7 +151,7 @@
 
 @keyframes flash {
   from {
-    background-color: var(--highlight);
+    background-color: rgb(212 245 60 / 0.25);
   }
   to {
     background-color: transparent;

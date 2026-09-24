@@ -8,16 +8,33 @@ import {
   type HeadToHeadPlayer,
   type HeadToHeadRecord,
   type Meeting,
+  type Page,
   type Pair,
+  type PlayerMatch,
   type PlayerProfile,
   type PlayerSearchResult,
   type RatingSeries,
   type ServeRates,
 } from '../api/client'
-import { getHeadToHead, getPlayer, getPlayerRatingSeries, type MeetingFilters } from '../api/endpoints'
+import {
+  getHeadToHead,
+  getPlayer,
+  getPlayerMatches,
+  getPlayerRatingSeries,
+  simulateMatch,
+  type MeetingFilters,
+} from '../api/endpoints'
 import { useResource, type Resource } from '../api/useResource'
 import {
   Button,
+  Card,
+  CountUp,
+  Odometer,
+  FormPills,
+  Kicker,
+  Note,
+  Reveal,
+  SurfaceBadge,
   ButtonLink,
   ChartedMark,
   ChartedSheet,
@@ -37,7 +54,7 @@ import {
   type RivalryResult,
 } from '../components'
 import { absenceReason } from '../lib/absence'
-import { formatPercent, surname } from '../lib/format'
+import { formatHand, formatPercent, formatScore, surname } from '../lib/format'
 import { breadcrumbs, useJsonLd } from '../lib/jsonld'
 import { surfaceLabel } from '../lib/surface'
 import { tierLabel } from '../lib/tier'
@@ -201,6 +218,8 @@ function Rivalry({
     (signal) => getPlayerRatingSeries(b, { surface: series }, signal),
     [b, series],
   )
+  const formA = useResource((signal) => getPlayerMatches(a, { limit: 10 }, signal), [a])
+  const formB = useResource((signal) => getPlayerMatches(b, { limit: 10 }, signal), [b])
 
   if (h2h.state === 'error') {
     const notFound = h2h.error instanceof ApiError && h2h.error.status === 404
@@ -229,36 +248,47 @@ function Rivalry({
   const record = comparison.record
   const filtered = isFiltered(comparison.filters)
 
+  const [winsA, winsB] = record.wins
+  const leader =
+    winsA === winsB ? 'Level' : `${surname(winsA > winsB ? playerA.name : playerB.name)} leads`
+
   return (
     <>
       <div className={styles.score}>
-        <div>
-          <Link className={styles.nameA} to={`/players/${playerA.slug}`}>
-            {playerA.name}
-          </Link>
-          <Meta parts={[playerA.tour.toUpperCase(), playerA.country]} />
-        </div>
+        <PlayerPanel side="a" player={playerA} profile={profileA} form={formA} surface={surface} />
         <div className={styles.tally}>
-          <span>
-            {record.wins[0]}-{record.wins[1]}
-          </span>
+          <Kicker>Head-to-head</Kicker>
+          <div className={styles.tallyFigures} aria-hidden="true">
+            <Odometer className={styles.tallyA} value={winsA} />
+            <span className={styles.tallyDash} />
+            <Odometer className={styles.tallyB} value={winsB} />
+          </div>
+          <span className="sr-only">{`${winsA}-${winsB}`}</span>
+          {record.matches > 0 ? <span className={styles.leads}>{leader}</span> : null}
           <span className={styles.tallyWords}>
             {filtered
               ? `${describeFilters(comparison.filters)}, of ${comparison.total_meetings} ${comparison.total_meetings === 1 ? 'meeting' : 'meetings'}`
               : `over ${record.matches} ${record.matches === 1 ? 'meeting' : 'meetings'}`}
           </span>
         </div>
-        <div className={styles.sideB}>
-          <Link className={styles.nameB} to={`/players/${playerB.slug}`}>
-            {playerB.name}
-          </Link>
-          <Meta className={styles.metaB} parts={[playerB.tour.toUpperCase(), playerB.country]} />
+        <PlayerPanel side="b" player={playerB} profile={profileB} form={formB} surface={surface} />
+        <div className={styles.scoreBar} aria-hidden="true">
+          <span style={{ flexGrow: winsA + winsB === 0 ? 1 : winsA }} />
+          <span style={{ flexGrow: winsA + winsB === 0 ? 1 : winsB }} />
         </div>
       </div>
 
       {comparison.total_meetings > 0 ? (
         <MeetingFilterControls comparison={comparison} filters={filters} />
       ) : null}
+
+      <div className={styles.grid}>
+        <SimulatorCard a={playerA} b={playerB} surface={surface} />
+        {record.matches > 0 ? <SurfaceCard comparison={comparison} /> : null}
+      </div>
+
+      {record.matches > 0 ? <MeetingTiles comparison={comparison} /> : null}
+      {record.matches > 0 ? <RecentMeetings comparison={comparison} /> : null}
 
       {record.matches === 0 ? (
         <NeverMet
@@ -300,11 +330,236 @@ function Rivalry({
         <ButtonLink to={`/simulator?a=${playerA.slug}&b=${playerB.slug}`}>
           Simulate this matchup
         </ButtonLink>
-        <p className={styles.caption}>
-          Every rung from a service point up to the match, derived from both ratings.
-        </p>
       </div>
     </>
+  )
+}
+
+function PlayerPanel({
+  side,
+  player,
+  profile,
+  form,
+  surface,
+}: {
+  side: 'a' | 'b'
+  player: HeadToHeadPlayer
+  profile: Resource<PlayerProfile>
+  form: Resource<Page<PlayerMatch>>
+  surface: string | null
+}) {
+  const elo = ratingOf(profile, surface ?? 'overall')
+  const recent = form.state === 'ready' ? form.data.data.slice(0, 10) : []
+  const hand = profile.state === 'ready' ? formatHand(profile.data.hand) : null
+  return (
+    <Card className={side === 'a' ? styles.panel : `${styles.panel} ${styles.panelB}`}>
+      <span className={side === 'a' ? styles.dashA : styles.dashB} aria-hidden="true" />
+      <Link className={side === 'a' ? styles.nameA : styles.nameB} to={`/players/${player.slug}`}>
+        {player.name}
+      </Link>
+      <Meta
+        className={side === 'b' ? styles.metaB : undefined}
+        parts={[player.tour.toUpperCase(), player.country, hand]}
+      />
+      <div className={styles.panelStats}>
+        {elo === null ? null : (
+          <div>
+            <Kicker>{surface === null ? 'Elo' : `${surfaceLabel(surface)} Elo`}</Kicker>
+            <Odometer className={styles.panelElo} value={Math.round(elo)} />
+          </div>
+        )}
+        {recent.length > 0 ? (
+          <div>
+            <Kicker>Form</Kicker>
+            <FormPills results={recent.map((m) => m.won).reverse()} side={side} label={`${player.name}, recent form`} />
+          </div>
+        ) : null}
+      </div>
+    </Card>
+  )
+}
+
+/** What the model makes of the next meeting between them. */
+function SimulatorCard({
+  a,
+  b,
+  surface,
+}: {
+  a: HeadToHeadPlayer
+  b: HeadToHeadPlayer
+  surface: string | null
+}) {
+  const [bestOf, setBestOf] = useState(3)
+  const sim = useResource(
+    (signal) => simulateMatch(a.slug, b.slug, { surface, best_of: bestOf }, signal),
+    [a.slug, b.slug, surface, bestOf],
+  )
+  const chain = sim.state === 'ready' ? sim.data.chain : null
+  const pa = chain === null ? null : chain.match[0]
+
+  return (
+    <Card
+      title="Match simulator"
+      aside={`${surface === null ? 'All surfaces' : surfaceLabel(surface)} · Bo${bestOf}`}
+    >
+      {sim.state === 'loading' ? <Skeleton lines={4} /> : null}
+      {sim.state === 'ready' && pa === null ? (
+        <p className={styles.caption}>{absenceReason(sim.data.availability)}</p>
+      ) : null}
+      {pa !== null ? (
+        <>
+          <div className={styles.odds}>
+            <div>
+              <span className={styles.oddsA}>
+                <CountUp value={pa * 100} format={(v) => v.toFixed(1)} />
+                <small>%</small>
+              </span>
+              <div className={styles.oddsName}>{surname(a.name)}</div>
+            </div>
+            <div className={styles.oddsRight}>
+              <span className={styles.oddsB}>
+                <CountUp value={(1 - pa) * 100} format={(v) => v.toFixed(1)} />
+                <small>%</small>
+              </span>
+              <div className={styles.oddsName}>{surname(b.name)}</div>
+            </div>
+          </div>
+          <div className={styles.oddsBar} aria-hidden="true">
+            <span style={{ width: `${pa * 100}%` }} />
+          </div>
+        </>
+      ) : null}
+      <div className={styles.simActions}>
+        <ButtonLink to={`/simulator?a=${a.slug}&b=${b.slug}`}>Open full simulator</ButtonLink>
+        <div className={styles.cells} role="group" aria-label="Match length">
+          {[3, 5].map((n) => (
+            <button
+              key={n}
+              type="button"
+              className={bestOf === n ? `${styles.cell} ${styles.cellActive}` : styles.cell}
+              aria-pressed={bestOf === n}
+              onClick={() => setBestOf(n)}
+            >
+              Bo{n}
+            </button>
+          ))}
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+/** The record on each surface they met on, as one split bar per surface. */
+function SurfaceCard({ comparison }: { comparison: Comparison }) {
+  const rows = comparison.surfaces.filter((split) => split.matches > 0)
+  return (
+    <Card title="By surface" delay={100}>
+      <div className={styles.surfaces}>
+        {rows.map((split) => {
+          const [wa, wb] = split.wins
+          return (
+            <div key={split.name} className={styles.surfaceRow}>
+              <SurfaceBadge surface={split.name === 'unknown' ? null : split.name} />
+              <div className={styles.surfaceBar} aria-hidden="true">
+                {wa > 0 ? <span className={styles.barA} style={{ flexGrow: wa }} /> : null}
+                {wb > 0 ? <span className={styles.barB} style={{ flexGrow: wb }} /> : null}
+              </div>
+              <span className={styles.pair} aria-label={`${wa} to ${wb}`}>
+                <span className={styles.pairA}>{wa}</span>
+                <span className={styles.pairDash} aria-hidden="true">–</span>
+                <span className={styles.pairB}>{wb}</span>
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </Card>
+  )
+}
+
+function MeetingTiles({ comparison }: { comparison: Comparison }) {
+  const tally = (list: ReadonlyArray<Meeting>): [number, number] => [
+    list.filter((m) => m.winner_index === 0).length,
+    list.filter((m) => m.winner_index === 1).length,
+  ]
+  const finals = comparison.meetings.filter((m) => m.round === 'F')
+  const tiles: { label: string; wins: [number, number] | null }[] = [
+    { label: 'Finals', wins: finals.length > 0 ? tally(finals) : null },
+    { label: 'Slam finals', wins: tally(finals.filter((m) => m.level === 'G')) },
+    {
+      label: 'Deciding sets',
+      wins:
+        comparison.closeness.deciders.matches > 0
+          ? [comparison.closeness.deciders.wins[0], comparison.closeness.deciders.wins[1]]
+          : null,
+    },
+    {
+      label: 'Tiebreaks',
+      wins:
+        comparison.closeness.tiebreaks.matches > 0
+          ? [comparison.closeness.tiebreaks.wins[0], comparison.closeness.tiebreaks.wins[1]]
+          : null,
+    },
+  ]
+  return (
+    <div className={styles.tiles}>
+      {tiles.map((tile, index) => (
+        <Card key={tile.label} tilt className={styles.tile} delay={index * 70}>
+          <Kicker>{tile.label}</Kicker>
+          {tile.wins === null || tile.wins[0] + tile.wins[1] === 0 ? (
+            <span className={styles.tileNone}>none</span>
+          ) : (
+            <span className={styles.tileValue} aria-label={`${tile.wins[0]} to ${tile.wins[1]}`}>
+              <span className={styles.pairA}>{tile.wins[0]}</span>
+              <span className={styles.pairDash} aria-hidden="true">–</span>
+              <span className={styles.pairB}>{tile.wins[1]}</span>
+            </span>
+          )}
+        </Card>
+      ))}
+    </div>
+  )
+}
+
+/** The latest meetings as cards, newest first; the full sheet is further down. */
+function RecentMeetings({ comparison }: { comparison: Comparison }) {
+  const recent = [...comparison.meetings].reverse().slice(0, 6)
+  const [playerA, playerB] = comparison.players
+  return (
+    <section className={styles.recent}>
+      <div className={styles.recentHead}>
+        <h2 className={styles.sectionTitle}>Recent meetings</h2>
+        <a className={styles.recentLink} href="#every-meeting">
+          All {comparison.meetings.length} ↓
+        </a>
+      </div>
+      <div className={styles.recentGrid}>
+        {recent.map((meeting, index) => {
+          const winner = meeting.winner_index === 0 ? playerA : playerB
+          return (
+            <Reveal
+              key={`${meeting.date}-${meeting.tournament}-${meeting.round}`}
+              className={styles.meeting}
+              delay={index * 60}
+            >
+              <div className={styles.meetingEvent}>
+                <span className={styles.meetingName}>{meeting.tournament}</span>
+                <span className={styles.meetingWhen}>
+                  {meeting.round} · {meeting.date.slice(0, 7)}
+                </span>
+              </div>
+              <SurfaceBadge surface={meeting.surface} />
+              <div className={styles.meetingResult}>
+                <span className={meeting.winner_index === 0 ? styles.winnerA : styles.winnerB}>
+                  {surname(winner.name)}
+                </span>
+                <span className={styles.meetingScore}>{formatScore(meeting.score) ?? 'n/r'}</span>
+              </div>
+            </Reveal>
+          )
+        })}
+      </div>
+    </section>
   )
 }
 
@@ -372,14 +627,7 @@ function RivalrySection({
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>The rivalry, oldest to newest</h2>
-      <RivalryStrip results={results} nameA={playerA.name} nameB={playerB.name} />
-      {record.incomplete > 0 ? (
-        <p className={styles.caption}>
-          {record.incomplete} of these {record.matches} ended in a retirement or a walkover.
-          They count in the record, because somebody advanced, and are left out of every rate
-          below.
-        </p>
-      ) : null}
+      <RivalryStrip results={results} nameA={playerA.name} nameB={playerB.name} legend={false} />
       {closeness.deciders.matches > 0 ? (
         <SplitBar
           label="Deciding sets won"
@@ -396,13 +644,25 @@ function RivalrySection({
           max={closeness.tiebreaks.matches}
         />
       ) : null}
-      <p className={styles.caption}>
+      <Note>
+        <p>
+          Filled squares are wins for {playerA.name}, outlined are wins for {playerB.name}. Colour
+          is the surface.
+        </p>
+        {record.incomplete > 0 ? (
+          <p>
+            {record.incomplete} of these {record.matches} ended in a retirement or a walkover.
+            They count in the record and are left out of every rate.
+          </p>
+        ) : null}
+        <p>
         {closeness.deciders.matches} of the {closeness.scored} meetings whose score could be read went
         to a deciding set, and {closeness.tiebreaks.matches}{' '}
         {closeness.tiebreaks.matches === 1 ? 'tiebreak was' : 'tiebreaks were'} played between them.
         Both are over all {total} meetings whatever the cut above; the record and the strip are
         the cut.
-      </p>
+        </p>
+      </Note>
     </section>
   )
 }
@@ -449,10 +709,10 @@ function ServeSection({
       {compare(serveA.rates, serveB.rates).map((row) => (
         <CompareRow key={row.label} row={row} nameA={playerA.name} nameB={playerB.name} />
       ))}
-      <p className={styles.caption}>
+      <Note>
         Over the {Number(serveA.matches_with_data)} of {filtered ? 'these' : 'their'} meetings
         that recorded a serve line{filtered ? ', under the cut above' : ''}.
-      </p>
+      </Note>
     </section>
   )
 }
@@ -569,11 +829,11 @@ function RatingsSection({
         />
       ) : null}
 
-      <p className={styles.caption}>
+      <Note>
         A rating a player never earned is absent rather than 1500: an unplayed surface is not a
         rating of average. A career that ended keeps its last rating, which is a real number
         and the wrong one to read as form.
-      </p>
+      </Note>
     </section>
   )
 }
@@ -667,7 +927,7 @@ function MeetingsSection({
 
   return (
     <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Every meeting</h2>
+      <h2 className={styles.sectionTitle} id="every-meeting">Every meeting</h2>
       <StatTable
         caption="Oldest first, which is how a rivalry reads. A retirement counts in the record and is marked."
         columns={columns}
