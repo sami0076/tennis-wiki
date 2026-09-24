@@ -33,7 +33,12 @@ export function CountUp({ value, format = (v) => String(Math.round(v)), duration
       if (t < 1) frame = requestAnimationFrame(tick)
     }
     frame = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(frame)
+    // A throttled tab can starve animation frames; the figure must still land.
+    const settle = window.setTimeout(() => setShown(value), duration + 150)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.clearTimeout(settle)
+    }
   }, [seen, value, duration, animates])
 
   if (!animates) {
