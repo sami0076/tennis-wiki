@@ -1,62 +1,66 @@
 .path {
-  font-size: var(--t-13);
-  color: var(--pencil);
+  color: var(--ink);
+  border-bottom: 1.5px solid var(--lime-deep);
 }
 
-.path a {
-  border-bottom: 0;
-}
-
-.path a:hover {
-  border-bottom: var(--rule-ink);
-}
-
-.title {
-  font-size: var(--t-28);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  padding: var(--s-2) 0 var(--s-4);
-}
-
-/* The table head, shown only where the two halves sit side by side. */
+/* The column head, shown only where the two halves sit side by side. */
 .head {
   display: none;
-  padding: 6px 0;
-  border-bottom: var(--rule-ink);
-  font-size: var(--t-12);
-  font-weight: 500;
+  padding: 0 var(--s-4) var(--s-2);
+  font-size: var(--t-11);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--pencil);
 }
 
 .rows {
+  display: grid;
+  gap: 6px;
   list-style: none;
   margin: 0;
   padding: 0;
-  border-top: var(--rule-ink);
 }
 
 .row {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--s-2) var(--s-4);
-  padding: 10px 0;
-  border-bottom: var(--rule);
+  padding: 12px var(--s-4);
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
   font-size: var(--t-13);
+  transition:
+    transform 200ms var(--ease-out),
+    box-shadow 200ms ease-out;
+}
+
+.row:hover {
+  transform: translateX(4px);
+  box-shadow: inset 3px 0 0 var(--player-a), var(--shadow-lift);
 }
 
 .year {
+  align-self: start;
+  font-size: var(--t-16);
   font-weight: 700;
+  letter-spacing: -0.02em;
   border-bottom: 0;
 }
 
 .year:hover {
-  border-bottom: var(--rule-ink);
+  color: var(--player-a);
+}
+
+.head .year {
+  font-size: inherit;
+  letter-spacing: inherit;
 }
 
 .half {
   display: grid;
-  gap: 3px;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -64,6 +68,7 @@
    the head names the columns instead. */
 .tourTag {
   font-size: var(--t-11);
+  font-weight: 700;
   color: var(--pencil);
 }
 
@@ -78,23 +83,27 @@
 .surfaces {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--s-1) var(--s-3);
+  align-items: center;
+  gap: 4px var(--s-2);
   color: var(--pencil);
 }
 
+/* A surface's count as a pill in its own ink and wash. */
 .count {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--t-12);
+  font-weight: 700;
   white-space: nowrap;
 }
 
-/* The site's surface square, 8px, before its count; the count is the label. */
 .square {
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   margin-right: 5px;
-  border-radius: 1px;
-  vertical-align: 0;
+  border-radius: 50%;
+  vertical-align: 1px;
 }
 
 .ties,
@@ -102,10 +111,18 @@
   font-size: var(--t-12);
 }
 
+.partial {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--lime-wash);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--lime-deep);
+}
+
 .slams {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s-1) var(--s-3);
+  gap: 4px var(--s-3);
 }
 
 .slam {
@@ -118,16 +135,17 @@
 }
 
 .event:hover {
-  border-bottom: var(--rule-ink);
+  color: var(--ink);
 }
 
 .champion {
-  color: var(--ink);
+  font-weight: 700;
+  color: var(--player-a);
   border-bottom: 0;
 }
 
 .champion:hover {
-  border-bottom: var(--rule-ink);
+  border-bottom: 1.5px solid currentColor;
 }
 
 .caption,
@@ -145,19 +163,11 @@
 }
 
 @media (min-width: 880px) {
-  .title {
-    font-size: var(--t-32);
-  }
-
   .head,
   .row {
     display: grid;
     grid-template-columns: 6ch 1fr 1fr;
     gap: var(--s-5);
-  }
-
-  .rows {
-    border-top: 0;
   }
 
   .tourTag {
