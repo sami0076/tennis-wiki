@@ -167,6 +167,13 @@ const searchResults = {
   next_cursor: null,
 }
 
+const simulation = {
+  best_of: 3,
+  surface: 'overall',
+  chain: { point: [0.64, 0.62], hold: [0.8, 0.78], set: [0.55, 0.45], match: [0.564, 0.436] },
+  availability: 'available',
+}
+
 /** Answers each endpoint the page asks for, and nothing else. */
 let requested: string[] = []
 
@@ -183,7 +190,11 @@ function stub(comparison: Comparison, charted: unknown = null) {
           ? searchResults
           : path.endsWith('/ratings')
             ? emptySeries
-            : profile
+            : path.endsWith('/matches')
+              ? { data: [], next_cursor: null }
+              : path === '/api/v1/simulate/match'
+                ? simulation
+                : profile
     return Promise.resolve(
       new Response(JSON.stringify(body), {
         status: 200,
