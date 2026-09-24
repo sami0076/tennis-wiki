@@ -13,6 +13,7 @@ html {
 
 body {
   margin: 0;
+  overflow-x: clip;
   background: var(--bond);
   color: var(--ink);
   font-family: var(--font);
@@ -138,6 +139,38 @@ table,
   }
   50% {
     box-shadow: 0 0 0 6px rgb(212 245 60 / 0);
+  }
+}
+
+/* A light that sweeps across a filled bar every few seconds. Put it on the
+   fill itself; the fill clips it. */
+.dp-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.dp-shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 25%, rgb(255 255 255 / 0.55) 50%, transparent 75%);
+  transform: translateX(-110%);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dp-shine::after {
+    animation: dp-shine 6s ease-in-out 1.6s infinite;
+  }
+}
+
+@keyframes dp-shine {
+  0% {
+    transform: translateX(-110%);
+  }
+  22%,
+  100% {
+    transform: translateX(110%);
   }
 }
 

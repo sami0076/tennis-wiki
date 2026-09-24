@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
-import { NavLink, Link, useNavigate } from 'react-router-dom'
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom'
 import { PlayerSearch } from '../components'
+import { Backdrop, ScrollProgress } from './Atmosphere'
 import styles from './Layout.module.css'
 
 interface LayoutProps {
@@ -24,8 +25,11 @@ const links = [
  * licence requires in the foot of every page.
  */
 export function Layout({ children }: LayoutProps) {
+  const { pathname } = useLocation()
   return (
     <div className={styles.shell}>
+      <Backdrop />
+      <ScrollProgress />
       <header className={styles.header}>
         <nav className={styles.nav}>
           <Link to="/" className={styles.brand}>
@@ -56,7 +60,9 @@ export function Layout({ children }: LayoutProps) {
         </nav>
       </header>
 
-      <main className={styles.main}>{children}</main>
+      <main key={pathname} className={styles.main}>
+        {children}
+      </main>
 
       <footer className={styles.footer}>
         <p className={styles.footerBrand}>

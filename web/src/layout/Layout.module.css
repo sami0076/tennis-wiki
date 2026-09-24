@@ -9,8 +9,8 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  margin: 0 calc(-1 * var(--s-4));
-  padding: 0 var(--s-4);
+  margin: 0 calc(50% - 50vw);
+  padding: 0 calc(50vw - 50%);
   background: rgb(246 246 242 / 0.86);
   backdrop-filter: blur(10px) saturate(1.2);
   -webkit-backdrop-filter: blur(10px) saturate(1.2);
@@ -141,6 +141,20 @@
   padding: var(--s-4) 0 var(--s-8);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .main {
+    animation: page-in 560ms var(--ease-out) both;
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+    filter: blur(6px);
+  }
+}
+
 .footer {
   display: grid;
   gap: var(--s-2);
@@ -176,10 +190,6 @@
     padding: 0 var(--s-6);
   }
 
-  .header {
-    margin: 0 calc(-1 * var(--s-6));
-    padding: 0 var(--s-6);
-  }
 
   .nav {
     gap: var(--s-6);
