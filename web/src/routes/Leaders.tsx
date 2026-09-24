@@ -216,10 +216,6 @@ function Board({ board, minMatches }: { board: Resource<Leaderboard>; minMatches
         rowKey={(row) => row.slug}
         defaultSort={{ key: 'position', direction: 'asc' }}
       />
-      <p className={styles.caption}>
-        The top {data.data.length} of {data.population.qualified.toLocaleString('en-GB')} who clear the
-        floor. Sorting reorders the rows on this page rather than the board behind them.
-      </p>
     </>
   )
 }

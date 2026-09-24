@@ -91,11 +91,7 @@ function Results({ search, cursors, setCursors }: ResultsProps) {
 
   if (search.tooShort) {
     return (
-      <p className={styles.hint}>
-        Type at least {MIN_QUERY} characters. Diacritics and near-misses are handled by the
-        search itself, so &ldquo;Djokovi&#263;&rdquo; and &ldquo;djokovic&rdquo; find the same
-        player.
-      </p>
+      <p className={styles.hint}>Type at least {MIN_QUERY} characters.</p>
     )
   }
 
@@ -124,10 +120,6 @@ function Results({ search, cursors, setCursors }: ResultsProps) {
           </li>
         ))}
       </ul>
-      <p className={styles.caption}>
-        Ranked by name similarity, weighted by the best level a player reached. Within a level
-        it favours shorter names, so the match count is there to settle the ties it cannot.
-      </p>
       <div className={styles.more}>
         {search.nextCursor !== null ? (
           <Button onClick={() => setCursors((current) => [...current, search.nextCursor as string])}>

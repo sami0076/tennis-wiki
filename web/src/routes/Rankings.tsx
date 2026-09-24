@@ -9,6 +9,7 @@ import {
   EmptyState,
   PageHeader,
   Meta,
+  Note,
   RankDelta,
   Skeleton,
   StatTable,
@@ -111,9 +112,7 @@ export function Rankings() {
       {kind === 'elo' ? (
         <SurfaceToggle value={surface} onChange={(next) => ask(() => setSurface(next))} />
       ) : (
-        <p className={styles.caption}>
-          The tours publish one list, so this one has no surface split. The Elo list does.
-        </p>
+        <Note>The tours publish one list, so this one has no surface split. The Elo list does.</Note>
       )}
 
       {kind === 'elo' && date === null ? <Leaders lines={lines} /> : null}
@@ -146,10 +145,6 @@ function Leaders({ lines }: { lines: Resource<Trajectories | null> }) {
         }))}
         animate
       />
-      <p className={styles.caption}>
-        The top eight to {lines.data.to}, on one shared scale, so a line crossing another is
-        a lead changing hands rather than two charts drawn at different sizes.
-      </p>
     </section>
   )
 }
@@ -202,34 +197,24 @@ function Board({ page, elo, surface, cursors, setCursors, clearDate }: BoardProp
           `as of ${data.as_of}`,
         ]}
       />
-      {/* omitempty on the API side: absent, not null, when no date was asked for */}
-      {data.requested ? (
-        <p className={styles.caption}>
-          You asked for {data.requested}. This is the nearest week at or before it that
-          exists, which is what every ranking here is: as of a week that happened, never as
-          of today.
-        </p>
-      ) : null}
-
       <StatTable
-        caption={
+        caption={[
+          // omitempty on the API side: absent, not null, when no date was asked for
+          data.requested
+            ? `You asked for ${data.requested}. This is the nearest week at or before it that exists: every ranking here is as of a week that happened, never as of today.`
+            : '',
           elo
-            ? 'Elo against the published rank, and the distance between them.'
-            : 'The published list, with the rating this site gives the same players.'
-        }
+            ? 'A rating more than a year old drops out of this list. Without that rule it would be a list of the retired, led by players who stopped in 2005.'
+            : '',
+          `Sorting reorders the ${data.data.length} rows on this page rather than the list behind them.`,
+        ]
+          .filter(Boolean)
+          .join(' ')}
         columns={elo ? eloColumns : officialColumns}
         rows={data.data}
         rowKey={(row) => row.slug}
         defaultSort={{ key: 'position', direction: 'asc' }}
       />
-
-      <p className={styles.caption}>
-        {elo
-          ? 'A rating more than a year old drops out of this list. Without that rule it would be a list of the retired, led by players who stopped in 2005. '
-          : ''}
-        Sorting reorders the {data.data.length} rows on this page rather than the list behind
-        them.
-      </p>
 
       <div className={styles.more}>
         {data.next_cursor !== null && data.next_cursor !== '' ? (
