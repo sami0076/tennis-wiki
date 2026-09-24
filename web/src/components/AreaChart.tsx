@@ -18,7 +18,7 @@ const PAD_BOTTOM = 8
  * AreaChart is one rating over time: the line drawn in, the ground under it
  * washed in the player's colour, the peak ringed and the latest figure dotted.
  */
-export function AreaChart({ points, label, side = 'a', height = 240 }: AreaChartProps) {
+export function AreaChart({ points, label, side, height = 240 }: AreaChartProps) {
   const [ref, seen] = useInView<HTMLDivElement>()
   const gradient = useId()
   if (points.length < 2) return null
@@ -54,7 +54,7 @@ export function AreaChart({ points, label, side = 'a', height = 240 }: AreaChart
   const pct = (value: number, of: number) => `${(value / of) * 100}%`
 
   return (
-    <div ref={ref} className={[styles.chart, styles[side], seen ? styles.seen : ''].join(' ')}>
+    <div ref={ref} className={[styles.chart, side ? styles[side] : '', seen ? styles.seen : ''].join(' ')}>
       <div className={styles.plot} style={{ height }}>
         <svg viewBox={`0 0 ${W} ${height}`} preserveAspectRatio="none" role="img" aria-label={label}>
           <defs>

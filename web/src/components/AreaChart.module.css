@@ -1,7 +1,11 @@
 .chart {
-  --tone: var(--player-a);
+  --tone: var(--ink);
   padding-right: 6ch;
   color: var(--tone);
+}
+
+.a {
+  --tone: var(--player-a);
 }
 
 .b {

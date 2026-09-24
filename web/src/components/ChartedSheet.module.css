@@ -1,4 +1,4 @@
-/* The mark on a row: a small lime pill, filled while its sheet is open. */
+/* The mark on a row: a small pill, filled while its sheet is open. */
 .mark,
 .markOpen {
   border: 0;
@@ -18,7 +18,8 @@
 
 .mark:hover,
 .markOpen {
-  background: var(--lime);
+  background: var(--ink);
+  color: var(--card);
 }
 
 .sheet {

@@ -63,7 +63,7 @@
 }
 
 .sheet:hover {
-  color: var(--player-a);
+  color: var(--ink);
 }
 
 .badge {
@@ -86,7 +86,7 @@
 
 .champion:hover,
 .finalist:hover {
-  color: var(--player-a);
+  color: var(--ink);
 }
 
 .score {

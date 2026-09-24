@@ -1,20 +1,10 @@
 .court {
-  --court: var(--hard);
-  --apron: var(--hard-wash);
+  --court: var(--ink);
+  --apron: var(--highlight);
   display: block;
   width: 100%;
   height: auto;
   overflow: visible;
-}
-
-.clay {
-  --court: var(--clay);
-  --apron: var(--clay-wash);
-}
-
-.grass {
-  --court: var(--grass);
-  --apron: var(--grass-wash);
 }
 
 .apron {
@@ -41,7 +31,7 @@
 }
 
 .net .tape {
-  stroke: #fff;
+  stroke: var(--card);
   stroke-width: 3;
 }
 
@@ -58,20 +48,20 @@
 
 .bounce {
   fill: none;
-  stroke: var(--lime);
+  stroke: var(--ink);
   stroke-width: 2;
   opacity: 0;
 }
 
 .ball circle {
-  fill: var(--lime);
-  stroke: var(--lime-deep);
-  stroke-width: 1;
+  fill: var(--card);
+  stroke: var(--ink);
+  stroke-width: 1.5;
 }
 
 .ball path {
   fill: none;
-  stroke: #fff;
+  stroke: var(--ink);
   stroke-width: 1.4;
   opacity: 0.9;
 }
@@ -97,14 +87,6 @@
     transform-origin: center;
     animation: bounce 2.8s linear infinite;
   }
-
-  .cycle .surface {
-    animation: court 12s ease-in-out infinite;
-  }
-
-  .cycle .apron {
-    animation: apron 12s ease-in-out infinite;
-  }
 }
 
 @keyframes flight {
@@ -126,41 +108,5 @@
   100% {
     opacity: 0;
     transform: scale(1.8);
-  }
-}
-
-@keyframes court {
-  0%,
-  28% {
-    fill: var(--hard);
-  }
-  36%,
-  61% {
-    fill: var(--clay);
-  }
-  69%,
-  94% {
-    fill: var(--grass);
-  }
-  100% {
-    fill: var(--hard);
-  }
-}
-
-@keyframes apron {
-  0%,
-  28% {
-    fill: var(--hard-wash);
-  }
-  36%,
-  61% {
-    fill: var(--clay-wash);
-  }
-  69%,
-  94% {
-    fill: var(--grass-wash);
-  }
-  100% {
-    fill: var(--hard-wash);
   }
 }

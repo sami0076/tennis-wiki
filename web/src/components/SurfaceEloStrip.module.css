@@ -27,10 +27,10 @@
 .best {
   padding: 1px 6px;
   border-radius: 999px;
-  background: var(--lime);
+  background: var(--ink);
   font-size: var(--t-11);
   font-weight: 700;
-  color: var(--ink);
+  color: var(--card);
 }
 
 .value {

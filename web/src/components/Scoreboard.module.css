@@ -1,4 +1,4 @@
-/* A stadium board: ink panel, light type, the server lit in lime. */
+/* A stadium board: ink panel, light type, the server lit in the ball colour. */
 .board {
   width: 100%;
   /* Fixed so the set columns keep their width and the name takes the rest. */
@@ -32,8 +32,8 @@
 /* The set in progress is boxed in the surface's hue: the sheet's active cell. */
 .setHeadCurrent {
   border-color: currentColor;
-  color: var(--lime) !important;
-  border-color: var(--lime) !important;
+  color: var(--ball) !important;
+  border-color: var(--ball) !important;
 }
 
 .row {
@@ -72,8 +72,8 @@
 }
 
 .serve {
-  background: var(--lime) !important;
-  box-shadow: 0 0 8px var(--lime);
+  background: var(--ball) !important;
+  box-shadow: 0 0 8px var(--ball);
 }
 
 .setWon,
@@ -98,8 +98,8 @@
 
 .currentCell {
   color: var(--ink);
-  background: var(--lime);
-  border-color: var(--lime) !important;
+  background: var(--ball);
+  border-color: var(--ball) !important;
 }
 
 .board tbody tr:last-child .currentCell {

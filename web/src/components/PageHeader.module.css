@@ -41,11 +41,11 @@
 }
 
 .a {
-  background: var(--player-a);
+  background: var(--ink);
 }
 
 .b {
-  background: var(--player-b);
+  background: var(--ink);
 }
 
 .title {
@@ -69,7 +69,7 @@
   display: inline-block;
 }
 
-/* The lime highlighter drawn under one word. */
+/* An ink rule swept under one word. */
 .marked {
   z-index: 0;
 }
@@ -78,13 +78,12 @@
   content: '';
   position: absolute;
   right: -0.06em;
-  bottom: 0.08em;
-  left: -0.06em;
+  bottom: 0.02em;
+  left: -0.02em;
   z-index: -1;
-  height: 0.34em;
-  border-radius: 0.08em;
-  background: var(--lime);
-  transform: skewX(-8deg);
+  height: 0.09em;
+  border-radius: 0.05em;
+  background: var(--ink);
   transform-origin: left;
 }
 

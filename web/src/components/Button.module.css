@@ -1,4 +1,4 @@
-/* Ink pill; lime rolls in behind the label on hover. */
+/* Ink pill; white rolls in behind the label on hover. */
 .button {
   position: relative;
   display: inline-flex;
@@ -26,7 +26,7 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: var(--lime);
+  background: var(--card);
   transform: translateX(-101%);
   transition: transform 340ms var(--ease-out);
 }

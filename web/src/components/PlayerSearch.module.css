@@ -28,8 +28,8 @@
 }
 
 .field:focus-within {
-  border-color: var(--player-a);
-  box-shadow: 0 0 0 3px var(--player-a-wash);
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgb(23 24 26 / 0.08);
 }
 
 .label {
@@ -89,8 +89,8 @@
 }
 
 .on {
-  background: var(--player-a-wash);
-  box-shadow: inset 3px 0 0 var(--player-a);
+  background: var(--highlight);
+  box-shadow: inset 3px 0 0 var(--ink);
 }
 
 .message {

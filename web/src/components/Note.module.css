@@ -45,8 +45,8 @@
 
 .summary:hover .icon,
 .note[open] .icon {
-  border-color: var(--player-a);
-  background: var(--player-a);
+  border-color: var(--ink);
+  background: var(--ink);
   color: var(--card);
 }
 

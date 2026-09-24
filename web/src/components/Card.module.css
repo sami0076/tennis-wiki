@@ -26,7 +26,7 @@
   border-radius: inherit;
   background: radial-gradient(
     420px circle at var(--mx) var(--my),
-    rgb(143 120 255 / 0.12),
+    rgb(23 24 26 / 0.05),
     transparent 60%
   );
   opacity: 0;
@@ -34,7 +34,7 @@
   pointer-events: none;
 }
 
-/* And a gradient edge lights along the top. */
+/* And an ink edge draws along the top. */
 .card::after {
   content: '';
   position: absolute;
@@ -43,7 +43,7 @@
   left: 16px;
   height: 2px;
   border-radius: 2px;
-  background: linear-gradient(90deg, var(--player-a), var(--player-b), var(--lime));
+  background: var(--ink);
   transform: scaleX(0);
   transition: transform 500ms var(--ease-out);
   pointer-events: none;
@@ -67,51 +67,13 @@
   }
 }
 
-.a {
-  background: linear-gradient(145deg, #f1edff 0%, var(--player-a-wash) 60%, #e3dcfb 100%);
-  border-color: var(--player-a-line);
-}
-
-.b {
-  background: linear-gradient(215deg, #fff0f5 0%, var(--player-b-wash) 60%, #f6d9e5 100%);
-  border-color: var(--player-b-line);
-}
-
-.lime {
-  background: var(--lime-wash);
-  border-color: var(--lime-deep);
-}
-
-/* The broadcast panel: every token inverted for what sits inside, and the two
-   sides brightened so they glow on the dark. */
+/* Tints are kept as names so pages can still ask for them, but the site is
+   cream, black and white: a tinted card is a plain white one. */
+.a,
+.b,
+.lime,
 .ink {
-  --ink: #f7f7f2;
-  --pencil: #a9a8b8;
-  --pencil-mid: #7d7c8c;
-  --pencil-light: #3a3a48;
-  --card: #1d1e26;
-  --card-line: #2d2e3a;
-  --highlight: #2a2b36;
-  --bond: #15161d;
-  --player-a: #9d8bff;
-  --player-a-wash: rgb(157 139 255 / 0.14);
-  --player-b: #ff5ca8;
-  --player-b-wash: rgb(255 92 168 / 0.14);
-  --third: #ffb547;
-  --hard: #5fa8ec;
-  --clay: #f08a4b;
-  --grass: #8fcf6a;
-  color: var(--ink);
-  background:
-    radial-gradient(600px circle at 0% 0%, rgb(157 139 255 / 0.22), transparent 55%),
-    radial-gradient(500px circle at 100% 100%, rgb(255 92 168 / 0.18), transparent 55%),
-    linear-gradient(160deg, #1e1f29, #121319);
-  border-color: #2d2e3a;
-  box-shadow: 0 20px 50px -24px rgb(23 24 26 / 0.55);
-}
-
-.ink::before {
-  background: radial-gradient(420px circle at var(--mx) var(--my), rgb(212 245 60 / 0.1), transparent 60%);
+  background: var(--card);
 }
 
 .head {

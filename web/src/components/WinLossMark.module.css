@@ -9,7 +9,7 @@
 }
 
 .win {
-  background: var(--player-a);
+  background: var(--ink);
   color: var(--card);
 }
 

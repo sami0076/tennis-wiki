@@ -84,7 +84,7 @@
 
 .final .won .player {
   font-weight: 700;
-  color: var(--player-a);
+  color: var(--ink);
 }
 
 .pre,
@@ -97,7 +97,7 @@
 }
 
 .player:hover {
-  color: var(--player-a);
+  color: var(--ink);
 }
 
 .score {

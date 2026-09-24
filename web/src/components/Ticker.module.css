@@ -4,7 +4,7 @@
   overflow: hidden;
   margin: 0 0 var(--s-6);
   border-radius: var(--radius);
-  background: linear-gradient(90deg, #17181a, #23213a 50%, #17181a);
+  background: var(--ink);
   color: #f7f7f2;
   box-shadow: 0 16px 40px -24px rgb(23 24 26 / 0.6);
 }
@@ -16,7 +16,7 @@
   align-items: center;
   gap: 8px;
   padding: 0 var(--s-4);
-  background: var(--lime);
+  background: var(--card);
   color: var(--ink);
   font-size: var(--t-11);
   font-weight: 800;
@@ -29,7 +29,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #e5243b;
+  background: var(--ink);
   animation: blink 1.2s steps(2, jump-none) infinite;
 }
 
@@ -69,26 +69,12 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #7d7c8c;
-}
-
-.a {
-  background: #9d8bff;
-  box-shadow: 0 0 10px #9d8bff;
-}
-
-.b {
-  background: #ff5ca8;
-  box-shadow: 0 0 10px #ff5ca8;
-}
-
-.lime {
-  background: var(--lime);
-  box-shadow: 0 0 10px var(--lime);
+  background: #f7f7f2;
+  opacity: 0.6;
 }
 
 .label {
-  color: #b9b8c6;
+  color: #b5b4ad;
 }
 
 .value {

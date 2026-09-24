@@ -72,7 +72,7 @@
   height: 8px;
   margin-left: 4px;
   vertical-align: 0;
-  color: var(--player-a);
+  color: var(--ink);
 }
 
 .marker svg {
@@ -99,7 +99,7 @@
 }
 
 .row:hover {
-  background: var(--player-a-wash);
+  background: var(--highlight);
 }
 
 .row:last-child .td {

@@ -80,19 +80,20 @@
 }
 
 .player:hover {
-  color: var(--player-a);
+  color: var(--ink);
 }
 
 .champion .player {
   font-weight: 700;
-  color: var(--player-a);
+  color: var(--ink);
 }
 
 .champion .name {
   padding: 1px 6px;
   border-radius: var(--radius-sm);
   border-bottom: 0;
-  background: var(--lime);
+  background: var(--ink);
+  color: var(--card);
 }
 
 .score {
@@ -136,13 +137,13 @@
 }
 
 .lit .name {
-  background: var(--player-a-wash);
-  border-bottom-color: var(--player-a);
+  background: var(--highlight);
+  border-bottom-color: var(--ink);
 }
 
 .lit::before,
 .lit::after {
-  background: var(--player-a);
+  background: var(--ink);
 }
 
 @media (prefers-reduced-motion: no-preference) {
