@@ -1,5 +1,6 @@
 import { Fragment, useMemo, useState, type ReactNode } from 'react'
 import { AbsentCell } from './AbsentCell'
+import { Note } from './Note'
 import styles from './StatTable.module.css'
 
 export type SortValue = number | string | null
@@ -106,7 +107,6 @@ export function StatTable<Row>({
   return (
     <div className={styles.wrap}>
       <table className={styles.table}>
-        <caption className={styles.caption}>{caption}</caption>
         <thead>
           <tr>
             {columns.map((column) => {
@@ -195,6 +195,7 @@ export function StatTable<Row>({
           ) : null}
         </tbody>
       </table>
+      <Note>{caption}</Note>
     </div>
   )
 }

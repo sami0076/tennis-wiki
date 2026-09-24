@@ -1,0 +1,73 @@
+.note {
+  margin-top: var(--s-3);
+  font-size: var(--t-12);
+  line-height: 1.55;
+  color: var(--pencil);
+}
+
+.summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.summary::-webkit-details-marker {
+  display: none;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--pencil-light);
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  font-style: italic;
+  transition:
+    border-color 160ms ease-out,
+    background-color 160ms ease-out,
+    color 160ms ease-out;
+}
+
+/* The words appear only on hover or when open; at rest it is just the mark. */
+.label {
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity 160ms ease-out,
+    transform 160ms ease-out;
+}
+
+.summary:hover .icon,
+.note[open] .icon {
+  border-color: var(--player-a);
+  background: var(--player-a);
+  color: var(--card);
+}
+
+.summary:hover .label,
+.summary:focus-visible .label,
+.note[open] .label {
+  opacity: 1;
+  transform: none;
+}
+
+.body {
+  display: grid;
+  gap: var(--s-2);
+  max-width: 72ch;
+  margin-top: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--radius-sm);
+  background: var(--bond);
+  animation: dp-rise 240ms var(--ease-out) both;
+}
+
+.body p {
+  margin: 0;
+}
