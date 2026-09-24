@@ -62,7 +62,7 @@ export function SurfaceEloStrip({ series, mode, overall = true }: SurfaceEloStri
             </div>
             <div className={styles.value}>{formatElo(value(s))}</div>
             <div className={styles.track}>
-              <div className={styles.fill} style={{ transform: `scaleX(${share(value(s))})` }} />
+              <div className={`${styles.fill} dp-shine`} style={{ transform: `scaleX(${share(value(s))})` }} />
             </div>
           </div>
         )
