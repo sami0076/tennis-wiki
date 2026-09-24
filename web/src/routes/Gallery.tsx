@@ -8,14 +8,21 @@ import { absenceReason } from '../lib/absence'
 import { useUrlParam } from '../lib/useUrlParam'
 import {
   AbsentCell,
+  AreaChart,
   Button,
   ButtonLink,
+  Card,
   ChartedMark,
   ChartedSheet,
+  CountUp,
+  CourtArt,
   DrawSheet,
   EmptyState,
+  FormPills,
+  Kicker,
   Meta,
   OddsBar,
+  PageHeader,
   PartialAggregate,
   Playback,
   PlayerSearch,
@@ -30,6 +37,7 @@ import {
   Sparkline,
   SplitBar,
   StatTable,
+  SurfaceBadge,
   SurfaceDot,
   SurfaceToggle,
   TourFilter,
@@ -194,13 +202,79 @@ export function Gallery() {
 
   return (
     <>
-      <section className={styles.intro}>
-        <h1 className={styles.title}>Components</h1>
-        <p className={styles.lede}>
-          Every component in the inventory, in every state. Not a page anyone visits: a
-          place to check the tokens, the ruling and the absence system against the
-          design before a page depends on them.
+      <PageHeader
+        kicker="Inventory"
+        title="Components"
+        lede="Every component in the inventory, in every state. Not a page anyone visits: a place to check the tokens, the colour and the absence system against the design before a page depends on them."
+        art={<CourtArt cycle />}
+      />
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>Card, Kicker and CountUp</h2>
+        <p className={styles.note}>
+          White on the cream ground, or tinted as one side of a comparison or the ball.
+          Each rises into place the first time it scrolls into view.
         </p>
+        <div className={styles.cards}>
+          <Card>
+            <Kicker>Plain</Kicker>
+            <CountUp className={styles.figure} value={2418} />
+          </Card>
+          <Card tint="a">
+            <Kicker>Player A</Kicker>
+            <CountUp className={`${styles.figure} ${styles.figureA}`} value={56.4} format={(v) => `${v.toFixed(1)}%`} />
+          </Card>
+          <Card tint="b">
+            <Kicker>Player B</Kicker>
+            <CountUp className={`${styles.figure} ${styles.figureB}`} value={43.6} format={(v) => `${v.toFixed(1)}%`} />
+          </Card>
+          <Card tint="lime">
+            <Kicker>The ball</Kicker>
+            <CountUp className={styles.figure} value={1624318} format={(v) => Math.round(v).toLocaleString('en-US')} />
+          </Card>
+        </div>
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>SurfaceBadge and FormPills</h2>
+        <div className={styles.row}>
+          <SurfaceBadge surface="hard" />
+          <SurfaceBadge surface="clay" />
+          <SurfaceBadge surface="grass" />
+          <SurfaceBadge surface="carpet" />
+          <SurfaceBadge surface={null} />
+        </div>
+        <p className={styles.sub}>Last ten, oldest first, for each side</p>
+        <div className={styles.row}>
+          <FormPills results={[true, true, false, true, true, true, false, true, true, true]} />
+          <FormPills side="b" results={[true, false, false, true, true, true, true, false, true, true]} />
+        </div>
+        <div className={styles.pillsWide}>
+          <FormPills size="lg" results={[true, true, true, true, false, true, true, true, true, false]} />
+        </div>
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>AreaChart</h2>
+        <p className={styles.note}>
+          One rating over time: the line draws in, the ground under it takes the side&apos;s
+          wash, the peak is ringed and the latest figure dotted.
+        </p>
+        <AreaChart points={trajectory} label="Elo rating over three seasons" />
+        <AreaChart points={trajectory} side="b" height={160} label="The same series as player B" />
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>CourtArt</h2>
+        <p className={styles.note}>
+          The site&apos;s illustration, per surface. Decorative and hidden from assistive
+          technology; the ball stops for anyone who asked for less motion.
+        </p>
+        <div className={styles.courts}>
+          <CourtArt surface="hard" />
+          <CourtArt surface="clay" />
+          <CourtArt surface="grass" rally={false} />
+        </div>
       </section>
 
       <section className={styles.block}>
