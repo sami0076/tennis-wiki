@@ -30,6 +30,7 @@ import {
   CountUp,
   FormPills,
   Kicker,
+  Note,
   ChartedSheet,
   EmptyState,
   EventLink,
@@ -142,20 +143,11 @@ export function Player() {
               points={trajectory.data.points.map((p) => ({ date: p.as_of, elo: p.elo }))}
               label={`Overall Elo from ${trajectory.data.from} to ${trajectory.data.to}`}
             />
-            <p className={styles.caption}>
-              Overall Elo, {trajectory.data.from} to {trajectory.data.to}, between{' '}
-              {Math.round(Math.min(...trajectory.data.points.map((p) => p.elo)))} and{' '}
-              {Math.round(Math.max(...trajectory.data.points.map((p) => p.elo)))}. Rated only in
-              the weeks they played.
-            </p>
           </Card>
         ) : null}
         {player.ratings === null || player.ratings.every((s) => s.surface === 'overall') ? null : (
           <Card title="Elo by surface" delay={120}>
             <SurfaceEloStrip series={player.ratings} mode={active ? 'current' : 'peak'} overall={false} />
-            <p className={styles.caption}>
-              Bars share one scale from 1200. Only surfaces they were rated on appear.
-            </p>
           </Card>
         )}
       </div>
@@ -355,7 +347,8 @@ function ClutchSection({ clutch }: { clutch: Resource<Clutch> }) {
       <ClutchRow label="Break points saved" metric={data.break_points_saved} />
       <ClutchRow label="Tiebreaks won" metric={data.tiebreaks_won} />
       <ClutchRow label="Deciding sets won" metric={data.deciding_sets_won} />
-      <p className={styles.caption}>
+      <Note>
+      <p>
         Against every {(data.baseline.tiers ?? []).map(tierName).join(' and ')} match from the{' '}
         {decade(data.baseline.from_decade)} to the {decade(data.baseline.to_decade)}, weighted
         by where this player&apos;s own matches fell.{' '}
@@ -365,7 +358,7 @@ function ClutchSection({ clutch }: { clutch: Resource<Clutch> }) {
         Tiebreaks and deciding sets cover the {data.baseline.scored_matches} of{' '}
         {data.baseline.matches} matches with a readable, completed score.
       </p>
-      <p className={styles.caption}>
+      <p>
         Every tiebreak is won by somebody, so those two averages sit at 50% by construction
         and the figure above is the margin over a coin toss. Break points saved is a real
         aggregate and is not 50%.{' '}
@@ -374,6 +367,7 @@ function ClutchSection({ clutch }: { clutch: Resource<Clutch> }) {
         </Link>
         .
       </p>
+      </Note>
     </section>
   )
 }
@@ -416,9 +410,7 @@ function CareerSection({ career }: { career: Career }) {
       <h2 className={styles.sectionTitle}>Career</h2>
       <StatRow label="Matches">{career.matches.toLocaleString()}</StatRow>
       <StatRow label="Retirements and walkovers">{career.incomplete_matches}</StatRow>
-      <p className={styles.caption}>
-        Retirements and walkovers count in the record and are excluded from every rate.
-      </p>
+      <Note>Retirements and walkovers count in the record and are excluded from every rate.</Note>
     </section>
   )
 }
@@ -461,10 +453,6 @@ function RankingSection({
       {latest !== undefined ? (
         <StatRow label={`Last published, ${latest.date}`}>{latest.rank}</StatRow>
       ) : null}
-      <p className={styles.caption}>
-        The tour&apos;s own list, {history.from} to {history.to}. A different claim from the
-        Elo above, which this project computes from results.
-      </p>
     </section>
   )
 }

@@ -1,6 +1,6 @@
 import type { PlayerSeason, PlayerSeasons, PlayerSplits, RankBand } from '../api/client'
 import type { Resource } from '../api/useResource'
-import { EmptyState, Skeleton, StatRow, StatTable, type Column } from '../components'
+import { EmptyState, Note, Skeleton, StatRow, StatTable, type Column } from '../components'
 import { formatPercent } from '../lib/format'
 import styles from './Player.module.css'
 
@@ -46,11 +46,10 @@ export function OpponentsSection({ splits }: { splits: PlayerSplits }) {
         </>
       )}
       <StatRow label="Decided by a final-set tiebreak">{record(splits.final_set_tiebreaks)}</StatRow>
-      <p className={styles.caption}>
+      <Note>
         Higher and lower over the matches where both rankings are known. The final-set tiebreak
-        record is over the {splits.scored} matches whose score could be read; tiebreaks and
-        deciding sets on their own are under pressure, above.
-      </p>
+        record is over the {splits.scored} matches whose score could be read.
+      </Note>
     </section>
   )
 }
@@ -102,16 +101,12 @@ export function SeasonsSection({ seasons }: { seasons: Resource<PlayerSeasons> }
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>Year by year</h2>
       <StatTable
-        caption={`Sets, games and tiebreaks are over the matches whose score could be read; hold, break, ace, double-fault and dominance over the matches carrying serve lines, which is the Lines column: ${withServe} of ${played} matches. A rate with nothing to divide by is n/r.`}
+        caption={`Sets, games and tiebreaks are over the matches whose score could be read; hold, break, ace, double-fault and dominance over the matches carrying serve lines, which is the Lines column: ${withServe} of ${played} matches. A rate with nothing to divide by is n/r. Dominance is return points won over serve points lost; above 1 wins more points than it loses.`}
         columns={seasonColumns}
         rows={rows}
         rowKey={(row) => String(row.season)}
         defaultSort={{ key: 'season', direction: 'desc' }}
       />
-      <p className={styles.caption}>
-        The dominance ratio is return points won over serve points lost; above 1 is winning
-        more points than losing. Defined on the methodology page.
-      </p>
     </section>
   )
 }
