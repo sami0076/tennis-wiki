@@ -1,0 +1,112 @@
+.chart {
+  --tone: var(--player-a);
+  padding-right: 6ch;
+  color: var(--tone);
+}
+
+.b {
+  --tone: var(--player-b);
+}
+
+.plot {
+  position: relative;
+}
+
+.plot svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.line {
+  fill: none;
+  stroke: var(--tone);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.peak,
+.end {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+}
+
+.peak {
+  border: 2.5px solid var(--tone);
+  background: var(--card);
+}
+
+.end {
+  background: var(--tone);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--tone) 20%, transparent);
+}
+
+.peakLabel,
+.endLabel {
+  position: absolute;
+  font-size: var(--t-12);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.peakLabel {
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--ink);
+}
+
+.endLabel {
+  top: 50%;
+  left: 18px;
+  transform: translateY(-50%);
+  color: var(--tone);
+}
+
+.years {
+  position: relative;
+  height: 20px;
+  margin-top: var(--s-2);
+  border-top: 1px solid var(--card-line);
+}
+
+.years span {
+  position: absolute;
+  top: 6px;
+  transform: translateX(-50%);
+  font-size: var(--t-11);
+  color: var(--pencil);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .line {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+
+  .area,
+  .peak,
+  .end {
+    opacity: 0;
+  }
+
+  .seen .line {
+    animation: dp-draw 1.6s var(--ease-out) forwards;
+  }
+
+  .seen .area {
+    opacity: 1;
+    animation: dp-fade 1.2s ease-out both 500ms;
+  }
+
+  .seen .peak,
+  .seen .end {
+    opacity: 1;
+    animation: dp-pop 500ms var(--ease-spring) both 1.3s;
+  }
+}
