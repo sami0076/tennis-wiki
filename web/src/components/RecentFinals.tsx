@@ -1,9 +1,10 @@
+import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import type { RecentFinals as RecentFinalsData } from '../api/client'
 import type { Resource } from '../api/useResource'
 import { Score } from './Score'
 import { Skeleton } from './Skeleton'
-import { SurfaceDot } from './SurfaceDot'
+import { SurfaceBadge } from './SurfaceBadge'
 import styles from './RecentFinals.module.css'
 
 interface RecentFinalsProps {
@@ -12,10 +13,9 @@ interface RecentFinalsProps {
 
 /**
  * RecentFinals is the week that ended last Sunday, as the finals played in
- * it: one ruled line per final, both tours, each a link to the sheet and to
- * both players, and the date the data is current to written on it. An
- * off-season week says which week it is showing instead of vanishing. Not a
- * feed: a final is the row on a sheet that says who won the thing.
+ * it: one card per final, both tours, each a link to the sheet and to both
+ * players, and the date the data is current to written above them. An
+ * off-season week says which week it is showing instead of vanishing.
  */
 export function RecentFinals({ recent }: RecentFinalsProps) {
   if (recent.state === 'loading') return <Skeleton lines={4} />
@@ -46,10 +46,14 @@ export function RecentFinals({ recent }: RecentFinalsProps) {
       </p>
       {data.finals.length > 0 ? (
         <ol className={styles.finals}>
-          {data.finals.map((final) => (
-            <li key={`${final.tour}-${final.name}-${final.start_date}`} className={styles.final}>
-              <span className={styles.tour}>{final.tour.toUpperCase()}</span>
+          {data.finals.map((final, index) => (
+            <li
+              key={`${final.tour}-${final.name}-${final.start_date}`}
+              className={styles.final}
+              style={{ '--i': index } as CSSProperties}
+            >
               <span className={styles.event}>
+                <span className={styles.tour}>{final.tour.toUpperCase()}</span>
                 {final.slug === null ? (
                   final.name
                 ) : (
@@ -57,12 +61,9 @@ export function RecentFinals({ recent }: RecentFinalsProps) {
                     {final.name}
                   </Link>
                 )}
-                {final.surface === null ? null : (
-                  <span className={styles.surface}>
-                    {' '}
-                    <SurfaceDot surface={final.surface} label={false} />
-                  </span>
-                )}
+              </span>
+              <span className={styles.badge}>
+                <SurfaceBadge surface={final.surface} />
               </span>
               <span className={styles.result}>
                 <Link className={styles.champion} to={`/players/${final.champion.slug}`}>

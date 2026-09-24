@@ -42,49 +42,49 @@
   stroke-dasharray: 1 3;
 }
 
-/* The ink ramp in ranking order, and the field after it. Hue is spent on
-   surface and cannot be borrowed. */
+/* The top three in colour, in ranking order, and the field after them. */
 .first {
-  stroke: var(--ink);
-  color: var(--ink);
+  stroke: var(--player-a);
+  color: var(--player-a);
 }
 
 .first .line {
-  stroke-width: 1.5;
+  stroke-width: 2.25;
 }
 
 .second {
-  stroke: var(--pencil);
-  color: var(--pencil);
+  stroke: var(--player-b);
+  color: var(--player-b);
 }
 
 .second .line {
-  stroke-width: 1.5;
+  stroke-width: 2;
 }
 
 .third {
-  stroke: var(--pencil-mid);
-  color: var(--pencil);
+  stroke: var(--third);
+  color: var(--third);
 }
 
 .third .line {
-  stroke-width: 1.25;
+  stroke-width: 1.75;
 }
 
 .field {
   stroke: var(--pencil-mid);
   color: var(--pencil);
-  opacity: 0.6;
+  opacity: 0.45;
 }
 
-/* A finger on one row: its line goes to ink and the others fall back. */
+/* A finger on one row: its line lights up and the others fall back. */
 .lit,
 .lit .line {
-  stroke: var(--ink);
+  stroke: var(--player-a);
+  opacity: 1;
 }
 
 .lit .line {
-  stroke-width: 1.5;
+  stroke-width: 2.5;
 }
 
 .dim {

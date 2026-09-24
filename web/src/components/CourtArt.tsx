@@ -55,10 +55,13 @@ const apron = (() => {
 const [netLeftX, netY] = at(-0.04, 0.5)
 const [netRightX] = at(1.04, 0.5)
 
-const [serveX, serveY] = at(0.3, 0.9)
-const [landX, landY] = at(0.72, 0.18)
-const [outX, outY] = at(0.9, -0.05)
-const FLIGHT = `M${serveX.toFixed(1)} ${(serveY - 60).toFixed(1)} Q${(W / 2).toFixed(1)} -40 ${landX.toFixed(1)} ${landY.toFixed(1)} Q${((landX + outX) / 2).toFixed(1)} ${(landY - 60).toFixed(1)} ${outX.toFixed(1)} ${(outY - 20).toFixed(1)}`
+// Struck from behind the near baseline, over the net, into the far service
+// box, and a short second bounce toward the far baseline.
+const [hitX, hitY] = at(0.22, 1.02)
+const [landX, landY] = at(0.7, 0.3)
+const [outX, outY] = at(1.02, 0.16)
+const f = (n: number) => n.toFixed(1)
+const FLIGHT = `M${f(hitX)} ${f(hitY - 70)} Q${f(W * 0.46)} ${f(FAR - 90)} ${f(landX)} ${f(landY)} Q${f((landX + outX) / 2)} ${f(landY - 40)} ${f(outX)} ${f(outY - 12)}`
 
 /**
  * CourtArt is the site's illustration: a court whose lines draw themselves in,
