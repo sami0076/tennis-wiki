@@ -1,6 +1,6 @@
 ---
 name: Deucepoint
-description: Court colour - a cream ground, white cards, violet against magenta for the two sides of every comparison, lime for the ball, and pages that move when they arrive.
+description: Cream, ink and white, with white cards and pages that move when they arrive; colour only where it tells two players or four surfaces apart.
 colors:
   bond: "#f6f6f2"
   highlight: "#ecece6"
@@ -10,9 +10,7 @@ colors:
   pencil: "#66655f"
   pencil-mid: "#8a8881"
   pencil-light: "#cfcdc5"
-  lime: "#d4f53c"
-  lime-deep: "#b9dc1c"
-  lime-wash: "#f3fbd0"
+  ball: "#d4f53c"
   player-a: "#5b3ae6"
   player-a-wash: "#ece8f8"
   player-b: "#d0186b"
@@ -50,12 +48,12 @@ Reasoning is in [ADR-0014](docs/decisions/0014-court-colour.md), which supersede
 
 ## Overview
 
-**Creative North Star: "Court colour."** The same cream ground and the same monospaced face, now with white cards on it, big figures, and colour that tells you who is who: violet is player A, magenta is player B, lime is the ball. Pages arrive rather than appear: cards rise in, figures count up, bars grow, lines draw in, and the home page loops a rally over a court.
+**Creative North Star: "Cream, ink and white, in motion."** A cream ground, white cards, black type and one monospaced face. Colour is kept for the places it does a job: violet is player A and magenta player B wherever two players are compared (head to head, odds, the simulator, chart lines), and surfaces keep their colours. Everything else is ink. Pages arrive rather than appear: headlines rise word by word, cards rise in, figures roll up, bars grow, lines draw in, and the home page loops a rally over a black-and-white court.
 
 **Key characteristics**
 - Cream `--bond` ground; white cards (8px radius, faint shadow) hold every section.
 - Violet against magenta in every comparison, each with a wash for tinted panels.
-- Lime used sparingly: the brand ball, the primary search button, the leader, "best" and "won" tags, button hovers.
+- No decorative colour: accents, badges, buttons and hovers are ink on cream or white.
 - Surfaces keep their ink and gain a wash for badges (`HARD`, `CLAY`, `GRASS`).
 - Martian Mono for everything, with fluid display and figure sizes for names and headline numbers.
 - Motion on arrival, triggered by scrolling into view, removed under reduced motion.
@@ -67,7 +65,7 @@ Every colour is a custom property in `web/src/styles/tokens.css`.
 - **Ground:** `--bond` for the page, `--card` for panels, `--card-line` for rules inside a card, `--highlight` for empty tracks and quiet chips.
 - **Ink and pencils:** ink for entries and figures; pencil for captions, kickers and meta; pencil-mid and pencil-light for fields and ruling.
 - **Sides:** `--player-a` (violet) and `--player-b` (magenta) for names, tallies, bars, chart lines, form pills and tinted panels (`--player-*-wash`, `--player-*-line`). In a ranked chart, the top three lines are violet, magenta and `--third` (amber).
-- **Ball:** `--lime` fills; `--lime-deep` for its edge and pulse; `--lime-wash` for calls to action such as the playback panel. Lime is never text on white.
+- **Accent:** ink. The `--lime*` token names survive but point at ink, dark grey and white; `--ball` (real lime) is kept for the scoreboard's serve light only.
 - **Surfaces:** ink for text, bars and courts; wash for badge grounds (`surfaceVar`, `surfaceWash` in `lib/surface.ts`).
 - **Outcomes:** win and loss on rank deltas; W/L marks are violet (won) and grey (lost) squares.
 
@@ -79,17 +77,17 @@ One family, Martian Mono, self-hosted. Names and headline numbers use the fluid 
 
 ## Layout
 
-A single column up to 1248px, padded 16px on a phone and 32px from 880px, with one breakpoint at 880px. The header is sticky and frosted: brand ball, tabs (active one in brackets with a lime underline), and search.
+A single column up to 1248px, padded 16px on a phone and 32px from 880px, with one breakpoint at 880px. The header is sticky and frosted: brand ball, tabs (active one in brackets with an ink underline), and search.
 
-- **Page opener:** `PageHeader`: a kicker with an accent dash (or the pulsing lime ball), the display title, a standfirst, and optional art on the right (`CourtArt`).
-- **Home:** hero with the cycling court, a large search with a lime button and "Try" chips; then three columns (Elo top 5, the rivalry at the top, last week's finals); then the leaders chart, the coverage table and the replayed draw as cards.
+- **Page opener:** `PageHeader`: a kicker with an accent dash (or a pulsing ink dot), the display title, a standfirst, and optional art on the right (`CourtArt`).
+- **Home:** hero with the black-and-white court, a large search with an ink button and "Try" chips; then three columns (Elo top 5, the rivalry at the top, last week's finals); then the leaders chart, the coverage table and the replayed draw as cards.
 - **Player:** name at the left, a violet Elo card at the right (count-up rating, peak, last-10 form pills); four career tiles; rating history (2fr) beside Elo by surface (1fr); the remaining sections as cards.
 - **Head to head:** two tinted player panels around a large counting tally, the split bar under all three; the filters in one card; the match simulator beside the by-surface splits; finals, slam finals, deciding sets and tiebreak tiles; recent meetings as two-column cards; the full sheet below.
 - Everything is one column below 880px, and a table wider than a phone scrolls inside its card.
 
 ## Shapes & Depth
 
-Cards have an 8px radius and `--shadow`. On hover a card lifts to `--shadow-lift` and moves 2-4px. Badges have a 4px radius. Toggles and filter cells are pills inside a pill tray: ink when active, or the surface colour for a surface filter. Buttons are ink with an 8px radius; on hover lime slides in from the left. Empty states are dashed cards.
+Cards have an 8px radius and `--shadow`. On hover a card lifts to `--shadow-lift` and moves 2-4px. Badges have a 4px radius. Toggles and filter cells are pills inside a pill tray: ink when active, or the surface colour for a surface filter. Buttons are ink with an 8px radius; on hover white slides in from the left. Empty states are dashed cards.
 
 ## Motion
 
@@ -100,14 +98,14 @@ All motion lives in `base.css` keyframes (`dp-rise`, `dp-fade`, `dp-grow-x`, `dp
 - **Bars:** split bars, surface bars, odds bars and tally bars grow from their origin.
 - **Charts:** lines draw in (`stroke-dasharray` with `pathLength=1`); area washes fade in after them; peak and end markers pop.
 - **FormPills:** pop in one after another.
-- **CourtArt:** court lines draw in; a lime ball loops along a dashed flight with a bounce ring; with `cycle`, the court changes hard → clay → grass over 12s.
+- **CourtArt:** court lines draw in; a white ball loops along a dashed flight with a bounce ring; the court is ink with white lines.
 - **Ambient:** the brand ball and kicker dot pulse.
 
 Under `prefers-reduced-motion: reduce`, `base.css` collapses every animation. `CountUp` and the ball's `animateMotion` check `matchMedia` themselves.
 
 ## Components
 
-New in this system (`web/src/components`, all shown at `/_components`): `Card`/`Kicker`, `Reveal`, `CountUp`, `PageHeader`, `CourtArt`, `FormPills`, `SurfaceBadge`, `AreaChart`. Restyled: `Button`, `PlayerSearch`, `StatTable` (a card with uppercase heads and a violet-wash row hover), `StatRow`, `SplitBar`, `WinSplit`, `SurfaceToggle`/`TourFilter` (pills), `SurfaceEloStrip` (bars), `RecentFinals` (cards), `SeedingSheet` and `TrajectoryChart` (coloured leaders), `WinLossMark`, `Skeleton` (shimmer), `EmptyState` (dashed card), `Scoreboard` (ink board, lime serve), `DrawSheet`, `RoundList`.
+New in this system (`web/src/components`, all shown at `/_components`): `Card`/`Kicker`, `Reveal`, `CountUp`, `PageHeader`, `CourtArt`, `FormPills`, `SurfaceBadge`, `AreaChart`. Restyled: `Button`, `PlayerSearch`, `StatTable` (a card with uppercase heads and a grey row hover), `StatRow`, `SplitBar`, `WinSplit`, `SurfaceToggle`/`TourFilter` (pills), `SurfaceEloStrip` (bars), `RecentFinals` (cards), `SeedingSheet` and `TrajectoryChart` (coloured leaders), `WinLossMark`, `Skeleton` (shimmer), `EmptyState` (dashed card), `Scoreboard` (ink board, lime serve light), `DrawSheet`, `RoundList`.
 
 ### The absence system (unchanged)
 - **AbsentCell:** `n/r` in pencil, aligned like the numbers around it. Never `0`, blank or a dash.
@@ -127,7 +125,7 @@ The `charted` mark after a score opens the per-set sheet under its row; nothing 
 - Type `n/r` for an unrecorded value and explain it in the caption.
 
 **Don't**
-- Use lime as text on white, or as a third player colour.
+- Add colour for decoration; ask where a colour tells something apart first.
 - Loop motion other than the court rally and the brand pulse.
 - Render an absence as `0`, a blank or a dash.
 - Add photography or a second type family.

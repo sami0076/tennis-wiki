@@ -35,3 +35,10 @@ Figures always settle on their final value, and screen readers only ever get tha
   absence system and typed marks exist.
 - A chart can now carry player identity by colour, so every coloured value still needs its
   name or number beside it: colour is never the only encoding.
+
+## Amendment, 2026-09-23
+
+After living with it, the palette went back to cream, ink and white. The cards, the
+motion and the two player colours stay; lime and every decorative tint, glow and dark
+panel are gone. Colour is kept where it tells two players apart (comparisons, odds,
+chart lines) and for surfaces, and the scoreboard keeps its serve light.
