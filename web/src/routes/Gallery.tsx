@@ -212,7 +212,7 @@ export function Gallery() {
       <section className={styles.block}>
         <h2 className={styles.name}>Card, Kicker and CountUp</h2>
         <p className={styles.note}>
-          White on the cream ground, or tinted as one side of a comparison or the ball.
+          White on the cream ground; the player colours go on the figures, not the card.
           Each rises into place the first time it scrolls into view.
         </p>
         <div className={styles.cards}>
@@ -220,16 +220,16 @@ export function Gallery() {
             <Kicker>Plain</Kicker>
             <CountUp className={styles.figure} value={2418} />
           </Card>
-          <Card tint="a">
+          <Card>
             <Kicker>Player A</Kicker>
             <CountUp className={`${styles.figure} ${styles.figureA}`} value={56.4} format={(v) => `${v.toFixed(1)}%`} />
           </Card>
-          <Card tint="b">
+          <Card>
             <Kicker>Player B</Kicker>
             <CountUp className={`${styles.figure} ${styles.figureB}`} value={43.6} format={(v) => `${v.toFixed(1)}%`} />
           </Card>
-          <Card tint="lime">
-            <Kicker>The ball</Kicker>
+          <Card tilt>
+            <Kicker>Tilted</Kicker>
             <CountUp className={styles.figure} value={1624318} format={(v) => Math.round(v).toLocaleString('en-US')} />
           </Card>
         </div>
