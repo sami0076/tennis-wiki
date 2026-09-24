@@ -25,9 +25,11 @@
 .head {
   height: 28px;
   padding-left: var(--gutter);
-  border-bottom: var(--rule-ink);
-  font-size: var(--t-12);
-  font-weight: 500;
+  border-bottom: 2px solid var(--ink);
+  font-size: var(--t-11);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   line-height: 24px;
   color: var(--pencil);
   white-space: nowrap;
@@ -77,8 +79,20 @@
   border-bottom: 0;
 }
 
+.player:hover {
+  color: var(--player-a);
+}
+
 .champion .player {
   font-weight: 700;
+  color: var(--player-a);
+}
+
+.champion .name {
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  border-bottom: 0;
+  background: var(--lime);
 }
 
 .score {
@@ -122,11 +136,22 @@
 }
 
 .lit .name {
-  background: var(--highlight);
-  border-bottom-color: var(--ink);
+  background: var(--player-a-wash);
+  border-bottom-color: var(--player-a);
 }
 
 .lit::before,
 .lit::after {
-  background: var(--ink);
+  background: var(--player-a);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .stub::before {
+    transform-origin: left;
+    animation: dp-grow-x 600ms var(--ease-out) both 200ms;
+  }
+
+  .joins::after {
+    animation: dp-grow-y 600ms var(--ease-out) both 350ms;
+  }
 }

@@ -5,5 +5,5 @@
 }
 
 .link:hover {
-  border-bottom: var(--rule-ink);
+  color: var(--player-a);
 }
