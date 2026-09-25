@@ -1,0 +1,202 @@
+/* A sheet that drops from the top of the page over a dimmed site. Sits high
+   rather than centred, because the list under the field grows downwards and a
+   centred panel would move the field as it does. */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: max(8vh, var(--s-6)) var(--s-4) var(--s-4);
+  background: rgb(var(--ink-rgb) / 0.32);
+  backdrop-filter: blur(3px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scrim {
+    animation: dp-fade 160ms var(--ease-out);
+  }
+}
+
+.panel {
+  width: min(640px, 100%);
+  max-height: min(70vh, 560px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lift);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .panel {
+    animation: dp-palette-drop 220ms var(--ease-out);
+  }
+}
+
+@keyframes dp-palette-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.985);
+  }
+}
+
+/* The field
+   The focus ring moves from the input to the row around it: the input is the
+   only thing in the dialog that takes focus, and a rectangle drawn around it
+   inside a panel that is already the focused thing reads as an error state. */
+.field {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  border-bottom: var(--rule-card);
+  box-shadow: inset 0 -2px 0 -1px transparent;
+  transition: box-shadow 160ms var(--ease-out);
+}
+
+.field:focus-within {
+  box-shadow: inset 0 -2px 0 -1px var(--ink);
+}
+
+.glyph {
+  color: var(--pencil-mid);
+  font-size: var(--t-16);
+  line-height: 1;
+}
+
+/* The player a second step is about, shown as a chip where the magnifier was. */
+.subject {
+  padding: 2px var(--s-2);
+  border-radius: var(--radius-sm);
+  background: var(--highlight);
+  color: var(--ink);
+  font-size: var(--t-12);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* The "v" that makes a chip read as one half of a pairing. */
+.versus {
+  color: var(--pencil);
+  font-weight: 400;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font-size: var(--t-16);
+  outline: none;
+}
+
+.input:focus-visible {
+  outline: none;
+}
+
+.esc {
+  padding: 2px 6px;
+  border: var(--rule);
+  border-radius: var(--radius-sm);
+  color: var(--pencil);
+  font-family: inherit;
+  font-size: var(--t-11);
+}
+
+/* The list */
+.list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--s-2);
+  margin: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.on {
+  background: var(--highlight);
+}
+
+.kicker {
+  font-size: var(--t-11);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pencil);
+}
+
+.label {
+  font-size: var(--t-14);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hint {
+  font-size: var(--t-12);
+  color: var(--pencil);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* The foot: the keys while there is a list, what went wrong while there is not. */
+.foot {
+  padding: var(--s-2) var(--s-4);
+  border-top: var(--rule-card);
+  font-size: var(--t-11);
+  color: var(--pencil);
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.keys {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.keys kbd {
+  padding: 1px 5px;
+  border: var(--rule);
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: var(--t-11);
+  color: var(--ink);
+}
+
+.keys span + kbd {
+  margin-left: var(--s-2);
+}
+
+.message {
+  color: var(--pencil);
+}
+
+@media (max-width: 560px) {
+  .scrim {
+    padding-top: var(--s-4);
+  }
+
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .hint {
+    text-align: left;
+  }
+}

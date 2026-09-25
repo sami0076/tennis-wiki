@@ -11,7 +11,7 @@
   z-index: 20;
   margin: 0 calc(50% - 50vw);
   padding: 0 calc(50vw - 50%);
-  background: rgb(246 246 242 / 0.86);
+  background: rgb(var(--ground-rgb) / 0.82);
   backdrop-filter: blur(10px) saturate(1.2);
   -webkit-backdrop-filter: blur(10px) saturate(1.2);
   border-bottom: 1px solid var(--card-line);
@@ -133,8 +133,62 @@
   content: ']';
 }
 
-.search {
+.tools {
+  display: flex;
   flex: 1 0 100%;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* The trigger replaces the combobox that used to live here. One field in the
+   chrome could only ever open a player page; the palette behind this button
+   reaches every player, every page and both comparisons, and writes its own
+   shortcut on itself so the keystroke is discoverable rather than folklore. */
+.trigger {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  height: 32px;
+  padding: 0 var(--s-2) 0 var(--s-3);
+  border: var(--rule);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--pencil);
+  font-size: var(--t-13);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 160ms var(--ease-out),
+    color 160ms var(--ease-out);
+}
+
+.trigger:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.triggerGlyph {
+  font-size: var(--t-14);
+  line-height: 1;
+}
+
+.triggerLabel {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shortcut {
+  flex: 0 0 auto;
+  padding: 1px 5px;
+  border: var(--rule);
+  border-radius: 3px;
+  color: var(--pencil-mid);
+  font-family: inherit;
+  font-size: var(--t-11);
 }
 
 .main {
@@ -192,21 +246,26 @@
 
 
   .nav {
-    gap: var(--s-6);
+    gap: var(--s-5);
     padding: var(--s-4) 0;
+    flex-wrap: nowrap;
   }
 
   .brand {
     order: 1;
+    flex: 0 0 auto;
   }
 
+  /* Nowrap above, so the tabs shrink and scroll rather than pushing the
+     search onto a second row. Six tabs in this face are close enough to the
+     width of the bar that a seventh, or a longer word, would have wrapped it. */
   .links {
     order: 2;
     flex: 1 1 auto;
+    min-width: 0;
     justify-content: center;
-    gap: var(--s-5);
+    gap: var(--s-4);
     font-size: var(--t-13);
-    overflow: visible;
   }
 
   .long {
@@ -221,8 +280,8 @@
     display: none;
   }
 
-  .search {
+  .tools {
     order: 3;
-    flex: 0 1 260px;
+    flex: 0 0 236px;
   }
 }
