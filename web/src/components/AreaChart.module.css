@@ -114,3 +114,73 @@
     animation: dp-pop 500ms var(--ease-spring) both 1.3s;
   }
 }
+
+/* Reading the line
+   ---------------------------------------------------------------------
+   Pointing at the plot, or focusing it and pressing an arrow, puts a rule
+   through the nearest week and writes that week's date and rating above the
+   line. Nothing here animates in: a readout that faded would lag the pointer
+   it is answering. */
+.plot {
+  touch-action: pan-y;
+}
+
+.plot:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+.crosshair {
+  stroke: var(--pencil-mid);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.marker {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border: 2px solid var(--card);
+  border-radius: 50%;
+  background: var(--tone);
+  pointer-events: none;
+}
+
+.readout {
+  position: absolute;
+  top: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  padding: 2px var(--s-2);
+  border: var(--rule);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Flipped near the right edge so a readout taken at the end of a career is
+   not half off the card. */
+.readout[data-side='right'] {
+  transform: translateX(4px);
+}
+
+.readout[data-side='left'] {
+  transform: translateX(calc(-100% - 4px));
+}
+
+.readoutValue {
+  font-size: var(--t-13);
+  font-weight: 700;
+  color: var(--tone);
+}
+
+.readoutDate {
+  font-size: var(--t-11);
+  color: var(--pencil);
+}
