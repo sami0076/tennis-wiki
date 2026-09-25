@@ -1,0 +1,38 @@
+.flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* A hairline, because a flag with white in it (Japan, Switzerland's cross) has
+   no edge of its own against a white card. */
+.image,
+.blank {
+  display: block;
+  flex: 0 0 auto;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px var(--hairline);
+  object-fit: cover;
+}
+
+.blank {
+  background: var(--highlight);
+}
+
+.sm .image,
+.sm .blank {
+  width: 18px;
+  height: 12px;
+}
+
+.md .image,
+.md .blank {
+  width: 24px;
+  height: 16px;
+}
+
+.code {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
