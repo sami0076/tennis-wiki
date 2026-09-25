@@ -35,6 +35,7 @@ import {
   ChartedSheet,
   EmptyState,
   EventLink,
+  Flag,
   Meta,
   PartialAggregate,
   RankDelta,
@@ -295,7 +296,7 @@ function PlayerHero({
           <span className={styles.dash} aria-hidden="true" />
           <Meta
             parts={[
-              player.country,
+              <Flag key="flag" country={player.country} size="md" />,
               formatHand(player.hand),
               when,
               span,
@@ -410,25 +411,18 @@ function ClutchSection({ clutch }: { clutch: Resource<Clutch> }) {
       <ClutchRow label="Tiebreaks won" metric={data.tiebreaks_won} />
       <ClutchRow label="Deciding sets won" metric={data.deciding_sets_won} />
       <Note>
-      <p>
-        Against every {(data.baseline.tiers ?? []).map(tierName).join(' and ')} match from the{' '}
-        {decade(data.baseline.from_decade)} to the {decade(data.baseline.to_decade)}, weighted
-        by where this player&apos;s own matches fell.{' '}
-        {data.break_points_saved === null
-          ? null
-          : `Break points saved covers the ${data.break_points_saved.played} break points their matches recorded. `}
-        Tiebreaks and deciding sets cover the {data.baseline.scored_matches} of{' '}
-        {data.baseline.matches} matches with a readable, completed score.
-      </p>
-      <p>
-        Every tiebreak is won by somebody, so those two averages sit at 50% by construction
-        and the figure above is the margin over a coin toss. Break points saved is a real
-        aggregate and is not 50%.{' '}
-        <Link className={styles.inline} to="/methodology#where-statistics-do-not-exist">
-          What is missing, and why
-        </Link>
-        .
-      </p>
+        <p>
+          Measured against every {(data.baseline.tiers ?? []).map(tierName).join(' and ')} match
+          from the {decade(data.baseline.from_decade)} to the{' '}
+          {decade(data.baseline.to_decade)}, weighted by where this player's own matches fell,
+          over the {data.baseline.scored_matches} of {data.baseline.matches} matches with a
+          readable score. Every tiebreak is won by somebody, so those two averages sit at 50%
+          by construction.{' '}
+          <Link className={styles.inline} to="/methodology#where-statistics-do-not-exist">
+            What is missing, and why
+          </Link>
+          .
+        </p>
       </Note>
     </Card>
   )
@@ -618,10 +612,6 @@ function PointsSection({ player }: { player: PlayerProfile }) {
               formatPercent(points.total_points_won_percentage)
             )}
           </div>
-          <p className={styles.pointFoot}>
-            Serve and return together. Half of every match is won by somebody, so a career above
-            52% is a career that mostly won.
-          </p>
         </div>
         <div className={styles.point}>
           <Kicker>Dominance ratio</Kicker>
@@ -632,10 +622,6 @@ function PointsSection({ player }: { player: PlayerProfile }) {
               points.dominance_ratio.toFixed(2)
             )}
           </div>
-          <p className={styles.pointFoot}>
-            Return points won over serve points lost. 1.00 is a player who returns as well as
-            they are returned against.
-          </p>
         </div>
       </div>
     </Card>
@@ -665,7 +651,6 @@ function SplitsSection({ career }: { career: Career }) {
   return (
     <Card title="By surface and by level">
       <StatTable
-        caption="Every match counts once, on the surface and at the tier it was played."
         columns={[
           {
             key: 'surface',
@@ -682,7 +667,6 @@ function SplitsSection({ career }: { career: Career }) {
         defaultSort={{ key: 'matches', direction: 'desc' }}
       />
       <StatTable
-        caption="Matches with serve statistics, per tier. This is what makes never recorded at this level a checkable claim."
         columns={[
           { key: 'tier', header: 'Tier', wrap: true, value: (row) => row.tier },
           { key: 'matches', header: 'Matches', align: 'right', value: (row) => Number(row.matches) },
@@ -699,9 +683,6 @@ function SplitsSection({ career }: { career: Career }) {
         defaultSort={{ key: 'matches', direction: 'desc' }}
       />
       <StatRow label="Retirements and walkovers">{career.incomplete_matches}</StatRow>
-      <Note>
-        They count in the record above and are excluded from every rate on this page.
-      </Note>
     </Card>
   )
 }
@@ -830,7 +811,7 @@ function MatchesSection({
         ) : (
           <>
             <StatTable
-              caption="Most recent first. Aces reading n/r is a match nobody recorded serve statistics for; ret. is a retirement and w/o a walkover, which count in the record and sit out of every rate."
+              caption="n/r is a match nobody recorded serve statistics for. ret. and w/o count in the record and sit out of every rate."
               columns={columns}
               rows={matches.data.data}
               rowKey={(row) => `${row.date}-${row.tournament}-${row.opponent.slug}-${row.round}`}

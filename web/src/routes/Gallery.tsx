@@ -18,6 +18,7 @@ import {
   CourtArt,
   DrawSheet,
   EmptyState,
+  Flag,
   FormPills,
   Kicker,
   Meta,
@@ -234,6 +235,29 @@ export function Gallery() {
             <Kicker>Tilted</Kicker>
             <CountUp className={styles.figure} value={1624318} format={(v) => Math.round(v).toLocaleString('en-US')} />
           </Card>
+        </div>
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>Flag</h2>
+        <p className={styles.note}>
+          The database stores IOC codes, which are not ISO codes: GER is Germany and not
+          Georgia, SUI is Switzerland. The code rides beside the picture, because a hundred
+          flags at 18px are not something anyone can tell apart. A country that no longer
+          exists keeps its letters and gets no flag -- a Soviet player did not play for Russia.
+        </p>
+        <div className={styles.row}>
+          <Flag country="SUI" />
+          <Flag country="GER" />
+          <Flag country="RSA" />
+          <Flag country="TPE" />
+          <Flag country="URS" />
+          <Flag country="ZZZ" />
+        </div>
+        <p className={styles.sub}>Larger, for a profile; and bare, beside a name</p>
+        <div className={styles.row}>
+          <Flag country="ESP" size="md" />
+          <Flag country="ARG" code={false} />
         </div>
       </section>
 

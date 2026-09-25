@@ -5,8 +5,8 @@ import {
   Card,
   EmptyState,
   EventLink,
+  Flag,
   Kicker,
-  Note,
   Odometer,
   RoundFunnel,
   Score,
@@ -52,7 +52,6 @@ export function RunsSection({ highlights }: { highlights: Resource<PlayerHighlig
   const { streaks, schedule } = highlights.data
   const best = streaks.find((s) => s.kind === 'best')
   const current = streaks.find((s) => s.kind === 'current')
-  const worst = streaks.find((s) => s.kind === 'worst')
 
   if (best === undefined && current === undefined && schedule.rated_matches === 0) return null
 
@@ -96,20 +95,6 @@ export function RunsSection({ highlights }: { highlights: Resource<PlayerHighlig
           />
         )}
       </div>
-      <Note>
-        <p>
-          A run is broken by a defeat, never by a retirement or a walkover, and team events sit
-          outside it the way they sit outside the rating.
-          {worst === undefined
-            ? ' This career has no defeat in the database.'
-            : ` The longest losing run was ${worst.length}, ending ${worst.to}.`}
-        </p>
-        <p>
-          Every opponent carries the rating they held the week of the match, not the one they
-          ended their career on. A match whose opponent the model had not rated yet is in
-          neither figure.
-        </p>
-      </Note>
     </Card>
   )
 }
@@ -172,7 +157,7 @@ export function BestWinsSection({ highlights }: { highlights: Resource<PlayerHig
   return (
     <Card title="Biggest wins">
       <StatTable
-        caption="Ranked by the opponent's overall Elo in the week of the match, which is what the win was worth at the time rather than what that name is worth now. Main draw only."
+        caption="Main draw only, ranked on the opponent's Elo that week rather than their career best."
         columns={winColumns}
         rows={wins}
         rowKey={(row) => `${row.date}-${row.opponent.slug}-${row.round}`}
@@ -184,7 +169,7 @@ export function BestWinsSection({ highlights }: { highlights: Resource<PlayerHig
 const winColumns: ReadonlyArray<Column<BestWin>> = [
   {
     key: 'elo',
-    header: 'Opp. Elo',
+    header: 'Elo then',
     align: 'right',
     value: (row) => row.opponent_elo,
     render: (row) => <span className={styles.bigElo}>{formatElo(row.opponent_elo)}</span>,
@@ -274,10 +259,6 @@ function Shelf({ finals }: { finals: ReadonlyArray<FinalsRecord> }) {
           </li>
         ))}
       </ul>
-      <Note>
-        Titles over finals reached, at each kind of event. A final lost is still a final, and a
-        qualifying final is not one.
-      </Note>
     </>
   )
 }
@@ -311,6 +292,7 @@ export function RivalsSection({
         {rivals.map((rival) => (
           <li key={rival.slug} className={styles.rival}>
             <Link className={styles.rivalName} to={`/players/${rival.slug}`}>
+              <Flag country={rival.country} code={false} />
               {rival.name}
             </Link>
             <RivalBar rival={rival} />
@@ -323,10 +305,6 @@ export function RivalsSection({
           </li>
         ))}
       </ul>
-      <Note>
-        The record is this player&apos;s, over every meeting in the database. Team events are
-        left out, as they are everywhere the rating is.
-      </Note>
     </Card>
   )
 }

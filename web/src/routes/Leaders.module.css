@@ -154,6 +154,10 @@
 }
 
 .country {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: var(--s-2);
   font-size: var(--t-11);
   color: var(--pencil);
 }

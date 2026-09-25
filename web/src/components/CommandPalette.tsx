@@ -5,6 +5,7 @@ import { MIN_QUERY, usePlayerSearch } from '../api/useSearch'
 import { useRecentPlayers, type RecentPlayer } from '../lib/useRecentPlayers'
 import { tierLabel } from '../lib/tier'
 import { Meta } from './Meta'
+import { Flag } from './Flag'
 import styles from './CommandPalette.module.css'
 
 /** Where the palette can send a reader without a name being typed. */
@@ -360,7 +361,7 @@ function PlayerHint({ player }: { player: PlayerSearchResult }) {
     <Meta
       parts={[
         player.tour.toUpperCase(),
-        player.country,
+        <Flag key="flag" country={player.country} />,
         player.matches === 0 ? 'no matches' : `${player.matches} matches`,
         tierLabel(player.best_tier),
       ]}

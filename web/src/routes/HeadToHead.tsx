@@ -42,6 +42,7 @@ import {
   ChartedSheet,
   EmptyState,
   EventLink,
+  Flag,
   Meta,
   PlayerSearch,
   RivalryStrip,
@@ -363,7 +364,7 @@ function PlayerPanel({
       </Link>
       <Meta
         className={side === 'b' ? styles.metaB : undefined}
-        parts={[player.tour.toUpperCase(), player.country, hand]}
+        parts={[player.tour.toUpperCase(), <Flag key="flag" country={player.country} />, hand]}
       />
       <div className={styles.panelStats}>
         {elo === null ? null : (
@@ -1191,6 +1192,7 @@ function CommonOpponentsSection({
       value: (row) => row.name,
       render: (row) => (
         <Link className={styles.commonName} to={`/players/${row.slug}`}>
+          <Flag country={row.country} code={false} />
           {row.name}
         </Link>
       ),

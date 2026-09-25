@@ -689,6 +689,9 @@
 }
 
 .commonName {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   font-weight: 600;
   border-bottom: 0;
 }
