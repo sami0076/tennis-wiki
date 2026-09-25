@@ -35,6 +35,22 @@ body {
   color: var(--bond);
 }
 
+/* The open list of a <select> is painted by the platform, not by the page, and
+   it takes its colours from the select itself. A select styled to look like
+   part of a card -- no border, no background -- therefore hands the popup a
+   transparent background, which the platform resolves to its own white canvas.
+   In dark mode the option text is near-white, so the list was white on white.
+
+   Setting both on the options rather than the selects keeps every select free
+   to look like whatever its surroundings need while the list it opens stays
+   readable in both themes. --card, not --bond: the list floats above the page
+   the way a card does. */
+option,
+optgroup {
+  background-color: var(--card);
+  color: var(--ink);
+}
+
 h1,
 h2,
 h3,
