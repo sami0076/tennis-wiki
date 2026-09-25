@@ -147,6 +147,87 @@ func (q *Queries) ListChartedStats(ctx context.Context, chartingID string) ([]Li
 	return items, nil
 }
 
+const listCommonOpponents = `-- name: ListCommonOpponents :many
+WITH side_a AS (
+    SELECT (CASE WHEN mp.won THEN m.loser_id ELSE m.winner_id END)::bigint AS opponent_id,
+           count(*)::bigint                       AS matches,
+           count(*) FILTER (WHERE mp.won)::bigint AS wins
+      FROM match_players mp
+      JOIN matches m ON m.id = mp.match_id
+     WHERE mp.player_id = $1 AND NOT m.is_team_event
+     GROUP BY 1
+),
+side_b AS (
+    SELECT (CASE WHEN mp.won THEN m.loser_id ELSE m.winner_id END)::bigint AS opponent_id,
+           count(*)::bigint                       AS matches,
+           count(*) FILTER (WHERE mp.won)::bigint AS wins
+      FROM match_players mp
+      JOIN matches m ON m.id = mp.match_id
+     WHERE mp.player_id = $2 AND NOT m.is_team_event
+     GROUP BY 1
+)
+SELECT p.slug, p.full_name AS name, p.country,
+       side_a.matches AS a_matches, side_a.wins AS a_wins,
+       side_b.matches AS b_matches, side_b.wins AS b_wins
+  FROM side_a
+  JOIN side_b ON side_b.opponent_id = side_a.opponent_id
+  JOIN players p ON p.id = side_a.opponent_id
+ WHERE p.id <> $1
+   AND p.id <> $2
+ ORDER BY (side_a.matches + side_b.matches) DESC, p.full_name
+ LIMIT $3
+`
+
+type ListCommonOpponentsParams struct {
+	PlayerA  int64
+	PlayerB  int64
+	RowLimit int32
+}
+
+type ListCommonOpponentsRow struct {
+	Slug     string
+	Name     string
+	Country  *string
+	AMatches int64
+	AWins    int64
+	BMatches int64
+	BWins    int64
+}
+
+// Everyone both players have faced, with each side's record against them.
+//
+// Two rivals who have met three times have often played the same fifty people,
+// and how each did against that shared field is the comparison a three-match
+// head to head cannot make. Each half is grouped before the join so a row is
+// one opponent rather than one pairing of meetings.
+func (q *Queries) ListCommonOpponents(ctx context.Context, arg ListCommonOpponentsParams) ([]ListCommonOpponentsRow, error) {
+	rows, err := q.db.Query(ctx, listCommonOpponents, arg.PlayerA, arg.PlayerB, arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListCommonOpponentsRow{}
+	for rows.Next() {
+		var i ListCommonOpponentsRow
+		if err := rows.Scan(
+			&i.Slug,
+			&i.Name,
+			&i.Country,
+			&i.AMatches,
+			&i.AWins,
+			&i.BMatches,
+			&i.BWins,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listHeadToHeadMeetings = `-- name: ListHeadToHeadMeetings :many
 SELECT m.id,
        m.played_on,
