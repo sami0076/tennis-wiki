@@ -278,10 +278,13 @@ function PlayerHero({
   const career = player.career
   // An age while the career is running, its span once it is over. Both answer
   // "when was this player" and only one of them is right at a time.
-  const when =
+  // "27" alone in a meta line reads as a count of something. The age of a
+  // player still playing is the one number here that needs its unit.
+  const age =
     active && player.birth_date !== null && career !== null
       ? ageOn(player.birth_date, career.last_match)
       : null
+  const when = age === null ? null : `age ${age}`
   const span = career !== null && !active ? careerSpan(career.first_match, career.last_match) : null
   const overall = player.ratings?.find((s) => s.surface === 'overall') ?? null
   const latest =
@@ -296,7 +299,7 @@ function PlayerHero({
           <span className={styles.dash} aria-hidden="true" />
           <Meta
             parts={[
-              <Flag key="flag" country={player.country} size="md" />,
+              <Flag key="flag" country={player.country} />,
               formatHand(player.hand),
               when,
               span,
