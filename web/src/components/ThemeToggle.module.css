@@ -1,0 +1,62 @@
+/* A 32px square in the header chrome. Ink on the page ground, filling in on
+   hover the way the tabs do. */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: var(--rule);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--pencil);
+  cursor: pointer;
+  transition:
+    color 160ms var(--ease-out),
+    border-color 160ms var(--ease-out),
+    background-color 160ms var(--ease-out);
+}
+
+.toggle:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+  background: var(--highlight);
+}
+
+.mark {
+  width: 16px;
+  height: 16px;
+  overflow: visible;
+}
+
+/* The mark swaps shape rather than cross-fading: three marks of one circle,
+   each arriving with a quarter turn so the change is legible at 16px. */
+@media (prefers-reduced-motion: no-preference) {
+  .mark {
+    animation: dp-theme-turn 260ms var(--ease-out);
+  }
+}
+
+@keyframes dp-theme-turn {
+  from {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.7);
+  }
+}
+
+.disc {
+  fill: currentColor;
+}
+
+.ring {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
+
+.ray {
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}

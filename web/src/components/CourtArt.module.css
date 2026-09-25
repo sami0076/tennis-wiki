@@ -1,6 +1,7 @@
 .court {
-  --court: var(--ink);
-  --apron: var(--highlight);
+  /* --court and --court-line come from tokens.css and are the same in both
+     themes: a court is dark with white lines whatever the page around it is. */
+  --apron: var(--court-apron);
   display: block;
   width: 100%;
   height: auto;
@@ -19,7 +20,7 @@
 
 .marking {
   fill: none;
-  stroke: #fff;
+  stroke: var(--court-line);
   stroke-width: 2.5;
   stroke-linecap: round;
 }
@@ -36,7 +37,7 @@
 }
 
 .mesh {
-  fill: rgb(23 24 26 / 0.18);
+  fill: var(--court-net);
 }
 
 .flight {

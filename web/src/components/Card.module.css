@@ -9,7 +9,7 @@
   padding: var(--s-5);
   color: var(--ink);
   background: var(--card);
-  border: 1px solid rgb(23 24 26 / 0.05);
+  border: 1px solid var(--hairline);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   transition:
@@ -26,7 +26,7 @@
   border-radius: inherit;
   background: radial-gradient(
     420px circle at var(--mx) var(--my),
-    rgb(23 24 26 / 0.05),
+    var(--hairline),
     transparent 60%
   );
   opacity: 0;
