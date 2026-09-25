@@ -74,17 +74,39 @@ export function Layout({ children }: LayoutProps) {
         {children}
       </main>
 
+      {/*
+        One line. The credit and the licence link are not a design choice: the
+        data is CC BY-NC-SA 4.0 and the BY term requires both on the pages that
+        use it (DATA_LICENSE.md). What the licence does not require is three
+        stacked paragraphs, so this is the same obligation in a third of the
+        room, and the licence is now actually linked rather than just named.
+      */}
       <footer className={styles.footer}>
-        <p className={styles.footerBrand}>
+        <Link to="/" className={styles.footerBrand}>
           <span className={styles.ball} aria-hidden="true" />
           Deucepoint
-        </p>
-        <p>
-          <Link className={styles.footerLink} to="/methodology">
-            How these numbers are produced
-          </Link>
-        </p>
-        <p>Data: Jeff Sackmann&apos;s tennis_atp and tennis_wta, CC BY-NC-SA 4.0</p>
+        </Link>
+        <Link className={styles.footerLink} to="/methodology">
+          Methodology
+        </Link>
+        <span className={styles.credit}>
+          Data{' '}
+          <a
+            className={styles.footerLink}
+            href="https://github.com/JeffSackmann"
+            rel="noreferrer"
+          >
+            Jeff Sackmann
+          </a>
+          ,{' '}
+          <a
+            className={styles.footerLink}
+            href="https://creativecommons.org/licenses/by-nc-sa/4.0/"
+            rel="license noreferrer"
+          >
+            CC BY-NC-SA 4.0
+          </a>
+        </span>
       </footer>
 
       <CommandPalette open={paletteOpen} onClose={closePalette} />
