@@ -51,6 +51,14 @@ type PlayerProfile struct {
 	// same as a career of zeroes.
 	Career *Career    `json:"career"`
 	Serve  ServeStats `json:"serve"`
+	// Return is the same career read from the other end of the court, built
+	// from the opponents' serve lines. It has its own availability because the
+	// two sets of matches are not the same set: a row can carry one line and
+	// not the other.
+	Return ReturnStats `json:"return"`
+	// Points is what both lines say together, so it exists only for the
+	// matches that carried both.
+	Points *PointStats `json:"points"`
 	// Splits cut the career by who was beaten and how close it was; null
 	// with no matches, like Career.
 	Splits *PlayerSplits `json:"splits"`
@@ -113,6 +121,48 @@ type ServeRates struct {
 	FirstServeWon        *float64 `json:"first_serve_won_percentage"`
 	SecondServeWon       *float64 `json:"second_serve_won_percentage"`
 	BreakPointsSaved     *float64 `json:"break_points_saved_percentage"`
+	// A service game is held unless a break point in it was not saved, so the
+	// games broken are exactly the break points faced and lost. The source
+	// records no per-game outcome, and this identity is the reason it does not
+	// have to: a game with three break points saved and a fourth lost is one
+	// break, and bp_faced - bp_saved counts it once.
+	ServiceGamesHeld *float64 `json:"service_games_held_percentage"`
+	ServiceGames     int64    `json:"service_games"`
+}
+
+// ReturnStats carries what the opponents' serve lines say about this player's
+// return, or the reason there are none. Availability is decided on the same
+// terms as ServeStats but counted over a different set of matches.
+type ReturnStats struct {
+	Availability    string       `json:"availability"`
+	MatchesWithData int64        `json:"matches_with_data"`
+	Rates           *ReturnRates `json:"rates"`
+}
+
+// ReturnRates are the shares of the opponents' serve that came back won. A nil
+// field is a rate with no denominator: a player nobody ever served a second
+// serve to has not won 0% of them.
+type ReturnRates struct {
+	ReturnPointsWon  *float64 `json:"return_points_won_percentage"`
+	FirstReturnWon   *float64 `json:"first_return_won_percentage"`
+	SecondReturnWon  *float64 `json:"second_return_won_percentage"`
+	BreakPointsWon   *float64 `json:"break_points_won_percentage"`
+	ReturnGamesWon   *float64 `json:"return_games_won_percentage"`
+	BreakPointsFaced int64    `json:"break_points_created"`
+	// ReturnGames is the opponents' service games, which is what a break rate
+	// is a share of. Stated so a page can say 47 of 210 rather than 22.4%.
+	ReturnGames int64 `json:"return_games"`
+}
+
+// PointStats are the two figures that need both serve lines at once, counted
+// over the matches that carried both. Total points won is the flattest summary
+// of a match there is; the dominance ratio is return points won divided by
+// serve points lost, so 1.0 is a player who returns exactly as well as they are
+// returned against and every winner of a match is above it.
+type PointStats struct {
+	Matches        int64    `json:"matches"`
+	TotalPointsWon *float64 `json:"total_points_won_percentage"`
+	Dominance      *float64 `json:"dominance_ratio"`
 }
 
 // PlayerSearchResult is one row of the search response.
@@ -236,6 +286,7 @@ func (a *API) handlePlayer(w http.ResponseWriter, r *http.Request) {
 		ProSince:  player.ProSince,
 		BirthDate: formatDate(player.BirthDate),
 		Serve:     ServeStats{Availability: AvailabilityNotRecorded},
+		Return:    ReturnStats{Availability: AvailabilityNotRecorded},
 	}
 	if player.Hand != nil {
 		hand := string(*player.Hand)
@@ -280,8 +331,16 @@ func (a *API) handlePlayer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	returns, err := a.Queries.GetPlayerReturnSummary(ctx, player.ID)
+	if err != nil {
+		Internal(w, r, err)
+		return
+	}
+
 	profile.Career = buildCareer(summary, surfaces, tiers)
 	profile.Serve = buildServe(summary, tiers)
+	profile.Return = buildReturn(summary, returns, tiers)
+	profile.Points = buildPoints(returns)
 	profile.Splits = buildSplits(ranks)
 	writeJSON(w, r, http.StatusOK, profile)
 }
@@ -345,8 +404,74 @@ func buildServe(s db.GetPlayerCareerSummaryRow, tiers []db.GetPlayerTierSplitsRo
 		FirstServeWon:        percent(s.FirstWon, s.FirstIn),
 		SecondServeWon:       percent(s.SecondWon, s.ServePoints-s.FirstIn),
 		BreakPointsSaved:     percent(s.BpSaved, s.BpFaced),
+		ServiceGamesHeld:     percent(s.ServeGames-(s.BpFaced-s.BpSaved), s.ServeGames),
+		ServiceGames:         s.ServeGames,
 	}
 	return serve
+}
+
+// buildReturn reads the career from the other end of the court. Every figure
+// is a share of what the opponents served, so the denominators are theirs:
+// break points converted is the break points they faced, not the ones this
+// player faced, and return games won is their service games.
+func buildReturn(s db.GetPlayerCareerSummaryRow, rs db.GetPlayerReturnSummaryRow,
+	tiers []db.GetPlayerTierSplitsRow) ReturnStats {
+	ret := ReturnStats{MatchesWithData: rs.StatMatches}
+	if rs.StatMatches == 0 {
+		// The reason a return line is missing is the reason a serve line is:
+		// both come from the same row, one side of it each.
+		ret.Availability = explainMissingStats(s, tiers)
+		return ret
+	}
+
+	eligible := s.Matches - s.IncompleteMatches
+	ret.Availability = AvailabilityRecorded
+	if rs.StatMatches < eligible {
+		ret.Availability = AvailabilityPartial
+	}
+
+	// Return points won is everything the opponent served that they did not
+	// win; the two return splits are the same subtraction inside each serve.
+	returnPoints := rs.ServePoints - rs.FirstWon - rs.SecondWon
+	secondServes := rs.ServePoints - rs.FirstIn
+	ret.Rates = &ReturnRates{
+		ReturnPointsWon: percent(returnPoints, rs.ServePoints),
+		FirstReturnWon:  percent(rs.FirstIn-rs.FirstWon, rs.FirstIn),
+		SecondReturnWon: percent(secondServes-rs.SecondWon, secondServes),
+		BreakPointsWon:  percent(rs.BpFaced-rs.BpSaved, rs.BpFaced),
+		// A return game is won by breaking, so the games broken are the break
+		// points the opponent faced and did not save.
+		ReturnGamesWon:   percent(rs.BpFaced-rs.BpSaved, rs.ServeGames),
+		BreakPointsFaced: rs.BpFaced,
+		ReturnGames:      rs.ServeGames,
+	}
+	return ret
+}
+
+// buildPoints is the pair of figures that need both serve lines at once, over
+// the matches that carried both. Nil where no match did: a dominance ratio
+// computed from one side of the net is not a dominance ratio.
+func buildPoints(rs db.GetPlayerReturnSummaryRow) *PointStats {
+	if rs.BothMatches == 0 {
+		return nil
+	}
+	points := &PointStats{Matches: rs.BothMatches}
+
+	ownWon := rs.OwnFirstWon + rs.OwnSecondWon
+	returnWon := rs.ServePoints - rs.FirstWon - rs.SecondWon
+	points.TotalPointsWon = percent(ownWon+returnWon, rs.OwnServePoints+rs.ServePoints)
+
+	// Return points won as a share of theirs, over serve points lost as a
+	// share of this player's. Both denominators have to exist, and a player who
+	// lost no service point at all has no ratio rather than an infinite one.
+	ownLost := rs.OwnServePoints - ownWon
+	if rs.ServePoints > 0 && rs.OwnServePoints > 0 && ownLost > 0 {
+		ratio := (float64(returnWon) / float64(rs.ServePoints)) /
+			(float64(ownLost) / float64(rs.OwnServePoints))
+		ratio = float64(int64(ratio*100+0.5)) / 100
+		points.Dominance = &ratio
+	}
+	return points
 }
 
 // explainMissingStats decides which of the three absences applies, so the page
