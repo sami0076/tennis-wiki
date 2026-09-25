@@ -7,6 +7,7 @@ import {
   type ClutchMetric,
   type Page,
   type PlayerMatch,
+  type PlayerHighlights as PlayerHighlightsData,
   type PlayerProfile,
   type RankingHistory,
 } from '../api/client'
@@ -153,7 +154,13 @@ export function Player() {
 
   return (
     <>
-      <PlayerHero player={player} active={active} rankings={rankings} form={form} />
+      <PlayerHero
+        player={player}
+        active={active}
+        rankings={rankings}
+        form={form}
+        highlights={highlights}
+      />
 
       {player.career === null ? null : <CareerTiles career={player.career} />}
 
@@ -269,11 +276,13 @@ function PlayerHero({
   active,
   rankings,
   form,
+  highlights,
 }: {
   player: PlayerProfile
   active: boolean
   rankings: Resource<RankingHistory>
   form: Resource<Page<PlayerMatch>>
+  highlights: Resource<PlayerHighlightsData>
 }) {
   const career = player.career
   // An age while the career is running, its span once it is over. Both answer
@@ -290,7 +299,11 @@ function PlayerHero({
   const latest =
     rankings.state === 'ready' && active ? rankings.data.points[rankings.data.points.length - 1] : undefined
   const recent = form.state === 'ready' ? form.data.data.slice(0, 10) : []
-  const rival = recent[0]?.opponent
+  // The opponent they have played most, not the one they happened to play
+  // last. A career's rivalry is a thing; the previous match is an accident of
+  // the draw, and offering "compare with" against it reads as random because
+  // it is.
+  const rival = highlights.state === 'ready' ? highlights.data.rivals[0] : undefined
 
   return (
     <div className={styles.hero}>

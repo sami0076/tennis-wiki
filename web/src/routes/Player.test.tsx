@@ -702,6 +702,49 @@ describe('the player page', () => {
     }
   })
 
+
+  // The chip used to offer whoever the player last happened to draw, which on
+  // a real career is a stranger from a United Cup tie.
+  it('offers the most-played opponent to compare with, not the last one', async () => {
+    routes({
+      '/coverage': coverage,
+      '/clutch': clutch(),
+      '/ratings': emptySeries,
+      '/rankings': emptyRankings,
+      '/matches': {
+        data: [match({ opponent: { slug: 'itg-stranger', name: 'Itg Stranger' } })],
+        next_cursor: '',
+      },
+      '/highlights': {
+        ...noHighlights(),
+        rivals: [
+          {
+            slug: 'itg-nemesis',
+            name: 'Itg Nemesis',
+            country: 'ESP',
+            matches: 39,
+            wins: 16,
+            last_played: '2024-06-09',
+          },
+          {
+            slug: 'itg-stranger',
+            name: 'Itg Stranger',
+            country: 'FRA',
+            matches: 1,
+            wins: 1,
+            last_played: '2025-11-03',
+          },
+        ],
+      },
+      '/players/itg-player': profile(),
+    })
+    show()
+
+    const compare = await screen.findByRole('link', { name: /Compare with Nemesis/ })
+    expect(compare).toHaveAttribute('href', '/h2h/itg-player/itg-nemesis')
+    expect(screen.queryByRole('link', { name: /Compare with Stranger/ })).not.toBeInTheDocument()
+  })
+
   // The structured data a crawler reads: a Person built from the profile and
   // nothing else, and the trail to the page.
   it('writes the player as a Person into the document head', async () => {
