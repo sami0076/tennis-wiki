@@ -40,20 +40,27 @@ declares its denominator.
 ## Operating Context
 
 Routes: `/` (Elo leaders, trajectory chart, what the database holds), `/players`
-(search, tour filter), `/players/:slug` (identity, surface Elo, clutch vs tour average,
-career, official ranking, serve, splits by surface and tier, match log), `/h2h` and
-`/h2h/:a/:b` (career score, surface filter, split bars, rivalry strip, every meeting,
-simulate button), `/rankings` (Elo vs official, rank delta), `/simulator` (two pickers,
-the chain from point to match, the chance of each set score, one match played out from the
-chain on request and labelled a sample of the model, a draw played ten thousand times), `/methodology`
-(generated from `docs/methodology.md`), `/_components` (every component in every state).
+(search, tour filter), `/players/:slug` (identity, surface Elo, runs and the schedule,
+biggest wins, serve and return with the dominance ratio, clutch vs tour average, record by
+opponent rank, most-played opponents, record by round and titles by level, splits by
+surface and tier, official ranking, year by year, match log -- behind a sticky section
+rail), `/h2h` and `/h2h/:a/:b` (career score, surface filter, split bars, rivalry strip,
+common opponents, every meeting, simulate button), `/rankings` (Elo vs official, rank
+delta), `/leaders` (one figure at a time, filtered, with its population declared),
+`/simulator` (two pickers, the chain from point to match, the chance of each set score, one
+match played out from the chain on request and labelled a sample of the model, a draw
+played ten thousand times), `/methodology` (generated from `docs/methodology.md`),
+`/_components` (every component in every state).
 
-Player search lives in the header on every page: a combobox, debounced, every row
-carrying tour, country, career match count and best tier, because at 115,000 players a
-name is not an identifier. Query and filters live in the URL so any view is a link.
+Search is a command palette on ⌘K, Ctrl-K or `/`, reached from a trigger in the header on
+every page: players, every route, and a second step that turns a chosen player into a head
+to head or a simulation without leaving it. Debounced, every row carrying tour, country,
+career match count and best tier, because at 115,000 players a name is not an identifier.
+Query and filters live in the URL so any view is a link. Recently read players are kept in
+this browser's local storage and nowhere else.
 
 Frontend: React 18, TypeScript, Vite, CSS Modules and custom properties, `web/`. Types
-generated from the Go API structs. Dev: `make api` on :8080, `make web` on :5173.
+generated from the Go API structs. Two themes from one set of tokens. Dev: `make api` on :8080, `make web` on :5173.
 Seed fixture of ~4,100 real matches covers every data regime. Served as a static SPA.
 
 ## Capabilities and Constraints
@@ -77,8 +84,9 @@ Seed fixture of ~4,100 real matches covers every data regime. Served as a static
   360px is the mobile investment.
 - Styling stack is CSS Modules plus custom properties with no Tailwind, no component
   library, no charting library, no icon set (spec §4). Changing that needs an ADR.
-- Undecided: whether a dark theme ships. Not required by the product; open to the
-  visual direction.
+- A dark theme ships (2026-09-25), on a three-state toggle: follow the system, light, or
+  dark. The tokens carry both themes and every meaningful hue clears 4.5:1 in each; an
+  inline script applies a stored choice before the first paint.
 
 ## Brand Commitments
 

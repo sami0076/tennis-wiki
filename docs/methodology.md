@@ -145,6 +145,41 @@ Every board states its population: how many matches met the filter, how many of 
 carried statistics, and how many players cleared the floor. A name that is not on a board
 is either below the floor or without the figure, and those are different absences.
 
+## Reading a career as what happened
+
+`GET /api/v1/players/{slug}/highlights` answers a different kind of question from the
+rates above: not how well somebody served, but what their career actually did. Four of its
+figures need their working shown.
+
+**A run is broken by a defeat, and by nothing else.** Retirements and walkovers are left
+out of the sequence entirely rather than counted as results, because a run of wins broken
+by an opponent who never came out on court has not been broken by a defeat. Team events
+are excluded on the same terms the rating excludes them. The runs themselves are found
+with a window over the match list: a row's position in the whole sequence minus its
+position among rows of the same result is constant inside a run and changes at every
+switch, so grouping on that difference groups the runs. A career with no defeat has no
+worst run at all, which is an absent row rather than a run of length zero.
+
+**A win is worth what the opponent was worth that week.** Every opponent in the biggest-wins
+list and in the schedule figures carries the overall Elo they held in the last weekly
+snapshot on or before the match. Rating them as they ended instead would credit a win over
+a future champion with the champion's peak, which is the most flattering possible error and
+the easiest one to make. A match whose opponent the model had not rated yet is in neither
+the average nor the list; it is not counted at the base rating, because 1500 is where a
+rating starts rather than a measurement of anybody.
+
+**2000 is the bar, and the response says so.** The record against elite opposition is
+counted above a fixed 2000 Elo — roughly the top ten of a given week on the men's tour, and
+comfortably above the noise of one upset. It is a constant rather than a parameter, because
+a bar a caller can move is a bar nothing can be compared across, and the endpoint states it
+so a page never has to guess what it meant.
+
+**A service game is held unless a break point in it was lost.** The sources record no
+per-game outcome, and they do not have to: games broken is exactly break points faced minus
+break points saved, so a game with three break points saved and a fourth lost counts once.
+Service games held and return games won are the two sides of that identity, which is why
+the hold rate on a player page and the break rate on their opponents' agree.
+
 ## How a rating is computed
 
 Every rating here is computed from scratch, in chronological order, over every match in the
