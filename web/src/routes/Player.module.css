@@ -144,19 +144,197 @@ a.chip:hover {
   margin-bottom: var(--s-5);
 }
 
-.section {
+/* The page below the rail is a run of cards. Everything on it is a Card, so
+   there is one kind of panel and one title size rather than two that nearly
+   match. */
+.stack,
+.pair {
+  display: grid;
+  gap: var(--s-5);
   margin-bottom: var(--s-5);
-  padding: var(--s-5);
-  background: var(--card);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  align-items: start;
 }
 
-.sectionTitle {
+/* A card that takes the whole width of a pair: the points figures belong under
+   serve and return rather than beside either one. */
+.span {
+  grid-column: 1 / -1;
+}
+
+/* Runs and the schedule: four figures in a row, each with its own foot. */
+.runs {
+  display: grid;
+  gap: var(--s-4);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  margin-bottom: var(--s-4);
+}
+
+.run {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+}
+
+.runValue {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: var(--t-32);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.runUnit {
+  font-size: var(--t-12);
+  font-weight: 500;
+  color: var(--pencil);
+}
+
+.runFoot {
+  font-size: var(--t-11);
+  color: var(--pencil);
+}
+
+/* The Elo in the biggest-wins table leads its row. */
+.bigElo {
+  font-weight: 700;
+}
+
+/* Titles and finals, one shelf entry per kind of event. */
+.shelfLabel {
+  display: block;
+  margin: var(--s-5) 0 var(--s-2);
+}
+
+.shelf {
+  display: grid;
+  gap: var(--s-3);
+  /* auto-fill, not auto-fit: a career with one kind of title gets one card of
+     that size rather than one stretched across the row. */
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+}
+
+.shelfItem {
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm);
+}
+
+.shelfCount {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
   font-size: var(--t-20);
   font-weight: 700;
-  letter-spacing: -0.01em;
-  margin-bottom: var(--s-3);
+}
+
+.shelfOf {
+  font-size: var(--t-11);
+  font-weight: 500;
+  color: var(--pencil);
+}
+
+.shelfName {
+  display: block;
+  font-size: var(--t-11);
+  color: var(--pencil);
+}
+
+/* Most-played opponents: name, a won-lost bar, the record, a link to the
+   rivalry page. */
+.rivals {
+  display: grid;
+  gap: var(--s-2);
+}
+
+.rival {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 90px 5ch 5ch;
+  align-items: center;
+  gap: var(--s-3);
+  font-size: var(--t-12);
+}
+
+.rivalName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-bottom: 0;
+  font-weight: 600;
+}
+
+.rivalName:hover {
+  color: var(--pencil);
+}
+
+.rivalBar {
+  display: flex;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--highlight);
+}
+
+.rivalWon {
+  background: var(--mark-won);
+}
+
+.rivalLost {
+  background: var(--mark-lost);
+}
+
+.rivalRecord {
+  text-align: right;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rivalLink {
+  border-bottom: 0;
+  color: var(--pencil);
+  font-size: var(--t-11);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.rivalLink:hover {
+  color: var(--ink);
+}
+
+/* The two figures that need both serve lines. */
+.points {
+  display: grid;
+  gap: var(--s-5);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.point {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+
+.pointValue {
+  font-size: var(--t-32);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.pointFoot {
+  max-width: 44ch;
+  font-size: var(--t-11);
+  line-height: 1.5;
+  color: var(--pencil);
+}
+
+/* The one figure in a card that is the answer, set a step above the rows that
+   decompose it: hold for the serve card, break for the return card. */
+.lead {
+  font-size: var(--t-20);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .caption {
@@ -229,11 +407,8 @@ a.chip:hover {
     padding: var(--s-5) var(--s-6);
   }
 
-  .columns {
-    display: grid;
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    gap: 0 var(--s-5);
-    align-items: start;
+  .pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .eventSurface {

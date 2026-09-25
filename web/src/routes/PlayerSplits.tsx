@@ -1,6 +1,6 @@
 import type { PlayerSeason, PlayerSeasons, PlayerSplits, RankBand } from '../api/client'
 import type { Resource } from '../api/useResource'
-import { EmptyState, Note, Skeleton, StatRow, StatTable, type Column } from '../components'
+import { Card, EmptyState, Note, Skeleton, StatRow, StatTable, type Column } from '../components'
 import { formatPercent } from '../lib/format'
 import styles from './Player.module.css'
 
@@ -26,8 +26,7 @@ export function OpponentsSection({ splits }: { splits: PlayerSplits }) {
   const bands = splits.by_rank.filter((band) => band.matches > 0)
   const unranked = splits.by_rank.find((band) => band.band === 'unranked')?.matches ?? 0
   return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>By opponent&apos;s ranking</h2>
+    <Card title="By opponent's ranking">
       {splits.ranked === 0 ? (
         <EmptyState
           heading="No opponent's ranking is recorded"
@@ -50,7 +49,7 @@ export function OpponentsSection({ splits }: { splits: PlayerSplits }) {
         Higher and lower over the matches where both rankings are known. The final-set tiebreak
         record is over the {splits.scored} matches whose score could be read.
       </Note>
-    </section>
+    </Card>
   )
 }
 
@@ -79,18 +78,16 @@ const bandColumns: ReadonlyArray<Column<RankBand>> = [
 export function SeasonsSection({ seasons }: { seasons: Resource<PlayerSeasons> }) {
   if (seasons.state === 'loading') {
     return (
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Year by year</h2>
+      <Card title="Year by year">
         <Skeleton lines={6} />
-      </section>
+      </Card>
     )
   }
   if (seasons.state === 'error') {
     return (
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Year by year</h2>
+      <Card title="Year by year">
         <p className={styles.error}>The seasons could not be loaded: {seasons.error.message}</p>
-      </section>
+      </Card>
     )
   }
   const rows = seasons.data.seasons
@@ -98,8 +95,7 @@ export function SeasonsSection({ seasons }: { seasons: Resource<PlayerSeasons> }
   const withServe = rows.reduce((n, row) => n + row.with_serve, 0)
   const played = rows.reduce((n, row) => n + row.matches, 0)
   return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Year by year</h2>
+    <Card title="Year by year">
       <StatTable
         caption={`Sets, games and tiebreaks are over the matches whose score could be read; hold, break, ace, double-fault and dominance over the matches carrying serve lines, which is the Lines column: ${withServe} of ${played} matches. A rate with nothing to divide by is n/r. Dominance is return points won over serve points lost; above 1 wins more points than it loses.`}
         columns={seasonColumns}
@@ -107,7 +103,7 @@ export function SeasonsSection({ seasons }: { seasons: Resource<PlayerSeasons> }
         rowKey={(row) => String(row.season)}
         defaultSort={{ key: 'season', direction: 'desc' }}
       />
-    </section>
+    </Card>
   )
 }
 
