@@ -14,6 +14,12 @@ interface CardProps {
   as?: ElementType
   delay?: number
   className?: string
+  /**
+   * An anchor for the section rail. A card carrying one also carries
+   * data-anchor, which is what gives it the scroll margin that keeps its
+   * heading out from under the two sticky bars above it.
+   */
+  id?: string
 }
 
 // The spotlight follows the pointer through two custom properties; a mouse
@@ -35,12 +41,20 @@ function settle(event: PointerEvent<HTMLElement>) {
 }
 
 /** Card is a panel on the cream ground, risen into place on first view. */
-export function Card({ children, title, aside, tint, tilt = false, as = 'section', delay, className }: CardProps) {
+export function Card({ children, title, aside, tint, tilt = false, as = 'section', delay, className, id }: CardProps) {
   const classes = [styles.card, tint ? styles[tint] : '', tilt ? styles.tilt : '', className]
     .filter(Boolean)
     .join(' ')
   return (
-    <Reveal as={as} delay={delay} className={classes} onPointerMove={track} onPointerLeave={settle}>
+    <Reveal
+      as={as}
+      delay={delay}
+      className={classes}
+      id={id}
+      data-anchor={id === undefined ? undefined : ''}
+      onPointerMove={track}
+      onPointerLeave={settle}
+    >
       {title !== undefined || aside !== undefined ? (
         <div className={styles.head}>
           {title !== undefined ? <h2 className={styles.title}>{title}</h2> : <span />}

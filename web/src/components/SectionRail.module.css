@@ -1,0 +1,82 @@
+/* A strip under the header: horizontal and scrollable on a phone, the same
+   strip pinned under the header on a desktop. Not a left-hand column, because
+   the page below it is already two columns and a third would leave the tables
+   too narrow to read. */
+.rail {
+  position: sticky;
+  /* Clears the sticky site header, which is three rows tall on a phone and
+     one above the breakpoint; --header-h carries both. */
+  top: var(--header-h);
+  z-index: 15;
+  margin: 0 calc(-1 * var(--s-4)) var(--s-5);
+  padding: 0 var(--s-4);
+  background: rgb(var(--ground-rgb) / 0.86);
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  border-bottom: 1px solid var(--card-line);
+}
+
+.list {
+  display: flex;
+  gap: var(--s-4);
+  overflow-x: auto;
+  scrollbar-width: none;
+  /* The strip scrolls sideways on a phone; the scrollbar under six words is
+     more furniture than the words. */
+}
+
+.list::-webkit-scrollbar {
+  display: none;
+}
+
+.item {
+  position: relative;
+  display: inline-block;
+  padding: 10px 0;
+  border-bottom: 0;
+  color: var(--pencil);
+  font-size: var(--t-12);
+  white-space: nowrap;
+  transition: color 160ms var(--ease-out);
+}
+
+.item::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--ink);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 260ms var(--ease-out);
+}
+
+.item:hover {
+  color: var(--ink);
+}
+
+.on {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.on::after {
+  transform: scaleX(1);
+}
+
+@media (min-width: 880px) {
+  .rail {
+    margin: 0 calc(-1 * var(--s-6)) var(--s-6);
+    padding: 0 var(--s-6);
+  }
+
+  .list {
+    gap: var(--s-5);
+  }
+
+  .item {
+    font-size: var(--t-13);
+  }
+}

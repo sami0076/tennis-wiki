@@ -29,8 +29,10 @@ import {
   PlayerSummary,
   RankDelta,
   RivalryStrip,
+  RoundFunnel,
   RoundList,
   RoundStepper,
+  SectionRail,
   Scoreboard,
   Scorelines,
   Skeleton,
@@ -258,10 +260,48 @@ export function Gallery() {
         <h2 className={styles.name}>AreaChart</h2>
         <p className={styles.note}>
           One rating over time: the line draws in, the ground under it takes the side&apos;s
-          wash, the peak is ringed and the latest figure dotted.
+          wash, the peak is ringed and the latest figure dotted. Point at it, or focus it and
+          press an arrow, and a crosshair reads out the nearest week.
         </p>
         <AreaChart points={trajectory} label="Elo rating over three seasons" />
         <AreaChart points={trajectory} side="b" height={160} label="The same series as player B" />
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>SectionRail</h2>
+        <p className={styles.note}>
+          A sticky table of contents for a page that runs long. Every entry is an anchor, so a
+          section is a link somebody can send, and the one in view is marked. Sticky here too,
+          which is why it sits under the site header rather than at the top of the page.
+        </p>
+        <SectionRail
+          label="Example"
+          items={[
+            { id: 'gallery-rating', label: 'Rating' },
+            { id: 'gallery-serve', label: 'Serve and return' },
+            { id: 'gallery-matches', label: 'Every match' },
+          ]}
+        />
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>RoundFunnel</h2>
+        <p className={styles.note}>
+          The record round by round, scaled against the busiest one, so how far a career
+          usually got is legible before a number is read. Won is ink and lost is grey; the
+          record at the end of each bar is what carries it without colour.
+        </p>
+        <RoundFunnel
+          rounds={[
+            { round: 'R128', matches: 78, wins: 74 },
+            { round: 'R64', matches: 74, wins: 68 },
+            { round: 'R32', matches: 68, wins: 57 },
+            { round: 'R16', matches: 57, wins: 44 },
+            { round: 'QF', matches: 44, wins: 31 },
+            { round: 'SF', matches: 31, wins: 21 },
+            { round: 'F', matches: 21, wins: 12 },
+          ]}
+        />
       </section>
 
       <section className={styles.block}>
