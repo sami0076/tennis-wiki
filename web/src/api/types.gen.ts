@@ -141,6 +141,57 @@ export interface ClutchMetric {
 }
 
 //////////
+// source: common.go
+
+/**
+ * CommonOpponents is the comparison a short head to head cannot make. Two
+ * players who have met three times have usually played the same few dozen
+ * people, and how each did against that shared field says more about the
+ * matchup than three results do.
+ * Paired the way the rest of the head to head is: index 0 is the first slug in
+ * the URL, index 1 the second, so /h2h/a/b/common and /h2h/b/a/common are one
+ * comparison read from opposite ends.
+ */
+export interface CommonOpponents {
+  players: Pair<HeadToHeadPlayer>;
+  /**
+   * Totals is each side's record over the whole shared field. It counts only
+   * the opponents this response carries, so it moves with the limit; the page
+   * says what it is a total of rather than implying it is the career.
+   */
+  totals: Pair<CommonRecord>;
+  /**
+   * Opponents is every shared opponent this response carries, most-played
+   * first. Shown is how many that is and Total how many there are, so a page
+   * can say what it is not showing rather than implying there is no more.
+   */
+  opponents: CommonOpponent[];
+  total: number /* int */;
+}
+/**
+ * CommonRecord is one side's win-loss record over the shared field.
+ */
+export interface CommonRecord {
+  matches: number /* int */;
+  wins: number /* int */;
+}
+/**
+ * CommonOpponent is one third player and what each side did against them.
+ */
+export interface CommonOpponent {
+  slug: string;
+  name: string;
+  country: string | null;
+  /**
+   * Matches and Wins are in Players order. A side that has played this
+   * opponent once and won is 1-0, which is a real record over a sample of
+   * one; the page is responsible for saying so, not this endpoint.
+   */
+  matches: Pair<number>;
+  wins: Pair<number>;
+}
+
+//////////
 // source: coverage.go
 
 /**
@@ -331,6 +382,132 @@ export interface Meeting {
    * Players order; null on the same terms as DecidingSet.
    */
   tiebreaks: Pair<number> | null;
+}
+
+//////////
+// source: highlights.go
+
+/**
+ * PlayerHighlights is a career read as what happened rather than as a rate:
+ * the runs, the wins that cost the most, what was won and where a career kept
+ * stopping. Everything here is derived from matches the model rated, so a
+ * player it never rated has lists that are empty rather than zeroed.
+ */
+export interface PlayerHighlights {
+  slug: string;
+  name: string;
+  /**
+   * Streaks holds at most three rows, keyed best, worst and current. A career
+   * that has never lost has no worst row; that is an absent row, not a zero.
+   */
+  streaks: Streak[];
+  best_wins: BestWin[];
+  finals: FinalsRecord[];
+  rounds: RoundRecord[];
+  rivals: Rival[];
+  schedule: ScheduleQuality;
+}
+/**
+ * Streak is one unbroken run of the same result. Retirements and walkovers
+ * break nothing: they are left out of the sequence entirely.
+ */
+export interface Streak {
+  /**
+   * Kind is best, worst or current. Current can also be the best one.
+   */
+  kind: string;
+  won: boolean;
+  length: number /* int64 */;
+  from: string;
+  to: string;
+}
+/**
+ * BestWin is one win, carrying the rating the opponent actually held that week
+ * rather than the one they ended their career on.
+ */
+export interface BestWin {
+  date: string;
+  tournament: string;
+  event_slug: string | null;
+  season: number /* int16 */;
+  level: string;
+  tier: string;
+  surface: string | null;
+  round: string;
+  score: string | null;
+  opponent: NamedPlayer;
+  opponent_elo: number /* float64 */;
+  /**
+   * EloAsOf is the week the rating was read from, which is on or before the
+   * match rather than the day of it: the model rates weekly.
+   */
+  elo_as_of: string;
+}
+/**
+ * NamedPlayer is enough of another player to link to them and fly their flag.
+ * Distinct from Opponent in the match log, which is the same two fields
+ * without the country and is part of a response shape that does not carry one.
+ */
+export interface NamedPlayer {
+  slug: string;
+  name: string;
+  country: string | null;
+}
+/**
+ * FinalsRecord is titles and finals at one kind of event. Category uses the
+ * same words the season index does, so a slam title and a Challenger title are
+ * never summed into one number.
+ */
+export interface FinalsRecord {
+  category: string;
+  titles: number /* int64 */;
+  finals: number /* int64 */;
+}
+/**
+ * RoundRecord is the record in one round of a main draw.
+ */
+export interface RoundRecord {
+  round: string;
+  matches: number /* int64 */;
+  wins: number /* int64 */;
+}
+/**
+ * Rival is an opponent a career kept running into, with the record against
+ * them and when they last met.
+ */
+export interface Rival {
+  /**
+   * Spelled out rather than embedding NamedPlayer: Go inlines an embedded
+   * struct into the JSON and the type generator does not, so embedding here
+   * would put a field in the TypeScript that the API never sends.
+   */
+  slug: string;
+  name: string;
+  country: string | null;
+  matches: number /* int64 */;
+  wins: number /* int64 */;
+  last_played: string;
+}
+/**
+ * ScheduleQuality is what a career was played against. RatedMatches is the
+ * denominator and is smaller than the career: an opponent the model had not
+ * rated yet contributes to neither the average nor the record.
+ */
+export interface ScheduleQuality {
+  rated_matches: number /* int64 */;
+  /**
+   * AverageElo and HighestElo are null when nothing was rated. A career
+   * averaging zero Elo is not a thing that can happen.
+   */
+  average_elo: number /* float64 */ | null;
+  highest_elo: number /* float64 */ | null;
+  /**
+   * EliteElo is the bar EliteMatches and EliteWins are counted above, stated
+   * so the page can name it instead of hardcoding it a second time.
+   */
+  elite_elo: number /* float64 */;
+  elite_matches: number /* int64 */;
+  elite_wins: number /* int64 */;
 }
 
 //////////
@@ -528,6 +705,18 @@ export interface PlayerProfile {
   career: Career | null;
   serve: ServeStats;
   /**
+   * Return is the same career read from the other end of the court, built
+   * from the opponents' serve lines. It has its own availability because the
+   * two sets of matches are not the same set: a row can carry one line and
+   * not the other.
+   */
+  return: ReturnStats;
+  /**
+   * Points is what both lines say together, so it exists only for the
+   * matches that carried both.
+   */
+  points: PointStats | null;
+  /**
    * Splits cut the career by who was beaten and how close it was; null
    * with no matches, like Career.
    */
@@ -600,6 +789,55 @@ export interface ServeRates {
   first_serve_won_percentage: number /* float64 */ | null;
   second_serve_won_percentage: number /* float64 */ | null;
   break_points_saved_percentage: number /* float64 */ | null;
+  /**
+   * A service game is held unless a break point in it was not saved, so the
+   * games broken are exactly the break points faced and lost. The source
+   * records no per-game outcome, and this identity is the reason it does not
+   * have to: a game with three break points saved and a fourth lost is one
+   * break, and bp_faced - bp_saved counts it once.
+   */
+  service_games_held_percentage: number /* float64 */ | null;
+  service_games: number /* int64 */;
+}
+/**
+ * ReturnStats carries what the opponents' serve lines say about this player's
+ * return, or the reason there are none. Availability is decided on the same
+ * terms as ServeStats but counted over a different set of matches.
+ */
+export interface ReturnStats {
+  availability: string;
+  matches_with_data: number /* int64 */;
+  rates: ReturnRates | null;
+}
+/**
+ * ReturnRates are the shares of the opponents' serve that came back won. A nil
+ * field is a rate with no denominator: a player nobody ever served a second
+ * serve to has not won 0% of them.
+ */
+export interface ReturnRates {
+  return_points_won_percentage: number /* float64 */ | null;
+  first_return_won_percentage: number /* float64 */ | null;
+  second_return_won_percentage: number /* float64 */ | null;
+  break_points_won_percentage: number /* float64 */ | null;
+  return_games_won_percentage: number /* float64 */ | null;
+  break_points_created: number /* int64 */;
+  /**
+   * ReturnGames is the opponents' service games, which is what a break rate
+   * is a share of. Stated so a page can say 47 of 210 rather than 22.4%.
+   */
+  return_games: number /* int64 */;
+}
+/**
+ * PointStats are the two figures that need both serve lines at once, counted
+ * over the matches that carried both. Total points won is the flattest summary
+ * of a match there is; the dominance ratio is return points won divided by
+ * serve points lost, so 1.0 is a player who returns exactly as well as they are
+ * returned against and every winner of a match is above it.
+ */
+export interface PointStats {
+  matches: number /* int64 */;
+  total_points_won_percentage: number /* float64 */ | null;
+  dominance_ratio: number /* float64 */ | null;
 }
 /**
  * PlayerSearchResult is one row of the search response.

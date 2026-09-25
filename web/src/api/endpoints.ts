@@ -1,6 +1,7 @@
 import { request } from './client'
 import type {
   Clutch,
+  CommonOpponents,
   CoverageResponse,
   DrawSimulation,
   Edition,
@@ -11,6 +12,7 @@ import type {
   MatchSimulation,
   Page,
   PlayerMatch,
+  PlayerHighlights,
   PlayerProfile,
   PlayerSearchResult,
   PlayerSeasons,
@@ -78,6 +80,26 @@ export function getPlayerClutch(slug: string, signal?: AbortSignal): Promise<Clu
   return request<Clutch>(`/players/${encodeURIComponent(slug)}/clutch`, {}, signal)
 }
 
+/**
+ * The career read as what happened rather than as rates: the runs, the wins
+ * that cost the most, what was won and who kept turning up.
+ *
+ * Its own request rather than a block on the profile, for the same reason
+ * clutch is: the profile is one player's rows and this walks their whole match
+ * list and every opponent's rating history. A page that shows a name should
+ * not wait on that.
+ */
+export function getPlayerHighlights(
+  slug: string,
+  signal?: AbortSignal,
+): Promise<PlayerHighlights> {
+  return request<PlayerHighlights>(
+    `/players/${encodeURIComponent(slug)}/highlights`,
+    {},
+    signal,
+  )
+}
+
 /** A career a year at a time, every rate over its own count of matches. */
 export function getPlayerSeasons(slug: string, signal?: AbortSignal): Promise<PlayerSeasons> {
   return request<PlayerSeasons>(`/players/${encodeURIComponent(slug)}/seasons`, {}, signal)
@@ -113,6 +135,25 @@ export function getHeadToHead(
   return request<HeadToHead>(
     `/h2h/${encodeURIComponent(a)}/${encodeURIComponent(b)}`,
     { ...filters },
+    signal,
+  )
+}
+
+/**
+ * Every opponent both players have faced, with each side's record against
+ * them. Separate from the head to head itself because it answers a different
+ * question and is the more expensive half: two full careers grouped and joined
+ * rather than one rivalry's few dozen rows.
+ */
+export function getCommonOpponents(
+  a: string,
+  b: string,
+  options: { limit?: number } = {},
+  signal?: AbortSignal,
+): Promise<CommonOpponents> {
+  return request<CommonOpponents>(
+    `/h2h/${encodeURIComponent(a)}/${encodeURIComponent(b)}/common`,
+    { ...options },
     signal,
   )
 }
