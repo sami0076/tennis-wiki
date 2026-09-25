@@ -106,7 +106,7 @@ Full detail in [`docs/methodology.md`](docs/methodology.md) and
 Needs Docker and Go 1.23+.
 
 ```bash
-make seed                 # Postgres + Redis, schema, and ~4,100 real matches
+make seed                 # Postgres + Redis, schema, ~4,100 real matches, and their ratings
 make api                  # http://localhost:8080
 ```
 
@@ -121,7 +121,13 @@ Or step by step:
 docker compose up -d      # Postgres 16 + Redis 7
 make migrate-up           # apply the schema
 make ingest               # load the seed fixture
+make rate                 # compute the Elo ratings from those matches
 ```
+
+Do not skip `make rate`. Ingest writes matches but no ratings, and the Elo leaderboard,
+the surface strips, the rating charts and both simulators all read the ratings table — so
+without it they come up empty, which reads as a broken page rather than a stage nobody
+ran.
 
 Postgres is published on **5433** and Redis on **6380**, not the defaults, because a local
 install very often already holds 5432 and 6379.
@@ -134,7 +140,8 @@ Useful targets — `make help` lists them all:
 | `make down` | stop it, keeping data |
 | `make reset` | stop it and delete all data |
 | `make psql` | open a shell on the database |
-| `make seed` | stack, schema, and seed fixture in one |
+| `make seed` | stack, schema, seed fixture and ratings in one |
+| `make rate` | recompute the Elo ratings from every match |
 | `make api` | run the HTTP API on port 8080 |
 | `make test` | run the test suite (starts its own Postgres) |
 | `make lint` | run golangci-lint |

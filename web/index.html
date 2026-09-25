@@ -11,6 +11,12 @@
     <meta name="theme-color" content="#f6f6f2" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#121311" media="(prefers-color-scheme: dark)" />
     <!--
+      Declared, so the browser stops probing /favicon.ico and 404ing on every
+      page load. The SVG carries its own dark-mode rule, which is why there is
+      one file rather than two.
+    -->
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <!--
       Before the stylesheet and before React: a reader who chose dark must not
       see one cream frame first. Inline and tiny on purpose -- a module would
       arrive after the first paint, which is the frame this exists to fix.
