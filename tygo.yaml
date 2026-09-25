@@ -19,6 +19,7 @@ packages:
       - "highlights.go"
       - "clutch.go"
       - "simulate.go"
+      - "draws.go"
       - "coverage.go"
       - "charted.go"
       - "tournaments.go"

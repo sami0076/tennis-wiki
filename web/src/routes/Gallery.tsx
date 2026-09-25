@@ -16,6 +16,7 @@ import {
   ChartedSheet,
   CountUp,
   CourtArt,
+  DrawPicker,
   DrawSheet,
   EmptyState,
   Flag,
@@ -50,7 +51,7 @@ import {
   WinSplit,
   type Column,
 } from '../components'
-import type { EditionMatch, EditionSide } from '../api/client'
+import type { EditionMatch, EditionSide, ReplayableDraw } from '../api/client'
 import { buildBracket, pageSheets, roundGroups, MAIN_ROUNDS } from '../lib/bracket'
 import type { Snapshot } from '../lib/playback'
 import styles from './Gallery.module.css'
@@ -146,6 +147,46 @@ const trajectory = [
   { date: '2019-07-01', elo: 2190 },
   { date: '2020-01-01', elo: 2240 },
   { date: '2020-07-01', elo: 2205 },
+]
+
+// Two seasons, so the picker has more than one group to draw.
+const galleryDraws: ReplayableDraw[] = [
+  {
+    slug: 'wimbledon-atp',
+    name: 'Wimbledon',
+    season: 2019,
+    tour: 'atp',
+    tier: 'tour',
+    level: 'G',
+    surface: 'grass',
+    draw_size: 128,
+    matches: 127,
+    start_date: '2019-07-01',
+  },
+  {
+    slug: 'roland-garros-atp',
+    name: 'Roland Garros',
+    season: 2019,
+    tour: 'atp',
+    tier: 'tour',
+    level: 'G',
+    surface: 'clay',
+    draw_size: 128,
+    matches: 127,
+    start_date: '2019-05-26',
+  },
+  {
+    slug: 'us-open-wta',
+    name: 'US Open',
+    season: 2018,
+    tour: 'wta',
+    tier: 'tour',
+    level: 'G',
+    surface: 'hard',
+    draw_size: 128,
+    matches: 127,
+    start_date: '2018-08-27',
+  },
 ]
 
 // Five lines off the one above, far enough apart to tell the ramp's four steps
@@ -325,6 +366,21 @@ export function Gallery() {
             { round: 'SF', matches: 31, wins: 21 },
             { round: 'F', matches: 21, wins: 12 },
           ]}
+        />
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>DrawPicker</h2>
+        <p className={styles.note}>
+          Which draw the simulator replays. One select rather than a season picker and an
+          event picker, because the second would depend on the first; the seasons are the
+          optgroups. Its value carries the slug and the season together, since a draw is an
+          edition of an event and half the address names no draw at all.
+        </p>
+        <DrawPicker
+          draws={galleryDraws}
+          value={{ event: 'wimbledon-atp', season: 2019 }}
+          onChange={() => {}}
         />
       </section>
 

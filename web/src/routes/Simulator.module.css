@@ -87,6 +87,20 @@
   box-shadow: var(--shadow);
 }
 
+/* The heading and the picker on one line, wrapping on a phone. */
+.drawHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+
+.drawHead .sectionTitle {
+  margin-bottom: 0;
+}
+
 .sectionTitle {
   margin-bottom: var(--s-3);
   font-size: var(--t-20);

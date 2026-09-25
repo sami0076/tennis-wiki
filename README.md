@@ -160,6 +160,7 @@ GET /api/v1/rankings?type=elo|official    leaderboards, as of the last week that
 GET /api/v1/rankings/trajectory           the leaders' rating lines, for a chart
 GET /api/v1/simulate/match?a=&b=          point to match, every rung of the chain
 GET /api/v1/simulate/draw?event=&season=  a played draw, replayed ten thousand times
+GET /api/v1/simulate/draws?tour=&season=  every draw complete enough to replay
 GET /api/v1/tournaments?tour=&level=&q=   the index, grouped by level, searchable
 GET /api/v1/tournaments/:slug             an event across seasons, with how each got there
 GET /api/v1/tournaments/:slug/:season     one edition as a draw sheet
@@ -196,6 +197,12 @@ serve is an answer with a reason, not a coin flip.
 began, ten thousand times, and reports a confidence interval on every figure. There is no
 upcoming draw to simulate and there will not be one, so the simulator does the thing the data
 supports and can be scored against: Wimbledon 2019 gives Djokovic 39.9% ±1.0, and he won it.
+
+`/simulate/draws` is the list of every draw that can be replayed, which is narrower than the
+list of draws that exist: a round robin has no bracket to rebuild, and an edition the file
+recorded only the final of has nothing to play through. The endpoint applies that cut in SQL
+rather than letting the page offer an address the simulator would decline, so every row it
+returns is an `?event=&season=` the simulator will accept.
 
 **Under pressure is measured against a stated population.** `/clutch` reports break points
 saved, tiebreaks won and deciding sets won, each against what the tour did at the same

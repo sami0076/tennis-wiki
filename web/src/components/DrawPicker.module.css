@@ -1,0 +1,54 @@
+/* A label and a select on one line, in the pill tray the rest of the page's
+   controls live in. */
+.picker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  max-width: 100%;
+  padding: 4px var(--s-3);
+  border: var(--rule);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+}
+
+.label {
+  flex: 0 0 auto;
+  font-size: var(--t-11);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pencil);
+}
+
+.select {
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font: inherit;
+  font-size: var(--t-13);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.select:disabled {
+  color: var(--pencil-mid);
+  cursor: default;
+}
+
+.busy {
+  font-size: var(--t-11);
+  color: var(--pencil);
+}
+
+@media (max-width: 560px) {
+  .picker {
+    display: flex;
+  }
+
+  .select {
+    flex: 1;
+  }
+}

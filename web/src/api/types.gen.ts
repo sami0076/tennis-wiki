@@ -251,6 +251,51 @@ export interface Page<T extends any> {
 }
 
 //////////
+// source: draws.go
+
+/**
+ * ReplayableDraws is the list a reader picks a draw from.
+ * It exists because the simulator could only ever replay the draw named in the
+ * URL, and nothing on the page told anyone a URL was involved. Landing on
+ * /simulator meant the featured draw forever.
+ */
+export interface ReplayableDraws {
+  filters: DrawFilters;
+  data: ReplayableDraw[];
+}
+/**
+ * DrawFilters echoes the cut, defaults applied.
+ */
+export interface DrawFilters {
+  tour: string | null;
+  season: number /* int */ | null;
+  limit: number /* int */;
+}
+/**
+ * ReplayableDraw is one draw, addressed the way the simulator addresses one.
+ */
+export interface ReplayableDraw {
+  slug: string;
+  name: string;
+  season: number /* int16 */;
+  tour: string;
+  tier: string;
+  level: string;
+  /**
+   * Surface is "unknown" where the source recorded none, the same stand-in
+   * the rest of the API uses rather than a second spelling for absent.
+   */
+  surface: string;
+  /**
+   * DrawSize is the source's own figure and is null where it recorded none.
+   * Matches is always known, and is what the list falls back to describing.
+   */
+  draw_size: number /* int16 */ | null;
+  matches: number /* int64 */;
+  start_date: string;
+}
+
+//////////
 // source: h2h.go
 
 /**

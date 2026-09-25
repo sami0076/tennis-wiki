@@ -1,6 +1,7 @@
 export { AbsentCell, ABSENT_SORT_KEY } from './AbsentCell'
 export { Button, ButtonLink } from './Button'
 export { ChartedMark, ChartedSheet } from './ChartedSheet'
+export { DrawPicker } from './DrawPicker'
 export { DrawSheet } from './DrawSheet'
 export { EmptyState } from './EmptyState'
 export { EventLink } from './EventLink'

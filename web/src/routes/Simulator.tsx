@@ -5,14 +5,16 @@ import {
   type DrawSimulation,
   type MatchSimulation,
   type PlayerSearchResult,
+  type ReplayableDraws,
   type SimulationChain,
 } from '../api/client'
-import { simulateDraw, simulateMatch } from '../api/endpoints'
+import { getReplayableDraws, simulateDraw, simulateMatch } from '../api/endpoints'
 import { useResource, type Resource } from '../api/useResource'
 import {
   ButtonLink,
   Card,
   CourtArt,
+  DrawPicker,
   EmptyState,
   PageHeader,
   Meta,
@@ -28,7 +30,7 @@ import {
 import { formatPercent, surname } from '../lib/format'
 import { surfaceLabel } from '../lib/surface'
 import { prefersReducedMotion } from '../lib/useReducedMotion'
-import { useUrlParam } from '../lib/useUrlParam'
+import { useUrlParam, useUrlParams } from '../lib/useUrlParam'
 import { FEATURED_DRAW } from '../lib/featuredDraw'
 import styles from './Simulator.module.css'
 import { breadcrumbs, useJsonLd } from '../lib/jsonld'
@@ -53,6 +55,9 @@ export function Simulator() {
   // featured draw stands in when the URL names none.
   const [eventSlug] = useUrlParam('event')
   const [seasonParam] = useUrlParam('season')
+  // Both halves of the address in one navigation: written separately, the
+  // second overwrites the first and the page asks for a season with no event.
+  const setDrawParams = useUrlParams()
   const season = Number(seasonParam)
   const chosenDraw =
     eventSlug !== null && Number.isInteger(season) && season > 0
@@ -70,6 +75,11 @@ export function Simulator() {
     [a, b, chosen, sets],
   )
   const draw = useResource((signal) => simulateDraw(chosenDraw, signal), [chosenDraw.event, chosenDraw.season])
+  // Every draw this simulator can be pointed at. Its own request, and not one
+  // the draw on screen waits for.
+  const draws = useResource((signal) => getReplayableDraws({}, signal), [])
+  const chooseDraw = (next: { event: string; season: number }) =>
+    setDrawParams({ event: next.event, season: String(next.season) })
 
   return (
     <>
@@ -113,7 +123,7 @@ export function Simulator() {
         <MatchPanel match={match} surface={chosen} sets={sets} />
       )}
 
-      <DrawPanel draw={draw} chosen={chosenDraw} />
+      <DrawPanel draw={draw} chosen={chosenDraw} draws={draws} onChoose={chooseDraw} />
     </>
   )
 }
@@ -384,11 +394,36 @@ function Inputs({ sim }: { sim: MatchSimulation }) {
   )
 }
 
-function DrawPanel({ draw, chosen }: { draw: Resource<DrawSimulation>; chosen: { event: string; season: number } }) {
+function DrawPanel({
+  draw,
+  chosen,
+  draws,
+  onChoose,
+}: {
+  draw: Resource<DrawSimulation>
+  chosen: { event: string; season: number }
+  draws: Resource<ReplayableDraws>
+  onChoose: (draw: { event: string; season: number }) => void
+}) {
+  // The picker sits above every state of the panel, including the ones that
+  // are explaining why a draw could not be replayed: that is exactly the
+  // moment somebody wants to choose a different one.
+  const picker = (
+    <DrawPicker
+      draws={draws.state === 'ready' ? draws.data.data : []}
+      value={chosen}
+      onChange={onChoose}
+      busy={draws.state === 'loading'}
+    />
+  )
+
   if (draw.state === 'loading') {
     return (
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Draw simulator</h2>
+        <div className={styles.drawHead}>
+          <h2 className={styles.sectionTitle}>Draw simulator</h2>
+          {picker}
+        </div>
         <Skeleton lines={8} />
       </section>
     )
@@ -400,7 +435,10 @@ function DrawPanel({ draw, chosen }: { draw: Resource<DrawSimulation>; chosen: {
     const declined = draw.error instanceof ApiError && (draw.error.status === 422 || draw.error.status === 404)
     return (
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Draw simulator</h2>
+        <div className={styles.drawHead}>
+          <h2 className={styles.sectionTitle}>Draw simulator</h2>
+          {picker}
+        </div>
         {declined ? (
           <EmptyState
             heading="This draw cannot be replayed"
@@ -425,7 +463,10 @@ function DrawPanel({ draw, chosen }: { draw: Resource<DrawSimulation>; chosen: {
 
   return (
     <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Draw simulator</h2>
+      <div className={styles.drawHead}>
+        <h2 className={styles.sectionTitle}>Draw simulator</h2>
+        {picker}
+      </div>
       <Meta
         parts={[
           <Link key="sheet" className={styles.sheetLink} to={`/tournaments/${sim.event.slug}/${sim.event.season}`}>

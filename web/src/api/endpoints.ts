@@ -17,6 +17,7 @@ import type {
   PlayerSearchResult,
   PlayerSeasons,
   RankingHistory,
+  ReplayableDraws,
   RankingPage,
   RatingSeries,
   RecentFinals,
@@ -156,6 +157,18 @@ export function getCommonOpponents(
     { ...options },
     signal,
   )
+}
+
+/**
+ * The draws the simulator can be pointed at. Its own request rather than a
+ * block on the simulation: the page shows one draw and this is the list of
+ * every other one, which nothing needs until somebody wants to change it.
+ */
+export function getReplayableDraws(
+  filters: { tour?: string | null; season?: number | null; limit?: number } = {},
+  signal?: AbortSignal,
+): Promise<ReplayableDraws> {
+  return request<ReplayableDraws>('/simulate/draws', { ...filters }, signal)
 }
 
 export interface RankingFilters {

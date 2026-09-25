@@ -48,8 +48,9 @@ rail), `/h2h` and `/h2h/:a/:b` (career score, surface filter, split bars, rivalr
 common opponents, every meeting, simulate button), `/rankings` (Elo vs official, rank
 delta), `/leaders` (one figure at a time, filtered, with its population declared),
 `/simulator` (two pickers, the chain from point to match, the chance of each set score, one
-match played out from the chain on request and labelled a sample of the model, a draw
-played ten thousand times), `/methodology` (generated from `docs/methodology.md`),
+match played out from the chain on request and labelled a sample of the model, and any draw
+complete enough to rebuild, picked from a list and played ten thousand times),
+`/methodology` (generated from `docs/methodology.md`),
 `/_components` (every component in every state).
 
 Search is a command palette on ⌘K, Ctrl-K or `/`, reached from a trigger in the header on

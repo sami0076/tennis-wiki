@@ -176,6 +176,108 @@ func (q *Queries) ListDrawMatches(ctx context.Context, tournamentID int64) ([]Li
 	return items, nil
 }
 
+const listReplayableDraws = `-- name: ListReplayableDraws :many
+WITH eligible AS (
+    SELECT e.slug, t.id, t.name, t.season, t.tour, t.tier, t.level, t.surface,
+           t.draw_size, t.start_date, count(*) AS matches
+      FROM tournaments t
+      JOIN events e  ON e.id = t.event_id
+      JOIN matches m ON m.tournament_id = t.id
+     WHERE NOT m.is_qualifying AND NOT m.is_team_event AND m.round <> 'BR'
+       AND ($2::tour IS NULL OR t.tour = $2::tour)
+       AND ($3::smallint IS NULL OR t.season = $3::smallint)
+     GROUP BY e.slug, t.id
+    HAVING bool_and(m.round IN ('R128', 'R64', 'R32', 'R16', 'QF', 'SF', 'F'))
+       AND count(*) FILTER (WHERE m.round = 'F') = 1
+       AND count(DISTINCT m.round) >= 2
+),
+addressed AS (
+    SELECT DISTINCT ON (slug, season) slug, id, name, season, tour, tier, level, surface, draw_size, start_date, matches
+      FROM eligible
+     ORDER BY slug, season, matches DESC, id
+)
+SELECT slug, name, season, tour::text AS tour, tier::text AS tier, level,
+       coalesce(surface::text, 'unknown')::text AS surface,
+       draw_size, start_date, matches::bigint AS matches
+  FROM addressed
+ -- Newest first, and the draws worth replaying at the top of each season: a
+ -- Slam before a Masters before everything else.
+ ORDER BY season DESC,
+          CASE level
+              WHEN 'G' THEN 0
+              WHEN 'F' THEN 1
+              WHEN 'M' THEN 2
+              WHEN 'PM' THEN 2
+              WHEN '1000' THEN 2
+              ELSE 3
+          END,
+          matches DESC, name
+ LIMIT $1
+`
+
+type ListReplayableDrawsParams struct {
+	RowLimit int32
+	Tour     *Tour
+	Season   *int16
+}
+
+type ListReplayableDrawsRow struct {
+	Slug      string
+	Name      string
+	Season    int16
+	Tour      string
+	Tier      string
+	Level     string
+	Surface   string
+	DrawSize  *int16
+	StartDate time.Time
+	Matches   int64
+}
+
+// The draws a reader can choose between on the simulator, addressed the way
+// the simulator addresses them: an event slug and a season.
+//
+// The HAVING clause is the same first cut ListSimulatableEvents uses -- a
+// knockout ending in exactly one final, no round robin, no team tie -- and it
+// is a first cut for the same reason: byes and a partially recorded round are
+// only found by the reconstruction itself. A draw that passes here can still
+// be declined at simulation time, which the page already has an answer for.
+//
+// Joined to events rather than left-joined: a tournament with no event row has
+// no slug, and a draw with no slug is one this list could not address.
+// One row per address. An event that somehow filed two draws under the same
+// slug and season is one entry in a picker, not two identical ones.
+func (q *Queries) ListReplayableDraws(ctx context.Context, arg ListReplayableDrawsParams) ([]ListReplayableDrawsRow, error) {
+	rows, err := q.db.Query(ctx, listReplayableDraws, arg.RowLimit, arg.Tour, arg.Season)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListReplayableDrawsRow{}
+	for rows.Next() {
+		var i ListReplayableDrawsRow
+		if err := rows.Scan(
+			&i.Slug,
+			&i.Name,
+			&i.Season,
+			&i.Tour,
+			&i.Tier,
+			&i.Level,
+			&i.Surface,
+			&i.DrawSize,
+			&i.StartDate,
+			&i.Matches,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listSimulatableEvents = `-- name: ListSimulatableEvents :many
 SELECT t.id, t.name, t.season, t.tour::text AS tour, t.tier::text AS tier,
        coalesce(t.surface::text, 'unknown')::text AS surface,

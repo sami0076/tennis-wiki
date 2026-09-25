@@ -91,6 +91,7 @@ func (a *API) routes(r chi.Router) {
 	r.Get("/rankings/trajectory", a.handleTrajectories)
 	r.Get("/simulate/match", a.handleSimulateMatch)
 	r.Get("/simulate/draw", a.handleSimulateDraw)
+	r.Get("/simulate/draws", a.handleReplayableDraws)
 }
 
 // writeJSON sends a successful response. Errors go through WriteProblem instead.
