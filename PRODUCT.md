@@ -60,7 +60,8 @@ Query and filters live in the URL so any view is a link. Recently read players a
 this browser's local storage and nowhere else.
 
 Frontend: React 18, TypeScript, Vite, CSS Modules and custom properties, `web/`. Types
-generated from the Go API structs. Two themes from one set of tokens. Dev: `make api` on :8080, `make web` on :5173.
+generated from the Go API structs. Two themes from one set of tokens. Geist for text and
+Geist Mono for scores and draw sheets, both self-hosted. Dev: `make api` on :8080, `make web` on :5173.
 Seed fixture of ~4,100 real matches covers every data regime. Served as a static SPA.
 
 ## Capabilities and Constraints
@@ -84,6 +85,10 @@ Seed fixture of ~4,100 real matches covers every data regime. Served as a static
   360px is the mobile investment.
 - Styling stack is CSS Modules plus custom properties with no Tailwind, no component
   library, no charting library, no icon set (spec §4). Changing that needs an ADR.
+- Two faces, not one (2026-09-25, at the user's request, replacing Martian Mono): Geist
+  for everything and Geist Mono only where characters must line up in a scanned column --
+  scores, the scoreboard, the draw sheets. Tabular figures keep statistics tables straight
+  without a monospaced alphabet.
 - A dark theme ships (2026-09-25), on a three-state toggle: follow the system, light, or
   dark. The tokens carry both themes and every meaningful hue clears 4.5:1 in each; an
   inline script applies a stored choice before the first paint.

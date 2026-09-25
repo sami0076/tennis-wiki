@@ -99,8 +99,16 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* type */
-  --font: 'Martian Mono Variable', 'Martian Mono', ui-monospace, 'SF Mono', Menlo, Consolas,
+  /* type
+     ------------------------------------------------------------------
+     Geist for everything, Geist Mono only where characters have to line
+     up in a column a reader scans: a score, a set-by-set board, a draw
+     sheet. Everywhere else a proportional face reads faster and fits
+     more, and tabular figures (set on body in base.css) keep the numbers
+     in a table lined up without needing a monospaced alphabet too. */
+  --font: 'Geist Variable', 'Geist', ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'Geist Mono Variable', 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas,
     monospace;
   --t-11: 11px;
   --t-12: 12px;
@@ -110,8 +118,8 @@
   --t-20: 20px;
   --t-28: 28px;
   --t-32: 32px;
-  --t-display: clamp(40px, 7vw, 76px);
-  --t-figure: clamp(40px, 6vw, 64px);
+  --t-display: clamp(42px, 7.4vw, 82px);
+  --t-figure: clamp(42px, 6.4vw, 68px);
 
   /* spacing */
   --s-1: 4px;

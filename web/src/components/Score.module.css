@@ -1,4 +1,8 @@
+/* A score is read down a column against the scores above and below it, so it
+   keeps the monospaced face even though the page around it does not. */
 .score {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
   white-space: normal;
 }
 

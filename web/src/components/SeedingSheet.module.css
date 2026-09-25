@@ -1,5 +1,7 @@
-/* Phone first: the form lines, then the seeds under them. */
+/* Phone first: the form lines, then the seeds under them. Sized in
+   characters, so it keeps the monospaced face. */
 .sheet {
+  font-family: var(--font-mono);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas:

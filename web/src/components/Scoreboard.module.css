@@ -1,5 +1,6 @@
 /* A stadium board: ink panel, light type, the server lit in the ball colour. */
 .board {
+  font-family: var(--font-mono);
   width: 100%;
   /* Fixed so the set columns keep their width and the name takes the rest. */
   table-layout: fixed;

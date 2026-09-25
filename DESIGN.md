@@ -32,9 +32,10 @@ colors:
   court: "#17181a"
   court-line: "#ffffff"
 typography:
-  family: "'Martian Mono Variable', 'Martian Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
-  display: "clamp(40px, 7vw, 76px) / 700 / -0.035em"
-  figure: "clamp(40px, 6vw, 64px) / 700 / -0.04em"
+  family: "'Geist Variable', ui-sans-serif, system-ui, sans-serif"
+  mono: "'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
+  display: "clamp(42px, 7.4vw, 82px) / 700 / -0.035em"
+  figure: "clamp(42px, 6.4vw, 68px) / 700 / -0.04em"
   headline: "20px / 700"
   title: "16px / 600"
   body: "14px / 400 / 1.55"
@@ -63,7 +64,7 @@ Reasoning is in [ADR-0014](docs/decisions/0014-court-colour.md), which supersede
 - Violet against magenta in every comparison, on names, figures, bars and lines; panels stay white.
 - No decorative colour: accents, badges, buttons and hovers are ink on cream or white.
 - Surfaces keep their ink and gain a wash for badges (`HARD`, `CLAY`, `GRASS`).
-- Martian Mono for everything, with fluid display and figure sizes for names and headline numbers.
+- Geist for everything, with fluid display and figure sizes for names and headline numbers; Geist Mono only for scores, the scoreboard and the draw sheets.
 - Motion on arrival, triggered by scrolling into view, removed under reduced motion.
 
 ## Colors
@@ -93,7 +94,17 @@ Three states, not two: **system**, **light** and **dark**. A reader who has chos
 
 ## Typography
 
-One family, Martian Mono, self-hosted. Names and headline numbers use the fluid `--t-display` and `--t-figure`; everything else uses the fixed steps `--t-11` to `--t-32`. Kickers (small uppercase, letterspaced, pencil) label figures and sections. Scores, spans and records are still typed as the source writes them (`6-4 7-6(3)`, `380-89`), and a set never wraps.
+**Geist for everything, Geist Mono for the things that line up.** One face reads faster and fits more, and a hundred rows of Martian Mono was fatiguing at body sizes. Names and headline numbers use the fluid `--t-display` and `--t-figure`; everything else uses the fixed steps `--t-11` to `--t-32`. Kickers (small uppercase, letterspaced, pencil) label figures and sections.
+
+`--font-mono` is not decoration and is not a second voice. It goes only where characters have to line up in a column a reader scans down, and where a layout is sized in `ch`:
+
+- `Score` and `Scorelines` -- a score is read against the scores above and below it.
+- `Scoreboard` -- a set-by-set board is a grid of digits.
+- `DrawSheet`, `RoundList` and `SeedingSheet` -- the sheet's columns are sized in characters and its rules meet across them, which only works while every character is one width.
+
+Everything else, including every statistics table, is Geist. Numbers still line up because `font-variant-numeric: tabular-nums` is set on `body` and Geist's tabular figures are exact: `1111`, `0000` and `8888` all measure the same. A monospaced *alphabet* was never what kept the columns straight.
+
+Scores are still typed as the source writes them (`6-4 7-6(3)`, `380-89`), and a set never wraps.
 
 ## Layout
 
@@ -173,4 +184,4 @@ The `charted` mark after a score opens the per-set sheet under its row; nothing 
 - Write a colour that is not a token. A literal is a colour the dark theme cannot see.
 - Loop motion other than the court rally and the brand pulse.
 - Render an absence as `0`, a blank or a dash.
-- Add photography or a second type family.
+- Add photography, or a third face. Geist and Geist Mono are the two, and the mono is for alignment rather than for emphasis.
