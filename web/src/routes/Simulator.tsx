@@ -39,6 +39,20 @@ import { breadcrumbs, useJsonLd } from '../lib/jsonld'
 const SURFACES = ['hard', 'clay', 'grass', 'carpet']
 
 /**
+ * A request that is not ready to be made. useResource renders `loading` until
+ * its promise settles, which is exactly the state the draw panel should be in
+ * while the list that names the default draw is still arriving. Resolving with
+ * a placeholder instead would make the panel render something it would then
+ * have to replace.
+ *
+ * The effect that holds it is re-run and its result discarded the moment the
+ * dependency that made it pending changes, so nothing is left waiting on it.
+ */
+function pending<T>(): Promise<T> {
+  return new Promise<T>(() => {})
+}
+
+/**
  * The simulator: two players, every rung between a point and a match, and a
  * draw played ten thousand times.
  *
@@ -51,18 +65,15 @@ export function Simulator() {
   const [surface, setSurface] = useUrlParam('surface')
   const [bestOf, setBestOf] = useUrlParam('best_of')
   useJsonLd('breadcrumbs', breadcrumbs([{ name: 'Simulator', path: '/simulator' }]))
-  // The draw to replay, as its sheet addresses it: ?event=<slug>&season=. The
-  // featured draw stands in when the URL names none.
+  // The draw to replay, as its sheet addresses it: ?event=<slug>&season=.
   const [eventSlug] = useUrlParam('event')
   const [seasonParam] = useUrlParam('season')
   // Both halves of the address in one navigation: written separately, the
   // second overwrites the first and the page asks for a season with no event.
   const setDrawParams = useUrlParams()
   const season = Number(seasonParam)
-  const chosenDraw =
-    eventSlug !== null && Number.isInteger(season) && season > 0
-      ? { event: eventSlug, season }
-      : FEATURED_DRAW
+  const addressed =
+    eventSlug !== null && Number.isInteger(season) && season > 0 ? { event: eventSlug, season } : null
 
   const chosen = surface ?? 'hard'
   const sets = bestOf === '5' ? 5 : 3
@@ -74,10 +85,26 @@ export function Simulator() {
         : simulateMatch(a, b, { surface: chosen, best_of: sets }, signal),
     [a, b, chosen, sets],
   )
-  const draw = useResource((signal) => simulateDraw(chosenDraw, signal), [chosenDraw.event, chosenDraw.season])
-  // Every draw this simulator can be pointed at. Its own request, and not one
-  // the draw on screen waits for.
+  // Every draw this simulator can be pointed at.
   const draws = useResource((signal) => getReplayableDraws({}, signal), [])
+
+  // What to replay when the URL names nothing. The list is ordered newest and
+  // biggest first, so its top row is the draw a reader is most likely to know
+  // -- and it follows the data instead of being a constant that pins the page
+  // to one tournament forever. The featured draw is only the backstop for a
+  // list that failed, so there is still something on screen to read.
+  const first = draws.state === 'ready' ? draws.data.data[0] : undefined
+  const fallback = first === undefined ? FEATURED_DRAW : { event: first.slug, season: first.season }
+  const chosenDraw = addressed ?? fallback
+  // The list costs a few milliseconds against a simulation that takes a few
+  // hundred, so waiting for it rather than simulating a guess and swapping is
+  // both cheaper and free of a visible re-run.
+  const waiting = addressed === null && draws.state === 'loading'
+
+  const draw = useResource(
+    (signal) => (waiting ? pending<DrawSimulation>() : simulateDraw(chosenDraw, signal)),
+    [waiting, chosenDraw.event, chosenDraw.season],
+  )
   const chooseDraw = (next: { event: string; season: number }) =>
     setDrawParams({ event: next.event, season: String(next.season) })
 
@@ -414,6 +441,7 @@ function DrawPanel({
       value={chosen}
       onChange={onChoose}
       busy={draws.state === 'loading'}
+      problem={draws.state === 'error' ? draws.error.message : null}
     />
   )
 

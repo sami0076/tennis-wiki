@@ -99,4 +99,42 @@ describe('DrawPicker', () => {
     render(<DrawPicker draws={[]} value={{ event: 'wimbledon-atp', season: 2019 }} onChange={() => {}} busy />)
     expect(screen.getByRole('combobox')).toBeDisabled()
   })
+
+  // A disabled select and nothing else is indistinguishable from a broken
+  // one. This is how the picker first reached somebody: against an API
+  // without the list endpoint, it was a dropdown that would not open and
+  // nothing on screen admitting why.
+  it('says why it cannot be used rather than going quiet', () => {
+    render(
+      <DrawPicker
+        draws={[]}
+        value={{ event: 'wimbledon-atp', season: 2019 }}
+        onChange={() => {}}
+        problem="404 Not Found"
+      />,
+    )
+    const note = screen.getByRole('status')
+    expect(note).toHaveTextContent('could not be loaded')
+    expect(note).toHaveTextContent('404 Not Found')
+  })
+
+  it('says it is still loading rather than looking broken', () => {
+    render(<DrawPicker draws={[]} value={{ event: 'wimbledon-atp', season: 2019 }} onChange={() => {}} busy />)
+    expect(screen.getByText(/Loading the draws/)).toBeInTheDocument()
+  })
+
+  // An empty list is a fact about the database, not a failure, and it still
+  // needs saying: the control is disabled either way.
+  it('distinguishes an empty database from a failure', () => {
+    render(<DrawPicker draws={[]} value={{ event: 'wimbledon-atp', season: 2019 }} onChange={() => {}} />)
+    expect(screen.getByText(/complete enough to replay/)).toBeInTheDocument()
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+
+  it('says nothing at all when there is something to choose', () => {
+    render(<DrawPicker draws={[wimbledon, roland]} value={{ event: 'wimbledon-atp', season: 2019 }} onChange={() => {}} />)
+    expect(screen.getByRole('combobox')).toBeEnabled()
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.queryByText(/could not be loaded|Loading|complete enough/)).not.toBeInTheDocument()
+  })
 })

@@ -76,45 +76,38 @@ const draw: DrawSimulation = {
 }
 
 // The draws the picker offers. Two editions of two events, which is enough
-// for the list to have groups and for a choice to have somewhere to go.
-const replayable: ReplayableDraw[] = [
-  {
-    slug: 'wimbledon-atp',
-    name: 'Wimbledon',
-    season: 2019,
-    tour: 'atp',
-    tier: 'tour',
-    level: 'G',
-    surface: 'grass',
-    draw_size: 128,
-    matches: 127,
-    start_date: '2019-07-01',
-  },
-  {
-    slug: 'roland-garros-atp',
-    name: 'Roland Garros',
-    season: 2019,
-    tour: 'atp',
-    tier: 'tour',
-    level: 'G',
-    surface: 'clay',
-    draw_size: 128,
-    matches: 127,
-    start_date: '2019-05-26',
-  },
-  {
-    slug: 'wimbledon-atp',
-    name: 'Wimbledon',
-    season: 2015,
-    tour: 'atp',
-    tier: 'tour',
-    level: 'G',
-    surface: 'grass',
-    draw_size: 128,
-    matches: 127,
-    start_date: '2015-06-29',
-  },
-]
+// for the list to have groups and for a choice to have somewhere to go. Named
+// individually because the tests reorder them to prove the page reads the
+// list's order rather than happening to agree with it.
+const wimbledon2019: ReplayableDraw = {
+  slug: 'wimbledon-atp',
+  name: 'Wimbledon',
+  season: 2019,
+  tour: 'atp',
+  tier: 'tour',
+  level: 'G',
+  surface: 'grass',
+  draw_size: 128,
+  matches: 127,
+  start_date: '2019-07-01',
+}
+
+const roland2019: ReplayableDraw = {
+  slug: 'roland-garros-atp',
+  name: 'Roland Garros',
+  season: 2019,
+  tour: 'atp',
+  tier: 'tour',
+  level: 'G',
+  surface: 'clay',
+  draw_size: 128,
+  matches: 127,
+  start_date: '2019-05-26',
+}
+
+const wimbledon2015: ReplayableDraw = { ...wimbledon2019, season: 2015, start_date: '2015-06-29' }
+
+const replayable: ReplayableDraw[] = [wimbledon2019, roland2019, wimbledon2015]
 
 let requests: string[] = []
 
@@ -122,7 +115,8 @@ function stub(
   match: MatchSimulation | null,
   options: {
     draw?: DrawSimulation | { status: number; body: unknown }
-    draws?: ReplayableDraw[]
+    /** A list, or 'error' for an API that does not serve one. */
+    draws?: ReplayableDraw[] | 'error'
   } = {},
 ) {
   requests = []
@@ -136,7 +130,13 @@ function stub(
     // Checked before the single draw: the list is what the picker reads, and
     // the page asks for both on every render.
     if (path.endsWith('/simulate/draws')) {
-      body = { data: drawList, filters: { tour: null, season: null, limit: 120 } }
+      if (drawList === 'error') {
+        // What a deployed frontend meets when the API is an older build.
+        status = 404
+        body = { type: '/problems/not-found', title: 'Not found', status: 404, detail: 'no route', instance: path, request_id: 'x' }
+      } else {
+        body = { data: drawList, filters: { tour: null, season: null, limit: 120 } }
+      }
     } else if (path.endsWith('/simulate/draw')) {
       if ('status' in drawSim) {
         status = drawSim.status
@@ -325,7 +325,7 @@ describe('Simulator', () => {
     stub(null)
     renderAt('/simulator?event=testville-wta&season=2025')
     await screen.findByText('Draw simulator')
-    const asked = requests.find((url) => url.includes('/simulate/draw'))
+    const asked = requests.find((url) => url.includes('/simulate/draw?'))
     expect(asked).toContain('event=testville-wta')
     expect(asked).toContain('season=2025')
   })
@@ -375,6 +375,65 @@ describe('Simulator', () => {
     expect(asked).toContain('event=roland-garros-atp')
     // Both halves of the address, or the page asks for a season of nothing.
     expect(asked).toContain('season=2019')
+  })
+
+  // The page opened on a hardcoded Wimbledon 2019 whatever the database held.
+  // The top of the list is newest and biggest first, so it follows the data.
+  it('opens on the first draw of the list, not a constant', async () => {
+    stub(null)
+    renderAt('/simulator')
+    await screen.findByText('Draw simulator')
+
+    const asked = requests.find((url) => url.includes('/simulate/draw?'))
+    // replayable[0] is Wimbledon 2019 here, so the fixture is reordered to
+    // prove the page reads the list rather than happening to agree with it.
+    expect(asked).toContain('event=wimbledon-atp')
+  })
+
+  it('opens on whatever the list puts first', async () => {
+    stub(null, { draws: [roland2019, wimbledon2019] })
+    renderAt('/simulator')
+    await screen.findByText('Draw simulator')
+
+    const asked = requests.find((url) => url.includes('/simulate/draw?'))
+    expect(asked).toContain('event=roland-garros-atp')
+  })
+
+  // Waiting for the list costs milliseconds against a simulation that costs
+  // hundreds; simulating a guess first would spend a real request on a draw
+  // nobody asked for and then replace it on screen.
+  it('does not simulate a guess before the list arrives', async () => {
+    stub(null, { draws: [roland2019] })
+    renderAt('/simulator')
+    await screen.findByText('Draw simulator')
+
+    const drawCalls = requests.filter((url) => url.includes('/simulate/draw?'))
+    expect(drawCalls).toHaveLength(1)
+    expect(drawCalls[0]).toContain('event=roland-garros-atp')
+  })
+
+  // A URL that names a draw is the reader's choice and does not wait on, or
+  // get overridden by, the list.
+  it('lets the URL outrank the list', async () => {
+    stub(null)
+    renderAt('/simulator?event=testville-wta&season=2025')
+    await screen.findByText('Draw simulator')
+
+    const drawCalls = requests.filter((url) => url.includes('/simulate/draw?'))
+    expect(drawCalls).toHaveLength(1)
+    expect(drawCalls[0]).toContain('event=testville-wta')
+  })
+
+  // The list is what names the default draw, so when it fails the page still
+  // has to show one -- and has to admit the picker is not usable.
+  it('still shows a draw, and says why it cannot be changed, when the list fails', async () => {
+    stub(null, { draws: 'error' })
+    renderAt('/simulator')
+    await screen.findByText('Draw simulator')
+
+    expect(await screen.findByRole('link', { name: 'Wimbledon 2019' })).toBeInTheDocument()
+    expect(screen.getByText(/The list of draws could not be loaded/)).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Draw' })).toBeDisabled()
   })
 
   // Being unable to replay this draw is the moment a reader most wants a

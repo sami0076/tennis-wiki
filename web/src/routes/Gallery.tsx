@@ -382,6 +382,18 @@ export function Gallery() {
           value={{ event: 'wimbledon-atp', season: 2019 }}
           onChange={() => {}}
         />
+        <p className={styles.note}>
+          It says why it is empty whenever it is, because a disabled select and nothing else
+          is indistinguishable from a broken one.
+        </p>
+        <DrawPicker draws={[]} value={{ event: 'wimbledon-atp', season: 2019 }} onChange={() => {}} busy />
+        <DrawPicker
+          draws={[]}
+          value={{ event: 'wimbledon-atp', season: 2019 }}
+          onChange={() => {}}
+          problem="404 Not Found"
+        />
+        <DrawPicker draws={[]} value={{ event: 'wimbledon-atp', season: 2019 }} onChange={() => {}} />
       </section>
 
       <section className={styles.block}>

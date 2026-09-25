@@ -202,7 +202,9 @@ supports and can be scored against: Wimbledon 2019 gives Djokovic 39.9% ±1.0, a
 list of draws that exist: a round robin has no bracket to rebuild, and an edition the file
 recorded only the final of has nothing to play through. The endpoint applies that cut in SQL
 rather than letting the page offer an address the simulator would decline, so every row it
-returns is an `?event=&season=` the simulator will accept.
+returns is an `?event=&season=` the simulator will accept. The simulator opens on the top of
+that list -- newest season, biggest event -- rather than a draw hardcoded in the frontend, so
+which draw it starts on follows the data.
 
 **Under pressure is measured against a stated population.** `/clutch` reports break points
 saved, tiebreaks won and deciding sets won, each against what the tour did at the same
