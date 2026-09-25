@@ -69,7 +69,7 @@
   color: var(--pencil);
 }
 
-/* Each swatch stays glued to its word; only the caption after them wraps. */
+/* Each swatch stays glued to its word. */
 .keyPair {
   display: inline-flex;
   align-items: center;
@@ -77,9 +77,6 @@
   white-space: nowrap;
 }
 
-.keyNote {
-  flex: 1 1 100%;
-}
 
 .keyWon,
 .keyLost {

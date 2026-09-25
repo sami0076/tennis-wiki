@@ -24,6 +24,11 @@ interface PartialAggregateProps {
  *
  * The same caption explains the n/r mark, because a reader meets both at once:
  * the rows that are missing and the average that had to skip them.
+ *
+ * When nothing is missing there is nothing to explain, and the note is not
+ * rendered at all. The absence system exists to account for absences; a note
+ * saying that none occurred is the kind of small permanent text that makes a
+ * page feel like a legal document.
  */
 export function PartialAggregate({
   children,
@@ -32,16 +37,13 @@ export function PartialAggregate({
   noun = 'Averages',
   dashMeans = "the tournament didn't record serve statistics",
 }: PartialAggregateProps) {
-  const complete = recorded === total
+  if (recorded === total) return <>{children}</>
   return (
     <>
       {children}
       <Note>
         <p>
-          {complete ? null : `n/r means ${dashMeans}. `}
-          {complete
-            ? `${noun} cover all ${total} matches.`
-            : `${noun} cover the ${recorded} of ${total} matches that did.`}
+          n/r means {dashMeans}. {noun} cover the {recorded} of {total} matches that did.
         </p>
       </Note>
     </>

@@ -524,13 +524,15 @@ describe('the player page', () => {
     expect(await screen.findByRole('heading', { name: "By opponent's ranking" })).toBeInTheDocument()
     expect(screen.getByText('vs No. 1')).toBeInTheDocument()
     expect(screen.getByText('1-3')).toBeInTheDocument()
-    expect(screen.getByText(/Over the 180 matches where the opponent's ranking on the day is known; 12 more/)).toBeInTheDocument()
+    const bands = screen.getByText(/The bands nest/)
+    expect(bands).toHaveTextContent('180 matches with a known ranking')
+    expect(bands).toHaveTextContent('12 more were unranked')
     expect(screen.getByText('5-4')).toBeInTheDocument()
 
     expect(await screen.findByRole('heading', { name: 'Year by year' })).toBeInTheDocument()
     expect(screen.getByText('41-19')).toBeInTheDocument()
     expect(screen.getByText('88.1%')).toBeInTheDocument()
-    expect(screen.getByText(/which is the Lines column: 4 of 70 matches/)).toBeInTheDocument()
+    expect(screen.getByText(/stand on the Lines column: 4 of 70 matches/)).toBeInTheDocument()
     // 1995 had no serve line: hold, break, ace, double faults and dominance are
     // n/r, and so is a tiebreak rate over no tiebreaks.
     expect(screen.getAllByText('n/r').length).toBeGreaterThanOrEqual(6)

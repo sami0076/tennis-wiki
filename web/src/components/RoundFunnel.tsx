@@ -76,10 +76,6 @@ export function RoundFunnel({ rounds }: RoundFunnelProps) {
         <span className={styles.keyPair}>
           <span className={styles.keyLost} aria-hidden="true" /> lost
         </span>
-        <span className={styles.keyNote}>
-          Bars are scaled against the busiest round. Qualifying is not counted, and R128 is the
-          first round of a 128 draw rather than of every draw.
-        </span>
       </p>
     </div>
   )

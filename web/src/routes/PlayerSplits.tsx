@@ -1,6 +1,6 @@
 import type { PlayerSeason, PlayerSeasons, PlayerSplits, RankBand } from '../api/client'
 import type { Resource } from '../api/useResource'
-import { Card, EmptyState, Note, Skeleton, StatRow, StatTable, type Column } from '../components'
+import { Card, EmptyState, Skeleton, StatRow, StatTable, type Column } from '../components'
 import { formatPercent } from '../lib/format'
 import styles from './Player.module.css'
 
@@ -35,7 +35,7 @@ export function OpponentsSection({ splits }: { splits: PlayerSplits }) {
       ) : (
         <>
           <StatTable
-            caption={`Over the ${splits.ranked} matches where the opponent's ranking on the day is known${unranked > 0 ? `; ${unranked} more were against an unranked opponent` : ''}. The bands nest: a win over No. 1 is in every band down to the top 100.`}
+            caption={`The bands nest: a win over No. 1 is in every band down to the top 100. Over the ${splits.ranked} matches with a known ranking${unranked > 0 ? `; ${unranked} more were unranked` : ''}.`}
             columns={bandColumns}
             rows={bands}
             rowKey={(row) => row.band}
@@ -45,10 +45,6 @@ export function OpponentsSection({ splits }: { splits: PlayerSplits }) {
         </>
       )}
       <StatRow label="Decided by a final-set tiebreak">{record(splits.final_set_tiebreaks)}</StatRow>
-      <Note>
-        Higher and lower over the matches where both rankings are known. The final-set tiebreak
-        record is over the {splits.scored} matches whose score could be read.
-      </Note>
     </Card>
   )
 }
@@ -97,7 +93,7 @@ export function SeasonsSection({ seasons }: { seasons: Resource<PlayerSeasons> }
   return (
     <Card title="Year by year">
       <StatTable
-        caption={`Sets, games and tiebreaks are over the matches whose score could be read; hold, break, ace, double-fault and dominance over the matches carrying serve lines, which is the Lines column: ${withServe} of ${played} matches. A rate with nothing to divide by is n/r. Dominance is return points won over serve points lost; above 1 wins more points than it loses.`}
+        caption={`Hold, break, ace, DF and dominance stand on the Lines column: ${withServe} of ${played} matches. Sets, games and tiebreaks stand on every readable score. n/r is a rate with nothing to divide by.`}
         columns={seasonColumns}
         rows={rows}
         rowKey={(row) => String(row.season)}
