@@ -7,7 +7,13 @@
 
 html {
   -webkit-text-size-adjust: 100%;
-  color-scheme: light;
+  /* A jump to an anchor glides rather than teleports, which keeps a reader's
+     place on a page whose sections all look alike. Cancelled below for anyone
+     who asked for less motion. */
+  scroll-behavior: smooth;
+  /* color-scheme is set per theme in tokens.css, so the form controls, the
+     scrollbars and the browser's own chrome follow the theme the reader chose
+     rather than the one their system asked for. */
   scrollbar-color: var(--pencil-mid) var(--bond);
 }
 
@@ -135,10 +141,10 @@ table,
 @keyframes dp-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgb(23 24 26 / 0.35);
+    box-shadow: 0 0 0 0 rgb(var(--ink-rgb) / 0.35);
   }
   50% {
-    box-shadow: 0 0 0 6px rgb(23 24 26 / 0);
+    box-shadow: 0 0 0 6px rgb(var(--ink-rgb) / 0);
   }
 }
 
@@ -153,7 +159,12 @@ table,
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(100deg, transparent 25%, rgb(255 255 255 / 0.55) 50%, transparent 75%);
+  background: linear-gradient(
+    100deg,
+    transparent 25%,
+    rgb(var(--ground-rgb) / 0.55) 50%,
+    transparent 75%
+  );
   transform: translateX(-110%);
   pointer-events: none;
 }
@@ -176,6 +187,10 @@ table,
 
 /* Anyone who asked for less motion gets the finished page. */
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   *,
   *::before,
   *::after {
@@ -183,6 +198,13 @@ table,
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* An anchor under two sticky bars would land its heading behind them. Every
+   target of the section rail carries this, so a jump lands the heading in
+   view rather than just above it. */
+[data-anchor] {
+  scroll-margin-top: calc(var(--header-h) + var(--rail-h) + var(--s-3));
 }
 
 /* Visually hidden, still announced. */

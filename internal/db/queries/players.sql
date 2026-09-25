@@ -293,3 +293,208 @@ SELECT season,
  WHERE player_id = @player_id
  GROUP BY season
  ORDER BY season;
+
+-- name: GetPlayerReturnSummary :one
+-- The other half of a career. A return figure is made of the opponent's serve
+-- line, never of the player's own, so it is counted over the matches that
+-- carried the opponent's line -- which is not always the same set as the ones
+-- that carried this player's. Both denominators are reported so neither rate
+-- borrows the other's.
+--
+-- The last three columns are the player's own serve line over the subset where
+-- both sides were recorded, because total points won and the dominance ratio
+-- are quotients of the two and a match with only one line would bias them.
+WITH played AS (
+    SELECT mp.serve_points   AS own_points,
+           mp.first_won      AS own_first_won,
+           mp.second_won     AS own_second_won,
+           op.serve_points,
+           op.first_in,
+           op.first_won,
+           op.second_won,
+           op.serve_games,
+           op.bp_saved,
+           op.bp_faced
+      FROM match_players mp
+      JOIN matches m       ON m.id = mp.match_id
+      JOIN match_players op ON op.match_id = m.id AND op.player_id <> mp.player_id
+     WHERE mp.player_id = @player_id
+       AND NOT m.incomplete
+)
+SELECT count(*) FILTER (WHERE serve_points IS NOT NULL)::bigint       AS stat_matches,
+       coalesce(sum(serve_points), 0)::bigint                         AS serve_points,
+       coalesce(sum(first_in), 0)::bigint                             AS first_in,
+       coalesce(sum(first_won), 0)::bigint                            AS first_won,
+       coalesce(sum(second_won), 0)::bigint                           AS second_won,
+       coalesce(sum(serve_games), 0)::bigint                          AS serve_games,
+       coalesce(sum(bp_saved), 0)::bigint                             AS bp_saved,
+       coalesce(sum(bp_faced), 0)::bigint                             AS bp_faced,
+       count(*) FILTER (WHERE serve_points IS NOT NULL
+                          AND own_points IS NOT NULL)::bigint         AS both_matches,
+       coalesce(sum(own_points) FILTER (WHERE serve_points IS NOT NULL), 0)::bigint     AS own_serve_points,
+       coalesce(sum(own_first_won) FILTER (WHERE serve_points IS NOT NULL), 0)::bigint  AS own_first_won,
+       coalesce(sum(own_second_won) FILTER (WHERE serve_points IS NOT NULL), 0)::bigint AS own_second_won
+  FROM played;
+
+-- name: ListPlayerStreaks :many
+-- Gaps and islands over one career: the difference between a row's position in
+-- the whole sequence and its position among rows of the same result is constant
+-- inside a run and changes at every switch, so grouping on it groups the runs.
+--
+-- Retirements and walkovers are left out: a run of wins broken by an opponent
+-- who never came out has not been broken by a defeat. Team events are out for
+-- the same reason Elo leaves them out.
+--
+-- Up to three labelled rows rather than one row of nullable columns: a career
+-- with no defeat has no worst run, and that is a row that is not there rather
+-- than a run of length zero.
+WITH played AS (
+    SELECT m.played_on, m.id, mp.won,
+           row_number() OVER (ORDER BY m.played_on, m.id)
+         - row_number() OVER (PARTITION BY mp.won ORDER BY m.played_on, m.id) AS run
+      FROM match_players mp
+      JOIN matches m ON m.id = mp.match_id
+     WHERE mp.player_id = @player_id
+       AND NOT m.is_team_event AND NOT m.incomplete
+),
+runs AS (
+    SELECT won,
+           count(*)::bigint     AS length,
+           min(played_on)::date AS from_date,
+           max(played_on)::date AS to_date,
+           max(id)              AS last_id
+      FROM played
+     GROUP BY won, run
+),
+best AS (
+    SELECT * FROM runs WHERE won ORDER BY length DESC, to_date DESC LIMIT 1
+),
+worst AS (
+    SELECT * FROM runs WHERE NOT won ORDER BY length DESC, to_date DESC LIMIT 1
+),
+latest AS (
+    SELECT * FROM runs ORDER BY to_date DESC, last_id DESC LIMIT 1
+)
+SELECT 'best'::text AS kind, won, length, from_date, to_date FROM best
+UNION ALL
+SELECT 'worst'::text AS kind, won, length, from_date, to_date FROM worst
+UNION ALL
+SELECT 'current'::text AS kind, won, length, from_date, to_date FROM latest;
+
+-- name: ListPlayerBestWins :many
+-- The wins that cost the most to get: every opponent carries the overall Elo
+-- they held on the day, read from the last weekly snapshot on or before the
+-- match, and the list is ordered on it.
+--
+-- Rating the opponent as they were rather than as they ended keeps a win over
+-- a future champion from being credited with the champion's peak.
+SELECT m.played_on,
+       t.name        AS tournament,
+       e.slug        AS event_slug,
+       t.season,
+       t.level,
+       t.tier,
+       m.surface,
+       m.round,
+       m.score,
+       op.slug       AS opponent_slug,
+       op.full_name  AS opponent_name,
+       op.country    AS opponent_country,
+       oe.elo::float8 AS opponent_elo,
+       oe.as_of      AS elo_as_of
+  FROM match_players mp
+  JOIN matches m      ON m.id = mp.match_id
+  JOIN tournaments t  ON t.id = m.tournament_id
+  LEFT JOIN events e  ON e.id = t.event_id
+  JOIN players op     ON op.id = m.loser_id
+  JOIN LATERAL (
+        SELECT r.elo, r.as_of
+          FROM ratings r
+         WHERE r.player_id = m.loser_id
+           AND r.surface = 'overall'
+           AND r.as_of <= m.played_on
+         ORDER BY r.as_of DESC
+         LIMIT 1) oe ON true
+ WHERE mp.player_id = @player_id
+   AND mp.won
+   AND NOT m.incomplete AND NOT m.is_team_event AND NOT m.is_qualifying
+ ORDER BY oe.elo DESC, m.played_on DESC
+ LIMIT @row_limit;
+
+-- name: ListPlayerRoundRecord :many
+-- How far a career got, round by round. Qualifying is excluded: reaching the
+-- second round of qualifying and the second round of a draw are not the same
+-- achievement and must not be summed into one row.
+SELECT m.round,
+       count(*)::bigint                        AS matches,
+       count(*) FILTER (WHERE mp.won)::bigint  AS wins
+  FROM match_players mp
+  JOIN matches m ON m.id = mp.match_id
+ WHERE mp.player_id = @player_id
+   AND NOT m.is_team_event AND NOT m.is_qualifying AND NOT m.incomplete
+ GROUP BY m.round;
+
+-- name: ListPlayerFinalsByCategory :many
+-- Titles and finals by what the event was, in the same words the season index
+-- uses, so a slam title and a Challenger title are never one number.
+SELECT CASE
+           WHEN t.level = 'D' OR t.event_link = 'team' THEN 'team'
+           WHEN t.level = 'G' THEN 'slam'
+           WHEN t.level = 'F' THEN 'finals'
+           WHEN t.level = 'O' THEN 'olympics'
+           WHEN t.level IN ('M', 'PM', '1000') THEN 'masters'
+           ELSE t.tier::text
+       END::text                               AS category,
+       count(*)::bigint                        AS finals,
+       count(*) FILTER (WHERE mp.won)::bigint  AS titles
+  FROM match_players mp
+  JOIN matches m     ON m.id = mp.match_id
+  JOIN tournaments t ON t.id = m.tournament_id
+ WHERE mp.player_id = @player_id
+   AND m.round = 'F' AND NOT m.is_qualifying
+ GROUP BY 1
+ ORDER BY titles DESC, finals DESC, category;
+
+-- name: ListPlayerRivals :many
+-- Who a career was spent against. Ordered on meetings rather than on the
+-- record, because the question a rivalry list answers is who kept turning up.
+SELECT op.slug,
+       op.full_name         AS name,
+       op.country,
+       count(*)::bigint     AS matches,
+       count(*) FILTER (WHERE mp.won)::bigint AS wins,
+       max(m.played_on)::date AS last_played
+  FROM match_players mp
+  JOIN matches m  ON m.id = mp.match_id
+  JOIN players op ON op.id = CASE WHEN mp.won THEN m.loser_id ELSE m.winner_id END
+ WHERE mp.player_id = @player_id
+   AND NOT m.is_team_event
+ GROUP BY op.slug, op.full_name, op.country
+ ORDER BY matches DESC, last_played DESC, op.full_name
+ LIMIT @row_limit;
+
+-- name: GetPlayerOpponentQuality :one
+-- What the schedule was worth: the Elo every opponent held on the day, averaged,
+-- and the record against the ones above a bar. A match whose opponent the model
+-- had not rated yet is left out of both rather than counted at the base rating.
+WITH faced AS (
+    SELECT mp.won, oe.elo::float8 AS elo
+      FROM match_players mp
+      JOIN matches m ON m.id = mp.match_id
+      JOIN LATERAL (
+            SELECT r.elo
+              FROM ratings r
+             WHERE r.player_id = CASE WHEN mp.won THEN m.loser_id ELSE m.winner_id END
+               AND r.surface = 'overall'
+               AND r.as_of <= m.played_on
+             ORDER BY r.as_of DESC
+             LIMIT 1) oe ON true
+     WHERE mp.player_id = @player_id
+       AND NOT m.is_team_event AND NOT m.incomplete
+)
+SELECT count(*)::bigint                                          AS rated_matches,
+       coalesce(avg(elo), 0)::float8                             AS average_elo,
+       coalesce(max(elo), 0)::float8                             AS highest_elo,
+       count(*) FILTER (WHERE elo >= @elite_elo::float8)::bigint AS elite_matches,
+       count(*) FILTER (WHERE elo >= @elite_elo::float8 AND won)::bigint AS elite_wins
+  FROM faced;

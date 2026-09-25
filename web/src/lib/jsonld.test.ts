@@ -13,6 +13,8 @@ const profile: PlayerProfile = {
   pro_since: 2001,
   career: null,
   serve: { availability: 'recorded', matches_with_data: 0, rates: null },
+  return: { availability: 'recorded', matches_with_data: 0, rates: null },
+  points: null,
   splits: null,
   ratings: null,
 }

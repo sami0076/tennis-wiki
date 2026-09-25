@@ -5,7 +5,12 @@
 }
 
 /* The gap is real characters rather than padding, so the line reads as one
-   string to a screen reader and copies out as one. */
+   string to a screen reader and copies out as one.
+
+   Two spaces was the whole separator in a monospaced face. In a proportional
+   one they are about 7px and the fields run together, so the tracking widens
+   them without changing what is on the clipboard. */
 .gap {
   white-space: pre;
+  letter-spacing: 0.3em;
 }

@@ -76,7 +76,9 @@ func (a *API) routes(r chi.Router) {
 	r.Get("/players/{slug}/rankings", a.handlePlayerRankingHistory)
 	r.Get("/players/{slug}/clutch", a.handlePlayerClutch)
 	r.Get("/players/{slug}/seasons", a.handlePlayerSeasons)
+	r.Get("/players/{slug}/highlights", a.handlePlayerHighlights)
 	r.Get("/h2h/{slug}/{opponent}", a.handleHeadToHead)
+	r.Get("/h2h/{slug}/{opponent}/common", a.handleCommonOpponents)
 	r.Get("/charted/{id}", a.handleChartedMatch)
 	r.Get("/tournaments", a.handleEvents)
 	r.Get("/tournaments/{slug}", a.handleEvent)
@@ -89,6 +91,7 @@ func (a *API) routes(r chi.Router) {
 	r.Get("/rankings/trajectory", a.handleTrajectories)
 	r.Get("/simulate/match", a.handleSimulateMatch)
 	r.Get("/simulate/draw", a.handleSimulateDraw)
+	r.Get("/simulate/draws", a.handleReplayableDraws)
 }
 
 // writeJSON sends a successful response. Errors go through WriteProblem instead.

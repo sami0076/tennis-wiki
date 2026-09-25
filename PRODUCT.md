@@ -40,20 +40,29 @@ declares its denominator.
 ## Operating Context
 
 Routes: `/` (Elo leaders, trajectory chart, what the database holds), `/players`
-(search, tour filter), `/players/:slug` (identity, surface Elo, clutch vs tour average,
-career, official ranking, serve, splits by surface and tier, match log), `/h2h` and
-`/h2h/:a/:b` (career score, surface filter, split bars, rivalry strip, every meeting,
-simulate button), `/rankings` (Elo vs official, rank delta), `/simulator` (two pickers,
-the chain from point to match, the chance of each set score, one match played out from the
-chain on request and labelled a sample of the model, a draw played ten thousand times), `/methodology`
-(generated from `docs/methodology.md`), `/_components` (every component in every state).
+(search, tour filter), `/players/:slug` (identity, surface Elo, runs and the schedule,
+biggest wins, serve and return with the dominance ratio, clutch vs tour average, record by
+opponent rank, most-played opponents, record by round and titles by level, splits by
+surface and tier, official ranking, year by year, match log -- behind a sticky section
+rail), `/h2h` and `/h2h/:a/:b` (career score, surface filter, split bars, rivalry strip,
+common opponents, every meeting, simulate button), `/rankings` (Elo vs official, rank
+delta), `/leaders` (one figure at a time, filtered, with its population declared),
+`/simulator` (two pickers, the chain from point to match, the chance of each set score, one
+match played out from the chain on request and labelled a sample of the model, and any draw
+complete enough to rebuild, picked from a list and played ten thousand times),
+`/methodology` (generated from `docs/methodology.md`),
+`/_components` (every component in every state).
 
-Player search lives in the header on every page: a combobox, debounced, every row
-carrying tour, country, career match count and best tier, because at 115,000 players a
-name is not an identifier. Query and filters live in the URL so any view is a link.
+Search is a command palette on ⌘K, Ctrl-K or `/`, reached from a trigger in the header on
+every page: players, every route, and a second step that turns a chosen player into a head
+to head or a simulation without leaving it. Debounced, every row carrying tour, country,
+career match count and best tier, because at 115,000 players a name is not an identifier.
+Query and filters live in the URL so any view is a link. Recently read players are kept in
+this browser's local storage and nowhere else.
 
 Frontend: React 18, TypeScript, Vite, CSS Modules and custom properties, `web/`. Types
-generated from the Go API structs. Dev: `make api` on :8080, `make web` on :5173.
+generated from the Go API structs. Two themes from one set of tokens. Geist for text and
+Geist Mono for scores and draw sheets, both self-hosted. Dev: `make api` on :8080, `make web` on :5173.
 Seed fixture of ~4,100 real matches covers every data regime. Served as a static SPA.
 
 ## Capabilities and Constraints
@@ -77,15 +86,20 @@ Seed fixture of ~4,100 real matches covers every data regime. Served as a static
   360px is the mobile investment.
 - Styling stack is CSS Modules plus custom properties with no Tailwind, no component
   library, no charting library, no icon set (spec §4). Changing that needs an ADR.
-- Undecided: whether a dark theme ships. Not required by the product; open to the
-  visual direction.
+- Two faces, not one (2026-09-25, at the user's request, replacing Martian Mono): Geist
+  for everything and Geist Mono only where characters must line up in a scanned column --
+  scores, the scoreboard, the draw sheets. Tabular figures keep statistics tables straight
+  without a monospaced alphabet.
+- A dark theme ships (2026-09-25), on a three-state toggle: follow the system, light, or
+  dark. The tokens carry both themes and every meaningful hue clears 4.5:1 in each; an
+  inline script applies a stored choice before the first paint.
 
 ## Brand Commitments
 
 - Name: **Deucepoint**. The repository stays `tennis-wiki`. No logo or mark exists yet.
 - Non-commercial, forever: no ads, no payment flows, no paid tier (CC BY-NC-SA 4.0).
-- Attribution to Jeff Sackmann / Tennis Abstract in the footer of every page. Required
-  by the data licence, not optional.
+- Attribution to Jeff Sackmann / Tennis Abstract in the footer of every page, with the
+  licence linked. Required by the data licence, not optional; kept to one line.
 - Voice: plain sentences that say what happened and what to do, in sentence case.
   Captions explain the symbol directly under the element. Buttons say what happens
   ("Simulate this matchup", not "Go"). Nothing in the copy pretends a gap is a zero.
@@ -100,7 +114,9 @@ Seed fixture of ~4,100 real matches covers every data regime. Served as a static
   39.9% ±1.0 and he won it; 298 real draws score 0.833 Brier. All in
   `docs/methodology.md` and `docs/validation.json`.
 - Nine ADRs in `docs/decisions/`, `docs/performance.md` with measured query costs.
-- No player photographs, and none may be fabricated or scraped. No customer quotes,
+- Country flags are static SVGs from country-flag-icons (MIT), in `web/public/flags`, named
+  by ISO code and mapped from the IOC codes the sources store. Not the flag emoji, which has
+  no glyphs on Windows. No player photographs, and none may be fabricated or scraped. No customer quotes,
   press, or testimonials exist; none may be invented.
 - No screenshots of the current site exist yet (README placeholder).
 

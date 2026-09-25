@@ -9,7 +9,7 @@
   justify-content: space-between;
   gap: var(--s-3);
   padding: 9px 0;
-  border-bottom: 1px solid rgb(23 24 26 / 0.1);
+  border-bottom: 1px solid var(--hairline);
   font-size: var(--t-14);
 }
 

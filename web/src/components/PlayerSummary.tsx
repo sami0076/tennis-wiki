@@ -1,6 +1,7 @@
 import type { PlayerSearchResult } from '../api/types.gen'
 import { tierLabel } from '../lib/tier'
 import { Meta } from './Meta'
+import { Flag } from './Flag'
 import styles from './PlayerSummary.module.css'
 
 interface PlayerSummaryProps {
@@ -24,7 +25,7 @@ export function PlayerSummary({ player }: PlayerSummaryProps) {
         className={styles.meta}
         parts={[
           player.tour.toUpperCase(),
-          player.country,
+          <Flag key="flag" country={player.country} />,
           // Zero matches is a player the tour lists and this database has no
           // match for. Saying "0 matches" would read as a career that failed.
           player.matches === 0 ? 'no matches in the database' : `${player.matches} matches`,

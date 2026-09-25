@@ -264,6 +264,59 @@ func (q *Queries) GetPlayerClutch(ctx context.Context, playerID int64) (GetPlaye
 	return i, err
 }
 
+const getPlayerOpponentQuality = `-- name: GetPlayerOpponentQuality :one
+WITH faced AS (
+    SELECT mp.won, oe.elo::float8 AS elo
+      FROM match_players mp
+      JOIN matches m ON m.id = mp.match_id
+      JOIN LATERAL (
+            SELECT r.elo
+              FROM ratings r
+             WHERE r.player_id = CASE WHEN mp.won THEN m.loser_id ELSE m.winner_id END
+               AND r.surface = 'overall'
+               AND r.as_of <= m.played_on
+             ORDER BY r.as_of DESC
+             LIMIT 1) oe ON true
+     WHERE mp.player_id = $2
+       AND NOT m.is_team_event AND NOT m.incomplete
+)
+SELECT count(*)::bigint                                          AS rated_matches,
+       coalesce(avg(elo), 0)::float8                             AS average_elo,
+       coalesce(max(elo), 0)::float8                             AS highest_elo,
+       count(*) FILTER (WHERE elo >= $1::float8)::bigint AS elite_matches,
+       count(*) FILTER (WHERE elo >= $1::float8 AND won)::bigint AS elite_wins
+  FROM faced
+`
+
+type GetPlayerOpponentQualityParams struct {
+	EliteElo float64
+	PlayerID int64
+}
+
+type GetPlayerOpponentQualityRow struct {
+	RatedMatches int64
+	AverageElo   float64
+	HighestElo   float64
+	EliteMatches int64
+	EliteWins    int64
+}
+
+// What the schedule was worth: the Elo every opponent held on the day, averaged,
+// and the record against the ones above a bar. A match whose opponent the model
+// had not rated yet is left out of both rather than counted at the base rating.
+func (q *Queries) GetPlayerOpponentQuality(ctx context.Context, arg GetPlayerOpponentQualityParams) (GetPlayerOpponentQualityRow, error) {
+	row := q.db.QueryRow(ctx, getPlayerOpponentQuality, arg.EliteElo, arg.PlayerID)
+	var i GetPlayerOpponentQualityRow
+	err := row.Scan(
+		&i.RatedMatches,
+		&i.AverageElo,
+		&i.HighestElo,
+		&i.EliteMatches,
+		&i.EliteWins,
+	)
+	return i, err
+}
+
 const getPlayerRatings = `-- name: GetPlayerRatings :many
 WITH latest AS (
     SELECT DISTINCT ON (r.surface) r.surface, r.elo, r.as_of, r.matches_played
@@ -330,6 +383,84 @@ func (q *Queries) GetPlayerRatings(ctx context.Context, playerID int64) ([]GetPl
 		return nil, err
 	}
 	return items, nil
+}
+
+const getPlayerReturnSummary = `-- name: GetPlayerReturnSummary :one
+WITH played AS (
+    SELECT mp.serve_points   AS own_points,
+           mp.first_won      AS own_first_won,
+           mp.second_won     AS own_second_won,
+           op.serve_points,
+           op.first_in,
+           op.first_won,
+           op.second_won,
+           op.serve_games,
+           op.bp_saved,
+           op.bp_faced
+      FROM match_players mp
+      JOIN matches m       ON m.id = mp.match_id
+      JOIN match_players op ON op.match_id = m.id AND op.player_id <> mp.player_id
+     WHERE mp.player_id = $1
+       AND NOT m.incomplete
+)
+SELECT count(*) FILTER (WHERE serve_points IS NOT NULL)::bigint       AS stat_matches,
+       coalesce(sum(serve_points), 0)::bigint                         AS serve_points,
+       coalesce(sum(first_in), 0)::bigint                             AS first_in,
+       coalesce(sum(first_won), 0)::bigint                            AS first_won,
+       coalesce(sum(second_won), 0)::bigint                           AS second_won,
+       coalesce(sum(serve_games), 0)::bigint                          AS serve_games,
+       coalesce(sum(bp_saved), 0)::bigint                             AS bp_saved,
+       coalesce(sum(bp_faced), 0)::bigint                             AS bp_faced,
+       count(*) FILTER (WHERE serve_points IS NOT NULL
+                          AND own_points IS NOT NULL)::bigint         AS both_matches,
+       coalesce(sum(own_points) FILTER (WHERE serve_points IS NOT NULL), 0)::bigint     AS own_serve_points,
+       coalesce(sum(own_first_won) FILTER (WHERE serve_points IS NOT NULL), 0)::bigint  AS own_first_won,
+       coalesce(sum(own_second_won) FILTER (WHERE serve_points IS NOT NULL), 0)::bigint AS own_second_won
+  FROM played
+`
+
+type GetPlayerReturnSummaryRow struct {
+	StatMatches    int64
+	ServePoints    int64
+	FirstIn        int64
+	FirstWon       int64
+	SecondWon      int64
+	ServeGames     int64
+	BpSaved        int64
+	BpFaced        int64
+	BothMatches    int64
+	OwnServePoints int64
+	OwnFirstWon    int64
+	OwnSecondWon   int64
+}
+
+// The other half of a career. A return figure is made of the opponent's serve
+// line, never of the player's own, so it is counted over the matches that
+// carried the opponent's line -- which is not always the same set as the ones
+// that carried this player's. Both denominators are reported so neither rate
+// borrows the other's.
+//
+// The last three columns are the player's own serve line over the subset where
+// both sides were recorded, because total points won and the dominance ratio
+// are quotients of the two and a match with only one line would bias them.
+func (q *Queries) GetPlayerReturnSummary(ctx context.Context, playerID int64) (GetPlayerReturnSummaryRow, error) {
+	row := q.db.QueryRow(ctx, getPlayerReturnSummary, playerID)
+	var i GetPlayerReturnSummaryRow
+	err := row.Scan(
+		&i.StatMatches,
+		&i.ServePoints,
+		&i.FirstIn,
+		&i.FirstWon,
+		&i.SecondWon,
+		&i.ServeGames,
+		&i.BpSaved,
+		&i.BpFaced,
+		&i.BothMatches,
+		&i.OwnServePoints,
+		&i.OwnFirstWon,
+		&i.OwnSecondWon,
+	)
+	return i, err
 }
 
 const getPlayerSurfaceSplits = `-- name: GetPlayerSurfaceSplits :many
@@ -406,6 +537,152 @@ func (q *Queries) GetPlayerTierSplits(ctx context.Context, playerID int64) ([]Ge
 	for rows.Next() {
 		var i GetPlayerTierSplitsRow
 		if err := rows.Scan(&i.Tier, &i.Matches, &i.MatchesWithStats); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPlayerBestWins = `-- name: ListPlayerBestWins :many
+SELECT m.played_on,
+       t.name        AS tournament,
+       e.slug        AS event_slug,
+       t.season,
+       t.level,
+       t.tier,
+       m.surface,
+       m.round,
+       m.score,
+       op.slug       AS opponent_slug,
+       op.full_name  AS opponent_name,
+       op.country    AS opponent_country,
+       oe.elo::float8 AS opponent_elo,
+       oe.as_of      AS elo_as_of
+  FROM match_players mp
+  JOIN matches m      ON m.id = mp.match_id
+  JOIN tournaments t  ON t.id = m.tournament_id
+  LEFT JOIN events e  ON e.id = t.event_id
+  JOIN players op     ON op.id = m.loser_id
+  JOIN LATERAL (
+        SELECT r.elo, r.as_of
+          FROM ratings r
+         WHERE r.player_id = m.loser_id
+           AND r.surface = 'overall'
+           AND r.as_of <= m.played_on
+         ORDER BY r.as_of DESC
+         LIMIT 1) oe ON true
+ WHERE mp.player_id = $1
+   AND mp.won
+   AND NOT m.incomplete AND NOT m.is_team_event AND NOT m.is_qualifying
+ ORDER BY oe.elo DESC, m.played_on DESC
+ LIMIT $2
+`
+
+type ListPlayerBestWinsParams struct {
+	PlayerID int64
+	RowLimit int32
+}
+
+type ListPlayerBestWinsRow struct {
+	PlayedOn        time.Time
+	Tournament      string
+	EventSlug       *string
+	Season          int16
+	Level           string
+	Tier            Tier
+	Surface         *Surface
+	Round           string
+	Score           *string
+	OpponentSlug    string
+	OpponentName    string
+	OpponentCountry *string
+	OpponentElo     float64
+	EloAsOf         time.Time
+}
+
+// The wins that cost the most to get: every opponent carries the overall Elo
+// they held on the day, read from the last weekly snapshot on or before the
+// match, and the list is ordered on it.
+//
+// Rating the opponent as they were rather than as they ended keeps a win over
+// a future champion from being credited with the champion's peak.
+func (q *Queries) ListPlayerBestWins(ctx context.Context, arg ListPlayerBestWinsParams) ([]ListPlayerBestWinsRow, error) {
+	rows, err := q.db.Query(ctx, listPlayerBestWins, arg.PlayerID, arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListPlayerBestWinsRow{}
+	for rows.Next() {
+		var i ListPlayerBestWinsRow
+		if err := rows.Scan(
+			&i.PlayedOn,
+			&i.Tournament,
+			&i.EventSlug,
+			&i.Season,
+			&i.Level,
+			&i.Tier,
+			&i.Surface,
+			&i.Round,
+			&i.Score,
+			&i.OpponentSlug,
+			&i.OpponentName,
+			&i.OpponentCountry,
+			&i.OpponentElo,
+			&i.EloAsOf,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPlayerFinalsByCategory = `-- name: ListPlayerFinalsByCategory :many
+SELECT CASE
+           WHEN t.level = 'D' OR t.event_link = 'team' THEN 'team'
+           WHEN t.level = 'G' THEN 'slam'
+           WHEN t.level = 'F' THEN 'finals'
+           WHEN t.level = 'O' THEN 'olympics'
+           WHEN t.level IN ('M', 'PM', '1000') THEN 'masters'
+           ELSE t.tier::text
+       END::text                               AS category,
+       count(*)::bigint                        AS finals,
+       count(*) FILTER (WHERE mp.won)::bigint  AS titles
+  FROM match_players mp
+  JOIN matches m     ON m.id = mp.match_id
+  JOIN tournaments t ON t.id = m.tournament_id
+ WHERE mp.player_id = $1
+   AND m.round = 'F' AND NOT m.is_qualifying
+ GROUP BY 1
+ ORDER BY titles DESC, finals DESC, category
+`
+
+type ListPlayerFinalsByCategoryRow struct {
+	Category string
+	Finals   int64
+	Titles   int64
+}
+
+// Titles and finals by what the event was, in the same words the season index
+// uses, so a slam title and a Challenger title are never one number.
+func (q *Queries) ListPlayerFinalsByCategory(ctx context.Context, playerID int64) ([]ListPlayerFinalsByCategoryRow, error) {
+	rows, err := q.db.Query(ctx, listPlayerFinalsByCategory, playerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListPlayerFinalsByCategoryRow{}
+	for rows.Next() {
+		var i ListPlayerFinalsByCategoryRow
+		if err := rows.Scan(&i.Category, &i.Finals, &i.Titles); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -556,6 +833,106 @@ func (q *Queries) ListPlayerRatingSeries(ctx context.Context, arg ListPlayerRati
 	return items, nil
 }
 
+const listPlayerRivals = `-- name: ListPlayerRivals :many
+SELECT op.slug,
+       op.full_name         AS name,
+       op.country,
+       count(*)::bigint     AS matches,
+       count(*) FILTER (WHERE mp.won)::bigint AS wins,
+       max(m.played_on)::date AS last_played
+  FROM match_players mp
+  JOIN matches m  ON m.id = mp.match_id
+  JOIN players op ON op.id = CASE WHEN mp.won THEN m.loser_id ELSE m.winner_id END
+ WHERE mp.player_id = $1
+   AND NOT m.is_team_event
+ GROUP BY op.slug, op.full_name, op.country
+ ORDER BY matches DESC, last_played DESC, op.full_name
+ LIMIT $2
+`
+
+type ListPlayerRivalsParams struct {
+	PlayerID int64
+	RowLimit int32
+}
+
+type ListPlayerRivalsRow struct {
+	Slug       string
+	Name       string
+	Country    *string
+	Matches    int64
+	Wins       int64
+	LastPlayed time.Time
+}
+
+// Who a career was spent against. Ordered on meetings rather than on the
+// record, because the question a rivalry list answers is who kept turning up.
+func (q *Queries) ListPlayerRivals(ctx context.Context, arg ListPlayerRivalsParams) ([]ListPlayerRivalsRow, error) {
+	rows, err := q.db.Query(ctx, listPlayerRivals, arg.PlayerID, arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListPlayerRivalsRow{}
+	for rows.Next() {
+		var i ListPlayerRivalsRow
+		if err := rows.Scan(
+			&i.Slug,
+			&i.Name,
+			&i.Country,
+			&i.Matches,
+			&i.Wins,
+			&i.LastPlayed,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPlayerRoundRecord = `-- name: ListPlayerRoundRecord :many
+SELECT m.round,
+       count(*)::bigint                        AS matches,
+       count(*) FILTER (WHERE mp.won)::bigint  AS wins
+  FROM match_players mp
+  JOIN matches m ON m.id = mp.match_id
+ WHERE mp.player_id = $1
+   AND NOT m.is_team_event AND NOT m.is_qualifying AND NOT m.incomplete
+ GROUP BY m.round
+`
+
+type ListPlayerRoundRecordRow struct {
+	Round   string
+	Matches int64
+	Wins    int64
+}
+
+// How far a career got, round by round. Qualifying is excluded: reaching the
+// second round of qualifying and the second round of a draw are not the same
+// achievement and must not be summed into one row.
+func (q *Queries) ListPlayerRoundRecord(ctx context.Context, playerID int64) ([]ListPlayerRoundRecordRow, error) {
+	rows, err := q.db.Query(ctx, listPlayerRoundRecord, playerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListPlayerRoundRecordRow{}
+	for rows.Next() {
+		var i ListPlayerRoundRecordRow
+		if err := rows.Scan(&i.Round, &i.Matches, &i.Wins); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPlayerSeasonTotals = `-- name: ListPlayerSeasonTotals :many
 SELECT season,
        sum(matches)::bigint AS matches,
@@ -667,6 +1044,86 @@ func (q *Queries) ListPlayerSeasonTotals(ctx context.Context, playerID int64) ([
 			&i.TiebreaksPlayed,
 			&i.DecidersWon,
 			&i.DecidersPlayed,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPlayerStreaks = `-- name: ListPlayerStreaks :many
+WITH played AS (
+    SELECT m.played_on, m.id, mp.won,
+           row_number() OVER (ORDER BY m.played_on, m.id)
+         - row_number() OVER (PARTITION BY mp.won ORDER BY m.played_on, m.id) AS run
+      FROM match_players mp
+      JOIN matches m ON m.id = mp.match_id
+     WHERE mp.player_id = $1
+       AND NOT m.is_team_event AND NOT m.incomplete
+),
+runs AS (
+    SELECT won,
+           count(*)::bigint     AS length,
+           min(played_on)::date AS from_date,
+           max(played_on)::date AS to_date,
+           max(id)              AS last_id
+      FROM played
+     GROUP BY won, run
+),
+best AS (
+    SELECT won, length, from_date, to_date, last_id FROM runs WHERE won ORDER BY length DESC, to_date DESC LIMIT 1
+),
+worst AS (
+    SELECT won, length, from_date, to_date, last_id FROM runs WHERE NOT won ORDER BY length DESC, to_date DESC LIMIT 1
+),
+latest AS (
+    SELECT won, length, from_date, to_date, last_id FROM runs ORDER BY to_date DESC, last_id DESC LIMIT 1
+)
+SELECT 'best'::text AS kind, won, length, from_date, to_date FROM best
+UNION ALL
+SELECT 'worst'::text AS kind, won, length, from_date, to_date FROM worst
+UNION ALL
+SELECT 'current'::text AS kind, won, length, from_date, to_date FROM latest
+`
+
+type ListPlayerStreaksRow struct {
+	Kind     string
+	Won      bool
+	Length   int64
+	FromDate time.Time
+	ToDate   time.Time
+}
+
+// Gaps and islands over one career: the difference between a row's position in
+// the whole sequence and its position among rows of the same result is constant
+// inside a run and changes at every switch, so grouping on it groups the runs.
+//
+// Retirements and walkovers are left out: a run of wins broken by an opponent
+// who never came out has not been broken by a defeat. Team events are out for
+// the same reason Elo leaves them out.
+//
+// Up to three labelled rows rather than one row of nullable columns: a career
+// with no defeat has no worst run, and that is a row that is not there rather
+// than a run of length zero.
+func (q *Queries) ListPlayerStreaks(ctx context.Context, playerID int64) ([]ListPlayerStreaksRow, error) {
+	rows, err := q.db.Query(ctx, listPlayerStreaks, playerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListPlayerStreaksRow{}
+	for rows.Next() {
+		var i ListPlayerStreaksRow
+		if err := rows.Scan(
+			&i.Kind,
+			&i.Won,
+			&i.Length,
+			&i.FromDate,
+			&i.ToDate,
 		); err != nil {
 			return nil, err
 		}

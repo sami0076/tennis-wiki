@@ -8,6 +8,23 @@
       name="description"
       content="Match history, Elo ratings and head-to-heads across 1.6 million tennis matches."
     />
+    <meta name="theme-color" content="#f6f6f2" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121311" media="(prefers-color-scheme: dark)" />
+    <!--
+      Before the stylesheet and before React: a reader who chose dark must not
+      see one cream frame first. Inline and tiny on purpose -- a module would
+      arrive after the first paint, which is the frame this exists to fix.
+      Storage throws in a private window, so the whole thing is guarded and a
+      failure leaves the media query in tokens.css to answer.
+    -->
+    <script>
+      try {
+        var choice = localStorage.getItem('deucepoint:theme')
+        if (choice === 'light' || choice === 'dark') {
+          document.documentElement.setAttribute('data-theme', choice)
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

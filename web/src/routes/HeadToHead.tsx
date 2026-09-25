@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ApiError,
+  type CommonOpponent,
   type HeadToHead as Comparison,
   type HeadToHeadCloseness,
   type HeadToHeadFilters,
@@ -17,6 +18,7 @@ import {
   type ServeRates,
 } from '../api/client'
 import {
+  getCommonOpponents,
   getHeadToHead,
   getPlayer,
   getPlayerMatches,
@@ -40,6 +42,7 @@ import {
   ChartedSheet,
   EmptyState,
   EventLink,
+  Flag,
   Meta,
   PlayerSearch,
   RivalryStrip,
@@ -322,6 +325,8 @@ function Rivalry({
         surface={surface}
       />
 
+      <CommonOpponentsSection a={a} b={b} playerA={playerA} playerB={playerB} />
+
       {record.matches === 0 ? null : (
         <MeetingsSection meetings={met} playerA={playerA} playerB={playerB} />
       )}
@@ -359,7 +364,7 @@ function PlayerPanel({
       </Link>
       <Meta
         className={side === 'b' ? styles.metaB : undefined}
-        parts={[player.tour.toUpperCase(), player.country, hand]}
+        parts={[player.tour.toUpperCase(), <Flag key="flag" country={player.country} />, hand]}
       />
       <div className={styles.panelStats}>
         {elo === null ? null : (
@@ -1133,5 +1138,157 @@ function MeetingFilterControls({
         {isFiltered(f) ? <Button onClick={filters.clear}>Show every meeting</Button> : null}
       </div>
     </div>
+  )
+}
+
+/**
+ * The comparison a short head to head cannot make.
+ *
+ * Two players who have met three times have usually played the same few dozen
+ * people, and how each did against that shared field says more about the
+ * matchup than three results do. It is loaded here rather than with the
+ * comparison because it is the expensive half -- two whole careers grouped and
+ * joined -- and the score at the top should not wait for it.
+ */
+function CommonOpponentsSection({
+  a,
+  b,
+  playerA,
+  playerB,
+}: {
+  a: string
+  b: string
+  playerA: HeadToHeadPlayer
+  playerB: HeadToHeadPlayer
+}) {
+  const common = useResource((signal) => getCommonOpponents(a, b, { limit: 20 }, signal), [a, b])
+
+  if (common.state === 'loading') {
+    return (
+      <Card title="Through a common opponent">
+        <Skeleton lines={6} />
+      </Card>
+    )
+  }
+  if (common.state === 'error') return null
+
+  const { opponents, totals } = common.data
+  if (opponents.length === 0) {
+    return (
+      <Card title="Through a common opponent">
+        <EmptyState
+          heading="They have never played the same person"
+          reason="Nobody in the database has faced both of them. Different eras, different tours or different levels; a shared field is not something every pair has."
+        />
+      </Card>
+    )
+  }
+
+  const columns: ReadonlyArray<Column<CommonOpponent>> = [
+    {
+      key: 'opponent',
+      header: 'Opponent',
+      wrap: true,
+      value: (row) => row.name,
+      render: (row) => (
+        <Link className={styles.commonName} to={`/players/${row.slug}`}>
+          <Flag country={row.country} code={false} />
+          {row.name}
+        </Link>
+      ),
+    },
+    {
+      key: 'a',
+      header: surname(playerA.name),
+      align: 'right',
+      value: (row) => (row.matches[0] === 0 ? null : row.wins[0] / row.matches[0]),
+      render: (row) => (
+        <span className={styles.commonA}>
+          {row.wins[0]}&#8209;{row.matches[0] - row.wins[0]}
+        </span>
+      ),
+    },
+    {
+      key: 'split',
+      header: '',
+      sortable: false,
+      value: () => 0,
+      render: (row) => <CommonBar row={row} playerA={playerA} playerB={playerB} />,
+      wide: true,
+    },
+    {
+      key: 'b',
+      header: surname(playerB.name),
+      align: 'right',
+      value: (row) => (row.matches[1] === 0 ? null : row.wins[1] / row.matches[1]),
+      render: (row) => (
+        <span className={styles.commonB}>
+          {row.wins[1]}&#8209;{row.matches[1] - row.wins[1]}
+        </span>
+      ),
+    },
+  ]
+
+  return (
+    <Card
+      title="Through a common opponent"
+      aside={`${opponents.length} shared ${opponents.length === 1 ? 'opponent' : 'opponents'}`}
+    >
+      <div className={styles.commonTotals}>
+        <div className={styles.commonTotal}>
+          <span className={`${styles.dashA} ${styles.commonDash}`} aria-hidden="true" />
+          <span className={styles.commonTotalName}>{surname(playerA.name)}</span>
+          <span className={styles.commonTotalValue}>
+            {totals[0].wins}&#8209;{totals[0].matches - totals[0].wins}
+          </span>
+          <span className={styles.commonTotalFoot}>
+            {totals[0].matches === 0 ? 'no meetings' : formatPercent((100 * totals[0].wins) / totals[0].matches)}
+          </span>
+        </div>
+        <div className={styles.commonTotal}>
+          <span className={`${styles.dashB} ${styles.commonDash}`} aria-hidden="true" />
+          <span className={styles.commonTotalName}>{surname(playerB.name)}</span>
+          <span className={styles.commonTotalValue}>
+            {totals[1].wins}&#8209;{totals[1].matches - totals[1].wins}
+          </span>
+          <span className={styles.commonTotalFoot}>
+            {totals[1].matches === 0 ? 'no meetings' : formatPercent((100 * totals[1].wins) / totals[1].matches)}
+          </span>
+        </div>
+      </div>
+      <StatTable
+        caption="Everyone both of them have faced, most-played first. The two records are against the same people and not against each other, so a gap here is a gap in results rather than in schedule -- but they were not necessarily the same people at the same time, and a shared opponent met a decade apart is two different players."
+        columns={columns}
+        rows={opponents}
+        rowKey={(row) => row.slug}
+      />
+    </Card>
+  )
+}
+
+/** One opponent's two records, drawn as the share of meetings each side won. */
+function CommonBar({
+  row,
+  playerA,
+  playerB,
+}: {
+  row: CommonOpponent
+  playerA: HeadToHeadPlayer
+  playerB: HeadToHeadPlayer
+}) {
+  const rateA = row.matches[0] === 0 ? 0 : row.wins[0] / row.matches[0]
+  const rateB = row.matches[1] === 0 ? 0 : row.wins[1] / row.matches[1]
+  return (
+    <span
+      className={styles.commonBars}
+      aria-label={`${surname(playerA.name)} won ${Math.round(rateA * 100)}%, ${surname(playerB.name)} won ${Math.round(rateB * 100)}%`}
+    >
+      <span className={styles.commonTrack}>
+        <span className={styles.commonFillA} style={{ width: `${rateA * 100}%` }} />
+      </span>
+      <span className={styles.commonTrack}>
+        <span className={styles.commonFillB} style={{ width: `${rateB * 100}%` }} />
+      </span>
+    </span>
   )
 }

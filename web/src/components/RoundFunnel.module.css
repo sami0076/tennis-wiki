@@ -1,0 +1,121 @@
+.funnel {
+  display: grid;
+  gap: 6px;
+}
+
+.row {
+  display: grid;
+  /* Wide enough for "First round R128", the longest label the source can
+     produce; anything narrower puts the code under the bar. */
+  grid-template-columns: 17ch minmax(0, 1fr) 6ch;
+  align-items: center;
+  gap: var(--s-3);
+  font-size: var(--t-12);
+}
+
+.label {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* The source's code, kept beside the word: R128 is the first round of a 128
+   draw and the third of a 32 draw, and a reader who cares can see which. */
+.code {
+  color: var(--pencil-mid);
+  font-size: var(--t-11);
+}
+
+.track {
+  display: flex;
+  height: 14px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--highlight);
+}
+
+.won,
+.lost {
+  display: block;
+  min-width: 2px;
+}
+
+/* Won is ink and lost is the pencil ruling, the same pair the W/L marks use.
+   Colour is not the only encoding: the record is written at the end of every
+   bar. */
+.won {
+  background: var(--mark-won);
+}
+
+.lost {
+  background: var(--mark-lost);
+}
+
+.record {
+  text-align: right;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.key {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px var(--s-3);
+  margin-top: var(--s-3);
+  font-size: var(--t-11);
+  color: var(--pencil);
+}
+
+/* Each swatch stays glued to its word. */
+.keyPair {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+
+.keyWon,
+.keyLost {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+
+.keyWon {
+  background: var(--mark-won);
+}
+
+.keyLost {
+  background: var(--mark-lost);
+}
+
+/* The bars grow from the left as they arrive, one after another, so the shape
+   of the funnel draws itself. Hidden until then rather than held at scale 0,
+   which would still paint a hairline. */
+@media (prefers-reduced-motion: no-preference) {
+  .track {
+    visibility: hidden;
+    transform-origin: left;
+  }
+
+  .seen .track {
+    visibility: visible;
+    animation: dp-grow-x 700ms var(--ease-out) both;
+    animation-delay: var(--delay, 0ms);
+  }
+}
+
+@media (max-width: 560px) {
+  .row {
+    grid-template-columns: 11ch minmax(0, 1fr) 5ch;
+    gap: var(--s-2);
+  }
+
+  .code {
+    display: none;
+  }
+}

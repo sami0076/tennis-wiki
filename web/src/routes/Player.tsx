@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   ApiError,
@@ -7,6 +7,7 @@ import {
   type ClutchMetric,
   type Page,
   type PlayerMatch,
+  type PlayerHighlights as PlayerHighlightsData,
   type PlayerProfile,
   type RankingHistory,
 } from '../api/client'
@@ -14,6 +15,7 @@ import {
   getCoverage,
   getPlayer,
   getPlayerClutch,
+  getPlayerHighlights,
   getPlayerMatches,
   getPlayerRankings,
   getPlayerRatingSeries,
@@ -34,10 +36,12 @@ import {
   ChartedSheet,
   EmptyState,
   EventLink,
+  Flag,
   Meta,
   PartialAggregate,
   RankDelta,
   Score,
+  SectionRail,
   Skeleton,
   StatRow,
   StatTable,
@@ -46,6 +50,7 @@ import {
   SurfaceToggle,
   WinLossMark,
   type Column,
+  type RailItem,
 } from '../components'
 import { absenceReason, hasStatistics } from '../lib/absence'
 import { ageOn, careerSpan, formatElo, formatHand, formatPercent, surname } from '../lib/format'
@@ -53,6 +58,13 @@ import { tierLabel } from '../lib/tier'
 import { breadcrumbs, person, useJsonLd } from '../lib/jsonld'
 import { useUrlParam } from '../lib/useUrlParam'
 import { OpponentsSection, SeasonsSection } from './PlayerSplits'
+import {
+  BestWinsSection,
+  RivalsSection,
+  RoundsSection,
+  RunsSection,
+} from './PlayerHighlights'
+import { rememberPlayer } from '../lib/useRecentPlayers'
 import styles from './Player.module.css'
 
 /**
@@ -82,6 +94,7 @@ export function Player() {
   const rankings = useResource((signal) => getPlayerRankings(slug, signal), [slug])
   const clutch = useResource((signal) => getPlayerClutch(slug, signal), [slug])
   const seasons = useResource((signal) => getPlayerSeasons(slug, signal), [slug])
+  const highlights = useResource((signal) => getPlayerHighlights(slug, signal), [slug])
   useJsonLd('person', profile.state === 'ready' ? person(profile.data) : null)
   useJsonLd(
     'breadcrumbs',
@@ -95,6 +108,16 @@ export function Player() {
     [slug, surface, cursors.length],
   )
   const form = useResource((signal) => getPlayerMatches(slug, { limit: 10 }, signal), [slug])
+
+  // The palette's list of recent players is what was actually read, so it is
+  // written here rather than when a search result is clicked: a name that was
+  // searched for and abandoned is not somewhere this browser has been.
+  const loadedName = profile.state === 'ready' ? profile.data.name : null
+  const loadedTour = profile.state === 'ready' ? profile.data.tour : null
+  useEffect(() => {
+    if (loadedName === null || loadedTour === null) return
+    rememberPlayer({ slug, name: loadedName, tour: loadedTour })
+  }, [slug, loadedName, loadedTour])
 
   if (profile.state === 'loading') {
     return (
@@ -127,13 +150,23 @@ export function Player() {
     coverage.state === 'ready' ? coverage.data.current_through[player.tour] : undefined
   const active = stillPlaying(player.career, through)
 
+  const sections = railFor(player)
+
   return (
     <>
-      <PlayerHero player={player} active={active} rankings={rankings} form={form} />
+      <PlayerHero
+        player={player}
+        active={active}
+        rankings={rankings}
+        form={form}
+        highlights={highlights}
+      />
 
       {player.career === null ? null : <CareerTiles career={player.career} />}
 
-      <div className={styles.charts}>
+      {player.career === null ? null : <SectionRail items={sections} label="This career" />}
+
+      <div id="rating" data-anchor className={styles.charts}>
         {trajectory.state === 'ready' && trajectory.data.points.length > 1 ? (
           <Card
             title="Rating history"
@@ -165,38 +198,77 @@ export function Player() {
           action={<ButtonLink to="/">See what the database covers</ButtonLink>}
         />
       ) : (
-        <div className={styles.columns}>
-          <div className={styles.left}>
+        <>
+          <div id="highlights" data-anchor className={styles.stack}>
+            <RunsSection highlights={highlights} />
+            <BestWinsSection highlights={highlights} />
+          </div>
+
+          <div id="serve" data-anchor className={styles.pair}>
+            <ServeSection player={player} />
+            <ReturnSection player={player} />
+            <PointsSection player={player} />
+          </div>
+
+          <div id="pressure" data-anchor className={styles.pair}>
             <ClutchSection clutch={clutch} />
-            <CareerSection career={player.career} />
-            {player.splits === null ? null : <OpponentsSection splits={player.splits} />}
             <RankingSection rankings={rankings} />
           </div>
-          <div className={styles.right}>
-            <ServeSection player={player} />
+
+          <div id="opponents" data-anchor className={styles.pair}>
+            {player.splits === null ? null : <OpponentsSection splits={player.splits} />}
+            <RivalsSection highlights={highlights} slug={slug} />
+          </div>
+
+          <div id="draws" data-anchor className={styles.pair}>
+            <RoundsSection highlights={highlights} />
             <SplitsSection career={player.career} />
           </div>
+        </>
+      )}
+
+      {player.career === null ? null : (
+        <div id="seasons" data-anchor>
+          <SeasonsSection seasons={seasons} />
         </div>
       )}
 
-      {player.career === null ? null : <SeasonsSection seasons={seasons} />}
-
       {player.career === null ? null : (
-        <MatchesSection
-          matches={matches}
-          slug={slug}
-          surface={surface}
-          onSurface={(next) => {
-            setCursors([])
-            setSurface(next)
-          }}
-          onMore={(cursor) => setCursors((current) => [...current, cursor])}
-          paged={cursors.length > 0}
-          onFirst={() => setCursors([])}
-        />
+        <div id="matches" data-anchor>
+          <MatchesSection
+            matches={matches}
+            slug={slug}
+            surface={surface}
+            onSurface={(next) => {
+              setCursors([])
+              setSurface(next)
+            }}
+            onMore={(cursor) => setCursors((current) => [...current, cursor])}
+            paged={cursors.length > 0}
+            onFirst={() => setCursors([])}
+          />
+        </div>
       )}
     </>
   )
+}
+
+/**
+ * The rail's entries, in the order the page runs. Serve and return share one
+ * entry because they share one row, and a career with no statistics at all
+ * still gets it: what the page shows there is why there are none, which is
+ * worth being able to jump to.
+ */
+function railFor(player: PlayerProfile): ReadonlyArray<RailItem> {
+  const items: RailItem[] = [{ id: 'rating', label: 'Rating' }]
+  items.push({ id: 'highlights', label: 'Runs and best wins' })
+  items.push({ id: 'serve', label: 'Serve and return' })
+  items.push({ id: 'pressure', label: 'Under pressure' })
+  if (player.splits !== null) items.push({ id: 'opponents', label: 'Opponents' })
+  items.push({ id: 'draws', label: 'Draws and surfaces' })
+  items.push({ id: 'seasons', label: 'Year by year' })
+  items.push({ id: 'matches', label: 'Every match' })
+  return items
 }
 
 function PlayerHero({
@@ -204,25 +276,34 @@ function PlayerHero({
   active,
   rankings,
   form,
+  highlights,
 }: {
   player: PlayerProfile
   active: boolean
   rankings: Resource<RankingHistory>
   form: Resource<Page<PlayerMatch>>
+  highlights: Resource<PlayerHighlightsData>
 }) {
   const career = player.career
   // An age while the career is running, its span once it is over. Both answer
   // "when was this player" and only one of them is right at a time.
-  const when =
+  // "27" alone in a meta line reads as a count of something. The age of a
+  // player still playing is the one number here that needs its unit.
+  const age =
     active && player.birth_date !== null && career !== null
       ? ageOn(player.birth_date, career.last_match)
       : null
+  const when = age === null ? null : `age ${age}`
   const span = career !== null && !active ? careerSpan(career.first_match, career.last_match) : null
   const overall = player.ratings?.find((s) => s.surface === 'overall') ?? null
   const latest =
     rankings.state === 'ready' && active ? rankings.data.points[rankings.data.points.length - 1] : undefined
   const recent = form.state === 'ready' ? form.data.data.slice(0, 10) : []
-  const rival = recent[0]?.opponent
+  // The opponent they have played most, not the one they happened to play
+  // last. A career's rivalry is a thing; the previous match is an accident of
+  // the draw, and offering "compare with" against it reads as random because
+  // it is.
+  const rival = highlights.state === 'ready' ? highlights.data.rivals[0] : undefined
 
   return (
     <div className={styles.hero}>
@@ -231,7 +312,7 @@ function PlayerHero({
           <span className={styles.dash} aria-hidden="true" />
           <Meta
             parts={[
-              player.country,
+              <Flag key="flag" country={player.country} />,
               formatHand(player.hand),
               when,
               span,
@@ -311,10 +392,9 @@ function CareerTiles({ career }: { career: Career }) {
 function ClutchSection({ clutch }: { clutch: Resource<Clutch> }) {
   if (clutch.state === 'loading') {
     return (
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Under pressure, vs tour average</h2>
+      <Card title="Under pressure, vs tour average">
         <Skeleton lines={3} />
-      </section>
+      </Card>
     )
   }
   if (clutch.state === 'error') return null
@@ -327,7 +407,7 @@ function ClutchSection({ clutch }: { clutch: Resource<Clutch> }) {
 
   if (nothing) {
     return (
-      <section className={styles.section}>
+      <Card title="Under pressure, vs tour average">
         <EmptyState
           heading="Nothing to measure under pressure"
           reason={
@@ -337,38 +417,30 @@ function ClutchSection({ clutch }: { clutch: Resource<Clutch> }) {
             </>
           }
         />
-      </section>
+      </Card>
     )
   }
 
   return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Under pressure, vs tour average</h2>
+    <Card title="Under pressure, vs tour average">
       <ClutchRow label="Break points saved" metric={data.break_points_saved} />
       <ClutchRow label="Tiebreaks won" metric={data.tiebreaks_won} />
       <ClutchRow label="Deciding sets won" metric={data.deciding_sets_won} />
       <Note>
-      <p>
-        Against every {(data.baseline.tiers ?? []).map(tierName).join(' and ')} match from the{' '}
-        {decade(data.baseline.from_decade)} to the {decade(data.baseline.to_decade)}, weighted
-        by where this player&apos;s own matches fell.{' '}
-        {data.break_points_saved === null
-          ? null
-          : `Break points saved covers the ${data.break_points_saved.played} break points their matches recorded. `}
-        Tiebreaks and deciding sets cover the {data.baseline.scored_matches} of{' '}
-        {data.baseline.matches} matches with a readable, completed score.
-      </p>
-      <p>
-        Every tiebreak is won by somebody, so those two averages sit at 50% by construction
-        and the figure above is the margin over a coin toss. Break points saved is a real
-        aggregate and is not 50%.{' '}
-        <Link className={styles.inline} to="/methodology#where-statistics-do-not-exist">
-          What is missing, and why
-        </Link>
-        .
-      </p>
+        <p>
+          Measured against every {(data.baseline.tiers ?? []).map(tierName).join(' and ')} match
+          from the {decade(data.baseline.from_decade)} to the{' '}
+          {decade(data.baseline.to_decade)}, weighted by where this player's own matches fell,
+          over the {data.baseline.scored_matches} of {data.baseline.matches} matches with a
+          readable score. Every tiebreak is won by somebody, so those two averages sit at 50%
+          by construction.{' '}
+          <Link className={styles.inline} to="/methodology#where-statistics-do-not-exist">
+            What is missing, and why
+          </Link>
+          .
+        </p>
       </Note>
-    </section>
+    </Card>
   )
 }
 
@@ -404,17 +476,6 @@ function tierName(tier: string): string {
   return (tierLabel(tier) ?? tier).toLowerCase()
 }
 
-function CareerSection({ career }: { career: Career }) {
-  return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Career</h2>
-      <StatRow label="Matches">{career.matches.toLocaleString()}</StatRow>
-      <StatRow label="Retirements and walkovers">{career.incomplete_matches}</StatRow>
-      <Note>Retirements and walkovers count in the record and are excluded from every rate.</Note>
-    </section>
-  )
-}
-
 function RankingSection({
   rankings,
 }: {
@@ -422,10 +483,9 @@ function RankingSection({
 }) {
   if (rankings.state === 'loading') {
     return (
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Official ranking</h2>
+      <Card title="Official ranking">
         <Skeleton lines={2} />
-      </section>
+      </Card>
     )
   }
   if (rankings.state === 'error') return null
@@ -433,27 +493,25 @@ function RankingSection({
   const history = rankings.data
   if (history.points.length === 0) {
     return (
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Official ranking</h2>
+      <Card title="Official ranking">
         <EmptyState
           heading="Never appeared in the published rankings"
           reason="The ATP list begins in 1973 and the WTA list in 1975, and a player has to reach a qualifying level to enter either. The Elo above is computed from matches and does not have that floor."
         />
-      </section>
+      </Card>
     )
   }
 
   const latest = history.points[history.points.length - 1]
   return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Official ranking</h2>
+    <Card title="Official ranking">
       {history.best !== null ? (
         <StatRow label={`Best, ${history.best.date}`}>{history.best.rank}</StatRow>
       ) : null}
       {latest !== undefined ? (
         <StatRow label={`Last published, ${latest.date}`}>{latest.rank}</StatRow>
       ) : null}
-    </section>
+    </Card>
   )
 }
 
@@ -462,13 +520,13 @@ function ServeSection({ player }: { player: PlayerProfile }) {
 
   if (!hasStatistics(serve.availability) || serve.rates === null) {
     return (
-      <section className={styles.section}>
+      <Card title="Serve">
         <EmptyState
           heading="No serve statistics for this career"
           reason={absenceReason(serve.availability)}
           action={<ButtonLink to="/">See which tiers recorded them</ButtonLink>}
         />
-      </section>
+      </Card>
     )
   }
 
@@ -476,55 +534,139 @@ function ServeSection({ player }: { player: PlayerProfile }) {
   const eligible = player.career === null ? 0 : player.career.matches - player.career.incomplete_matches
 
   return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Serve</h2>
+    <Card title="Serve" aside="What they served">
       <PartialAggregate
         recorded={Number(serve.matches_with_data)}
         total={Number(eligible)}
         noun="These figures"
         dashMeans="the match recorded no serve statistics"
       >
+        <Rate label="Service games held" value={rates.service_games_held_percentage} lead />
         <StatRow label="Aces per match">{rates.aces_per_match.toFixed(1)}</StatRow>
         <StatRow label="Double faults per match">{rates.double_faults_per_match.toFixed(1)}</StatRow>
-        <StatRow label="First serves in">
-          {rates.first_serve_in_percentage === null ? (
-            <AbsentCell label="First serves in" />
-          ) : (
-            formatPercent(rates.first_serve_in_percentage)
-          )}
-        </StatRow>
-        <StatRow label="First serve points won">
-          {rates.first_serve_won_percentage === null ? (
-            <AbsentCell label="First serve points won" />
-          ) : (
-            formatPercent(rates.first_serve_won_percentage)
-          )}
-        </StatRow>
-        <StatRow label="Second serve points won">
-          {rates.second_serve_won_percentage === null ? (
-            <AbsentCell label="Second serve points won" />
-          ) : (
-            formatPercent(rates.second_serve_won_percentage)
-          )}
-        </StatRow>
-        <StatRow label="Break points saved">
-          {rates.break_points_saved_percentage === null ? (
-            <AbsentCell label="Break points saved" />
-          ) : (
-            formatPercent(rates.break_points_saved_percentage)
-          )}
-        </StatRow>
+        <Rate label="First serves in" value={rates.first_serve_in_percentage} />
+        <Rate label="First serve points won" value={rates.first_serve_won_percentage} />
+        <Rate label="Second serve points won" value={rates.second_serve_won_percentage} />
+        <Rate label="Break points saved" value={rates.break_points_saved_percentage} />
+        <StatRow label="Service games played">{rates.service_games.toLocaleString()}</StatRow>
       </PartialAggregate>
-    </section>
+    </Card>
+  )
+}
+
+/**
+ * The half of a career that lives on the other side of the net.
+ *
+ * Every figure here is a share of what the opponent served, which is why it is
+ * its own card rather than more rows under Serve: the denominators are
+ * different, the matches they were counted over are a different set, and a
+ * break rate sitting under a hold rate would look like it came from the same
+ * column of the same file. It does not.
+ */
+function ReturnSection({ player }: { player: PlayerProfile }) {
+  const returns = player.return
+
+  if (!hasStatistics(returns.availability) || returns.rates === null) {
+    return (
+      <Card title="Return">
+        <EmptyState
+          heading="No return statistics for this career"
+          reason={absenceReason(returns.availability)}
+        />
+      </Card>
+    )
+  }
+
+  const rates = returns.rates
+  const eligible = player.career === null ? 0 : player.career.matches - player.career.incomplete_matches
+
+  return (
+    <Card title="Return" aside="What they were served">
+      <PartialAggregate
+        recorded={Number(returns.matches_with_data)}
+        total={Number(eligible)}
+        noun="These figures"
+        dashMeans="the opponent's serve line was never recorded"
+      >
+        <Rate label="Return games won" value={rates.return_games_won_percentage} lead />
+        <Rate label="Return points won" value={rates.return_points_won_percentage} />
+        <Rate label="First-serve returns won" value={rates.first_return_won_percentage} />
+        <Rate label="Second-serve returns won" value={rates.second_return_won_percentage} />
+        <Rate label="Break points converted" value={rates.break_points_won_percentage} />
+        <StatRow label="Break points earned">
+          {rates.break_points_created.toLocaleString()}
+        </StatRow>
+        <StatRow label="Return games played">{rates.return_games.toLocaleString()}</StatRow>
+      </PartialAggregate>
+    </Card>
+  )
+}
+
+/**
+ * The two figures that need both serve lines at once, so they exist only for
+ * the matches that carried both.
+ *
+ * The dominance ratio is the one number on this page that is not a percentage:
+ * return points won as a share of theirs, over serve points lost as a share of
+ * this player's. One is a player who returns exactly as well as they are
+ * returned against, and the winner of a match is above it almost by
+ * definition, which is what makes a career average above 1.10 remarkable.
+ */
+function PointsSection({ player }: { player: PlayerProfile }) {
+  const points = player.points
+  if (points === null) return null
+
+  return (
+    <Card className={styles.span} title="Points won" aside={`${points.matches.toLocaleString()} matches with both serve lines`}>
+      <div className={styles.points}>
+        <div className={styles.point}>
+          <Kicker>Total points won</Kicker>
+          <div className={styles.pointValue}>
+            {points.total_points_won_percentage === null ? (
+              <AbsentCell label="Total points won" />
+            ) : (
+              formatPercent(points.total_points_won_percentage)
+            )}
+          </div>
+        </div>
+        <div className={styles.point}>
+          <Kicker>Dominance ratio</Kicker>
+          <div className={styles.pointValue}>
+            {points.dominance_ratio === null ? (
+              <AbsentCell label="Dominance ratio" />
+            ) : (
+              points.dominance_ratio.toFixed(2)
+            )}
+          </div>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+/** A percentage row, or the absence in its place. Never a zero for a missing one. */
+function Rate({
+  label,
+  value,
+  lead = false,
+}: {
+  label: string
+  value: number | null
+  lead?: boolean
+}) {
+  return (
+    <StatRow label={label}>
+      <span className={lead ? styles.lead : undefined}>
+        {value === null ? <AbsentCell label={label} /> : formatPercent(value)}
+      </span>
+    </StatRow>
   )
 }
 
 function SplitsSection({ career }: { career: Career }) {
   return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>By surface and by level</h2>
+    <Card title="By surface and by level">
       <StatTable
-        caption="Every match counts once, on the surface and at the tier it was played."
         columns={[
           {
             key: 'surface',
@@ -541,7 +683,6 @@ function SplitsSection({ career }: { career: Career }) {
         defaultSort={{ key: 'matches', direction: 'desc' }}
       />
       <StatTable
-        caption="Matches with serve statistics, per tier. This is what makes never recorded at this level a checkable claim."
         columns={[
           { key: 'tier', header: 'Tier', wrap: true, value: (row) => row.tier },
           { key: 'matches', header: 'Matches', align: 'right', value: (row) => Number(row.matches) },
@@ -557,7 +698,8 @@ function SplitsSection({ career }: { career: Career }) {
         rowKey={(row) => row.tier}
         defaultSort={{ key: 'matches', direction: 'desc' }}
       />
-    </section>
+      <StatRow label="Retirements and walkovers">{career.incomplete_matches}</StatRow>
+    </Card>
   )
 }
 
@@ -663,8 +805,7 @@ function MatchesSection({
     [openChart],
   )
   return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Matches</h2>
+    <Card title="Every match" aside="Most recent first">
       <SurfaceToggle value={surface} onChange={onSurface} />
 
       {matches.state === 'loading' ? <Skeleton lines={8} /> : null}
@@ -686,7 +827,7 @@ function MatchesSection({
         ) : (
           <>
             <StatTable
-              caption="Most recent first. Aces reading n/r is a match nobody recorded serve statistics for; ret. is a retirement and w/o a walkover, which count in the record and sit out of every rate."
+              caption="n/r is a match nobody recorded serve statistics for. ret. and w/o count in the record and sit out of every rate."
               columns={columns}
               rows={matches.data.data}
               rowKey={(row) => `${row.date}-${row.tournament}-${row.opponent.slug}-${row.round}`}
@@ -707,6 +848,6 @@ function MatchesSection({
           </>
         )
       ) : null}
-    </section>
+    </Card>
   )
 }

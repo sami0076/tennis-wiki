@@ -16,8 +16,10 @@ import {
   ChartedSheet,
   CountUp,
   CourtArt,
+  DrawPicker,
   DrawSheet,
   EmptyState,
+  Flag,
   FormPills,
   Kicker,
   Meta,
@@ -29,8 +31,10 @@ import {
   PlayerSummary,
   RankDelta,
   RivalryStrip,
+  RoundFunnel,
   RoundList,
   RoundStepper,
+  SectionRail,
   Scoreboard,
   Scorelines,
   Skeleton,
@@ -47,7 +51,7 @@ import {
   WinSplit,
   type Column,
 } from '../components'
-import type { EditionMatch, EditionSide } from '../api/client'
+import type { EditionMatch, EditionSide, ReplayableDraw } from '../api/client'
 import { buildBracket, pageSheets, roundGroups, MAIN_ROUNDS } from '../lib/bracket'
 import type { Snapshot } from '../lib/playback'
 import styles from './Gallery.module.css'
@@ -145,6 +149,46 @@ const trajectory = [
   { date: '2020-07-01', elo: 2205 },
 ]
 
+// Two seasons, so the picker has more than one group to draw.
+const galleryDraws: ReplayableDraw[] = [
+  {
+    slug: 'wimbledon-atp',
+    name: 'Wimbledon',
+    season: 2019,
+    tour: 'atp',
+    tier: 'tour',
+    level: 'G',
+    surface: 'grass',
+    draw_size: 128,
+    matches: 127,
+    start_date: '2019-07-01',
+  },
+  {
+    slug: 'roland-garros-atp',
+    name: 'Roland Garros',
+    season: 2019,
+    tour: 'atp',
+    tier: 'tour',
+    level: 'G',
+    surface: 'clay',
+    draw_size: 128,
+    matches: 127,
+    start_date: '2019-05-26',
+  },
+  {
+    slug: 'us-open-wta',
+    name: 'US Open',
+    season: 2018,
+    tour: 'wta',
+    tier: 'tour',
+    level: 'G',
+    surface: 'hard',
+    draw_size: 128,
+    matches: 127,
+    start_date: '2018-08-27',
+  },
+]
+
 // Five lines off the one above, far enough apart to tell the ramp's four steps
 // from each other at 360px.
 const leaders = ['Leader', 'Second', 'Third', 'Fourth', 'Fifth'].map((name, index) => ({
@@ -236,6 +280,29 @@ export function Gallery() {
       </section>
 
       <section className={styles.block}>
+        <h2 className={styles.name}>Flag</h2>
+        <p className={styles.note}>
+          The database stores IOC codes, which are not ISO codes: GER is Germany and not
+          Georgia, SUI is Switzerland. The code rides beside the picture, because a hundred
+          flags at 18px are not something anyone can tell apart. A country that no longer
+          exists keeps its letters and gets no flag -- a Soviet player did not play for Russia.
+        </p>
+        <div className={styles.row}>
+          <Flag country="SUI" />
+          <Flag country="GER" />
+          <Flag country="RSA" />
+          <Flag country="TPE" />
+          <Flag country="URS" />
+          <Flag country="ZZZ" />
+        </div>
+        <p className={styles.sub}>Larger, for a profile; and bare, beside a name</p>
+        <div className={styles.row}>
+          <Flag country="ESP" size="md" />
+          <Flag country="ARG" code={false} />
+        </div>
+      </section>
+
+      <section className={styles.block}>
         <h2 className={styles.name}>SurfaceBadge and FormPills</h2>
         <div className={styles.row}>
           <SurfaceBadge surface="hard" />
@@ -258,10 +325,75 @@ export function Gallery() {
         <h2 className={styles.name}>AreaChart</h2>
         <p className={styles.note}>
           One rating over time: the line draws in, the ground under it takes the side&apos;s
-          wash, the peak is ringed and the latest figure dotted.
+          wash, the peak is ringed and the latest figure dotted. Point at it, or focus it and
+          press an arrow, and a crosshair reads out the nearest week.
         </p>
         <AreaChart points={trajectory} label="Elo rating over three seasons" />
         <AreaChart points={trajectory} side="b" height={160} label="The same series as player B" />
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>SectionRail</h2>
+        <p className={styles.note}>
+          A sticky table of contents for a page that runs long. Every entry is an anchor, so a
+          section is a link somebody can send, and the one in view is marked. Sticky here too,
+          which is why it sits under the site header rather than at the top of the page.
+        </p>
+        <SectionRail
+          label="Example"
+          items={[
+            { id: 'gallery-rating', label: 'Rating' },
+            { id: 'gallery-serve', label: 'Serve and return' },
+            { id: 'gallery-matches', label: 'Every match' },
+          ]}
+        />
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>RoundFunnel</h2>
+        <p className={styles.note}>
+          The record round by round, scaled against the busiest one, so how far a career
+          usually got is legible before a number is read. Won is ink and lost is grey; the
+          record at the end of each bar is what carries it without colour.
+        </p>
+        <RoundFunnel
+          rounds={[
+            { round: 'R128', matches: 78, wins: 74 },
+            { round: 'R64', matches: 74, wins: 68 },
+            { round: 'R32', matches: 68, wins: 57 },
+            { round: 'R16', matches: 57, wins: 44 },
+            { round: 'QF', matches: 44, wins: 31 },
+            { round: 'SF', matches: 31, wins: 21 },
+            { round: 'F', matches: 21, wins: 12 },
+          ]}
+        />
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>DrawPicker</h2>
+        <p className={styles.note}>
+          Which draw the simulator replays. One select rather than a season picker and an
+          event picker, because the second would depend on the first; the seasons are the
+          optgroups. Its value carries the slug and the season together, since a draw is an
+          edition of an event and half the address names no draw at all.
+        </p>
+        <DrawPicker
+          draws={galleryDraws}
+          value={{ event: 'wimbledon-atp', season: 2019 }}
+          onChange={() => {}}
+        />
+        <p className={styles.note}>
+          It says why it is empty whenever it is, because a disabled select and nothing else
+          is indistinguishable from a broken one.
+        </p>
+        <DrawPicker draws={[]} value={{ event: 'wimbledon-atp', season: 2019 }} onChange={() => {}} busy />
+        <DrawPicker
+          draws={[]}
+          value={{ event: 'wimbledon-atp', season: 2019 }}
+          onChange={() => {}}
+          problem="404 Not Found"
+        />
+        <DrawPicker draws={[]} value={{ event: 'wimbledon-atp', season: 2019 }} onChange={() => {}} />
       </section>
 
       <section className={styles.block}>

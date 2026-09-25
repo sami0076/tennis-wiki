@@ -32,3 +32,37 @@ export function useUrlParam(name: string): [string | null, (value: string | null
 
   return [params.get(name), set]
 }
+
+/**
+ * Set several parameters in one navigation.
+ *
+ * Two useUrlParam setters called in the same tick clobber each other: each
+ * resolves against the URL as it was before either ran, and the last
+ * navigation is the one that sticks. That is invisible until something needs
+ * two parameters to agree.
+ *
+ * The draw on the simulator is the case that found it. A draw is addressed by
+ * an event slug *and* a season, so writing them one at a time leaves the page
+ * pointing at an event that never played that year -- or, as it actually did,
+ * at a season with no event at all.
+ */
+export function useUrlParams(): (values: Record<string, string | null>) => void {
+  const [, setParams] = useSearchParams()
+
+  return useCallback(
+    (values: Record<string, string | null>) => {
+      setParams(
+        (current) => {
+          const next = new URLSearchParams(current)
+          for (const [name, value] of Object.entries(values)) {
+            if (value === null || value === '') next.delete(name)
+            else next.set(name, value)
+          }
+          return next
+        },
+        { replace: true },
+      )
+    },
+    [setParams],
+  )
+}

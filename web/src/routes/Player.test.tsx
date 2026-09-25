@@ -51,8 +51,24 @@ function profile(overrides: Partial<PlayerProfile> = {}): PlayerProfile {
         first_serve_won_percentage: 74.8,
         second_serve_won_percentage: 55.1,
         break_points_saved_percentage: 66,
+        service_games_held_percentage: 88.4,
+        service_games: 3200,
       },
     },
+    return: {
+      availability: AvailabilityRecorded,
+      matches_with_data: 372,
+      rates: {
+        return_points_won_percentage: 42.1,
+        first_return_won_percentage: 33.8,
+        second_return_won_percentage: 55.4,
+        break_points_won_percentage: 45.2,
+        return_games_won_percentage: 32.6,
+        break_points_created: 1840,
+        return_games: 3160,
+      },
+    },
+    points: { matches: 370, total_points_won_percentage: 53.4, dominance_ratio: 1.24 },
     ratings: [
       {
         surface: 'overall',
@@ -104,11 +120,37 @@ function match(overrides: Partial<PlayerMatch> = {}): PlayerMatch {
   }
 }
 
+/** An empty career, for the tests that say nothing about the highlights. */
+function noHighlights() {
+  return {
+    slug: 'itg-player',
+    name: 'Itg Player',
+    streaks: [],
+    best_wins: [],
+    finals: [],
+    rounds: [],
+    rivals: [],
+    schedule: {
+      rated_matches: 0,
+      average_elo: null,
+      highest_elo: null,
+      elite_elo: 2000,
+      elite_matches: 0,
+      elite_wins: 0,
+    },
+  }
+}
+
 /** routes stubs fetch by path, so each endpoint can answer differently. */
 function routes(handlers: Record<string, unknown>, notFound: string[] = []) {
-  // The year-by-year is its own request; a test that says nothing about it
-  // gets an empty career rather than the profile answering for it.
-  const all: Record<string, unknown> = { '/seasons': { slug: 'itg-player', name: 'Itg Player', seasons: [] }, ...handlers }
+  // The year-by-year and the highlights are their own requests; a test that
+  // says nothing about either gets an empty career rather than the profile
+  // answering for them.
+  const all: Record<string, unknown> = {
+    '/seasons': { slug: 'itg-player', name: 'Itg Player', seasons: [] },
+    '/highlights': noHighlights(),
+    ...handlers,
+  }
   vi.stubGlobal('fetch', (input: RequestInfo | URL) => {
     const url = String(input)
     if (notFound.some((path) => url.includes(path))) {
@@ -272,7 +314,9 @@ describe('the player page', () => {
                 ? emptyRankings
                 : url.includes('/seasons')
                   ? { slug: 'itg-player', name: 'Itg Player', seasons: [] }
-                  : profile()
+                  : url.includes('/highlights')
+                    ? noHighlights()
+                    : profile()
       return Promise.resolve(
         new Response(JSON.stringify(body), {
           status: 200,
@@ -480,18 +524,226 @@ describe('the player page', () => {
     expect(await screen.findByRole('heading', { name: "By opponent's ranking" })).toBeInTheDocument()
     expect(screen.getByText('vs No. 1')).toBeInTheDocument()
     expect(screen.getByText('1-3')).toBeInTheDocument()
-    expect(screen.getByText(/Over the 180 matches where the opponent's ranking on the day is known; 12 more/)).toBeInTheDocument()
+    const bands = screen.getByText(/The bands nest/)
+    expect(bands).toHaveTextContent('180 matches with a known ranking')
+    expect(bands).toHaveTextContent('12 more were unranked')
     expect(screen.getByText('5-4')).toBeInTheDocument()
 
     expect(await screen.findByRole('heading', { name: 'Year by year' })).toBeInTheDocument()
     expect(screen.getByText('41-19')).toBeInTheDocument()
     expect(screen.getByText('88.1%')).toBeInTheDocument()
-    expect(screen.getByText(/which is the Lines column: 4 of 70 matches/)).toBeInTheDocument()
+    expect(screen.getByText(/stand on the Lines column: 4 of 70 matches/)).toBeInTheDocument()
     // 1995 had no serve line: hold, break, ace, double faults and dominance are
     // n/r, and so is a tiebreak rate over no tiebreaks.
     expect(screen.getAllByText('n/r').length).toBeGreaterThanOrEqual(6)
   })
 
+
+
+  // The career read as what happened rather than as rates. Its own request, so
+  // a page whose highlights are slow still shows a name and a record.
+  it('reads the runs, the biggest wins and the rivals from the highlights', async () => {
+    routes({
+      '/coverage': coverage,
+      '/clutch': clutch(),
+      '/ratings': emptySeries,
+      '/rankings': emptyRankings,
+      '/matches': { data: [match()], next_cursor: '' },
+      '/highlights': {
+        ...noHighlights(),
+        streaks: [
+          { kind: 'best', won: true, length: 23, from: '2019-01-14', to: '2019-08-26' },
+          { kind: 'current', won: false, length: 2, from: '2025-10-06', to: '2025-11-03' },
+        ],
+        best_wins: [
+          {
+            date: '2019-07-01',
+            tournament: 'Wimbledon',
+            event_slug: 'wimbledon-atp',
+            season: 2019,
+            level: 'G',
+            tier: 'tour',
+            surface: 'grass',
+            round: 'SF',
+            score: '7-6(3) 1-6 6-3 6-4',
+            opponent: { slug: 'itg-rival', name: 'Itg Rival', country: 'ESP' },
+            opponent_elo: 2015.4,
+            elo_as_of: '2019-07-01',
+          },
+        ],
+        rounds: [
+          { round: 'R32', matches: 40, wins: 34 },
+          { round: 'F', matches: 5, wins: 3 },
+        ],
+        finals: [{ category: 'slam', titles: 4, finals: 7 }],
+        rivals: [
+          {
+            slug: 'itg-rival',
+            name: 'Itg Rival',
+            country: 'ESP',
+            matches: 12,
+            wins: 7,
+            last_played: '2025-11-03',
+          },
+        ],
+        schedule: {
+          rated_matches: 380,
+          average_elo: 1804.2,
+          highest_elo: 2201.5,
+          elite_elo: 2000,
+          elite_matches: 30,
+          elite_wins: 11,
+        },
+      },
+      '/players/itg-player': profile(),
+    })
+    show()
+
+    expect(await screen.findByText('Longest winning run')).toBeInTheDocument()
+    expect(screen.getByText('2019-01-14 – 2019-08-26')).toBeInTheDocument()
+    // The run in progress is a run of defeats, and the word has to say so.
+    expect(screen.getByText('defeats')).toBeInTheDocument()
+
+    // The opponent's rating is the one held the week of the match.
+    expect(await screen.findByText('2015')).toBeInTheDocument()
+    expect(screen.getAllByText('Itg Rival').length).toBeGreaterThan(0)
+
+    // Titles over finals reached, at each kind of event.
+    expect(screen.getByText('Grand Slams')).toBeInTheDocument()
+    expect(screen.getByText('of 7')).toBeInTheDocument()
+
+    // The record against the bar the response itself names.
+    expect(screen.getByText('11-19 against 2000 and up')).toBeInTheDocument()
+  })
+
+  it('leaves the schedule figures out rather than showing a career of zero Elo', async () => {
+    routes({
+      '/coverage': coverage,
+      '/clutch': clutch(),
+      '/ratings': emptySeries,
+      '/rankings': emptyRankings,
+      '/matches': { data: [match()], next_cursor: '' },
+      '/players/itg-player': profile(),
+    })
+    show()
+    await screen.findByRole('heading', { name: 'Itg Player' })
+    // noHighlights() has nothing rated. An average of 0 Elo is not a thing
+    // that can happen, so the figure is absent rather than zeroed.
+    expect(screen.queryByText('Average opponent')).not.toBeInTheDocument()
+  })
+
+  // Serve and return are two cards because they are two sets of matches: a row
+  // can carry one side's line and not the other's.
+  it('reads the return figures from the opponents’ serve lines', async () => {
+    routes({
+      '/coverage': coverage,
+      '/clutch': clutch(),
+      '/ratings': emptySeries,
+      '/rankings': emptyRankings,
+      '/matches': { data: [match()], next_cursor: '' },
+      '/players/itg-player': profile(),
+    })
+    show()
+
+    expect(await screen.findByText('Return games won')).toBeInTheDocument()
+    expect(screen.getByText('32.6%')).toBeInTheDocument()
+    expect(screen.getByText('Break points converted')).toBeInTheDocument()
+    // The denominator the break rate stands on, stated rather than implied.
+    expect(screen.getByText('3,160')).toBeInTheDocument()
+    // Both lines together, which is the only place these two can come from.
+    expect(screen.getByText('1.24')).toBeInTheDocument()
+    expect(screen.getByText('53.4%')).toBeInTheDocument()
+  })
+
+  it('explains an absent return rather than showing it as zero', async () => {
+    routes({
+      '/coverage': coverage,
+      '/clutch': clutch(),
+      '/ratings': emptySeries,
+      '/rankings': emptyRankings,
+      '/matches': { data: [match()], next_cursor: '' },
+      '/players/itg-player': profile({
+        return: { availability: AvailabilityNeverForTier, matches_with_data: 0, rates: null },
+        points: null,
+      }),
+    })
+    show()
+    expect(await screen.findByText('No return statistics for this career')).toBeInTheDocument()
+    // The two figures that need both lines are gone with it, not zeroed.
+    expect(screen.queryByText('Dominance ratio')).not.toBeInTheDocument()
+  })
+
+  // The long scroll is navigable: every section is an anchor the rail links to.
+  it('gives every section an address', async () => {
+    routes({
+      '/coverage': coverage,
+      '/clutch': clutch(),
+      '/ratings': emptySeries,
+      '/rankings': emptyRankings,
+      '/matches': { data: [match()], next_cursor: '' },
+      '/players/itg-player': profile(),
+    })
+    const { container } = render(
+      <MemoryRouter initialEntries={['/players/itg-player']}>
+        <Routes>
+          <Route path="/players/:slug" element={<Player />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    await screen.findByRole('heading', { name: 'Itg Player' })
+
+    const rail = screen.getByRole('navigation', { name: 'This career' })
+    const targets = within(rail)
+      .getAllByRole('link')
+      .map((link) => link.getAttribute('href') ?? '')
+    expect(targets.length).toBeGreaterThan(4)
+    for (const target of targets) {
+      expect(container.querySelector(target)).not.toBeNull()
+    }
+  })
+
+
+  // The chip used to offer whoever the player last happened to draw, which on
+  // a real career is a stranger from a United Cup tie.
+  it('offers the most-played opponent to compare with, not the last one', async () => {
+    routes({
+      '/coverage': coverage,
+      '/clutch': clutch(),
+      '/ratings': emptySeries,
+      '/rankings': emptyRankings,
+      '/matches': {
+        data: [match({ opponent: { slug: 'itg-stranger', name: 'Itg Stranger' } })],
+        next_cursor: '',
+      },
+      '/highlights': {
+        ...noHighlights(),
+        rivals: [
+          {
+            slug: 'itg-nemesis',
+            name: 'Itg Nemesis',
+            country: 'ESP',
+            matches: 39,
+            wins: 16,
+            last_played: '2024-06-09',
+          },
+          {
+            slug: 'itg-stranger',
+            name: 'Itg Stranger',
+            country: 'FRA',
+            matches: 1,
+            wins: 1,
+            last_played: '2025-11-03',
+          },
+        ],
+      },
+      '/players/itg-player': profile(),
+    })
+    show()
+
+    const compare = await screen.findByRole('link', { name: /Compare with Nemesis/ })
+    expect(compare).toHaveAttribute('href', '/h2h/itg-player/itg-nemesis')
+    expect(screen.queryByRole('link', { name: /Compare with Stranger/ })).not.toBeInTheDocument()
+  })
 
   // The structured data a crawler reads: a Person built from the profile and
   // nothing else, and the trail to the page.

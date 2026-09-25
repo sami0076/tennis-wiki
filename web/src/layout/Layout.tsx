@@ -1,6 +1,6 @@
-import { useState, type ReactNode } from 'react'
-import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom'
-import { PlayerSearch } from '../components'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { NavLink, Link, useLocation } from 'react-router-dom'
+import { CommandPalette, ThemeToggle } from '../components'
 import { ScrollProgress } from './Atmosphere'
 import styles from './Layout.module.css'
 
@@ -15,6 +15,7 @@ const links = [
   { to: '/players', label: 'Players', short: 'Players' },
   { to: '/h2h', label: 'Head to head', short: 'H2H' },
   { to: '/rankings', label: 'Rankings', short: 'Rankings' },
+  { to: '/leaders', label: 'Leaders', short: 'Leaders' },
   { to: '/tournaments', label: 'Tournaments', short: 'Draws' },
   { to: '/simulator', label: 'Simulator', short: 'Simulator' },
 ]
@@ -26,6 +27,15 @@ const links = [
  */
 export function Layout({ children }: LayoutProps) {
   const { pathname } = useLocation()
+  const [paletteOpen, setPaletteOpen] = useState(false)
+  const closePalette = useCallback(() => setPaletteOpen(false), [])
+
+  usePaletteHotkey(() => setPaletteOpen(true))
+
+  // A route change closes it. Every row in the palette navigates, and one that
+  // survived the navigation would sit over the page it just opened.
+  useEffect(() => setPaletteOpen(false), [pathname])
+
   return (
     <div className={styles.shell}>
       <ScrollProgress />
@@ -53,8 +63,9 @@ export function Layout({ children }: LayoutProps) {
               </NavLink>
             ))}
           </div>
-          <div className={styles.search}>
-            <HeaderSearch />
+          <div className={styles.tools}>
+            <SearchTrigger onOpen={() => setPaletteOpen(true)} />
+            <ThemeToggle />
           </div>
         </nav>
       </header>
@@ -63,51 +74,100 @@ export function Layout({ children }: LayoutProps) {
         {children}
       </main>
 
+      {/*
+        One line. The credit and the licence link are not a design choice: the
+        data is CC BY-NC-SA 4.0 and the BY term requires both on the pages that
+        use it (DATA_LICENSE.md). What the licence does not require is three
+        stacked paragraphs, so this is the same obligation in a third of the
+        room, and the licence is now actually linked rather than just named.
+      */}
       <footer className={styles.footer}>
-        <p className={styles.footerBrand}>
+        <Link to="/" className={styles.footerBrand}>
           <span className={styles.ball} aria-hidden="true" />
           Deucepoint
-        </p>
-        <p>
-          <Link className={styles.footerLink} to="/methodology">
-            How these numbers are produced
-          </Link>
-        </p>
-        <p>Data: Jeff Sackmann&apos;s tennis_atp and tennis_wta, CC BY-NC-SA 4.0</p>
+        </Link>
+        <Link className={styles.footerLink} to="/methodology">
+          Methodology
+        </Link>
+        <span className={styles.credit}>
+          Data{' '}
+          <a
+            className={styles.footerLink}
+            href="https://github.com/JeffSackmann"
+            rel="noreferrer"
+          >
+            Jeff Sackmann
+          </a>
+          ,{' '}
+          <a
+            className={styles.footerLink}
+            href="https://creativecommons.org/licenses/by-nc-sa/4.0/"
+            rel="license noreferrer"
+          >
+            CC BY-NC-SA 4.0
+          </a>
+        </span>
       </footer>
+
+      <CommandPalette open={paletteOpen} onClose={closePalette} />
     </div>
   )
 }
 
 /**
- * The search is in the chrome rather than on a page because it is how anyone
- * reaches a player, and needing to go back to a search page first would make
- * every other page a dead end.
+ * The trigger is a button rather than the combobox it replaced. One search
+ * field in the chrome could only ever open a player page; the palette behind
+ * this button reaches every player, every page and the two comparisons that
+ * are the point of the site, and it is the same one keystroke away.
  *
- * Choosing a result goes straight to that player. Pressing Enter without
- * choosing goes to the full result list instead, which is the right answer when
- * the eight rows on offer were not enough to settle a namesake.
+ * The shortcut is written on the button, because a shortcut nobody is told
+ * about is a shortcut nobody uses.
  */
-function HeaderSearch() {
-  const navigate = useNavigate()
-  const [query, setQuery] = useState('')
-
+function SearchTrigger({ onOpen }: { onOpen: () => void }) {
   return (
-    <PlayerSearch
-      label="Player"
-      hideLabel
-      placeholder="Search 115,000 players"
-      value={query}
-      onChange={setQuery}
-      onSelect={(player) => {
-        setQuery('')
-        navigate(`/players/${player.slug}`)
-      }}
-      onSubmit={(value) => {
-        if (value === '') return
-        setQuery('')
-        navigate(`/players?q=${encodeURIComponent(value)}`)
-      }}
-    />
+    <button type="button" className={styles.trigger} onClick={onOpen}>
+      <span className={styles.triggerGlyph} aria-hidden="true">
+        ⌕
+      </span>
+      <span className={styles.triggerLabel}>Search</span>
+      <kbd className={styles.shortcut} aria-hidden="true">
+        {shortcutLabel()}
+      </kbd>
+    </button>
   )
+}
+
+/** ⌘K where that is the convention, Ctrl K everywhere else. */
+function shortcutLabel(): string {
+  if (typeof navigator === 'undefined') return 'Ctrl K'
+  return /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) ? '⌘K' : 'Ctrl K'
+}
+
+/**
+ * ⌘K and Ctrl-K anywhere, and / when the reader is not already typing. The
+ * slash is a convenience and must never swallow a slash meant for a field, so
+ * it checks what has focus first.
+ */
+function usePaletteHotkey(open: () => void) {
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key.toLowerCase() === 'k' && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault()
+        open()
+        return
+      }
+      if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return
+      const target = event.target as HTMLElement | null
+      if (target !== null && isTyping(target)) return
+      event.preventDefault()
+      open()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [open])
+}
+
+function isTyping(element: HTMLElement): boolean {
+  const tag = element.tagName
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || element.isContentEditable
 }

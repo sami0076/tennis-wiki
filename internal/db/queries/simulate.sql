@@ -104,3 +104,54 @@ SELECT m.best_of, m.deciding_set, m.tiebreaks_winner, m.tiebreaks_loser,
    AND t.tour = @tour::tour
  ORDER BY m.played_on DESC, m.id
  LIMIT @row_limit;
+
+-- name: ListReplayableDraws :many
+-- The draws a reader can choose between on the simulator, addressed the way
+-- the simulator addresses them: an event slug and a season.
+--
+-- The HAVING clause is the same first cut ListSimulatableEvents uses -- a
+-- knockout ending in exactly one final, no round robin, no team tie -- and it
+-- is a first cut for the same reason: byes and a partially recorded round are
+-- only found by the reconstruction itself. A draw that passes here can still
+-- be declined at simulation time, which the page already has an answer for.
+--
+-- Joined to events rather than left-joined: a tournament with no event row has
+-- no slug, and a draw with no slug is one this list could not address.
+WITH eligible AS (
+    SELECT e.slug, t.id, t.name, t.season, t.tour, t.tier, t.level, t.surface,
+           t.draw_size, t.start_date, count(*) AS matches
+      FROM tournaments t
+      JOIN events e  ON e.id = t.event_id
+      JOIN matches m ON m.tournament_id = t.id
+     WHERE NOT m.is_qualifying AND NOT m.is_team_event AND m.round <> 'BR'
+       AND (sqlc.narg(tour)::tour IS NULL OR t.tour = sqlc.narg(tour)::tour)
+       AND (sqlc.narg(season)::smallint IS NULL OR t.season = sqlc.narg(season)::smallint)
+     GROUP BY e.slug, t.id
+    HAVING bool_and(m.round IN ('R128', 'R64', 'R32', 'R16', 'QF', 'SF', 'F'))
+       AND count(*) FILTER (WHERE m.round = 'F') = 1
+       AND count(DISTINCT m.round) >= 2
+),
+-- One row per address. An event that somehow filed two draws under the same
+-- slug and season is one entry in a picker, not two identical ones.
+addressed AS (
+    SELECT DISTINCT ON (slug, season) *
+      FROM eligible
+     ORDER BY slug, season, matches DESC, id
+)
+SELECT slug, name, season, tour::text AS tour, tier::text AS tier, level,
+       coalesce(surface::text, 'unknown')::text AS surface,
+       draw_size, start_date, matches::bigint AS matches
+  FROM addressed
+ -- Newest first, and the draws worth replaying at the top of each season: a
+ -- Slam before a Masters before everything else.
+ ORDER BY season DESC,
+          CASE level
+              WHEN 'G' THEN 0
+              WHEN 'F' THEN 1
+              WHEN 'M' THEN 2
+              WHEN 'PM' THEN 2
+              WHEN '1000' THEN 2
+              ELSE 3
+          END,
+          matches DESC, name
+ LIMIT @row_limit;

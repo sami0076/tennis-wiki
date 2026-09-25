@@ -126,3 +126,39 @@ SELECT cs.player_id, cs.set_no,
  WHERE cm.charting_id = @charting_id
  ORDER BY cs.set_no, cs.player_id;
 
+
+-- name: ListCommonOpponents :many
+-- Everyone both players have faced, with each side's record against them.
+--
+-- Two rivals who have met three times have often played the same fifty people,
+-- and how each did against that shared field is the comparison a three-match
+-- head to head cannot make. Each half is grouped before the join so a row is
+-- one opponent rather than one pairing of meetings.
+WITH side_a AS (
+    SELECT (CASE WHEN mp.won THEN m.loser_id ELSE m.winner_id END)::bigint AS opponent_id,
+           count(*)::bigint                       AS matches,
+           count(*) FILTER (WHERE mp.won)::bigint AS wins
+      FROM match_players mp
+      JOIN matches m ON m.id = mp.match_id
+     WHERE mp.player_id = @player_a AND NOT m.is_team_event
+     GROUP BY 1
+),
+side_b AS (
+    SELECT (CASE WHEN mp.won THEN m.loser_id ELSE m.winner_id END)::bigint AS opponent_id,
+           count(*)::bigint                       AS matches,
+           count(*) FILTER (WHERE mp.won)::bigint AS wins
+      FROM match_players mp
+      JOIN matches m ON m.id = mp.match_id
+     WHERE mp.player_id = @player_b AND NOT m.is_team_event
+     GROUP BY 1
+)
+SELECT p.slug, p.full_name AS name, p.country,
+       side_a.matches AS a_matches, side_a.wins AS a_wins,
+       side_b.matches AS b_matches, side_b.wins AS b_wins
+  FROM side_a
+  JOIN side_b ON side_b.opponent_id = side_a.opponent_id
+  JOIN players p ON p.id = side_a.opponent_id
+ WHERE p.id <> @player_a
+   AND p.id <> @player_b
+ ORDER BY (side_a.matches + side_b.matches) DESC, p.full_name
+ LIMIT @row_limit;

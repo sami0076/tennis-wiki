@@ -641,3 +641,120 @@
     display: none;
   }
 }
+
+/* Through a common opponent
+   ---------------------------------------------------------------------
+   The two totals above the table, then one row per shared opponent with each
+   side's record and a pair of bars for the share of meetings each side won.
+   The bars are the comparison; the records beside them are the evidence, so
+   neither is carried by colour alone. */
+.commonTotals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-4);
+  margin-bottom: var(--s-4);
+}
+
+.commonTotal {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+}
+
+.commonDash {
+  width: 28px;
+  height: 4px;
+  border-radius: 2px;
+  margin-bottom: 4px;
+}
+
+.commonTotalName {
+  font-size: var(--t-11);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pencil);
+}
+
+.commonTotalValue {
+  font-size: var(--t-28);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.commonTotalFoot {
+  font-size: var(--t-11);
+  color: var(--pencil);
+}
+
+.commonName {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  border-bottom: 0;
+}
+
+.commonName:hover {
+  color: var(--pencil);
+}
+
+.commonA {
+  color: var(--player-a);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.commonB {
+  color: var(--player-b);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.commonBars {
+  display: grid;
+  gap: 3px;
+  min-width: 80px;
+}
+
+.commonTrack {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--highlight);
+  overflow: hidden;
+}
+
+.commonFillA,
+.commonFillB {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  transform-origin: left;
+}
+
+.commonFillA {
+  background: var(--player-a);
+}
+
+.commonFillB {
+  background: var(--player-b);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .commonFillA,
+  .commonFillB {
+    animation: dp-grow-x 900ms var(--ease-out) both 150ms;
+  }
+}
+
+@media (max-width: 560px) {
+  .commonTotals {
+    gap: var(--s-3);
+  }
+
+  .commonTotalValue {
+    font-size: var(--t-20);
+  }
+}

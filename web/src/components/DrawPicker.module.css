@@ -1,0 +1,98 @@
+/* A plain labelled dropdown. Deliberately not a pill in a tray: the tray
+   controls on this page are toggles, and this one opens a list. */
+.picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  max-width: 100%;
+}
+
+.label {
+  flex: 0 0 auto;
+  font-size: var(--t-11);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pencil);
+}
+
+/* The chevron is drawn over the select rather than by it, because the native
+   arrow is the one part of a select whose colour cannot be themed. */
+.field {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.select {
+  min-width: 0;
+  max-width: 100%;
+  padding: 7px 34px 7px var(--s-3);
+  border: var(--rule);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  font: inherit;
+  font-size: var(--t-13);
+  color: var(--ink);
+  cursor: pointer;
+  appearance: none;
+  transition:
+    border-color 180ms ease-out,
+    box-shadow 180ms ease-out;
+}
+
+.select:hover:not(:disabled) {
+  border-color: var(--ink);
+}
+
+.select:focus-visible {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.select:disabled {
+  color: var(--pencil-mid);
+  background: transparent;
+  cursor: not-allowed;
+}
+
+.chevron {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  width: 11px;
+  height: 7px;
+  margin-top: -3px;
+  color: var(--pencil);
+  pointer-events: none;
+}
+
+.select:disabled + .chevron {
+  color: var(--pencil-mid);
+}
+
+/* The reason there is nothing to choose from. It takes the whole row so a
+   sentence is not squeezed against the control it is explaining. */
+.note {
+  flex: 1 0 100%;
+  margin: 0;
+  font-size: var(--t-12);
+  color: var(--pencil);
+}
+
+@media (max-width: 560px) {
+  .picker {
+    width: 100%;
+  }
+
+  .field {
+    flex: 1;
+  }
+
+  .select {
+    width: 100%;
+  }
+}

@@ -5,7 +5,10 @@
   padding-bottom: var(--s-2);
 }
 
+/* The sheet's columns are sized in characters and its rules meet across
+   them, which only works while every character is the same width. */
 .sheet {
+  font-family: var(--font-mono);
   display: inline-flex;
   align-items: flex-start;
   min-width: 100%;

@@ -1,3 +1,10 @@
+/* One round of a draw, read as a sheet: monospaced like the sheet it
+   replaces below the breakpoint. */
+.match,
+.line {
+  font-family: var(--font-mono);
+}
+
 /* The stepper stays at the top while a long round scrolls under it. */
 .stepper {
   position: sticky;

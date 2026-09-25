@@ -5,14 +5,16 @@ import {
   type DrawSimulation,
   type MatchSimulation,
   type PlayerSearchResult,
+  type ReplayableDraws,
   type SimulationChain,
 } from '../api/client'
-import { simulateDraw, simulateMatch } from '../api/endpoints'
+import { getReplayableDraws, simulateDraw, simulateMatch } from '../api/endpoints'
 import { useResource, type Resource } from '../api/useResource'
 import {
   ButtonLink,
   Card,
   CourtArt,
+  DrawPicker,
   EmptyState,
   PageHeader,
   Meta,
@@ -28,13 +30,27 @@ import {
 import { formatPercent, surname } from '../lib/format'
 import { surfaceLabel } from '../lib/surface'
 import { prefersReducedMotion } from '../lib/useReducedMotion'
-import { useUrlParam } from '../lib/useUrlParam'
+import { useUrlParam, useUrlParams } from '../lib/useUrlParam'
 import { FEATURED_DRAW } from '../lib/featuredDraw'
 import styles from './Simulator.module.css'
 import { breadcrumbs, useJsonLd } from '../lib/jsonld'
 
 
 const SURFACES = ['hard', 'clay', 'grass', 'carpet']
+
+/**
+ * A request that is not ready to be made. useResource renders `loading` until
+ * its promise settles, which is exactly the state the draw panel should be in
+ * while the list that names the default draw is still arriving. Resolving with
+ * a placeholder instead would make the panel render something it would then
+ * have to replace.
+ *
+ * The effect that holds it is re-run and its result discarded the moment the
+ * dependency that made it pending changes, so nothing is left waiting on it.
+ */
+function pending<T>(): Promise<T> {
+  return new Promise<T>(() => {})
+}
 
 /**
  * The simulator: two players, every rung between a point and a match, and a
@@ -49,15 +65,15 @@ export function Simulator() {
   const [surface, setSurface] = useUrlParam('surface')
   const [bestOf, setBestOf] = useUrlParam('best_of')
   useJsonLd('breadcrumbs', breadcrumbs([{ name: 'Simulator', path: '/simulator' }]))
-  // The draw to replay, as its sheet addresses it: ?event=<slug>&season=. The
-  // featured draw stands in when the URL names none.
+  // The draw to replay, as its sheet addresses it: ?event=<slug>&season=.
   const [eventSlug] = useUrlParam('event')
   const [seasonParam] = useUrlParam('season')
+  // Both halves of the address in one navigation: written separately, the
+  // second overwrites the first and the page asks for a season with no event.
+  const setDrawParams = useUrlParams()
   const season = Number(seasonParam)
-  const chosenDraw =
-    eventSlug !== null && Number.isInteger(season) && season > 0
-      ? { event: eventSlug, season }
-      : FEATURED_DRAW
+  const addressed =
+    eventSlug !== null && Number.isInteger(season) && season > 0 ? { event: eventSlug, season } : null
 
   const chosen = surface ?? 'hard'
   const sets = bestOf === '5' ? 5 : 3
@@ -69,7 +85,28 @@ export function Simulator() {
         : simulateMatch(a, b, { surface: chosen, best_of: sets }, signal),
     [a, b, chosen, sets],
   )
-  const draw = useResource((signal) => simulateDraw(chosenDraw, signal), [chosenDraw.event, chosenDraw.season])
+  // Every draw this simulator can be pointed at.
+  const draws = useResource((signal) => getReplayableDraws({}, signal), [])
+
+  // What to replay when the URL names nothing. The list is ordered newest and
+  // biggest first, so its top row is the draw a reader is most likely to know
+  // -- and it follows the data instead of being a constant that pins the page
+  // to one tournament forever. The featured draw is only the backstop for a
+  // list that failed, so there is still something on screen to read.
+  const first = draws.state === 'ready' ? draws.data.data[0] : undefined
+  const fallback = first === undefined ? FEATURED_DRAW : { event: first.slug, season: first.season }
+  const chosenDraw = addressed ?? fallback
+  // The list costs a few milliseconds against a simulation that takes a few
+  // hundred, so waiting for it rather than simulating a guess and swapping is
+  // both cheaper and free of a visible re-run.
+  const waiting = addressed === null && draws.state === 'loading'
+
+  const draw = useResource(
+    (signal) => (waiting ? pending<DrawSimulation>() : simulateDraw(chosenDraw, signal)),
+    [waiting, chosenDraw.event, chosenDraw.season],
+  )
+  const chooseDraw = (next: { event: string; season: number }) =>
+    setDrawParams({ event: next.event, season: String(next.season) })
 
   return (
     <>
@@ -113,7 +150,7 @@ export function Simulator() {
         <MatchPanel match={match} surface={chosen} sets={sets} />
       )}
 
-      <DrawPanel draw={draw} chosen={chosenDraw} />
+      <DrawPanel draw={draw} chosen={chosenDraw} draws={draws} onChoose={chooseDraw} />
     </>
   )
 }
@@ -384,11 +421,37 @@ function Inputs({ sim }: { sim: MatchSimulation }) {
   )
 }
 
-function DrawPanel({ draw, chosen }: { draw: Resource<DrawSimulation>; chosen: { event: string; season: number } }) {
+function DrawPanel({
+  draw,
+  chosen,
+  draws,
+  onChoose,
+}: {
+  draw: Resource<DrawSimulation>
+  chosen: { event: string; season: number }
+  draws: Resource<ReplayableDraws>
+  onChoose: (draw: { event: string; season: number }) => void
+}) {
+  // The picker sits above every state of the panel, including the ones that
+  // are explaining why a draw could not be replayed: that is exactly the
+  // moment somebody wants to choose a different one.
+  const picker = (
+    <DrawPicker
+      draws={draws.state === 'ready' ? draws.data.data : []}
+      value={chosen}
+      onChange={onChoose}
+      busy={draws.state === 'loading'}
+      problem={draws.state === 'error' ? draws.error.message : null}
+    />
+  )
+
   if (draw.state === 'loading') {
     return (
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Draw simulator</h2>
+        <div className={styles.drawHead}>
+          <h2 className={styles.sectionTitle}>Draw simulator</h2>
+          {picker}
+        </div>
         <Skeleton lines={8} />
       </section>
     )
@@ -400,7 +463,10 @@ function DrawPanel({ draw, chosen }: { draw: Resource<DrawSimulation>; chosen: {
     const declined = draw.error instanceof ApiError && (draw.error.status === 422 || draw.error.status === 404)
     return (
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Draw simulator</h2>
+        <div className={styles.drawHead}>
+          <h2 className={styles.sectionTitle}>Draw simulator</h2>
+          {picker}
+        </div>
         {declined ? (
           <EmptyState
             heading="This draw cannot be replayed"
@@ -425,7 +491,10 @@ function DrawPanel({ draw, chosen }: { draw: Resource<DrawSimulation>; chosen: {
 
   return (
     <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Draw simulator</h2>
+      <div className={styles.drawHead}>
+        <h2 className={styles.sectionTitle}>Draw simulator</h2>
+        {picker}
+      </div>
       <Meta
         parts={[
           <Link key="sheet" className={styles.sheetLink} to={`/tournaments/${sim.event.slug}/${sim.event.season}`}>

@@ -1,4 +1,6 @@
+/* Set-by-set, in a grid sized in characters. */
 .scorelines {
+  font-family: var(--font-mono);
   padding: 0 0 var(--s-2);
 }
 

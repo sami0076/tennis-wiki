@@ -36,8 +36,14 @@ export interface Column<Row> {
 }
 
 interface StatTableProps<Row> {
-  /** Always required: a table with no caption is a table nobody can cite. */
-  caption: string
+  /**
+   * The note under the table. Optional, and left off where the column headers
+   * already say everything: a caption that only restates the headers is a
+   * permanent ⓘ on the page in exchange for nothing. Keep it wherever the
+   * table carries an absence mark, a denominator or a rule a reader could not
+   * infer from the columns.
+   */
+  caption?: string
   columns: ReadonlyArray<Column<Row>>
   rows: ReadonlyArray<Row>
   rowKey: (row: Row) => string
@@ -195,7 +201,7 @@ export function StatTable<Row>({
           ) : null}
         </tbody>
       </table>
-      <Note>{caption}</Note>
+      {caption === undefined ? null : <Note>{caption}</Note>}
     </div>
   )
 }

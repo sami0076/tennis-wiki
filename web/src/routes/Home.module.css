@@ -175,6 +175,8 @@
 }
 
 .topCountry {
+  display: inline-flex;
+  align-items: center;
   font-size: var(--t-11);
   font-weight: 400;
   color: var(--pencil);

@@ -30,6 +30,8 @@ function serve(matches: number): ServeStats {
       first_serve_won_percentage: 74,
       second_serve_won_percentage: 52,
       break_points_saved_percentage: 66,
+      service_games_held_percentage: 86.2,
+      service_games: 1200,
     },
   }
 }
@@ -174,15 +176,28 @@ const simulation = {
   availability: 'available',
 }
 
+/** The shared field, empty unless a test says otherwise. */
+const noCommon = {
+  players: [borg, mcenroe],
+  totals: [
+    { matches: 0, wins: 0 },
+    { matches: 0, wins: 0 },
+  ],
+  opponents: [],
+  total: 0,
+}
+
 /** Answers each endpoint the page asks for, and nothing else. */
 let requested: string[] = []
 
-function stub(comparison: Comparison, charted: unknown = null) {
+function stub(comparison: Comparison, charted: unknown = null, common: unknown = noCommon) {
   requested = []
   vi.stubGlobal('fetch', (input: string) => {
     requested.push(String(input))
     const path = new URL(String(input), 'http://localhost').pathname
-    const body = path.startsWith('/api/v1/h2h/')
+    const body = path.endsWith('/common')
+      ? common
+      : path.startsWith('/api/v1/h2h/')
       ? comparison
       : path.startsWith('/api/v1/charted/')
         ? charted
@@ -412,4 +427,54 @@ describe('HeadToHead', () => {
     expect(screen.getByRole('combobox', { name: 'First player' })).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Second player' })).toBeInTheDocument()
   })
+
+  // The comparison a three-match rivalry cannot make: how each of them did
+  // against the same third parties.
+  it('compares the two through the opponents they share', async () => {
+    stub(rivalry, null, {
+      players: [borg, mcenroe],
+      totals: [
+        { matches: 14, wins: 11 },
+        { matches: 9, wins: 4 },
+      ],
+      opponents: [
+        {
+          slug: 'jimmy-connors',
+          name: 'Jimmy Connors',
+          country: 'USA',
+          matches: [9, 6],
+          wins: [7, 2],
+        },
+        {
+          slug: 'ivan-lendl',
+          name: 'Ivan Lendl',
+          country: 'CZE',
+          matches: [5, 3],
+          wins: [4, 2],
+        },
+      ],
+      total: 2,
+    })
+    renderAt('/h2h/bjorn-borg/john-mcenroe')
+
+    expect(await screen.findByText('Through a common opponent')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Jimmy Connors' })).toHaveAttribute(
+      'href',
+      '/players/jimmy-connors',
+    )
+    // Each side's record against that opponent, in the order the URL asked for.
+    expect(screen.getByText('7\u20112')).toBeInTheDocument()
+    expect(screen.getByText('2\u20114')).toBeInTheDocument()
+    // The totals over the whole shared field, each with its share.
+    expect(screen.getByText('11\u20113')).toBeInTheDocument()
+    expect(screen.getByText('4\u20115')).toBeInTheDocument()
+    expect(screen.getByText('78.6%')).toBeInTheDocument()
+  })
+
+  it('says plainly when two players have never played the same person', async () => {
+    stub(rivalry)
+    renderAt('/h2h/bjorn-borg/john-mcenroe')
+    expect(await screen.findByText('They have never played the same person')).toBeInTheDocument()
+  })
+
 })

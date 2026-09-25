@@ -4,7 +4,7 @@
   padding: var(--s-5);
   border: 1.5px dashed var(--pencil-light);
   border-radius: var(--radius);
-  background: rgb(255 255 255 / 0.55);
+  background: var(--glass);
 }
 
 .heading {

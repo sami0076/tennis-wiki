@@ -7,6 +7,7 @@ import {
   Button,
   CountUp,
   EmptyState,
+  Flag,
   PageHeader,
   Meta,
   Note,
@@ -262,7 +263,11 @@ const player: Column<RankingRow> = {
       <Link className={styles.player} to={`/players/${row.slug}`}>
         {row.name}
       </Link>
-      {row.country === null ? null : <span className={styles.country}>{row.country}</span>}
+      {row.country === null ? null : (
+        <span className={styles.country}>
+          <Flag country={row.country} />
+        </span>
+      )}
     </>
   ),
 }

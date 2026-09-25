@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import type { LeaderRow, LeaderStat, Leaderboard, PlayerSearchResult } from '../api/client'
 import { getLeaders } from '../api/endpoints'
 import { useResource, type Resource } from '../api/useResource'
-import { EmptyState, Meta, PageHeader, PlayerSearch, Skeleton, StatTable, SurfaceToggle, TourFilter, type Column } from '../components'
+import { EmptyState, Flag, Meta, PageHeader, PlayerSearch, Skeleton, StatTable, SurfaceToggle, TourFilter, type Column } from '../components'
 import { formatPercent } from '../lib/format'
 import { tierLabel } from '../lib/tier'
 import { useUrlParam } from '../lib/useUrlParam'
@@ -346,9 +346,8 @@ function columns(stat: LeaderStat): ReadonlyArray<Column<LeaderRow>> {
             {row.name}
           </Link>
           <span className={styles.country}>
-            {' '}
             {row.tour.toUpperCase()}
-            {row.country === null ? '' : ` ${row.country}`}
+            {row.country === null ? null : <Flag country={row.country} />}
           </span>
         </>
       ),

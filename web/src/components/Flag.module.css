@@ -1,0 +1,43 @@
+/* The flag sits inside a run of text -- "SUI  right-handed  age 27" -- so it
+   has to sit ON that text's baseline rather than beside it.
+
+   An inline-flex box does not: its baseline comes from its own first flex
+   item, which put the code 4.7px above the words next to it. So the wrapper
+   stays plain inline text, the code is ordinary text on the shared baseline,
+   and only the picture is a box, nudged down to sit optically centred on the
+   lowercase letters around it. */
+.flag {
+  white-space: nowrap;
+}
+
+.image,
+.blank {
+  display: inline-block;
+  vertical-align: -0.2em;
+  border-radius: 2px;
+  /* A flag with white in it -- Japan's, the Swiss cross -- has no edge of its
+     own against a white card. */
+  box-shadow: 0 0 0 1px var(--hairline);
+  object-fit: cover;
+}
+
+.blank {
+  background: var(--highlight);
+}
+
+.sm .image,
+.sm .blank {
+  width: 18px;
+  height: 12px;
+}
+
+.md .image,
+.md .blank {
+  width: 22px;
+  height: 15px;
+  vertical-align: -0.25em;
+}
+
+.code {
+  margin-left: 6px;
+}

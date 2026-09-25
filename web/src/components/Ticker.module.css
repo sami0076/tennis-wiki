@@ -4,9 +4,9 @@
   overflow: hidden;
   margin: 0 0 var(--s-6);
   border-radius: var(--radius);
-  background: var(--ink);
-  color: #f7f7f2;
-  box-shadow: 0 16px 40px -24px rgb(23 24 26 / 0.6);
+  background: var(--panel);
+  color: var(--on-panel);
+  box-shadow: 0 16px 40px -24px rgb(0 0 0 / 0.6);
 }
 
 .live {
@@ -60,7 +60,7 @@
   align-items: center;
   gap: 10px;
   padding: 14px 28px;
-  border-right: 1px solid rgb(255 255 255 / 0.08);
+  border-right: 1px solid var(--panel-line);
   white-space: nowrap;
   font-size: var(--t-13);
 }
@@ -69,17 +69,17 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #f7f7f2;
+  background: var(--on-panel);
   opacity: 0.6;
 }
 
 .label {
-  color: #b5b4ad;
+  color: var(--panel-quiet);
 }
 
 .value {
   font-weight: 700;
-  color: #fff;
+  color: var(--on-panel);
 }
 
 @keyframes crawl {

@@ -1,5 +1,6 @@
 /* A stadium board: ink panel, light type, the server lit in the ball colour. */
 .board {
+  font-family: var(--font-mono);
   width: 100%;
   /* Fixed so the set columns keep their width and the name takes the rest. */
   table-layout: fixed;
@@ -7,8 +8,8 @@
   border-spacing: 0;
   overflow: hidden;
   border-radius: var(--radius);
-  background: var(--ink);
-  color: var(--card);
+  background: var(--panel);
+  color: var(--on-panel);
   box-shadow: var(--shadow-lift);
 }
 
@@ -24,7 +25,7 @@
   font-size: var(--t-11);
   font-weight: 600;
   letter-spacing: 0.06em;
-  color: var(--pencil-mid);
+  color: var(--panel-quiet);
   border: 1px solid transparent;
   border-bottom: 0;
 }
@@ -93,11 +94,11 @@
 }
 
 .setLost {
-  color: var(--pencil-mid);
+  color: var(--panel-quiet);
 }
 
 .currentCell {
-  color: var(--ink);
+  color: #17181a;
   background: var(--ball);
   border-color: var(--ball) !important;
 }

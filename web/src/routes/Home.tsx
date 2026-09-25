@@ -15,6 +15,7 @@ import {
   Card,
   CountUp,
   CourtArt,
+  Flag,
   Note,
   Odometer,
   PageHeader,
@@ -283,7 +284,13 @@ function TopFive({ leaders }: { leaders: Resource<RankingPage> }) {
           <span className={styles.topPosition}>{row.position}</span>
           <span className={styles.topName}>
             <Link to={`/players/${row.slug}`}>{row.name}</Link>
-            <span className={styles.topCountry}>{row.country ?? row.tour.toUpperCase()}</span>
+            <span className={styles.topCountry}>
+              {row.country === null ? (
+                row.tour.toUpperCase()
+              ) : (
+                <Flag country={row.country} />
+              )}
+            </span>
           </span>
           <span className={styles.topElo}>
             {row.elo === null ? '–' : <CountUp value={row.elo} format={formatElo} />}

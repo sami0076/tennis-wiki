@@ -30,12 +30,16 @@ describe('PartialAggregate', () => {
     expect(screen.queryByText(/n\/r means/)).not.toBeInTheDocument()
   })
 
-  it('says so plainly when nothing is missing', () => {
+  // A note saying that nothing is missing is a permanent ⓘ bought with no
+  // information. The aggregate still renders; only the caption goes.
+  it('adds nothing at all when nothing is missing', () => {
     render(
       <PartialAggregate recorded={68} total={68}>
         <p>12.4 aces</p>
       </PartialAggregate>,
     )
-    expect(screen.getByText(/all 68 matches/)).toBeInTheDocument()
+    expect(screen.getByText('12.4 aces')).toBeInTheDocument()
+    expect(screen.queryByRole('group')).not.toBeInTheDocument()
+    expect(screen.queryByText(/68 matches/)).not.toBeInTheDocument()
   })
 })

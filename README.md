@@ -153,11 +153,14 @@ GET /api/v1/players/:slug/ratings         Elo trajectory, per surface
 GET /api/v1/players/:slug/rankings        published ATP/WTA ranking over time
 GET /api/v1/players/:slug/clutch          break points, tiebreaks, deciding sets
 GET /api/v1/players/:slug/seasons         a career a year at a time, every rate with its own count
+GET /api/v1/players/:slug/highlights      runs, biggest wins, titles by level, record by round, rivals
 GET /api/v1/h2h/:slug/:opponent           head-to-head, either way round
+GET /api/v1/h2h/:slug/:opponent/common    every opponent both have faced, with each side's record
 GET /api/v1/rankings?type=elo|official    leaderboards, as of the last week that exists
 GET /api/v1/rankings/trajectory           the leaders' rating lines, for a chart
 GET /api/v1/simulate/match?a=&b=          point to match, every rung of the chain
 GET /api/v1/simulate/draw?event=&season=  a played draw, replayed ten thousand times
+GET /api/v1/simulate/draws?tour=&season=  every draw complete enough to replay
 GET /api/v1/tournaments?tour=&level=&q=   the index, grouped by level, searchable
 GET /api/v1/tournaments/:slug             an event across seasons, with how each got there
 GET /api/v1/tournaments/:slug/:season     one edition as a draw sheet
@@ -194,6 +197,14 @@ serve is an answer with a reason, not a coin flip.
 began, ten thousand times, and reports a confidence interval on every figure. There is no
 upcoming draw to simulate and there will not be one, so the simulator does the thing the data
 supports and can be scored against: Wimbledon 2019 gives Djokovic 39.9% ±1.0, and he won it.
+
+`/simulate/draws` is the list of every draw that can be replayed, which is narrower than the
+list of draws that exist: a round robin has no bracket to rebuild, and an edition the file
+recorded only the final of has nothing to play through. The endpoint applies that cut in SQL
+rather than letting the page offer an address the simulator would decline, so every row it
+returns is an `?event=&season=` the simulator will accept. The simulator opens on the top of
+that list -- newest season, biggest event -- rather than a draw hardcoded in the frontend, so
+which draw it starts on follows the data.
 
 **Under pressure is measured against a stated population.** `/clutch` reports break points
 saved, tiebreaks won and deciding sets won, each against what the tour did at the same
@@ -295,6 +306,33 @@ a first-serve rate over two matches and one over two hundred are different claim
 that is not in the table can be looked up, and the page says which absence it is: below the
 floor, with the figure over the matches they do have, or without the figure at all. It sits
 beside `/rankings` rather than in the nav, because a leaderboard is a ranking.
+**The player page is a dozen cards deep, so it carries its own table of contents**: a
+sticky rail under the header that tracks the section in view, every entry a real anchor so a
+section is a link somebody can send. Under it the career is read four ways the rest of the
+site cannot read it.
+
+*Serve and return are two cards, not one.* A return figure is made of the opponent's serve
+line, so its denominators are theirs — break points converted is the break points *they*
+faced, return games won is *their* service games — and the two are counted over different
+sets of matches, because a row can carry one side's line and not the other's. Below them sit
+the two figures that need both at once, over the matches that carried both: total points won,
+and the dominance ratio (return points won over serve points lost; 1.00 is a player who
+returns exactly as well as they are returned against).
+
+*Runs and the schedule* is the career as what happened: the longest winning run and the one
+in progress, found with a gaps-and-islands window over the match list, with retirements and
+walkovers left out of the sequence entirely — a run of wins broken by an opponent who never
+came out has not been broken by a defeat. Beside them, the average and the highest Elo the
+schedule actually faced, and the record above 2000. Every opponent carries the rating they
+held the week of the match, not the one they ended their career on, so a win over a future
+champion is credited with what it was worth at the time.
+
+*Biggest wins* ranks those same wins by that rating, which is the list every career average
+is an average of. *How far, and what was won* draws the record round by round as the funnel
+a career actually is, scaled against the busiest round, with titles over finals reached at
+each kind of event beneath it. *Most-played opponents* is who kept turning up, each row a
+link to the rivalry page.
+
 The player page cuts a career two more ways. By the opponent's ranking on the day -- the
 record vs No. 1, the top 5, 10, 20, 50 and 100, outside the top 100 and unranked, the bands
 nesting -- and by closeness, with the matches a final-set tiebreak decided; each is captioned
@@ -317,11 +355,36 @@ The deciding sets and tiebreaks between them are the rivalry's summary and are n
 cut that leaves nothing is an answer naming the filter; two players who never met is a full
 page, not an error.
 
-Search is in the header on every page: a combobox rather than a div that looks like one, so
-arrow keys and a screen reader reach the same results. It debounces and cancels superseded
-requests, and every row carries tour, country, career match count and best tier, because at
-115,000 players a name is not an identifier. `/players?q=` is the same search as a full list,
-and the query and tour filter live in the URL so a search can be sent to somebody.
+**Through a common opponent** is the comparison a three-match rivalry cannot make. Two
+players who have met three times have usually played the same few dozen people, and how each
+did against that shared field says more about the matchup than three results do. Its own
+request rather than a block on the comparison: it is two whole careers grouped and joined,
+and the score at the top should not wait for it.
+
+**Charts read as well as they draw.** A career line whose only legible values are its two
+ends is a picture of a career rather than a record of one, so pointing at the rating history
+puts a crosshair on the nearest week and writes that week's date and Elo over the line. The
+same readout answers to the arrow keys and is announced politely, because "what was he rated
+in 2016" should not need a mouse.
+
+**Search is a command palette**, on ⌘K or Ctrl-K anywhere and on `/` when nothing else has
+focus. A field in the header could only ever open a player page, and the best pages on this
+site are comparisons; this reaches every player, every route, and both comparisons. Type a
+name, press Tab, and the palette becomes "head to head against…" or "simulate a match
+against…" — then search the other half and land on `/h2h/a/b`, which is otherwise two
+searches on two pages. With nothing typed it offers the players this browser has actually
+read, kept in local storage and nowhere else. It debounces and cancels superseded requests,
+and every row carries tour, country, career match count and best tier, because at 115,000
+players a name is not an identifier. `/players?q=` is the same search as a full list, and the
+query and tour filter live in the URL so a search can be sent to somebody.
+
+**A dark theme, on a three-state toggle**: follow the system, light, or dark. Three states
+rather than two, because a reader who has chosen nothing is not the same as one who has
+chosen the theme their machine happens to be on, and their site should keep following them
+at dusk. The choice is one attribute on `<html>` and a block of custom properties; every
+colour that carries meaning — the two sides of a comparison, the four surfaces, win and loss
+— is lifted until it clears 4.5:1 on the panel it sits on. An inline script in `index.html`
+applies a stored choice before the first paint, so nothing flashes cream on the way to dark.
 
 **Every page carries structured data** for the crawlers that execute scripts: `WebSite`
 with the player search as its search action on the root, `Person` on a player, `SportsEvent`

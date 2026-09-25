@@ -374,3 +374,133 @@ func TestProfileIsRevalidatable(t *testing.T) {
 		t.Errorf("304 carried %d bytes", rec.Body.Len())
 	}
 }
+
+// returnMatch writes a match where both sides carry a serve line, which is what
+// a return figure needs: the opponent's line is the player's return.
+func (f *apiFixture) returnMatch(tournamentID, winnerID, loserID int64, num int,
+	winnerPoints, loserPoints *int16) {
+	f.t.Helper()
+	var matchID int64
+	err := f.tx.QueryRow(f.ctx,
+		`INSERT INTO matches (tournament_id, match_num, round, best_of, surface, winner_id,
+		                      loser_id, played_on, incomplete, has_detailed_stats, source)
+		 VALUES ($1, $2, 'R32', 3, 'clay', $3, $4, make_date(2019, 5, 2), false, true, 'test')
+		 RETURNING id`,
+		tournamentID, num, winnerID, loserID).Scan(&matchID)
+	if err != nil {
+		f.t.Fatalf("insert match: %v", err)
+	}
+	for _, p := range []struct {
+		id     int64
+		won    bool
+		points *int16
+	}{{winnerID, true, winnerPoints}, {loserID, false, loserPoints}} {
+		if p.points == nil {
+			if _, err := f.tx.Exec(f.ctx,
+				`INSERT INTO match_players (match_id, player_id, won) VALUES ($1, $2, $3)`,
+				matchID, p.id, p.won); err != nil {
+				f.t.Fatalf("insert match_player: %v", err)
+			}
+			continue
+		}
+		// Half the points are first serves and half of those are won, so every
+		// derived rate below has a round number to check against.
+		half := *p.points / 2
+		quarter := half / 2
+		if _, err := f.tx.Exec(f.ctx,
+			`INSERT INTO match_players (match_id, player_id, won, aces, double_faults,
+			                            serve_points, first_in, first_won, second_won,
+			                            serve_games, bp_saved, bp_faced)
+			 VALUES ($1, $2, $3, 0, 0, $4, $5, $6, $7, 10, 2, 4)`,
+			matchID, p.id, p.won, p.points, half, quarter, quarter); err != nil {
+			f.t.Fatalf("insert match_player: %v", err)
+		}
+	}
+}
+
+func TestReturnIsBuiltFromTheOpponentsServeLine(t *testing.T) {
+	f := newAPIFixture(t)
+	player := f.player("itg-return", "Itg Return", db.TourAtp)
+	foil := f.player("itg-return-foil", "Itg Returnfoil", db.TourAtp)
+	open := f.tournament("itg-return-open", db.TierTour, 2019)
+
+	points := int16(100)
+	f.returnMatch(open, player, foil, 1, &points, &points)
+
+	profile := decodeProfile(t, f.get("/api/v1/players/itg-return"))
+
+	if profile.Return.Availability != AvailabilityRecorded {
+		t.Fatalf("availability = %q, want recorded", profile.Return.Availability)
+	}
+	if profile.Return.Rates == nil {
+		t.Fatal("rates are nil on a match that recorded both lines")
+	}
+	// The opponent served 100 points, won 25 on first serve and 25 on second,
+	// so half of everything they served came back won.
+	if got := profile.Return.Rates.ReturnPointsWon; got == nil || *got != 50 {
+		t.Errorf("return points won = %v, want 50", got)
+	}
+	// They put 50 first serves in and won 25, so half the first-serve returns
+	// were won. Every figure is a share of what they served, not of anything
+	// this player served.
+	if got := profile.Return.Rates.FirstReturnWon; got == nil || *got != 50 {
+		t.Errorf("first-serve returns won = %v, want 50", got)
+	}
+	// They faced 4 break points and saved 2.
+	if got := profile.Return.Rates.BreakPointsWon; got == nil || *got != 50 {
+		t.Errorf("break points converted = %v, want 50", got)
+	}
+	if profile.Return.Rates.BreakPointsFaced != 4 {
+		t.Errorf("break points created = %d, want 4", profile.Return.Rates.BreakPointsFaced)
+	}
+}
+
+func TestReturnIsAbsentWhenOnlyThisPlayersLineWasRecorded(t *testing.T) {
+	f := newAPIFixture(t)
+	player := f.player("itg-half", "Itg Half", db.TourAtp)
+	foil := f.player("itg-half-foil", "Itg Halffoil", db.TourAtp)
+	open := f.tournament("itg-half-open", db.TierTour, 2019)
+
+	points := int16(100)
+	f.returnMatch(open, player, foil, 1, &points, nil)
+
+	profile := decodeProfile(t, f.get("/api/v1/players/itg-half"))
+
+	// The serve line is there and the return line is not. Two availabilities
+	// rather than one, because the two are made of different rows.
+	if profile.Serve.Rates == nil {
+		t.Fatal("serve rates are nil on a match that recorded this player's line")
+	}
+	if profile.Return.Rates != nil {
+		t.Errorf("return rates = %+v, want none from an unrecorded opponent line",
+			profile.Return.Rates)
+	}
+	if profile.Points != nil {
+		t.Errorf("points = %+v, want none: a dominance ratio needs both lines",
+			profile.Points)
+	}
+}
+
+func TestDominanceRatioIsOneForTwoIdenticalServeLines(t *testing.T) {
+	f := newAPIFixture(t)
+	player := f.player("itg-dominance", "Itg Dominance", db.TourAtp)
+	foil := f.player("itg-dominance-foil", "Itg Dominancefoil", db.TourAtp)
+	open := f.tournament("itg-dominance-open", db.TierTour, 2019)
+
+	points := int16(100)
+	f.returnMatch(open, player, foil, 1, &points, &points)
+
+	profile := decodeProfile(t, f.get("/api/v1/players/itg-dominance"))
+
+	if profile.Points == nil {
+		t.Fatal("points are nil on a match that recorded both lines")
+	}
+	// Both sides won half their own service points, so each returned exactly
+	// as well as they were returned against.
+	if got := profile.Points.Dominance; got == nil || *got != 1 {
+		t.Errorf("dominance = %v, want 1", got)
+	}
+	if got := profile.Points.TotalPointsWon; got == nil || *got != 50 {
+		t.Errorf("total points won = %v, want 50", got)
+	}
+}
