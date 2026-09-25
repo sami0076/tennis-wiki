@@ -147,8 +147,13 @@ migrate-reset:
 sqlc:
 	$(GO) run github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION) generate
 
-## seed: start the stack, migrate, and load the seed fixture
-seed: up migrate-up ingest
+## seed: start the stack, migrate, load the seed fixture and rate it
+# `rate` is part of seeding, not an extra step. Ingest writes matches but no
+# ratings, and a database with matches and no ratings is not a working site:
+# the Elo leaderboard, every surface strip, the rating chart and both
+# simulators read the ratings table, so all of them come up empty. That looks
+# like a bug in the page rather than a stage nobody ran.
+seed: up migrate-up ingest rate
 
 ## api: run the HTTP API on port 8080
 api:
