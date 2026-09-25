@@ -127,7 +127,7 @@ Under `prefers-reduced-motion: reduce`, `base.css` collapses every animation. `C
 
 ## Components
 
-New in this system (`web/src/components`, all shown at `/_components`): `Card`/`Kicker`, `Reveal`, `CountUp`, `PageHeader`, `CourtArt`, `FormPills`, `SurfaceBadge`, `AreaChart`, `CommandPalette`, `ThemeToggle`, `SectionRail`, `RoundFunnel`. Restyled: `Button`, `PlayerSearch`, `StatTable` (a card with uppercase heads and a grey row hover), `StatRow`, `SplitBar`, `WinSplit`, `SurfaceToggle`/`TourFilter` (pills), `SurfaceEloStrip` (bars), `RecentFinals` (cards), `SeedingSheet` and `TrajectoryChart` (coloured leaders), `WinLossMark`, `Skeleton` (shimmer), `EmptyState` (dashed card), `Scoreboard` (ink board, lime serve light), `DrawSheet`, `RoundList`.
+New in this system (`web/src/components`, all shown at `/_components`): `Card`/`Kicker`, `Reveal`, `CountUp`, `PageHeader`, `CourtArt`, `FormPills`, `SurfaceBadge`, `AreaChart`, `CommandPalette`, `ThemeToggle`, `SectionRail`, `RoundFunnel`, `Flag`. Restyled: `Button`, `PlayerSearch`, `StatTable` (a card with uppercase heads and a grey row hover), `StatRow`, `SplitBar`, `WinSplit`, `SurfaceToggle`/`TourFilter` (pills), `SurfaceEloStrip` (bars), `RecentFinals` (cards), `SeedingSheet` and `TrajectoryChart` (coloured leaders), `WinLossMark`, `Skeleton` (shimmer), `EmptyState` (dashed card), `Scoreboard` (ink board, lime serve light), `DrawSheet`, `RoundList`.
 
 ### The command palette
 
@@ -138,6 +138,18 @@ One overlay reaches every player, every route and both comparisons. It exists be
 - Tab is the second step rather than a focus move, because the palette is one field and one list and there is nowhere else for focus to go. Escape backs out one step and then closes.
 - The highlight resets whenever the list changes. A stale index would have Enter open whatever took that row's place, which is the one mistake a palette must never make.
 - The trigger writes its own shortcut on itself. A shortcut nobody is told about is a shortcut nobody uses.
+
+### Flags, and how little text a page needs
+
+**A flag is a picture of a country, not a label for one.** `Flag` draws a static SVG named by ISO code -- the database stores IOC codes, which are a different standard, and `lib/country.ts` is the only thing that knows the difference. The flag emoji is not used: Chrome and Edge on Windows have no glyphs for it and render two letters instead. The country code rides beside the flag wherever the flag is the only thing identifying a player, and the flag is marked decorative where a name is already doing that job.
+
+**Small permanent text is a tax the page pays forever.** Three rules keep it down:
+
+- A caption that only restates the column headers is not written. `StatTable`'s caption is optional, and is kept where the table carries an absence mark, a denominator, or a rule a reader could not infer from the columns.
+- `PartialAggregate` renders nothing when nothing is missing. The absence system exists to account for absences; a note saying none occurred is furniture.
+- Anything that explains the model rather than the figure belongs on `/methodology`, which is linked from every page.
+
+What stays, always: the denominator under a partial aggregate, what `n/r` means where one appears, and the population any "vs average" figure is measured against.
 
 ### The absence system (unchanged)
 - **AbsentCell:** `n/r` in pencil, aligned like the numbers around it. Never `0`, blank or a dash.

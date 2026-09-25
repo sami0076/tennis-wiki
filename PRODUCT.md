@@ -92,8 +92,8 @@ Seed fixture of ~4,100 real matches covers every data regime. Served as a static
 
 - Name: **Deucepoint**. The repository stays `tennis-wiki`. No logo or mark exists yet.
 - Non-commercial, forever: no ads, no payment flows, no paid tier (CC BY-NC-SA 4.0).
-- Attribution to Jeff Sackmann / Tennis Abstract in the footer of every page. Required
-  by the data licence, not optional.
+- Attribution to Jeff Sackmann / Tennis Abstract in the footer of every page, with the
+  licence linked. Required by the data licence, not optional; kept to one line.
 - Voice: plain sentences that say what happened and what to do, in sentence case.
   Captions explain the symbol directly under the element. Buttons say what happens
   ("Simulate this matchup", not "Go"). Nothing in the copy pretends a gap is a zero.
@@ -108,7 +108,9 @@ Seed fixture of ~4,100 real matches covers every data regime. Served as a static
   39.9% ±1.0 and he won it; 298 real draws score 0.833 Brier. All in
   `docs/methodology.md` and `docs/validation.json`.
 - Nine ADRs in `docs/decisions/`, `docs/performance.md` with measured query costs.
-- No player photographs, and none may be fabricated or scraped. No customer quotes,
+- Country flags are static SVGs from country-flag-icons (MIT), in `web/public/flags`, named
+  by ISO code and mapped from the IOC codes the sources store. Not the flag emoji, which has
+  no glyphs on Windows. No player photographs, and none may be fabricated or scraped. No customer quotes,
   press, or testimonials exist; none may be invented.
 - No screenshots of the current site exist yet (README placeholder).
 
