@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
+import { findJsonLd } from '../test/jsonld'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Edition as EditionData, EditionMatch, EditionSide, Event } from '../api/client'
@@ -192,11 +193,12 @@ describe('Edition', () => {
     stub(edition)
     renderAt('/tournaments/testville-wta/2025')
     await screen.findByRole('heading', { level: 1, name: 'Testville 2025' })
-    const scripts = Array.from(document.head.querySelectorAll('script[type="application/ld+json"]'))
-    const event = scripts.map((s) => JSON.parse(s.textContent ?? '{}')).find((ld) => ld['@type'] === 'SportsEvent')
+    const event = (await findJsonLd('SportsEvent')) as Record<string, unknown> & {
+      competitor: { name: string }[]
+    }
     expect(event).toMatchObject({ name: 'Testville 2025', startDate: '2025-05-01', description: 'WTA, clay, 4 draw' })
     expect(event).not.toHaveProperty('location')
-    expect(event.competitor.map((c: { name: string }) => c.name)).toEqual(['Ann Ace', 'Bea Base'])
+    expect(event.competitor.map((c) => c.name)).toEqual(['Ann Ace', 'Bea Base'])
   })
 
 })
