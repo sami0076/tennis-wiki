@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -134,7 +135,7 @@ func params(f File, m ingest.MatchRow) db.InsertOngoingMatchParams {
 		Level:           m.Level,
 		Indoor:          m.Indoor,
 		MatchNum:        int32(m.MatchNum),
-		Round:           m.Round,
+		Round:           roundCode(m.Round),
 		PlayedOn:        m.TourneyDate,
 		WinnerSourceID:  m.Winner.SourceID,
 		WinnerName:      m.Winner.Name,
@@ -151,6 +152,24 @@ func params(f File, m ingest.MatchRow) db.InsertOngoingMatchParams {
 		p.Score = &m.Score
 	}
 	return p
+}
+
+// roundCode puts the WTA ongoing file's words into the codes every other file
+// uses: "Quarterfinals" there is QF everywhere else.
+func roundCode(round string) string {
+	switch r := strings.ToLower(strings.TrimSpace(round)); {
+	case r == "final" || r == "finals":
+		return "F"
+	case strings.HasPrefix(r, "semi"):
+		return "SF"
+	case strings.HasPrefix(r, "quarter"):
+		return "QF"
+	case strings.HasPrefix(r, "round of "):
+		return "R" + strings.TrimPrefix(r, "round of ")
+	case strings.HasPrefix(r, "round robin"):
+		return "RR"
+	}
+	return strings.TrimSpace(round)
 }
 
 func seed(s *int) *int16 {
