@@ -143,7 +143,7 @@ Under `prefers-reduced-motion: reduce`, `base.css` collapses every animation. `C
 
 ## Components
 
-New in this system (`web/src/components`, all shown at `/_components`): `Card`/`Kicker`, `Reveal`, `CountUp`, `PageHeader`, `CourtArt`, `FormPills`, `SurfaceBadge`, `AreaChart`, `RadarChart`, `CommandPalette`, `ThemeToggle`, `SectionRail`, `RoundFunnel`, `Flag`, `DrawPicker`. Restyled: `Button`, `PlayerSearch`, `StatTable` (a card with uppercase heads and a grey row hover), `StatRow`, `SplitBar`, `WinSplit`, `SurfaceToggle`/`TourFilter` (pills), `SurfaceEloStrip` (bars), `RecentFinals` (cards), `SeedingSheet` and `TrajectoryChart` (coloured leaders), `WinLossMark`, `Skeleton` (shimmer), `EmptyState` (dashed card), `Scoreboard` (ink board, lime serve light), `DrawSheet`, `RoundList`.
+New in this system (`web/src/components`, all shown at `/_components`): `Card`/`Kicker`, `Reveal`, `CountUp`, `PageHeader`, `CourtArt`, `FormPills`, `SurfaceBadge`, `AreaChart`, `RadarChart`, `ThisWeek`, `CommandPalette`, `ThemeToggle`, `SectionRail`, `RoundFunnel`, `Flag`, `DrawPicker`. Restyled: `Button`, `PlayerSearch`, `StatTable` (a card with uppercase heads and a grey row hover), `StatRow`, `SplitBar`, `WinSplit`, `SurfaceToggle`/`TourFilter` (pills), `SurfaceEloStrip` (bars), `RecentFinals` (cards), `SeedingSheet` and `TrajectoryChart` (coloured leaders), `WinLossMark`, `Skeleton` (shimmer), `EmptyState` (dashed card), `Scoreboard` (ink board, lime serve light), `DrawSheet`, `RoundList`.
 
 ### The command palette
 

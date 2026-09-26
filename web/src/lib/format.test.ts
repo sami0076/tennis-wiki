@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ageOn, careerSpan, formatHand, formatOrdinal, formatScore } from './format'
+import { ageOn, careerSpan, formatAgo, formatHand, formatOrdinal, formatScore } from './format'
 
 describe('formatScore', () => {
   it('types scores as the sheet does, with hyphens', () => {
@@ -64,5 +64,15 @@ describe('formatOrdinal', () => {
       '50th',
       '100th',
     ])
+  })
+})
+
+describe('formatAgo', () => {
+  it('reads minutes, hours and days', () => {
+    const now = new Date('2026-09-26T16:00:00Z')
+    expect(formatAgo('2026-09-26T15:59:50Z', now)).toBe('just now')
+    expect(formatAgo('2026-09-26T15:59:00Z', now)).toBe('1 minute ago')
+    expect(formatAgo('2026-09-26T13:00:00Z', now)).toBe('3 hours ago')
+    expect(formatAgo('2026-09-23T16:00:00Z', now)).toBe('3 days ago')
   })
 })

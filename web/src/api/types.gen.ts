@@ -1549,6 +1549,63 @@ export interface PlayerSeason {
 }
 
 //////////
+// source: thisweek.go
+
+/**
+ * ThisWeek is the events being played now, from results so far. Provisional:
+ * the source's ongoing files, fetched hourly and kept apart from matches until
+ * the weekly load brings a finished event in (ADR-0016). Not live scores.
+ */
+export interface ThisWeek {
+  /**
+   * CheckedAt is when the files were last asked for, ChangedAt when they
+   * last moved. Both null before the first fetch.
+   */
+  checked_at: string | null;
+  changed_at: string | null;
+  events: WeekEvent[];
+}
+/**
+ * WeekEvent is one event and how far it has got.
+ */
+export interface WeekEvent {
+  tour: string;
+  name: string;
+  level: string;
+  surface: string | null;
+  /**
+   * Round is the furthest round with a result in; "F" means it is decided.
+   */
+  round: string;
+  matches: number /* int */;
+  last_played: string;
+  champion: WeekPlayer | null;
+  latest: WeekResult[];
+}
+/**
+ * WeekResult is one finished match.
+ */
+export interface WeekResult {
+  /**
+   * Date is the source's: the day played in the ATP file, the week's start
+   * in the WTA file.
+   */
+  date: string;
+  round: string;
+  winner: WeekPlayer;
+  loser: WeekPlayer;
+  score: string | null;
+}
+/**
+ * WeekPlayer links to the player where the database knows them.
+ */
+export interface WeekPlayer {
+  name: string;
+  slug: string | null;
+  seed: number /* int16 */ | null;
+}
+
+//////////
 // source: tournaments.go
 
 /**

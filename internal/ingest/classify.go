@@ -54,7 +54,8 @@ var teamEventLevels = map[string]struct{}{
 	"T": {}, // team events in some WTA files
 }
 
-func isTeamEvent(level string) bool {
+// IsTeamEvent reports whether a tourney_level is a team tie.
+func IsTeamEvent(level string) bool {
 	_, ok := teamEventLevels[strings.ToUpper(strings.TrimSpace(level))]
 	return ok
 }

@@ -77,6 +77,16 @@ kubectl -n deucepoint apply -f /root/deploy/k8s/jobs/refresh.yaml
 kubectl -n deucepoint logs -f job/refresh
 ```
 
+**This week (ADR-0016)** is the `ongoing-hourly` CronJob and migration 00020. The first
+time: run the migrate Job, pin the `tools` image built with `cmd/ongoing` in
+`base/65-ongoing-hourly.yaml`, set `suspend: false` there, and apply. It refreshes at seven
+past every hour; to fill the card at once:
+
+```sh
+kubectl -n deucepoint create job --from=cronjob/ongoing-hourly ongoing-now
+kubectl -n deucepoint logs -f job/ongoing-now
+```
+
 ## Deploying the frontend
 
 Nothing to do. Cloudflare Pages watches `main`, runs `npm run build` in `web/` with

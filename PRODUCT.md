@@ -67,7 +67,8 @@ Seed fixture of ~4,100 real matches covers every data regime. Served as a static
 
 ## Capabilities and Constraints
 
-- Read-only API. No accounts, comments, or social features. No live scores. No betting
+- Read-only API. No accounts, comments, or social features. No live scores: this week's events show results so far, hourly and labelled provisional
+  (ADR-0016). No betting
   odds, tipping, or predictions framed as picks; the simulator reports probabilities.
 - Full-schema data reaches the current season on both tours since the live source was
   added (ADR-0002, amended), and a weekly CronJob keeps it there. What remains thin is

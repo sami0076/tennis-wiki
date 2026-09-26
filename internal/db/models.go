@@ -367,6 +367,34 @@ type MatchPlayer struct {
 	BpFaced      *int16
 }
 
+type OngoingFile struct {
+	File      string
+	Etag      *string
+	CheckedAt pgtype.Timestamptz
+	ChangedAt pgtype.Timestamptz
+	Rows      int32
+}
+
+type OngoingMatch struct {
+	File            string
+	Tour            Tour
+	TourneySourceID string
+	TourneyName     string
+	Level           string
+	Surface         *Surface
+	Indoor          *bool
+	MatchNum        int32
+	Round           string
+	PlayedOn        time.Time
+	Score           *string
+	WinnerSourceID  string
+	WinnerName      string
+	WinnerSeed      *int16
+	LoserSourceID   string
+	LoserName       string
+	LoserSeed       *int16
+}
+
 type Player struct {
 	ID         int64
 	SourceID   string
