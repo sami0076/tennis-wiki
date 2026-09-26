@@ -43,7 +43,7 @@ RUN : "${GOOSE_VERSION:?run make images, or pass --build-arg GOOSE_VERSION}" \
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH \
     go build -trimpath -ldflags="-s -w" -o /out/ \
-    ./cmd/ingest ./cmd/rate ./cmd/dataqual ./cmd/validate
+    ./cmd/ingest ./cmd/rate ./cmd/dataqual ./cmd/validate ./cmd/ongoing
 
 FROM alpine:3.21
 
