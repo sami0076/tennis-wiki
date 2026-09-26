@@ -61,6 +61,14 @@ func (a *API) Router() http.Handler {
 			public.Use(Cached(a.Cache))
 			a.routes(public)
 		})
+
+		// Uncached: the hourly ongoing refresh would otherwise have to flush
+		// the whole cache, and a few dozen rows cost nothing to read.
+		v1.Group(func(fresh chi.Router) {
+			fresh.Use(NewRateLimiter(a.Config.RateLimitPerMin).Middleware(a.Config.TrustProxy))
+			fresh.Use(ETag)
+			fresh.Get("/this-week", a.handleThisWeek)
+		})
 	})
 	return r
 }
