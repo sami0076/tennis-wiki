@@ -28,6 +28,13 @@ export function formatPercent(value: number, places = 1): string {
   return `${value.toFixed(places)}%`
 }
 
+/** 1st, 2nd, 3rd, 11th, 22nd: how a percentile is spoken. */
+export function formatOrdinal(n: number): string {
+  const teen = n % 100 >= 11 && n % 100 <= 13
+  const suffix = teen ? 'th' : (['th', 'st', 'nd', 'rd'][n % 10] ?? 'th')
+  return `${n}${suffix}`
+}
+
 /**
  * A career is described by an age while it is running and by its span once it
  * is over. "23" and "1973-1983" answer the same question about two players.
