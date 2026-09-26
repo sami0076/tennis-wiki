@@ -5,6 +5,7 @@ import {
   getHeadToHead,
   getRankings,
   getRecentFinals,
+  getThisWeek,
   getTrajectories,
   simulateDraw,
 } from '../api/endpoints'
@@ -28,6 +29,7 @@ import {
   StatTable,
   SurfaceDot,
   Ticker,
+  ThisWeek,
   TourFilter,
   type Column,
   type TickerItem,
@@ -41,6 +43,7 @@ import type {
   HeadToHead,
   RankingPage,
   RankingRow,
+  ThisWeek as ThisWeekData,
   Trajectories,
 } from '../api/client'
 import { FEATURED_DRAW, roundsReached } from '../lib/featuredDraw'
@@ -92,6 +95,7 @@ export function Home() {
   )
   const draw = useResource((signal) => simulateDraw(FEATURED_DRAW, signal), [])
   const recent = useResource((signal) => getRecentFinals(signal), [])
+  const week = useResource((signal) => getThisWeek(signal), [])
   useJsonLd('website', website())
 
   const top = leaders.state === 'ready' ? leaders.data.data : []
@@ -109,7 +113,14 @@ export function Home() {
         <TryChips top={top} />
       </PageHeader>
 
-      <Ticker label="Elo leaders and last week's finals" items={tickerItems(top, recent)} />
+      <Ticker
+        label="Elo leaders, this week's latest results and last week's finals"
+        items={tickerItems(top, recent, week)}
+      />
+
+      <Card className={styles.block} title="This week">
+        <ThisWeek week={week} />
+      </Card>
 
       <div className={styles.trio}>
         <section className={styles.column}>
@@ -179,7 +190,26 @@ export function Home() {
   )
 }
 
-function tickerItems(top: ReadonlyArray<RankingRow>, recent: Resource<RecentFinalsData>): TickerItem[] {
+function tickerItems(
+  top: ReadonlyArray<RankingRow>,
+  recent: Resource<RecentFinalsData>,
+  week: Resource<ThisWeekData>,
+): TickerItem[] {
+  // One per event, its latest result: the ticker is a glance, the card the list.
+  const current: TickerItem[] =
+    week.state === 'ready'
+      ? week.data.events.flatMap((event) => {
+          const last = event.latest[0]
+          if (last === undefined) return []
+          return [
+            {
+              key: `week-${event.tour}-${event.name}`,
+              label: `${event.name} ${last.round} · ${surname(last.winner.name)} d. ${surname(last.loser.name)}`,
+              value: last.score ?? '',
+            },
+          ]
+        })
+      : []
   const leaders: TickerItem[] = top.map((row) => ({
     key: `elo-${row.slug}`,
     label: `#${row.position} ${surname(row.name)}`,
@@ -193,7 +223,7 @@ function tickerItems(top: ReadonlyArray<RankingRow>, recent: Resource<RecentFina
           value: final.final_score ?? '',
         }))
       : []
-  return [...leaders, ...finals]
+  return [...leaders, ...current, ...finals]
 }
 
 function Kicker({ coverage }: { coverage: Resource<CoverageResponse> }) {

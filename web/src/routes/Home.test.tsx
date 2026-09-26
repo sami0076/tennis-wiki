@@ -7,6 +7,7 @@ import type {
   HeadToHead,
   RankingPage,
   RecentFinals,
+  ThisWeek,
   Trajectories,
 } from '../api/client'
 import { Home } from './Home'
@@ -178,6 +179,32 @@ const recent: RecentFinals = {
   without: ['wta'],
 }
 
+const thisWeek: ThisWeek = {
+  checked_at: '2026-09-26T16:00:00Z',
+  changed_at: '2026-09-26T15:00:00Z',
+  events: [
+    {
+      tour: 'atp',
+      name: 'Chengdu',
+      level: '250',
+      surface: 'hard',
+      round: 'R16',
+      matches: 20,
+      last_played: '2026-09-26',
+      champion: null,
+      latest: [
+        {
+          date: '2026-09-26',
+          round: 'R16',
+          winner: { name: 'Lloyd Harris', slug: 'lloyd-harris', seed: null },
+          loser: { name: 'Valentin Vacherot', slug: 'valentin-vacherot', seed: 1 },
+          score: '6-4 7-6(5)',
+        },
+      ],
+    },
+  ],
+}
+
 const rivalry = {
   players: [
     { slug: 'jannik-sinner', name: 'Jannik Sinner', tour: 'atp', country: 'ITA' },
@@ -195,6 +222,7 @@ function stub(lines: Trajectories = trajectories, finals: RecentFinals = recent)
     else if (path.endsWith('/rankings')) body = rankings
     else if (path.endsWith('/simulate/draw')) body = draw
     else if (path.endsWith('/recent')) body = finals
+    else if (path.endsWith('/this-week')) body = thisWeek
     else if (path.includes('/h2h/')) body = rivalry
     return Promise.resolve(
       new Response(JSON.stringify(body), {
@@ -311,6 +339,14 @@ describe('Home', () => {
     stub(trajectories, { ...recent, requested: { from: '2026-12-07', to: '2026-12-13' } })
     renderHome()
     expect(await screen.findByText(/Nothing began in the week of 2026-12-07; the last week with a final was 2026-08-31 to 2026-09-06/)).toBeInTheDocument()
+  })
+
+  it("shows this week's events as results so far, and runs the latest past in the ticker", async () => {
+    stub()
+    renderHome()
+    expect(await screen.findByText('Round of 16 under way')).toBeInTheDocument()
+    expect(screen.getByText(/Results so far, not live scores/)).toBeInTheDocument()
+    expect(screen.getAllByText(/Chengdu R16 · Harris d\. Vacherot/).length).toBeGreaterThan(0)
   })
 
 })
