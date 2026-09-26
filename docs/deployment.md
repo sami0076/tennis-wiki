@@ -223,6 +223,23 @@ images — `k3s crictl rmi --prune`), the Postgres volume under `/var/lib/ranche
 **An ingest stopped half way.** Re-apply the load Job. It resumes from the ledger; nothing
 half-written survives, because each batch is a transaction.
 
+**A stretch of matches is missing, and the source has them.** The ledger is the usual
+cause rather than the source: the ingest asks conditionally and skips a 304, so a file
+first read mid-season is never re-read and the rest of that season never arrives. It
+shows on the site as a rating line with a hole in it. Count what is actually held and
+find the empty months first --
+
+```sql
+SELECT to_char(date_trunc('month', m.played_on), 'YYYY-MM') AS month, count(*)
+  FROM matches m JOIN tournaments t ON t.id = m.tournament_id
+ WHERE t.tour = 'wta' AND t.tier = 'tour' AND m.played_on >= '2025-01-01'
+ GROUP BY 1 ORDER BY 1;
+```
+
+-- then `jobs/load-force.yaml`, narrowed to the tour and seasons concerned as its header
+shows. If the months are still empty after a forced read, the source genuinely lacks them
+and `/api/v1/coverage` should be saying so.
+
 **The certificate is expiring.** cert-manager renews thirty days out and writes to
 `samisaleh07@gmail.com` if it cannot. `kubectl -n deucepoint get certificate` shows `Ready`;
 `kubectl -n deucepoint get challenge` shows what is stuck. The HTTP-01 challenge needs port

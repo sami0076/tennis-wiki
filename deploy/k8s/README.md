@@ -86,10 +86,18 @@ kubectl -n deucepoint delete job migrate --ignore-not-found
 kubectl -n deucepoint apply -f deploy/k8s/jobs/migrate.yaml
 ```
 
-All five Jobs clean themselves up 24 hours after finishing. `jobs/reconcile.yaml` is
+All six Jobs clean themselves up 24 hours after finishing. `jobs/reconcile.yaml` is
 identity reconciliation and the ratings without the load in front of them, for after a
 scoring change; its header says how to dry-run it first. `jobs/events.yaml` is the
 events stage on its own, for after a change to `configs/event_overrides.json`.
+
+`jobs/load-force.yaml` is `jobs/load.yaml` with `--force`, for when the database is
+missing rows the sources do carry. The ordinary ingest asks each source conditionally
+and skips a 304, so a file the ledger recorded from a run that read a shorter version of
+it is never looked at again, and the season it was mid-way through stays mid-way through.
+Nothing else here can break that: no other Job, and not the CronJob, passes `--force`.
+Its header says how to narrow the run to one tour and a season or two, which is minutes
+rather than the hour a full forced read takes.
 
 The weekly CronJob needs none of this -- it mints a new Job each Monday. To run it
 off-schedule: `kubectl -n deucepoint create job --from=cronjob/load-weekly catchup-now`.
