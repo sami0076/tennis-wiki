@@ -1,10 +1,17 @@
 package httpapi
 
 import (
+	"errors"
 	"math"
+	"net/http"
 	"sort"
+	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/sami0076/tennis-wiki/internal/db"
+	"github.com/sami0076/tennis-wiki/internal/rating"
 )
 
 // Percentiles places one player against their tour over a year: each axis is
@@ -173,4 +180,125 @@ func rankAxes(player windowFigures, pop []windowFigures) []PercentileAxis {
 		axes = append(axes, axis)
 	}
 	return axes
+}
+
+func (a *API) handlePlayerPercentiles(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	player, err := a.Queries.GetPlayerBySlug(ctx, chi.URLParam(r, "slug"))
+	if errors.Is(err, pgx.ErrNoRows) {
+		NotFound(w, r, "No player has that slug.")
+		return
+	}
+	if err != nil {
+		Internal(w, r, err)
+		return
+	}
+
+	out := Percentiles{
+		Tour: string(player.Tour), MinMatches: percentileMinMatches, Axes: []PercentileAxis{},
+	}
+	to, err := a.Queries.GetPlayerLastTourMatch(ctx, player.ID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		writeJSON(w, r, http.StatusOK, out)
+		return
+	}
+	if err != nil {
+		Internal(w, r, err)
+		return
+	}
+	from := to.AddDate(0, 0, -percentileWindowDays)
+	out.From, out.To = formatDate(&from), formatDate(&to)
+
+	rows, err := a.Queries.ListTourWindowTotals(ctx, db.ListTourWindowTotalsParams{
+		Tour: player.Tour, FromDate: from, ToDate: to,
+	})
+	if err != nil {
+		Internal(w, r, err)
+		return
+	}
+
+	ids := []int64{player.ID}
+	for _, row := range rows {
+		if row.Matches >= percentileMinMatches && row.PlayerID != player.ID {
+			ids = append(ids, row.PlayerID)
+		}
+	}
+	ratings, err := a.windowRatings(r, ids, to)
+	if err != nil {
+		Internal(w, r, err)
+		return
+	}
+
+	self := ratings[player.ID]
+	pop := make([]windowFigures, 0, len(ids))
+	for _, row := range rows {
+		f := totalsFigures(row)
+		rated := ratings[row.PlayerID]
+		f.hard, f.clay, f.grass, f.form = rated.hard, rated.clay, rated.grass, rated.form
+		if row.PlayerID == player.ID {
+			self = f
+			out.Matches = row.Matches
+			out.Qualified = row.Matches >= percentileMinMatches
+		}
+		if row.Matches >= percentileMinMatches {
+			pop = append(pop, f)
+		}
+	}
+	out.Population = len(pop)
+	out.Axes = rankAxes(self, pop)
+	writeJSON(w, r, http.StatusOK, out)
+}
+
+// windowRatings reads the rating figures for a set of players at the end of
+// a window: each surface blended with overall as the simulator blends it, and
+// the overall change over the last half of the window.
+func (a *API) windowRatings(
+	r *http.Request, ids []int64, asOf time.Time,
+) (map[int64]windowFigures, error) {
+	read := func(surface db.RatingSurface, on time.Time) (map[int64]db.CurrentEloAsOfRow, error) {
+		rows, err := a.Queries.CurrentEloAsOf(r.Context(), db.CurrentEloAsOfParams{
+			Surface: surface, OnDate: on, PlayerIds: ids,
+		})
+		out := make(map[int64]db.CurrentEloAsOfRow, len(rows))
+		for _, row := range rows {
+			out[row.PlayerID] = row
+		}
+		return out, err
+	}
+
+	overall, err := read(db.RatingSurfaceOverall, asOf)
+	if err != nil {
+		return nil, err
+	}
+	earlier, err := read(db.RatingSurfaceOverall, asOf.AddDate(0, 0, -formWindowDays))
+	if err != nil {
+		return nil, err
+	}
+	var surfaces [3]map[int64]db.CurrentEloAsOfRow
+	for i, s := range []db.RatingSurface{db.RatingSurfaceHard, db.RatingSurfaceClay, db.RatingSurfaceGrass} {
+		if surfaces[i], err = read(s, asOf); err != nil {
+			return nil, err
+		}
+	}
+
+	out := make(map[int64]windowFigures, len(overall))
+	for id, o := range overall {
+		var f windowFigures
+		blended := [3]**float64{&f.hard, &f.clay, &f.grass}
+		for i, bySurface := range surfaces {
+			var sr *rating.SurfaceRating
+			if row, ok := bySurface[id]; ok {
+				sr = &rating.SurfaceRating{Elo: row.Elo, Matches: int(row.MatchesPlayed)}
+			}
+			elo, _ := rating.BlendOptional(sr, o.Elo)
+			*blended[i] = &elo
+		}
+		if then, ok := earlier[id]; ok {
+			change := o.Elo - then.Elo
+			f.form = &change
+		}
+		out[id] = f
+	}
+	return out, nil
 }
