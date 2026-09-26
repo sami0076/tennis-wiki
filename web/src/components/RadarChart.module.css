@@ -168,7 +168,7 @@
 
   .seen .shape {
     opacity: 1;
-    animation: dp-pop 900ms var(--ease-spring) both 200ms;
+    animation: dp-pop 900ms var(--ease-out) both 200ms;
   }
 
   .seen .shape.b {
