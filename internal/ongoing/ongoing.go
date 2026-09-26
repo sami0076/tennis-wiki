@@ -68,7 +68,11 @@ func Refresh(ctx context.Context, pool *pgxpool.Pool, open Opener, baseURL strin
 	if err != nil {
 		return Result{}, err
 	}
-	defer func() { _ = body.Close() }()
+	defer func() {
+		if cerr := body.Close(); cerr != nil {
+			slog.WarnContext(ctx, "ongoing: closing file", "file", f.Name, "error", cerr)
+		}
+	}()
 
 	rows, skipped, err := read(f, body)
 	if err != nil {
