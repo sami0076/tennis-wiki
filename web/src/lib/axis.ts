@@ -41,50 +41,61 @@ export function timeTicks(from: number, to: number, target = 4): TimeTick[] {
   const span = to - from
   if (!Number.isFinite(span) || span <= 0) return []
 
-  const days = span / DAY
-  const inRange = (t: number) => t >= from && t <= to
+  // Whole years read best -- a year needs no other label to mean something --
+  // but only when enough of them fall inside the window. Fourteen months
+  // contains one January, and one tick is not an axis. A surface view is
+  // routinely that long: a clay rating only moves during the clay swing, so
+  // its window runs from one spring to the next.
+  const years = yearTicks(from, to, target)
+  if (years.length >= 3) return years
 
-  if (days > 400) {
-    // Start at the first January inside the window rather than at the window's
-    // own year, whose January is usually behind it and would be dropped --
-    // spending one of the four ticks on nothing.
-    const start = new Date(from)
-    const firstYear = start.getUTCFullYear() + (start.getTime() > Date.UTC(start.getUTCFullYear(), 0, 1) ? 1 : 0)
-    const lastYear = new Date(to).getUTCFullYear()
-    const every = Math.max(1, Math.ceil((lastYear - firstYear + 1) / target))
-    const ticks: TimeTick[] = []
-    for (let y = firstYear; y <= lastYear; y += every) {
-      const at = Date.UTC(y, 0, 1)
-      if (inRange(at)) ticks.push({ at, label: String(y) })
-    }
-    return ticks
-  }
+  return span / DAY > 80 ? monthTicks(from, to, target) : dayTicks(from, to, target)
+}
 
-  if (days > 80) {
-    const start = new Date(from)
-    const every = Math.max(1, Math.ceil(days / 30 / target))
-    const ticks: TimeTick[] = []
-    for (let i = 0; i < 24; i++) {
-      const d = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + i * every, 1))
-      const at = d.getTime()
-      if (at > to) break
-      if (!inRange(at)) continue
-      // The year is carried by the first tick and by every tick that crosses
-      // into a new one. Naming it only in January loses it entirely on a
-      // window whose ticks happen to step over January, which is how a chart
-      // spanning two years ends up saying which year none of it is.
-      const year = d.getUTCFullYear()
-      const turned = ticks.length === 0 || year !== new Date(ticks[ticks.length - 1]!.at).getUTCFullYear()
-      const month = MONTHS[d.getUTCMonth()]!
-      const label = !turned ? month : d.getUTCMonth() === 0 ? String(year) : `${month} ${year}`
-      ticks.push({ at, label })
-    }
-    return ticks
-  }
+function yearTicks(from: number, to: number, target: number): TimeTick[] {
+  // Start at the first January inside the window rather than at the window's
+  // own year, whose January is usually behind it and would be dropped --
+  // spending one of the four ticks on nothing.
+  const start = new Date(from)
+  const firstYear =
+    start.getUTCFullYear() + (start.getTime() > Date.UTC(start.getUTCFullYear(), 0, 1) ? 1 : 0)
+  const lastYear = new Date(to).getUTCFullYear()
+  const every = Math.max(1, Math.ceil((lastYear - firstYear + 1) / target))
 
   const ticks: TimeTick[] = []
+  for (let y = firstYear; y <= lastYear; y += every) {
+    const at = Date.UTC(y, 0, 1)
+    if (at >= from && at <= to) ticks.push({ at, label: String(y) })
+  }
+  return ticks
+}
+
+function monthTicks(from: number, to: number, target: number): TimeTick[] {
+  const start = new Date(from)
+  const every = Math.max(1, Math.ceil(from === to ? 1 : (to - from) / DAY / 30 / target))
+
+  const ticks: TimeTick[] = []
+  for (let i = 0; i < 64; i++) {
+    const d = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + i * every, 1))
+    const at = d.getTime()
+    if (at > to) break
+    if (at < from) continue
+    // The year is carried by the first tick and by every tick that crosses
+    // into a new one. Naming it only in January loses it entirely on a window
+    // whose ticks happen to step over January, which is how a chart spanning
+    // two years ends up saying which year none of it is.
+    const year = d.getUTCFullYear()
+    const turned = ticks.length === 0 || year !== new Date(ticks[ticks.length - 1]!.at).getUTCFullYear()
+    const month = MONTHS[d.getUTCMonth()]!
+    ticks.push({ at, label: !turned ? month : d.getUTCMonth() === 0 ? String(year) : `${month} ${year}` })
+  }
+  return ticks
+}
+
+function dayTicks(from: number, to: number, target: number): TimeTick[] {
+  const ticks: TimeTick[] = []
   for (let i = 0; i <= target; i++) {
-    const at = from + (span * i) / target
+    const at = from + ((to - from) * i) / target
     const d = new Date(at)
     ticks.push({ at, label: `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}` })
   }

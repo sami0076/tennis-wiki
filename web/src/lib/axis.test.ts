@@ -44,6 +44,27 @@ describe('timeTicks', () => {
     expect(ticks.map((t) => t.label)).toEqual(['Sep 2024', 'Dec', 'Mar 2025', 'Jun'])
   })
 
+  // A surface view is routinely a year and a bit: a clay rating only moves in
+  // the clay swing, so its window runs from one spring to the next. That
+  // contains a single January, and the axis showed one tick reading "2026".
+  it('falls back to months when too few years fall inside the window', () => {
+    const clay = timeTicks(at('2025-04-07'), at('2026-06-15'))
+    expect(clay.length).toBeGreaterThanOrEqual(3)
+    expect(clay.map((t) => t.label)).toEqual(['Aug 2025', 'Dec', 'Apr 2026'])
+  })
+
+  it('does not leave a two-year window on two ticks either', () => {
+    expect(timeTicks(at('2024-09-23'), at('2026-08-24')).length).toBeGreaterThanOrEqual(3)
+  })
+
+  // ...but a window with years to spare still uses them, because a year needs
+  // no other label to mean something.
+  it('keeps whole years once enough of them are in range', () => {
+    expect(timeTicks(at('2019-03-01'), at('2026-09-01')).map((t) => t.label)).toEqual([
+      '2020', '2022', '2024', '2026',
+    ])
+  })
+
   it('ticks plain dates over a few weeks', () => {
     const ticks = timeTicks(at('2024-03-01'), at('2024-04-01'))
     expect(ticks[0]!.label).toBe('1 Mar')
