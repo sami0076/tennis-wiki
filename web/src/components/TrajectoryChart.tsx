@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import type { SparkPoint } from './Sparkline'
 import { surname } from '../lib/format'
 import { spread } from '../lib/spread'
@@ -45,6 +46,8 @@ export function TrajectoryChart({
   width = 320,
   height = 140,
 }: TrajectoryChartProps) {
+  // useId's colons are not usable in a url(#...) reference.
+  const wipeId = `wipe-${useId().replace(/:/g, '')}`
   // One point is a dot, not a line. A player rated in a single week of the
   // window has nothing to draw and would otherwise widen the axis for nothing.
   const drawable = lines.filter((line) => line.points.length > 1)
@@ -138,37 +141,49 @@ export function TrajectoryChart({
             y2={height}
             vectorEffect="non-scaling-stroke"
           />
-          {/* The field first, so a named line is never drawn underneath one. */}
-          {field.map((line) => (
-            <path
-              key={line.name}
-              className={styles.field}
-              d={path(line.points)}
-              pathLength="1"
-              vectorEffect="non-scaling-stroke"
-            />
-          ))}
-          {leaders.map((line, index) => (
-            <path
-              key={line.name}
-              className={`${styles.named} ${rank(index)}`}
-              d={path(line.points)}
-              pathLength="1"
-              vectorEffect="non-scaling-stroke"
-            />
-          ))}
-          {/* A week with an absence either side of it: a path of one point
-              draws nothing, so it is marked rather than lost. */}
-          {leaders.map((line, index) =>
-            lone(line.points).map((point) => (
+          {/* The lines draw in behind a rectangle that widens from the left.
+              A clip is geometry, so the reveal is contiguous and in order by
+              construction. The dash it replaces was not: with the stroke in
+              screen space and pathLength normalising in user space, under a
+              plot stretched to the column width, it painted the two ends
+              before the middle -- which on a rating chart reads as missing
+              data, and was reported as exactly that. */}
+          <defs>
+            <clipPath id={wipeId}>
+              <rect className={styles.wipe} x="0" y={-height} width={width} height={height * 3} />
+            </clipPath>
+          </defs>
+          <g clipPath={`url(#${wipeId})`}>
+            {/* The field first, so a named line is never drawn underneath one. */}
+            {field.map((line) => (
               <path
-                key={`${line.name}-${point.date}`}
-                className={`${styles.dot} ${rank(index)}`}
-                d={`M${x(point).toFixed(2)} ${y(point).toFixed(2)}l0 0`}
+                key={line.name}
+                className={styles.field}
+                d={path(line.points)}
                 vectorEffect="non-scaling-stroke"
               />
-            )),
-          )}
+            ))}
+            {leaders.map((line, index) => (
+              <path
+                key={line.name}
+                className={`${styles.named} ${rank(index)}`}
+                d={path(line.points)}
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
+          {/* A week with an absence either side of it: a path of one point
+              draws nothing, so it is marked rather than lost. */}
+            {leaders.map((line, index) =>
+              lone(line.points).map((point) => (
+                <path
+                  key={`${line.name}-${point.date}`}
+                  className={`${styles.dot} ${rank(index)}`}
+                  d={`M${x(point).toFixed(2)} ${y(point).toFixed(2)}l0 0`}
+                  vectorEffect="non-scaling-stroke"
+                />
+              )),
+            )}
+          </g>
         </svg>
         {leaders.map((line, index) => (
           <span

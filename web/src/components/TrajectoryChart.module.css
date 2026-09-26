@@ -139,37 +139,33 @@
   stroke-linecap: round;
 }
 
-/* The site's entire ambient motion budget, spent here. pathLength="1" makes the
-   dash arithmetic independent of how long each line actually is.
+/* The site's entire ambient motion budget, spent here: the lines are revealed
+   by a rectangle that widens from the left.
 
-   The dash lives inside the keyframes and the animation does not hold its end
-   state, so a line at rest carries no dash pattern at all. It used to: the
-   element kept stroke-dasharray: 1 forever and relied on pathLength making that
-   one dash cover the whole path. That is a lot of trust to place in a cosmetic
-   effect -- anything that makes the browser compute the dash differently, and
-   the line is quietly holed, with the data still in the path and invisible on
-   the screen. Backwards, not forwards: the from-state applies before the
-   animation runs, so nothing flashes whole and then redraws. */
+   It used to be a stroke dash, and that was wrong twice over. The dash was
+   declared on the element and the animation held its end state, so it outlived
+   the animation and anything that stopped it finishing left a stroke pattern
+   over real data. And with the stroke in screen space, pathLength normalising
+   in user space, and the plot stretched to the column width, the reveal did not
+   run along the path in order -- it painted the two ends before the middle,
+   which on a rating chart reads as a hole in the data, and was reported as one.
+
+   A clip is geometry. It cannot paint out of order, and with no animation the
+   rectangle is simply full size, so nothing is ever hidden at rest. */
+.wipe {
+  transform-box: fill-box;
+  transform-origin: left center;
+}
+
 @media (prefers-reduced-motion: no-preference) {
-  .animate .named,
-  .animate .field {
-    animation: draw 900ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
-  }
-
-  .animate .field {
-    animation-duration: 700ms;
+  .animate .wipe {
+    animation: wipe 900ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
   }
 }
 
-@keyframes draw {
+@keyframes wipe {
   from {
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
-  }
-
-  to {
-    stroke-dasharray: 1;
-    stroke-dashoffset: 0;
+    transform: scaleX(0);
   }
 }
 
