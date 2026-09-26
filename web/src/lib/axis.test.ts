@@ -102,6 +102,25 @@ describe('splitOnGaps', () => {
     expect(run('2018-01-01', '2019-01-01', '2020-01-01', '2021-01-01', '2035-01-01')).toEqual([4, 1])
   })
 
+  // A real top player's two years, taken from the live API. The season has
+  // 49- and 56-day steps in it -- a tour player skips swings, and the rating
+  // only moves in weeks they played -- and not one of them is an absence.
+  // Lowering the floor far enough to cut these would shatter every line on the
+  // rankings page, which is the mistake this pins.
+  it('leaves a real top-player season in one piece', () => {
+    expect(
+      run(
+        '2024-09-23', '2024-10-07', '2024-11-04', '2024-12-30', '2025-01-06',
+        '2025-02-10', '2025-02-17', '2025-03-03', '2025-03-17', '2025-04-14',
+        '2025-04-21', '2025-05-05', '2025-05-19', '2025-06-16', '2025-06-30',
+        '2025-08-04', '2025-08-18', '2025-10-06', '2025-10-27', '2025-11-03',
+        '2025-12-29', '2026-01-12', '2026-03-02', '2026-03-16', '2026-04-20',
+        '2026-05-04', '2026-05-18', '2026-06-15', '2026-06-29', '2026-07-27',
+        '2026-08-10', '2026-08-24',
+      ),
+    ).toEqual([32])
+  })
+
   it('has nothing to split when there is nothing', () => {
     expect(splitOnGaps([], at)).toEqual([])
   })

@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react'
+import { findJsonLd } from '../test/jsonld'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -758,11 +759,13 @@ describe('the player page', () => {
     })
     show()
     await screen.findByRole('heading', { name: 'Itg Player' })
-    const scripts = Array.from(document.head.querySelectorAll('script[type="application/ld+json"]'))
-    const person = scripts.map((s) => JSON.parse(s.textContent ?? '{}')).find((ld) => ld['@type'] === 'Person')
-    expect(person).toMatchObject({ name: 'Itg Player', nationality: 'ESP', birthDate: '2003-05-05' })
-    const trail = scripts.map((s) => JSON.parse(s.textContent ?? '{}')).find((ld) => ld['@type'] === 'BreadcrumbList')
-    expect(trail.itemListElement.map((i: { name: string }) => i.name)).toEqual(['Deucepoint', 'Players', 'Itg Player'])
+    expect(await findJsonLd('Person')).toMatchObject({
+      name: 'Itg Player',
+      nationality: 'ESP',
+      birthDate: '2003-05-05',
+    })
+    const trail = (await findJsonLd('BreadcrumbList')) as { itemListElement: { name: string }[] }
+    expect(trail.itemListElement.map((i) => i.name)).toEqual(['Deucepoint', 'Players', 'Itg Player'])
   })
 
 })

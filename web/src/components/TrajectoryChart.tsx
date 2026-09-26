@@ -217,11 +217,12 @@ export function TrajectoryChart({
         <Note>
           {[
             field.length > 0 ? `${field.length} more drawn as the field, in grey.` : null,
-            'Rated only in the weeks they played',
-            broken > 0 ? 'so a line breaks where a player went unrated for six months or more' : null,
+            broken > 0
+              ? 'Rated only in the weeks they played, so a line breaks where a player went unrated for six months or more.'
+              : 'Rated only in the weeks they played.',
           ]
             .filter(Boolean)
-            .join(broken > 0 ? ', ' : '. ') + '.'}
+            .join(' ')}
         </Note>
       ) : null}
     </figure>

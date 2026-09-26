@@ -140,13 +140,20 @@
 }
 
 /* The site's entire ambient motion budget, spent here. pathLength="1" makes the
-   dash arithmetic independent of how long each line actually is. */
+   dash arithmetic independent of how long each line actually is.
+
+   The dash lives inside the keyframes and the animation does not hold its end
+   state, so a line at rest carries no dash pattern at all. It used to: the
+   element kept stroke-dasharray: 1 forever and relied on pathLength making that
+   one dash cover the whole path. That is a lot of trust to place in a cosmetic
+   effect -- anything that makes the browser compute the dash differently, and
+   the line is quietly holed, with the data still in the path and invisible on
+   the screen. Backwards, not forwards: the from-state applies before the
+   animation runs, so nothing flashes whole and then redraws. */
 @media (prefers-reduced-motion: no-preference) {
   .animate .named,
   .animate .field {
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
-    animation: draw 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: draw 900ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
   }
 
   .animate .field {
@@ -155,7 +162,13 @@
 }
 
 @keyframes draw {
+  from {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+
   to {
+    stroke-dasharray: 1;
     stroke-dashoffset: 0;
   }
 }
