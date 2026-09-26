@@ -358,7 +358,7 @@ func (s *Store) upsertMatches(
 			 RETURNING id`,
 			tid, r.MatchNum, r.Round, r.BestOf, r.Surface, r.Score, r.Minutes,
 			winnerID, loserID, r.TourneyDate, parsed.incomplete, r.IsQualifying(),
-			isTeamEvent(r.Level), r.HasDetailedStats(), r.Indoor, src.Name,
+			IsTeamEvent(r.Level), r.HasDetailedStats(), r.Indoor, src.Name,
 			parsed.tiebreaksWinner, parsed.tiebreaksLoser, parsed.decidingSet,
 			parsed.setsWinner, parsed.setsLoser, parsed.gamesWinner, parsed.gamesLoser)
 
