@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ageOn, careerSpan, formatHand, formatScore } from './format'
+import { ageOn, careerSpan, formatHand, formatOrdinal, formatScore } from './format'
 
 describe('formatScore', () => {
   it('types scores as the sheet does, with hyphens', () => {
@@ -47,5 +47,22 @@ describe('formatHand', () => {
   it('says so when the source did not record one', () => {
     expect(formatHand('U')).toBe('hand not recorded')
     expect(formatHand(null)).toBeNull()
+  })
+})
+
+describe('formatOrdinal', () => {
+  it('speaks a percentile, teens included', () => {
+    expect([1, 2, 3, 11, 12, 13, 21, 22, 50, 100].map(formatOrdinal)).toEqual([
+      '1st',
+      '2nd',
+      '3rd',
+      '11th',
+      '12th',
+      '13th',
+      '21st',
+      '22nd',
+      '50th',
+      '100th',
+    ])
   })
 })

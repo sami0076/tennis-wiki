@@ -29,6 +29,7 @@ import {
   Playback,
   PlayerSearch,
   PlayerSummary,
+  RadarChart,
   RankDelta,
   RivalryStrip,
   RoundFunnel,
@@ -366,6 +367,33 @@ export function Gallery() {
         </p>
         <AreaChart points={trajectory} label="Elo rating over three seasons" />
         <AreaChart points={trajectory} side="b" height={160} label="The same series as player B" />
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.name}>RadarChart</h2>
+        <p className={styles.note}>
+          Two players over the same axes, each a percentile of the tour, so the dashed ring is the
+          median. A is solid and B dashed; a figure a player does not have leaves a dotted chord
+          rather than a vertex at the centre. Point at an axis, or focus it and press an arrow.
+        </p>
+        <RadarChart
+          label="Two players over the last year"
+          axes={['Serve', 'Return', 'Clutch', 'Hard', 'Clay', 'Grass', 'Form', 'Big matches']}
+          series={[
+            {
+              name: 'Player A',
+              tone: 'a',
+              values: [92, 64, 81, 88, 55, 95, 70, 84],
+              details: ['70.1%', '37.9%', '78', '2210 Elo', '2040 Elo', '2260 Elo', '+34 Elo', '71.4%'],
+            },
+            {
+              name: 'Player B',
+              tone: 'b',
+              values: [48, 90, 66, 72, 97, 60, 41, null],
+              details: ['63.0%', '42.2%', '64', '2130 Elo', '2290 Elo', '2080 Elo', '-12 Elo', null],
+            },
+          ]}
+        />
       </section>
 
       <section className={styles.block}>

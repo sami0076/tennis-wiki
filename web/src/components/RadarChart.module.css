@@ -1,0 +1,177 @@
+.chart {
+  --tone: var(--ink);
+  display: grid;
+  gap: var(--s-4);
+  justify-items: center;
+}
+
+.a {
+  --tone: var(--player-a);
+}
+
+.b {
+  --tone: var(--player-b);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s-2) var(--s-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--t-13);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.legend li,
+.readout > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* A line sample rather than a dot: B is dashed on the chart, and the key says so. */
+.swatch {
+  width: 18px;
+  height: 0;
+  border-top: 2.5px solid var(--tone);
+}
+
+.b .swatch {
+  border-top-style: dashed;
+}
+
+.plot {
+  position: relative;
+  width: min(100%, 420px);
+  padding: var(--s-5) var(--s-7);
+  border-radius: var(--radius);
+  outline-offset: 4px;
+}
+
+.plot svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.ring,
+.median {
+  fill: none;
+  stroke: var(--card-line);
+  stroke-width: 1;
+}
+
+.median {
+  stroke: var(--pencil-light);
+  stroke-dasharray: 3 4;
+}
+
+.spoke,
+.spokeActive {
+  stroke: var(--card-line);
+  stroke-width: 1;
+}
+
+.spokeActive {
+  stroke: var(--ink);
+}
+
+.fill {
+  fill: var(--tone);
+  fill-opacity: 0.1;
+}
+
+.edge,
+.gap {
+  stroke: var(--tone);
+  stroke-linecap: round;
+}
+
+.edge {
+  stroke-width: 2;
+}
+
+.b .edge {
+  stroke-dasharray: 6 4;
+}
+
+.gap {
+  stroke-width: 1.5;
+  stroke-dasharray: 1 5;
+  opacity: 0.6;
+}
+
+.vertex {
+  fill: var(--tone);
+  stroke: var(--card);
+  stroke-width: 2;
+}
+
+.hit {
+  fill: transparent;
+  pointer-events: all;
+}
+
+.axis,
+.medianLabel {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.axis {
+  font-size: var(--t-12);
+  font-weight: 600;
+  color: var(--pencil);
+}
+
+.axisActive {
+  color: var(--ink);
+}
+
+.medianLabel {
+  left: 50%;
+  font-size: var(--t-11);
+  color: var(--pencil-mid);
+  background: var(--card);
+  padding: 0 var(--s-1);
+}
+
+.readout {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--s-2) var(--s-4);
+  min-height: 2.5em;
+  font-size: var(--t-13);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.hint {
+  color: var(--pencil);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .shape {
+    transform-box: view-box;
+    transform-origin: center;
+    opacity: 0;
+  }
+
+  .seen .shape {
+    opacity: 1;
+    animation: dp-pop 900ms var(--ease-out) both 200ms;
+  }
+
+  .seen .shape.b {
+    animation-delay: 350ms;
+  }
+}

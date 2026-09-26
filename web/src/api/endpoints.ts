@@ -11,6 +11,7 @@ import type {
   Leaderboard,
   MatchSimulation,
   Page,
+  Percentiles,
   PlayerMatch,
   PlayerHighlights,
   PlayerProfile,
@@ -104,6 +105,11 @@ export function getPlayerHighlights(
 /** A career a year at a time, every rate over its own count of matches. */
 export function getPlayerSeasons(slug: string, signal?: AbortSignal): Promise<PlayerSeasons> {
   return request<PlayerSeasons>(`/players/${encodeURIComponent(slug)}/seasons`, {}, signal)
+}
+
+/** A player's last tour-level year, each axis a percentile of their tour. */
+export function getPlayerPercentiles(slug: string, signal?: AbortSignal): Promise<Percentiles> {
+  return request<Percentiles>(`/players/${encodeURIComponent(slug)}/percentiles`, {}, signal)
 }
 
 export function getPlayerRankings(slug: string, signal?: AbortSignal): Promise<RankingHistory> {

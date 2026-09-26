@@ -498,3 +498,60 @@ SELECT count(*)::bigint                                          AS rated_matche
        count(*) FILTER (WHERE elo >= @elite_elo::float8)::bigint AS elite_matches,
        count(*) FILTER (WHERE elo >= @elite_elo::float8 AND won)::bigint AS elite_wins
   FROM faced;
+
+-- name: GetPlayerLastTourMatch :one
+-- The end of the window a player's percentiles are read over: their last
+-- finished main-draw match at tour level, so a retired player is measured
+-- against the tour they last played on rather than today's.
+SELECT m.played_on
+  FROM match_players mp
+  JOIN matches m     ON m.id = mp.match_id
+  JOIN tournaments t ON t.id = m.tournament_id
+ WHERE mp.player_id = @player_id
+   AND t.tier = 'tour'
+   AND NOT m.is_qualifying AND NOT m.incomplete AND NOT m.is_team_event
+ ORDER BY m.played_on DESC
+ LIMIT 1;
+
+-- name: ListTourWindowTotals :many
+-- Every tour-level player's totals over one window: the population a
+-- percentile is read against. Serve and return counts only where both lines
+-- were recorded, so the two share a denominator.
+WITH lines AS (
+    SELECT mp.player_id, mp.won, t.level, op.rank AS opponent_rank,
+           mp.serve_points IS NOT NULL AND op.serve_points IS NOT NULL AS has_stats,
+           mp.serve_points, mp.first_won, mp.second_won, mp.bp_saved, mp.bp_faced,
+           op.serve_points AS op_serve_points, op.first_won AS op_first_won,
+           op.second_won AS op_second_won, op.bp_saved AS op_bp_saved,
+           op.bp_faced AS op_bp_faced,
+           CASE WHEN mp.won THEN m.tiebreaks_winner ELSE m.tiebreaks_loser END AS tiebreaks_won,
+           m.tiebreaks_winner + m.tiebreaks_loser AS tiebreaks_played,
+           m.deciding_set
+      FROM matches m
+      JOIN tournaments t    ON t.id = m.tournament_id
+      JOIN match_players mp ON mp.match_id = m.id
+      JOIN match_players op ON op.match_id = m.id AND op.player_id <> mp.player_id
+     WHERE t.tour = @tour::tour AND t.tier = 'tour'
+       AND NOT m.is_qualifying AND NOT m.incomplete AND NOT m.is_team_event
+       AND m.played_on > @from_date::date AND m.played_on <= @to_date::date
+)
+SELECT player_id,
+       count(*)::bigint                                                   AS matches,
+       count(*) FILTER (WHERE has_stats)::bigint                          AS with_stats,
+       coalesce(sum(serve_points) FILTER (WHERE has_stats), 0)::bigint    AS serve_points,
+       coalesce(sum(first_won + second_won) FILTER (WHERE has_stats), 0)::bigint AS serve_won,
+       coalesce(sum(op_serve_points) FILTER (WHERE has_stats), 0)::bigint AS return_points,
+       coalesce(sum(op_serve_points - op_first_won - op_second_won)
+                FILTER (WHERE has_stats), 0)::bigint                      AS return_won,
+       coalesce(sum(bp_saved) FILTER (WHERE has_stats), 0)::bigint        AS bp_saved,
+       coalesce(sum(bp_faced) FILTER (WHERE has_stats), 0)::bigint        AS bp_faced,
+       coalesce(sum(op_bp_faced - op_bp_saved) FILTER (WHERE has_stats), 0)::bigint AS bp_won,
+       coalesce(sum(op_bp_faced) FILTER (WHERE has_stats), 0)::bigint     AS bp_chances,
+       coalesce(sum(tiebreaks_won), 0)::bigint                            AS tiebreaks_won,
+       coalesce(sum(tiebreaks_played), 0)::bigint                         AS tiebreaks_played,
+       count(*) FILTER (WHERE deciding_set AND won)::bigint               AS deciders_won,
+       count(*) FILTER (WHERE deciding_set)::bigint                       AS deciders_played,
+       count(*) FILTER (WHERE level = 'G' OR opponent_rank <= 10)::bigint AS big_played,
+       count(*) FILTER (WHERE (level = 'G' OR opponent_rank <= 10) AND won)::bigint AS big_won
+  FROM lines
+ GROUP BY player_id;

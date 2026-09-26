@@ -18,6 +18,7 @@ packages:
       - "common.go"
       - "highlights.go"
       - "clutch.go"
+      - "percentiles.go"
       - "simulate.go"
       - "draws.go"
       - "coverage.go"

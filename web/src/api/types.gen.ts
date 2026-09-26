@@ -707,6 +707,53 @@ export interface MatchServe {
 }
 
 //////////
+// source: percentiles.go
+
+/**
+ * Percentiles places one player against their tour over a year: each axis is
+ * the share of qualified players they rank above, 0 to 100, so a figure in
+ * aces and a figure in Elo can sit on one chart.
+ */
+export interface Percentiles {
+  tour: string;
+  /**
+   * From (exclusive) and To bound the window. Both null when the
+   * player never played a tour-level match, and Axes is then empty.
+   */
+  from: string | null;
+  to: string | null;
+  /**
+   * Population is how many players cleared MinMatches in the window: what
+   * every percentile here is a percentile of.
+   */
+  population: number /* int */;
+  min_matches: number /* int */;
+  /**
+   * Matches is the player's own count, and Qualified whether it cleared the
+   * floor. A player under it is still ranked, against a population they
+   * are not part of.
+   */
+  matches: number /* int64 */;
+  qualified: boolean;
+  axes: PercentileAxis[];
+}
+/**
+ * PercentileAxis is one spoke. Percentile and Value are null together, where
+ * the player had too little of it in the window to be measured.
+ */
+export interface PercentileAxis {
+  key: string;
+  label: string;
+  /**
+   * Value is the figure ranked, in Unit: "percent", "elo", or "elo_change".
+   * Clutch is itself a mean of percentiles and has Unit "percentile".
+   */
+  value: number /* float64 */ | null;
+  unit: string;
+  percentile: number /* int */ | null;
+}
+
+//////////
 // source: players.go
 
 /**
