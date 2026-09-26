@@ -32,7 +32,7 @@ type Percentiles struct {
 	// are not part of.
 	Matches   int64            `json:"matches"`
 	Qualified bool             `json:"qualified"`
-	Axes      []PercentileAxis `json:"axes" tstype:"PercentileAxis[] | null"`
+	Axes      []PercentileAxis `json:"axes"`
 }
 
 // PercentileAxis is one spoke. Percentile and Value are null together, where

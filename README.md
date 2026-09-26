@@ -159,6 +159,7 @@ GET /api/v1/players/:slug/matches         match history, filterable and cursor-p
 GET /api/v1/players/:slug/ratings         Elo trajectory, per surface
 GET /api/v1/players/:slug/rankings        published ATP/WTA ranking over time
 GET /api/v1/players/:slug/clutch          break points, tiebreaks, deciding sets
+GET /api/v1/players/:slug/percentiles     last tour-level year, each axis a percentile of the tour
 GET /api/v1/players/:slug/seasons         a career a year at a time, every rate with its own count
 GET /api/v1/players/:slug/highlights      runs, biggest wins, titles by level, record by round, rivals
 GET /api/v1/h2h/:slug/:opponent           head-to-head, either way round
