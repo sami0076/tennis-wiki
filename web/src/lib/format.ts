@@ -28,6 +28,16 @@ export function formatPercent(value: number, places = 1): string {
   return `${value.toFixed(places)}%`
 }
 
+/** "40 minutes ago", "3 hours ago": how old a fetched figure is. */
+export function formatAgo(iso: string, now: Date): string {
+  const minutes = Math.max(0, Math.round((now.getTime() - Date.parse(iso)) / 60000))
+  if (minutes < 1) return 'just now'
+  if (minutes < 60) return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`
+  const hours = Math.round(minutes / 60)
+  if (hours < 48) return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`
+  return `${Math.round(hours / 24)} days ago`
+}
+
 /** 1st, 2nd, 3rd, 11th, 22nd: how a percentile is spoken. */
 export function formatOrdinal(n: number): string {
   const teen = n % 100 >= 11 && n % 100 <= 13
