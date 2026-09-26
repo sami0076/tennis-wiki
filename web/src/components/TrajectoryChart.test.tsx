@@ -124,6 +124,16 @@ describe('TrajectoryChart', () => {
     expect(container.querySelectorAll('path[d$="l0 0"]').length).toBe(3)
   })
 
+  // The caption is two sentences assembled from parts, and the parts already
+  // carry their own full stops. Joining them with another produced "in grey..".
+  it('punctuates the caption once', () => {
+    const lines = [1, 2, 3, 4, 5].map((n) => line(`Player Number${n}`, n, 4))
+    render(<TrajectoryChart lines={lines} />)
+    const note = screen.getByText(/drawn as the field/)
+    expect(note.textContent).not.toMatch(/\.\./)
+    expect(note).toHaveTextContent('2 more drawn as the field, in grey. Rated only in the weeks they played.')
+  })
+
   it('survives a flat series without dividing by zero', () => {
     const flat: TrajectoryLineData = {
       name: 'Flat',
