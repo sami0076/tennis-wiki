@@ -1,34 +1,34 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
-// Read as text rather than imported: the point is what the stylesheet declares,
-// and importing it would hand back the CSS-module class map instead.
 const css = readFileSync('src/components/TrajectoryChart.module.css', 'utf8')
-// Comments explain the rule and name the property while doing it, which would
-// match every assertion below.
+// Comments explain the rules and name the properties while doing it, which
+// would match every assertion below.
 const rules = css.replace(/\/\*[\s\S]*?\*\//g, '')
 
 /**
- * The draw-in animation hides the line by dashing it and then reveals it. If
- * the dash is declared on the element rather than inside the keyframes, it
- * outlives the animation: anything that stops the animation finishing leaves a
- * stroke pattern over real data, and a chart with a hole in it is
- * indistinguishable from a gap in the database. It cost a long debugging
- * session to find that once.
+ * The lines are revealed by a clip that widens from the left. A stroke dash
+ * was tried first and failed twice: it outlived the animation, and it did not
+ * run along the path in order, painting the two ends before the middle. Both
+ * look like a hole in the data on a chart whose whole job is to show data.
  */
 describe('the draw-in animation', () => {
-  it('declares the dash only inside the keyframes', () => {
-    const keyframes = rules.slice(rules.indexOf('@keyframes draw'))
-    const outside = rules.slice(0, rules.indexOf('@keyframes draw'))
-    expect(keyframes).toContain('stroke-dasharray')
-    expect(outside).not.toContain('stroke-dasharray')
-    expect(outside).not.toContain('stroke-dashoffset')
+  it('reveals with geometry, never with a stroke dash', () => {
+    expect(rules).toContain('@keyframes wipe')
+    expect(rules).not.toContain('stroke-dasharray')
+    expect(rules).not.toContain('stroke-dashoffset')
   })
 
-  // forwards would hold the last keyframe, dash and all, which is the thing
-  // above by another route.
+  // Holding the end state is how the first version outlived its animation.
   it('does not hold its end state', () => {
-    expect(rules).toContain('animation: draw 900ms cubic-bezier(0.16, 1, 0.3, 1) backwards')
-    expect(rules).not.toMatch(/animation: draw[^;]*forwards/)
+    expect(rules).toContain('animation: wipe 900ms cubic-bezier(0.16, 1, 0.3, 1) backwards')
+    expect(rules).not.toMatch(/animation:[^;]*forwards/)
+  })
+
+  // Without this the clip shrinks toward the middle of the plot instead of
+  // collapsing to its left edge, and the reveal opens outwards from the centre.
+  it('wipes from the left edge', () => {
+    expect(rules).toMatch(/\.wipe\s*\{[^}]*transform-box:\s*fill-box/)
+    expect(rules).toMatch(/\.wipe\s*\{[^}]*transform-origin:\s*left/)
   })
 })
