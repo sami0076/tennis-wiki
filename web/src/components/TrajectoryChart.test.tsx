@@ -56,6 +56,74 @@ describe('TrajectoryChart', () => {
     expect(chart).toHaveAttribute('aria-label', expect.stringContaining('2024'))
   })
 
+  // The chart used to carry two figures and no time axis at all, so a reader
+  // could see a line rise without being able to say from what, to what, or when.
+  it('numbers both axes', () => {
+    render(<TrajectoryChart lines={[line('A Player', 1, 4), line('B Player', 2, 4)]} />)
+
+    // The ratings run 2001..2032 here, so the grid lands on 2010, 2020, 2030.
+    expect(screen.getByText('2010')).toBeInTheDocument()
+    expect(screen.getByText('2020')).toBeInTheDocument()
+    expect(screen.getByText('Elo')).toBeInTheDocument()
+    // And the time axis says when, which nothing did before: the series runs
+    // January to April 2024, so the months are named and the year is carried.
+    expect(screen.getByText('Feb')).toBeInTheDocument()
+    expect(screen.getByText('Mar')).toBeInTheDocument()
+    expect(screen.getByText('2024')).toBeInTheDocument()
+  })
+
+  // Joining two points either side of a long absence draws a climb that never
+  // happened. The line is cut instead, and the cut is declared.
+  it('breaks a line where the player went unrated, rather than bridging it', () => {
+    const gapped: TrajectoryLineData = {
+      name: 'Gone Away',
+      position: 1,
+      points: [
+        { date: '2019-01-07', elo: 2400 },
+        { date: '2019-03-26', elo: 2420 },
+        { date: '2025-12-29', elo: 2500 },
+      ],
+    }
+    const { container } = render(<TrajectoryChart lines={[gapped, line('Present', 2, 4)]} />)
+
+    const d = container.querySelector('path')?.getAttribute('d') ?? ''
+    // Two subpaths: one per stretch the player was actually rated through.
+    expect((d.match(/M/g) ?? []).length).toBeGreaterThan(1)
+    expect(screen.getByRole('img')).toHaveAttribute(
+      'aria-label',
+      expect.stringContaining('break'),
+    )
+    expect(screen.getByText(/six months or more/)).toBeInTheDocument()
+  })
+
+  it('keeps an uninterrupted line in one piece', () => {
+    const { container } = render(
+      <TrajectoryChart lines={[line('A Player', 1, 4), line('B Player', 2, 4)]} />,
+    )
+    for (const path of container.querySelectorAll('path')) {
+      expect((path.getAttribute('d')?.match(/M/g) ?? []).length).toBe(1)
+    }
+    expect(screen.queryByText(/six months or more/)).not.toBeInTheDocument()
+  })
+
+  // A path of one point draws nothing, so a week with an absence either side
+  // of it would silently disappear.
+  it('marks a week stranded between two absences', () => {
+    const stranded: TrajectoryLineData = {
+      name: 'One Week',
+      position: 1,
+      points: [
+        { date: '2019-01-07', elo: 2400 },
+        { date: '2022-06-01', elo: 2450 },
+        { date: '2025-12-29', elo: 2500 },
+      ],
+    }
+    const { container } = render(<TrajectoryChart lines={[stranded, line('Present', 2, 4)]} />)
+    // A zero-length path with a round cap, so the dot stays round under the
+    // stretch that turns a <circle> into an ellipse.
+    expect(container.querySelectorAll('path[d$="l0 0"]').length).toBe(3)
+  })
+
   it('survives a flat series without dividing by zero', () => {
     const flat: TrajectoryLineData = {
       name: 'Flat',

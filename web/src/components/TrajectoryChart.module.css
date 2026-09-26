@@ -67,26 +67,76 @@
   white-space: nowrap;
 }
 
-/* The two figures that make the ruling readable. */
+/* The figures that make the ruling readable, one per gridline. */
 .axis {
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  width: 4.5ch;
   font-size: var(--t-11);
   line-height: 1;
   color: var(--pencil);
 }
 
-.axis span:first-child {
+/* Each figure is pinned to the gridline it names, and centred on it. */
+.tick {
+  position: absolute;
+  right: var(--s-2);
   transform: translateY(-50%);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.axis span:last-child {
-  transform: translateY(50%);
+/* What the figures are, said once, above them. */
+.unit {
+  position: absolute;
+  top: -1.5em;
+  left: 0;
+  font-size: var(--t-11);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pencil);
+}
+
+/* The time axis, under the plot and inside the same padding, so a percentage
+   along it is the same percentage along the lines above. */
+.dates {
+  position: relative;
+  height: 1.4em;
+  margin: 6px 12ch 0 4.5ch;
+  font-size: var(--t-11);
+  line-height: 1;
+  color: var(--pencil);
+}
+
+.date {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* A first or last label would otherwise hang off the end of the plot. */
+.date:first-child {
+  transform: none;
+}
+
+.date:last-child {
+  transform: translateX(-100%);
+}
+
+/* A week stranded between two absences, with no neighbour to draw a line to.
+   A zero-length path with a round cap is a dot whose stroke does not scale, so
+   it stays round: the plot is stretched to the column width and a <circle>
+   drawn in it comes out an ellipse. */
+.dot {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 5;
+  stroke-linecap: round;
 }
 
 /* The site's entire ambient motion budget, spent here. pathLength="1" makes the

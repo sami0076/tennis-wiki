@@ -52,6 +52,7 @@ import {
   type Column,
 } from '../components'
 import type { EditionMatch, EditionSide, ReplayableDraw } from '../api/client'
+import type { TrajectoryLineData } from '../components/TrajectoryChart'
 import { buildBracket, pageSheets, roundGroups, MAIN_ROUNDS } from '../lib/bracket'
 import type { Snapshot } from '../lib/playback'
 import styles from './Gallery.module.css'
@@ -147,6 +148,41 @@ const trajectory = [
   { date: '2019-07-01', elo: 2190 },
   { date: '2020-01-01', elo: 2240 },
   { date: '2020-07-01', elo: 2205 },
+]
+
+// A window with holes in it: one player away for two years, one rated in a
+// single stranded week, one who simply stops. This is what the seed fixture
+// and a real injury layoff both look like.
+const absent: TrajectoryLineData[] = [
+  {
+    name: 'Ada Returning',
+    position: 1,
+    points: [
+      { date: '2021-01-04', elo: 2180 },
+      { date: '2021-03-01', elo: 2210 },
+      { date: '2021-06-07', elo: 2190 },
+      { date: '2023-07-03', elo: 2240 },
+      { date: '2023-09-04', elo: 2265 },
+    ],
+  },
+  {
+    name: 'Bea Stranded',
+    position: 2,
+    points: [
+      { date: '2021-02-01', elo: 2120 },
+      { date: '2022-05-02', elo: 2150 },
+      { date: '2023-08-07', elo: 2100 },
+    ],
+  },
+  {
+    name: 'Cleo Stopped',
+    position: 3,
+    points: [
+      { date: '2021-01-04', elo: 2060 },
+      { date: '2021-04-05', elo: 2090 },
+      { date: '2021-08-02', elo: 2075 },
+    ],
+  },
 ]
 
 // Two seasons, so the picker has more than one group to draw.
@@ -579,6 +615,14 @@ export function Gallery() {
           which is only true because the range is shared. Still no charting library.
         </p>
         <TrajectoryChart lines={leaders} />
+        <p className={styles.note}>
+          Both axes are numbered: the ruling sits on round ratings rather than on fifths of
+          the range, and the time axis names whole years or month starts, whichever the
+          window calls for. A line is cut where the player went unrated for six months or
+          more, because joining the two ends would draw a climb that never happened; a week
+          left alone between two absences is a dot, since a line of one point draws nothing.
+        </p>
+        <TrajectoryChart lines={absent} />
       </section>
 
       <section className={styles.block}>

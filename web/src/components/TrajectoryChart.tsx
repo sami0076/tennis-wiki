@@ -1,6 +1,7 @@
 import type { SparkPoint } from './Sparkline'
 import { surname } from '../lib/format'
 import { spread } from '../lib/spread'
+import { niceTicks, splitOnGaps, timeTicks } from '../lib/axis'
 import { Note } from './Note'
 import styles from './TrajectoryChart.module.css'
 
@@ -61,15 +62,45 @@ export function TrajectoryChart({
 
   const x = (point: SparkPoint) => ((Date.parse(point.date) - from) / spanX) * width
   const y = (point: SparkPoint) => height - ((point.elo - min) / spanY) * height
+  const atValue = (value: number) => height - ((value - min) / spanY) * height
+
+  // One run per stretch the player was actually rated through. A run of one is
+  // a week on its own: drawn as a dot, because a path of one point draws
+  // nothing at all and the week would silently vanish.
   const path = (points: ReadonlyArray<SparkPoint>) =>
-    points
-      .map((point, index) => `${index === 0 ? 'M' : 'L'}${x(point).toFixed(2)} ${y(point).toFixed(2)}`)
+    splitOnGaps(points, (point) => Date.parse(point.date))
+      .map((run) =>
+        run
+          .map((point, index) => `${index === 0 ? 'M' : 'L'}${x(point).toFixed(2)} ${y(point).toFixed(2)}`)
+          .join(' '),
+      )
       .join(' ')
+
+  const lone = (points: ReadonlyArray<SparkPoint>) =>
+    splitOnGaps(points, (point) => Date.parse(point.date)).filter((run) => run.length === 1).flat()
+
+  // The grid sits on round ratings inside the range, and the ends are labelled
+  // separately, so a tick landing on top of one is dropped.
+  const grid = niceTicks(min, max).filter((tick) => tick > min && tick < max)
+  const dates = timeTicks(from, to)
+  // The ends say what the data actually reaches, which the round ticks do not.
+  // Where an end would sit on top of a tick, the tick wins: two figures a few
+  // pixels apart are worse than one.
+  const clearOfGrid = (value: number) =>
+    grid.every((tick) => Math.abs(atValue(tick) - atValue(value)) / height > 0.07)
 
   const ordered = [...drawable].sort((a, b) => a.position - b.position)
   const leaders = ordered.slice(0, named)
   const field = ordered.slice(named)
-  const label = `Elo of the top ${ordered.length}, ${new Date(from).getUTCFullYear()} to ${new Date(to).getUTCFullYear()}, between ${Math.round(min)} and ${Math.round(max)}. Leading: ${leaders.map((line) => line.name).join(', ')}.`
+  // The tick labels are aria-hidden, so the description carries both axes.
+  const broken = ordered.filter(
+    (line) => splitOnGaps(line.points, (point) => Date.parse(point.date)).length > 1,
+  ).length
+  const label =
+    `Elo of the top ${ordered.length}, ${new Date(from).getUTCFullYear()} to ${new Date(to).getUTCFullYear()}, ` +
+    `between ${Math.round(min)} and ${Math.round(max)}. ` +
+    `Leading: ${leaders.map((line) => line.name).join(', ')}.` +
+    (broken > 0 ? ` ${broken} of the lines break where the player went unrated for six months or more.` : '')
 
   // Each name sits at the end of its line, as a share of the rendered height,
   // and names that would sit on top of each other are pushed apart.
@@ -88,14 +119,14 @@ export function TrajectoryChart({
           role="img"
           aria-label={label}
         >
-          {[0, 0.25, 0.5, 0.75].map((share) => (
+          {grid.map((tick) => (
             <line
-              key={share}
+              key={tick}
               className={styles.ruling}
               x1="0"
-              y1={height * share}
+              y1={atValue(tick)}
               x2={width}
-              y2={height * share}
+              y2={atValue(tick)}
               vectorEffect="non-scaling-stroke"
             />
           ))}
@@ -126,6 +157,18 @@ export function TrajectoryChart({
               vectorEffect="non-scaling-stroke"
             />
           ))}
+          {/* A week with an absence either side of it: a path of one point
+              draws nothing, so it is marked rather than lost. */}
+          {leaders.map((line, index) =>
+            lone(line.points).map((point) => (
+              <path
+                key={`${line.name}-${point.date}`}
+                className={`${styles.dot} ${rank(index)}`}
+                d={`M${x(point).toFixed(2)} ${y(point).toFixed(2)}l0 0`}
+                vectorEffect="non-scaling-stroke"
+              />
+            )),
+          )}
         </svg>
         {leaders.map((line, index) => (
           <span
@@ -137,13 +180,49 @@ export function TrajectoryChart({
             {surname(line.name)}
           </span>
         ))}
+        {/* Both axes are HTML over the plot, not text inside it: the SVG is
+            stretched to the column width with preserveAspectRatio="none",
+            which would stretch any glyph drawn in it with the lines. */}
         <span className={styles.axis} aria-hidden="true">
-          <span>{Math.round(max)}</span>
-          <span>{Math.round(min)}</span>
+          <span className={styles.unit}>Elo</span>
+          {clearOfGrid(max) ? (
+            <span className={styles.tick} style={{ top: 0 }}>
+              {Math.round(max)}
+            </span>
+          ) : null}
+          {grid.map((tick) => (
+            <span key={tick} className={styles.tick} style={{ top: `${(atValue(tick) / height) * 100}%` }}>
+              {tick}
+            </span>
+          ))}
+          {clearOfGrid(min) ? (
+            <span className={styles.tick} style={{ top: '100%' }}>
+              {Math.round(min)}
+            </span>
+          ) : null}
         </span>
       </div>
-      {field.length > 0 ? (
-        <Note>{`${field.length} more drawn as the field, in grey. Rated only in the weeks they played.`}</Note>
+      <div className={styles.dates} aria-hidden="true">
+        {dates.map((tick) => (
+          <span
+            key={tick.at}
+            className={styles.date}
+            style={{ left: `${((tick.at - from) / spanX) * 100}%` }}
+          >
+            {tick.label}
+          </span>
+        ))}
+      </div>
+      {field.length > 0 || broken > 0 ? (
+        <Note>
+          {[
+            field.length > 0 ? `${field.length} more drawn as the field, in grey.` : null,
+            'Rated only in the weeks they played',
+            broken > 0 ? 'so a line breaks where a player went unrated for six months or more' : null,
+          ]
+            .filter(Boolean)
+            .join(broken > 0 ? ', ' : '. ') + '.'}
+        </Note>
       ) : null}
     </figure>
   )
