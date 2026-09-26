@@ -614,7 +614,13 @@ export function Gallery() {
           ramp, everyone else as the field. Crossing lines mean a lead changing hands,
           which is only true because the range is shared. Still no charting library.
         </p>
-        <TrajectoryChart lines={leaders} />
+        <TrajectoryChart lines={leaders} animate />
+        <p className={styles.note}>
+          Rendered with <code>animate</code>, as /rankings renders it, because the animated
+          state is a state: a draw-in that paints the two ends before the middle looks
+          exactly like a chart with a hole in its data, and this gallery showing only the
+          still version is how that shipped.
+        </p>
         <p className={styles.note}>
           Both axes are numbered: the ruling sits on round ratings rather than on fifths of
           the range, and the time axis names whole years or month starts, whichever the
