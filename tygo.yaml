@@ -26,6 +26,7 @@ packages:
       - "tournaments.go"
       - "seasons.go"
       - "recent.go"
+      - "thisweek.go"
       - "leaders.go"
       - "problem.go"
       - "cursor.go"

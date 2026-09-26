@@ -24,6 +24,7 @@ import type {
   RecentFinals,
   SeasonEventsResponse,
   SeasonsResponse,
+  ThisWeek,
   Trajectories,
 } from './types.gen'
 
@@ -110,6 +111,11 @@ export function getPlayerSeasons(slug: string, signal?: AbortSignal): Promise<Pl
 /** A player's last tour-level year, each axis a percentile of their tour. */
 export function getPlayerPercentiles(slug: string, signal?: AbortSignal): Promise<Percentiles> {
   return request<Percentiles>(`/players/${encodeURIComponent(slug)}/percentiles`, {}, signal)
+}
+
+/** Events in progress, from results so far. Provisional and hourly, not live. */
+export function getThisWeek(signal?: AbortSignal): Promise<ThisWeek> {
+  return request<ThisWeek>('/this-week', {}, signal)
 }
 
 export function getPlayerRankings(slug: string, signal?: AbortSignal): Promise<RankingHistory> {
