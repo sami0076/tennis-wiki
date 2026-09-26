@@ -11,6 +11,8 @@ import {
   type Meeting,
   type Page,
   type Pair,
+  type PercentileAxis,
+  type Percentiles,
   type PlayerMatch,
   type PlayerProfile,
   type PlayerSearchResult,
@@ -22,6 +24,7 @@ import {
   getHeadToHead,
   getPlayer,
   getPlayerMatches,
+  getPlayerPercentiles,
   getPlayerRatingSeries,
   simulateMatch,
   type MeetingFilters,
@@ -45,6 +48,7 @@ import {
   Flag,
   Meta,
   PlayerSearch,
+  RadarChart,
   RivalryStrip,
   Score,
   Skeleton,
@@ -57,7 +61,7 @@ import {
   type RivalryResult,
 } from '../components'
 import { absenceReason } from '../lib/absence'
-import { formatHand, formatPercent, formatScore, surname } from '../lib/format'
+import { formatElo, formatHand, formatPercent, formatScore, surname } from '../lib/format'
 import { breadcrumbs, useJsonLd } from '../lib/jsonld'
 import { surfaceLabel } from '../lib/surface'
 import { tierLabel } from '../lib/tier'
@@ -314,6 +318,8 @@ function Rivalry({
           <ServeSection comparison={comparison} playerA={playerA} playerB={playerB} filtered={filtered} />
         </>
       )}
+
+      <ShapeSection playerA={playerA} playerB={playerB} />
 
       <RatingsSection
         profileA={profileA}
@@ -777,6 +783,85 @@ function CompareRow({ row, nameA, nameB }: { row: Comparable; nameA: string; nam
         {row.format(value)} for {present}, not recorded for the other
       </span>
     </p>
+  )
+}
+
+function axisDetail(axis: PercentileAxis): string | null {
+  if (axis.value === null) return null
+  switch (axis.unit) {
+    case 'percent':
+      return formatPercent(axis.value)
+    case 'elo':
+      return `${formatElo(axis.value)} Elo`
+    case 'elo_change':
+      return `${axis.value > 0 ? '+' : ''}${formatElo(axis.value)} Elo`
+    default:
+      return null
+  }
+}
+
+function windowWords(p: Percentiles): string {
+  return `the ${p.population} ${p.tour.toUpperCase()} players with ${p.min_matches} or more tour-level matches in the year to ${p.to}`
+}
+
+/**
+ * Each player's last tour-level year, as percentiles of their tour. Not cut by
+ * the meeting filters: it is about the players, not about their meetings.
+ */
+function ShapeSection({ playerA, playerB }: { playerA: HeadToHeadPlayer; playerB: HeadToHeadPlayer }) {
+  const a = useResource((signal) => getPlayerPercentiles(playerA.slug, signal), [playerA.slug])
+  const b = useResource((signal) => getPlayerPercentiles(playerB.slug, signal), [playerB.slug])
+
+  if (a.state === 'error' || b.state === 'error') return null
+  if (a.state !== 'ready' || b.state !== 'ready') {
+    return (
+      <section className={styles.section}>
+        <Skeleton lines={8} />
+      </section>
+    )
+  }
+
+  const sides = [
+    { player: playerA, data: a.data, tone: 'a' as const },
+    { player: playerB, data: b.data, tone: 'b' as const },
+  ]
+  const drawn = sides.filter((s) => s.data.axes.length > 0)
+  if (drawn.length === 0) return null
+
+  const axes = (drawn[0]?.data.axes ?? []).map((axis) => axis.label)
+  const sameWindow = a.data.to === b.data.to && a.data.tour === b.data.tour
+  const unranked = sides.filter((s) => s.data.axes.length === 0)
+  const short = drawn.filter((s) => !s.data.qualified)
+
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>Their last year on tour</h2>
+      <RadarChart
+        label={`${playerA.name} and ${playerB.name}, each axis a percentile of their tour`}
+        axes={axes}
+        series={drawn.map((s) => ({
+          name: s.player.name,
+          tone: s.tone,
+          values: s.data.axes.map((axis) => axis.percentile),
+          details: s.data.axes.map(axisDetail),
+        }))}
+      />
+      <Note>
+        Each axis is where a player ranks, from 0 to 100, among{' '}
+        {sameWindow && drawn.length === 2
+          ? windowWords(a.data)
+          : drawn.map((s) => `${windowWords(s.data)} (${surname(s.player.name)})`).join(', and ')}
+        . Serve and return are points won; clutch averages break points saved and converted,
+        tiebreaks and deciding sets; the surfaces are Elo, blended with overall where a surface
+        is thinly played; form is the Elo gained in the last 26 weeks; big matches are those
+        against the top ten or at a Slam, from five of them.
+        {short.map(
+          (s) =>
+            ` ${s.player.name} played ${s.data.matches} tour-level ${s.data.matches === 1 ? 'match' : 'matches'} that year, under the floor, and is ranked against the field anyway.`,
+        )}
+        {unranked.map((s) => ` ${s.player.name} has no tour-level match to rank.`)}
+      </Note>
+    </section>
   )
 }
 

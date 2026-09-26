@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -7,6 +7,7 @@ import {
   AvailabilityRecorded,
   type HeadToHead as Comparison,
   type Meeting,
+  type Percentiles,
   type ServeStats,
 } from '../api/client'
 import { HeadToHead } from './HeadToHead'
@@ -187,6 +188,20 @@ const noCommon = {
   total: 0,
 }
 
+const percentiles: Percentiles = {
+  tour: 'atp',
+  from: '2018-11-18',
+  to: '2019-11-17',
+  population: 140,
+  min_matches: 10,
+  matches: 62,
+  qualified: true,
+  axes: [
+    { key: 'serve', label: 'Serve', value: 71.2, unit: 'percent', percentile: 96 },
+    { key: 'big', label: 'Big matches', value: null, unit: 'percent', percentile: null },
+  ],
+}
+
 /** Answers each endpoint the page asks for, and nothing else. */
 let requested: string[] = []
 
@@ -207,6 +222,8 @@ function stub(comparison: Comparison, charted: unknown = null, common: unknown =
             ? emptySeries
             : path.endsWith('/matches')
               ? { data: [], next_cursor: null }
+              : path.endsWith('/percentiles')
+                ? percentiles
               : path === '/api/v1/simulate/match'
                 ? simulation
                 : profile
@@ -245,6 +262,17 @@ describe('HeadToHead', () => {
     // The event is a link to its sheet, the round typed after it.
     expect(screen.getByRole('link', { name: 'Wimbledon' })).toHaveAttribute('href', '/tournaments/wimbledon-atp/1980')
     expect(screen.getByText('Break points saved')).toBeInTheDocument()
+  })
+
+  it('draws both players against their tour, a missing figure said as missing', async () => {
+    stub(rivalry)
+    renderAt('/h2h/bjorn-borg/john-mcenroe')
+
+    expect(await screen.findByText('Their last year on tour')).toBeInTheDocument()
+    const table = screen.getByRole('table', { name: /each axis a percentile/ })
+    expect(within(table).getByRole('row', { name: /Serve/ })).toHaveTextContent('96th · 71.2%')
+    expect(within(table).getByRole('row', { name: /Big matches/ })).toHaveTextContent('no figure')
+    expect(screen.getByText(/among the 140 ATP players with 10 or more/)).toBeInTheDocument()
   })
 
   // One of the three meetings is charted: one mark, and the sheet opens under
